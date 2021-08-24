@@ -14,8 +14,8 @@
 #include "Buzzer.h"
 #include "Button.h"
 
-#define INCLUDE_Mario 				1
-#define INCLUDE_War_Cant_of_Mars 	0
+#define INCLUDE_Mario               1
+#define INCLUDE_War_Cant_of_Mars    0
 
 extern Module::Buzzer* Buzzer;
 extern Module::Button* Button;
