@@ -56,9 +56,27 @@ building the source code and flashing the embedded chips.
 
    e.g. `make flash-example_buzzer` -> and you shall hear some music (or noise)
 
-## User Guide (Windows + CLion)
+## Document Usage
 
-#### TODO - waiting for the true master of Windows
+You will need [Doxygen](https://www.doxygen.nl/index.html)
+
+```
+sudo apt-get install doxygen
+```
+
+generate:
+
+```
+// at the root directory of this repo
+doxygen
+```
+
+view the document:
+
+```
+firefox ./doc/html/index.html
+```
+
 
 ## Developer Guide
 
