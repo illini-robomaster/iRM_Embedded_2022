@@ -1,4 +1,4 @@
-# iRM Embedded 2020
+# iRM Embedded 2022
 
 ![win](https://github.com/illini-robomaster/iRM_Embedded_2020/workflows/windows%20build/badge.svg)
 ![mac](https://github.com/illini-robomaster/iRM_Embedded_2020/workflows/mac%20build/badge.svg)
