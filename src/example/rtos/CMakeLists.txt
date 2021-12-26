@@ -18,10 +18,9 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_led ASM C CXX)
+project(example_rtos ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_typeA
+irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES typeA.cc)
 
-add_subdirectory(rtos)
