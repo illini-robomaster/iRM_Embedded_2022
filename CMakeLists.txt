@@ -29,5 +29,7 @@ project(iRM_Embedded_2020)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 add_subdirectory(boards)
-add_subdirectory(src)
+add_subdirectory(shared)
+add_subdirectory(vehicles)
+add_subdirectory(examples)
 

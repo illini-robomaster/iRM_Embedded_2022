@@ -77,7 +77,6 @@ view the document:
 firefox ./doc/html/index.html
 ```
 
-
 ## Developer Guide
 
 Use the following guide when making contributions to this repo.
