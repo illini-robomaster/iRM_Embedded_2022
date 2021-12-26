@@ -1,10 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-<<<<<<< HEAD
-#  Copyright (C) 2021                                                    #
-=======
 #  Copyright (C) 2020                                                    #
->>>>>>> main
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
