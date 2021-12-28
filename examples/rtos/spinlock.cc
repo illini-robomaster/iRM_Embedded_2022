@@ -17,24 +17,28 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *                                                                          *
  ****************************************************************************/
-
-#include "bsp_gpio.h"
-#include "cmsis_os.h"
+ 
 #include "main.h"
 
-#define LED_RED_Pin GPIO_PIN_11
-#define LED_RED_GPIO_Port GPIOE
+#include "bsp_print.h"
+#include "cmsis_os.h"
 
-#define LED_GREEN_Pin GPIO_PIN_14
-#define LED_GREEN_GPIO_Port GPIOF
+int32_t pub = 0;
 
-static bsp::GPIO *gpio_red, *gpio_green;
+osMutexId_t addLockHandle;
+
+const osMutexAttr_t addLock = {
+  .name = "addLock",
+  .attr_bits = osMutexRecursive,
+  .cb_mem = NULL,
+  .cb_size = 0
+};
 
 /* init new task START */
-osThreadId_t LED_GREEN_TaskHandle;
+osThreadId_t ADD_TaskHandle;
 
-const osThreadAttr_t LED2Task_attributes = {
-  .name = "LEDGreenTask",
+const osThreadAttr_t AddTask_attributes = {
+  .name = "AddTask",
   .attr_bits = osThreadDetached,
   .cb_mem = NULL,
   .cb_size = 0,
@@ -45,33 +49,47 @@ const osThreadAttr_t LED2Task_attributes = {
   .reserved = 0
 };
 
-void LED_GREEN_Task(void *argument) {
+void AddTask(void *argument) {
   UNUSED(argument);
+  osStatus_t ret;
   while (1) {
-    gpio_green->Toggle();
-    osDelay(200);
+    ret = osMutexAcquire(addLockHandle, osWaitForever);
+    if(ret == osOK) {
+      pub += 1;
+      print("%d, by thread 2\r\n", pub);
+    }
+    osMutexRelease(addLockHandle);
+    osDelay(2000);
   }
 }
+
 /* init new task END */
 
+void RM_RTOS_Mutexes_Init(void) {
+  addLockHandle =	osMutexNew (&addLock);
+}
 
 void RM_RTOS_Threads_Init(void) {
-  LED_GREEN_TaskHandle = osThreadNew(LED_GREEN_Task, NULL, &LED2Task_attributes);
+  ADD_TaskHandle = osThreadNew(AddTask, NULL, &AddTask_attributes);
 }
 
 
 void RM_RTOS_Init(void) {
-  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
-  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-  gpio_red->High();
-  gpio_green->Low();
+
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+  osStatus_t ret;
+  print_use_uart(&huart8);
   while (1) {
-    gpio_red->Toggle();
-    osDelay(500);
+    ret = osMutexAcquire(addLockHandle, osWaitForever);
+    if(ret == osOK) {  
+      pub += 1;
+      print("%d, by thread 1\r\n", pub);
+    }
+    osMutexRelease(addLockHandle);
+    osDelay(3000);
   }
 }
 

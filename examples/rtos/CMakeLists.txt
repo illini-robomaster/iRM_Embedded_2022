@@ -24,3 +24,7 @@ irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES typeA.cc)
 
+irm_add_arm_executable(${PROJECT_NAME}_spin
+    TARGET DJI_Board_TypeA
+    SOURCES spinlock.cc)
+
