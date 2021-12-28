@@ -18,34 +18,23 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
-#include "main.h"
+#pragma once
 #include "cmsis_os.h"
 
-#include "dbus.h"
-#include "gimbal.h"
+// task attribute for gimbalTask init in rm_rtos.cc
+const osThreadAttr_t gimbalTaskAttribute = {
+  .name = "gimbalTask",
+  .attr_bits = osThreadDetached,
+  .cb_mem = NULL,
+  .cb_size = 0,
+  .stack_mem = NULL,
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+  .tz_module = 0,
+  .reserved = 0
+};
 
-// gimbalTask() task handler and attribute
-extern const osThreadAttr_t gimbalTaskAttribute;
-osThreadId_t gimbalTaskHandle;
-
-// gimbalTask() declaration
-extern void gimbalTask (void* arg);
-
-
-void RM_RTOS_Threads_Init(void) {
-  gimbalTaskHandle = osThreadNew(gimbalTask, NULL, &gimbalTaskAttribute);
-}
-
-void RM_RTOS_Init(void) {
-
-}
+// function declaration
+void gimbalTask (void* arg);
 
 
-void RM_RTOS_Default_Task(const void* argument) {
-  UNUSED(argument);
-
-  while (1) {
-
-  }
-}
