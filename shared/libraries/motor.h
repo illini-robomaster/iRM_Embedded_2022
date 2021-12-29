@@ -210,7 +210,7 @@ class MotorPWMBase : public MotorBase {
 class Motor2305 : public MotorPWMBase {
  public:
   /* override base implementation with max current protection */
-  virtual void SetOutput(int16_t val) override final;
+  void SetOutput(int16_t val) override final;
 };
 
 } /* namespace control */

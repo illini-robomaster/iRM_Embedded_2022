@@ -24,7 +24,7 @@ include(cmake/arm_toolchain.cmake)
 include(cmake/build_helper.cmake)
 include(cmake/clang_format.cmake)
 
-project(iRM_Embedded_2020)
+project(iRM_Embedded_2022)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
