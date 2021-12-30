@@ -57,7 +57,7 @@ void MotorCANBase::TransmitOutput(MotorCANBase* motors[], uint8_t num_motors) {
   uint8_t data[8] = {0};
 
   RM_ASSERT_GT(num_motors, 0, "Meaningless empty can motor transmission");
-  RM_ASSERT_LT(num_motors, 4, "Exceeding maximum of 4 motor commands per CAN message");
+  RM_ASSERT_LE(num_motors, 4, "Exceeding maximum of 4 motor commands per CAN message");
   for (uint8_t i = 0; i < num_motors; ++i) {
     RM_ASSERT_EQ(motors[i]->tx_id_, motors[0]->tx_id_, "tx id mismatch");
     RM_ASSERT_EQ(motors[i]->can_, motors[0]->can_, "can line mismatch");

@@ -24,11 +24,14 @@ typedef enum{
 
 class Chassis {
 public:
-    Chassis(chassis_type_t robot_type);
-    void Move(double x, double y, double z);
+    Chassis(chassis_type_t robot_type, float kp, float ki, float kd);
+    void Move(float x, float y, float z);
 
 private:
-    control::PIDController** pid;
+    PIDController pid_FL;
+    PIDController pid_BL;
+    PIDController pid_FR;
+    PIDController pid_BR;
     MotorCANBase** motors;
     chassis_type_t type;
 };
