@@ -57,7 +57,7 @@ void MotorCANBase::TransmitOutput(MotorCANBase* motors[], uint8_t num_motors) {
   uint8_t data[8] = {0};
 
   RM_ASSERT_GT(num_motors, 0, "Meaningless empty can motor transmission");
-  RM_ASSERT_LT(num_motors, 4, "Exceeding maximum of 4 motor commands per CAN message");
+  RM_ASSERT_LE(num_motors, 4, "Exceeding maximum of 4 motor commands per CAN message");
   for (uint8_t i = 0; i < num_motors; ++i) {
     RM_ASSERT_EQ(motors[i]->tx_id_, motors[0]->tx_id_, "tx id mismatch");
     RM_ASSERT_EQ(motors[i]->can_, motors[0]->can_, "can line mismatch");
@@ -104,6 +104,34 @@ void Motor3508::PrintData() const {
 }
 
 void Motor3508::SetOutput(int16_t val) {
+  constexpr int16_t MAX_ABS_CURRENT = 12288;  // ~20A
+  output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
+}
+
+Motor6020::Motor6020(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
+  can->RegisterRxCallback(rx_id, can_motor_callback, this);
+}
+
+void Motor6020::UpdateData(const uint8_t data[]) {
+  const int16_t raw_theta = data[0] << 8 | data[1];
+  const int16_t raw_omega = data[2] << 8 | data[3];
+  raw_current_get_ = data[4] << 8 | data[5];
+  raw_temperature_ = data[6];
+
+  constexpr float THETA_SCALE = 2 * PI / 8192;  // digital -> rad
+  constexpr float OMEGA_SCALE = 2 * PI / 60;    // rpm -> rad / sec
+  theta_ = raw_theta * THETA_SCALE;
+  omega_ = raw_omega * OMEGA_SCALE;
+}
+
+void Motor6020::PrintData() const {
+  print("theta: %.4f ", GetTheta());
+  print("omega: %.4f ", GetOmega());
+  print("raw temperature: %d ", raw_temperature_);
+  print("raw current get: %d \r\n", raw_current_get_);
+}
+
+void Motor6020::SetOutput(int16_t val) {
   constexpr int16_t MAX_ABS_CURRENT = 12288;  // ~20A
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }

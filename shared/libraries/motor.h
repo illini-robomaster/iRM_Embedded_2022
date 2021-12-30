@@ -115,6 +115,24 @@ class MotorCANBase : public MotorBase {
 };
 
 /**
+ * @brief DJI 2006 motor class
+ */
+class Motor2006 : public MotorCANBase {
+ public:
+  /* constructor wrapper over MotorCANBase */
+  Motor2006(bsp::CAN* can, uint16_t rx_id);
+  /* implements data update callback */
+  void UpdateData(const uint8_t data[]) override final;
+  /* implements data printout */
+  void PrintData() const override final;
+  /* override base implementation with max current protection */
+  void SetOutput(int16_t val) override final;
+
+ private:
+  volatile int16_t raw_current_get_ = 0;
+};
+
+/**
  * @brief DJI 3508 motor class
  */
 class Motor3508 : public MotorCANBase {
@@ -131,6 +149,28 @@ class Motor3508 : public MotorCANBase {
  private:
   volatile int16_t raw_current_get_ = 0;
   volatile uint8_t raw_temperature_ = 0;
+};
+
+/**
+ * @brief DJI 6020 motor class
+ */
+class Motor6020 : public MotorCANBase {
+ public:
+  /* constructor wrapper over MotorCANBase */
+  Motor6020(bsp::CAN* can, uint16_t rx_id);
+  /* implements data update callback */
+  void UpdateData(const uint8_t data[]) override final;
+  /* implements data printout */
+  void PrintData() const override final;
+  /* override base implementation with max current protection */
+  void SetOutput(int16_t val) override final;
+
+ private:
+  volatile int16_t raw_current_get_ = 0;
+  volatile int16_t raw_current_set_ = 0;
+  volatile uint8_t raw_temperature_ = 0;
+
+  static const int16_t CURRENT_CORRECTION = -1;  // current direction is reversed
 };
 
 /**
@@ -155,24 +195,6 @@ class Motor6623 : public MotorCANBase {
   volatile int16_t raw_current_set_ = 0;
 
   static const int16_t CURRENT_CORRECTION = -1;  // current direction is reversed
-};
-
-/**
- * @brief DJI 2006 motor class
- */
-class Motor2006 : public MotorCANBase {
- public:
-  /* constructor wrapper over MotorCANBase */
-  Motor2006(bsp::CAN* can, uint16_t rx_id);
-  /* implements data update callback */
-  void UpdateData(const uint8_t data[]) override final;
-  /* implements data printout */
-  void PrintData() const override final;
-  /* override base implementation with max current protection */
-  void SetOutput(int16_t val) override final;
-
- private:
-  volatile int16_t raw_current_get_ = 0;
 };
 
 /**
