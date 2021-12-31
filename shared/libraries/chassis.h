@@ -19,12 +19,16 @@ typedef enum{
 typedef enum{
 	HERO = 0,
 	STANDARD = 1,
-	ENGINEER = 2
-} chassis_type_t;
+	ENGINEER = 2,
+	AERIAL = 3,
+	SENTRY = 4,
+	DART = 5,
+	RADAR = 6
+} robot_type_t;
 
 class Chassis {
 public:
-    Chassis(chassis_type_t robot_type, float kp, float ki, float kd);
+    Chassis(robot_type_t robot_type, const int* motor_id, const float* pid);
     void Move(float x, float y, float z);
 
 private:
@@ -33,7 +37,7 @@ private:
     PIDController pid_FR;
     PIDController pid_BR;
     MotorCANBase** motors;
-    chassis_type_t type;
+    robot_type_t type;
 };
 
 }

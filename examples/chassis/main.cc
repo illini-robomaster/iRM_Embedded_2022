@@ -12,7 +12,9 @@ control::Chassis* chassis = nullptr;
 
 void RM_RTOS_Init() {
 	dbus = new remote::DBUS(&huart1);
-	chassis = new control::Chassis(control::STANDARD, 20, 8, 2); // 5 3 0.1 / 20 8 2
+	int motor_id[4] = {2, 3, 1, 4};
+	float chassis_pid[3] = {20, 8, 2};
+	chassis = new control::Chassis(control::STANDARD, motor_id, chassis_pid); // 5 3 0.1 / 20 8 2
 }
 
 void RM_RTOS_Default_Task(const void* args) {

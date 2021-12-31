@@ -28,7 +28,7 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define TARGET_SPEED 80
+#define TARGET_SPEED 400
 
 bsp::CAN* can1 = NULL;
 control::MotorCANBase* motor = NULL;
@@ -36,20 +36,20 @@ control::MotorCANBase* motor = NULL;
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  can1 = new bsp::CAN(&hcan1, 0x208);
+  motor = new control::Motor3508(can1, 0x208);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {motor};
-  control::PIDController pid(20, 8, 0);
+  control::PIDController pid(10, 0.1, 0.05);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   float target;
 
-  while (1) {
+  while (true) {
     if (key.Read())
       target = TARGET_SPEED;
     else

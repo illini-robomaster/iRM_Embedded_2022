@@ -33,16 +33,16 @@ control::MotorCANBase* motor = NULL;
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  can1 = new bsp::CAN(&hcan1, 0x204);
+  motor = new control::Motor3508(can1, 0x204);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {motor};
 
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
-  while (1) {
+  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+  while (true) {
     motor->PrintData();
     if (key.Read())
       motor->SetOutput(800);

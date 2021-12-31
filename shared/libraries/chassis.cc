@@ -10,17 +10,21 @@
 extern CAN_HandleTypeDef hcan1;
 
 namespace control{
-    Chassis::Chassis(chassis_type_t robot_type, float kp, float ki, float kd): pid_FL(PIDController(kp, ki, kd)), pid_BL(PIDController(kp, ki, kd)), pid_FR(PIDController(kp, ki, kd)), pid_BR(PIDController(kp, ki, kd)) {
+    Chassis::Chassis(robot_type_t robot_type, const int* motor_id, const float* pid):
+    pid_FL(PIDController(pid[0], pid[1], pid[2])),
+    pid_BL(PIDController(pid[0], pid[1], pid[2])),
+    pid_FR(PIDController(pid[0], pid[1], pid[2])),
+    pid_BR(PIDController(pid[0], pid[1], pid[2])) {
 	    type = robot_type;
 	    switch (type) {
 		    case HERO:
 		    case STANDARD: {
 			    motors = new MotorCANBase *[4];
 			    auto* can1 = new bsp::CAN(&hcan1, 0x201);
-			    motors[MOTOR_FL] = new Motor3508(can1, 0x202);
-			    motors[MOTOR_BL] = new Motor3508(can1, 0x203);
-			    motors[MOTOR_FR] = new Motor3508(can1, 0x201);
-			    motors[MOTOR_BR] = new Motor3508(can1, 0x204);
+			    motors[MOTOR_FL] = new Motor3508(can1, 0x200 + motor_id[0]);
+			    motors[MOTOR_BL] = new Motor3508(can1, 0x200 + motor_id[1]);
+			    motors[MOTOR_FR] = new Motor3508(can1, 0x200 + motor_id[2]);
+			    motors[MOTOR_BR] = new Motor3508(can1, 0x200 + motor_id[3]);
 			    break;
 		    }
 		    case ENGINEER: {
@@ -32,21 +36,23 @@ namespace control{
 	    }
     }
     void Chassis::Move(float x, float y, float z) {
+	    constexpr int MAX_ABS_CURRENT = 12288;  // ~20A
+	    constexpr int MAX_ABS_REMOTE = 32767;
 	    switch (type) {
 		    case HERO:
 		    case STANDARD: {
-			    x = x * 12288 / 32767;
-			    y = y * 12288 / 32767;
-			    z = z * 12288 / 32767;
-			    // constexpr int16_t MAX_ABS_CURRENT = 12288;  // ~20A
-//			    double moveSum = fabs(x) + fabs(y) + fabs(z);
-//			    if (moveSum >= MAX_ABS_CURRENT) {
-//				    int k = MAX_ABS_CURRENT/moveSum;
-//				    x *= k;
-//				    y *= k;
-//				    z *= k;
-//			    }
+			    x = x * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
+			    y = y * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
+			    z = z * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
+			    float moveSum = fabs(x) + fabs(y) + fabs(z);
+			    if (moveSum >= MAX_ABS_CURRENT) {
+				    float k = MAX_ABS_CURRENT / moveSum;
+				    x *= k;
+				    y *= k;
+				    z *= k;
+			    }
 			    float FL_speed = y + x + z;
+
 			    float BL_speed = y - x + z;
 			    float FR_speed = -1 * (y - x - z);
 			    float BR_speed = -1 * (y + x - z);
