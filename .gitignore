@@ -1,3 +1,62 @@
+# C - https://github.com/github/gitignore/blob/master/C.gitignore
+# Prerequisites
+*.d
+*.DS_Store
+*.osx.project
+.project
+.cproject
+.mxproject
+
+# Object files
+*.o
+*.ko
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# C++ - https://github.com/github/gitignore/blob/master/C%2B%2B.gitignore
 # Prerequisites
 *.d
 
@@ -31,5 +90,69 @@
 *.out
 *.app
 
+# Embedded System Specific
+*.bak
+*.ddk
+*.edk
+*.lst
+*.lnp
+*.mpf
+*.mpj
+*.obj
+*.omf
+*.plg
+*.rpt
+*.tmp
+*.__i
+*.crf
+*.o
+*.d
+*.axf
+*.tra
+*.dep
+*.iex
+*.uvopt
+*.htm
+*.hsc
+*.lnk
+st.*
+JLinkLog.txt
+.tags
+.tags_sorted_by_file
+~*
+*.map
+*uvgui*
+*.uvoptx
+*.udb
+*.ini
+*.sct
+*.uvguix.*
+
+# Group Rule Specific
+*.jpg
+*.png
+*.mp4
+*.avi
+*.mov
+
+# build directory
+build/
+cmake-build-default/
+cmake-build-debug/
+cmake-build-release/
+cmake-build-relwithdebinfo/
+cmake-build-minsizerel/
+html/
+data_history/
+
+# CMake Compile Commands
+compile_commands.json
+
+# Clion
 .idea
-build
+
+# Build result
+*.bin
+
+# Vim YCM config
+.ycm_extra_conf.py
