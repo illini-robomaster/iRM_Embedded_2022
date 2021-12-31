@@ -27,14 +27,14 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-bsp::CAN* can1 = NULL;
-control::MotorCANBase* motor = NULL;
+bsp::CAN* can1 = nullptr;
+control::MotorCANBase* motor = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
-  can1 = new bsp::CAN(&hcan1, 0x204);
-  motor = new control::Motor3508(can1, 0x204);
+  can1 = new bsp::CAN(&hcan1, 0x201);
+  motor = new control::Motor3508(can1, 0x201);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
