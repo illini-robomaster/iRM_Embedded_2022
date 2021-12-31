@@ -28,7 +28,7 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define TARGET_SPEED 400
+#define TARGET_SPEED 80
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
