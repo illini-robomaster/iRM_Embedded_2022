@@ -42,7 +42,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
 
   bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-  while (1) {
+  while (true) {
     motor->PrintData();
     if (key.Read())
       motor->SetOutput(400);
