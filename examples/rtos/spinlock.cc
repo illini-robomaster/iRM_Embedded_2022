@@ -66,7 +66,7 @@ void AddTask(void *argument) {
 /* init new task END */
 
 void RM_RTOS_Mutexes_Init(void) {
-  addLockHandle =	osMutexNew (&addLock);
+  addLockHandle = osMutexNew (&addLock);
 }
 
 void RM_RTOS_Threads_Init(void) {
