@@ -28,4 +28,4 @@ add_subdirectory(motor)
 add_subdirectory(sdio)
 add_subdirectory(uart)
 add_subdirectory(usb)
-
+add_subdirectory(rtos)
