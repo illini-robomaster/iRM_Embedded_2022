@@ -210,6 +210,8 @@ class MotorPWMBase : public MotorBase {
    * @param clock_freq     clock frequency associated with the timer, in [Hz]
    * @param output_freq    desired output frequency, in [Hz]
    * @param idle_throttle  idling pulse width, in [us]
+   * 
+   * @note M3508 have idle_throttle about 1500, snail have idle_throttle about 1100
    */
   MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq,
                uint32_t idle_throttle);
