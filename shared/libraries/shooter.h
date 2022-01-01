@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2021                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,18 +18,41 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+#pragma once
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
+#include "motor.h"
+#include "controller.h"
 
-project(iRM_Embedded_2022)
+namespace control {
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+typedef enum{
+	MOTOR_Left = 0,
+	MOTOR_Rright = 1,
+	MOTOR_Bullet = 2,
+} shooter_motor_t;
 
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
+typedef enum{
+	HERO = 0,
+	STANDARD = 1,
+	ENGINEER = 2,
+	AERIAL = 3,
+	SENTRY = 4,
+	DART = 5,
+	RADAR = 6
+} robot_type_t;
 
+class Shooter {
+public:
+    Shooter(robot_type_t robot_type, const int* motor_id, const float* fire_pid, const float* load_pid);
+    void Fire(float speed);
+    void Load(float speed);
+
+private:
+    PIDController pid_Left;
+    PIDController pid_Right;
+    PIDController pid_Bullet;
+    MotorCANBase** motors;
+    robot_type_t type;
+};
+
+}

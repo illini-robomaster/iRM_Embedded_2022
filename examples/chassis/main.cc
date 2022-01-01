@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2021                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,18 +18,25 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+#include "cmsis_os.h"
+#include "main.h"
+#include "dbus.h"
+#include "chassis.h"
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
+remote::DBUS* dbus = nullptr;
+control::Chassis* chassis = nullptr;
 
-project(iRM_Embedded_2022)
+void RM_RTOS_Init() {
+	dbus = new remote::DBUS(&huart1);
+	int motor_id[4] = {2, 3, 1, 4};
+	float chassis_pid[3] = {20, 8, 2};
+	chassis = new control::Chassis(control::STANDARD, motor_id, chassis_pid); // 5 3 0.1 / 20 8 2
+}
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
-
+void RM_RTOS_Default_Task(const void* args) {
+	UNUSED(args);
+	while (true) {
+		chassis->Move(dbus->ch0, dbus->ch1, dbus->ch2);
+		osDelay(10);
+	}
+}

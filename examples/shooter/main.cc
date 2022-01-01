@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2021                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,18 +18,34 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+#include "bsp_gpio.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "dbus.h"
+#include "shooter.h"
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
+#define LASER_Pin GPIO_PIN_13
+#define LASER_GPIO_Port GPIOG
 
-project(iRM_Embedded_2022)
+remote::DBUS* dbus = nullptr;
+control::Shooter* shooter = nullptr;
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+void RM_RTOS_Init() {
+	dbus = new remote::DBUS(&huart1);
+	int motor_id[3] = {1, 2, 3};
+	float fire_pid[3] = {80, 3, 0.1};
+	float load_pid[3] = {30, 5, 0.1};
+	shooter= new control::Shooter(control::HERO, motor_id, fire_pid, load_pid);
+}
 
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
-
+void RM_RTOS_Default_Task(const void* args) {
+	UNUSED(args);
+	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+	while (true) {
+		laser.High();
+		shooter->Fire(dbus->ch1);
+		osDelay(10);
+		shooter->Load(dbus->ch3);
+		osDelay(10);
+	}
+}

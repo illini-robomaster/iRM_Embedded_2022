@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2021                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,18 +18,42 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+#pragma once
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
+#include "motor.h"
+#include "controller.h"
 
-project(iRM_Embedded_2022)
+namespace control {
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+typedef enum{
+	MOTOR_FL = 0,
+	MOTOR_BL = 1,
+	MOTOR_FR = 2,
+	MOTOR_BR = 3
+} chassis_motor_t;
 
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
+typedef enum{
+	HERO = 0,
+	STANDARD = 1,
+	ENGINEER = 2,
+	AERIAL = 3,
+	SENTRY = 4,
+	DART = 5,
+	RADAR = 6
+} robot_type_t;
 
+class Chassis {
+public:
+    Chassis(robot_type_t robot_type, const int* motor_id, const float* pid);
+    void Move(float x, float y, float z);
+
+private:
+    PIDController pid_FL;
+    PIDController pid_BL;
+    PIDController pid_FR;
+    PIDController pid_BR;
+    MotorCANBase** motors;
+    robot_type_t type;
+};
+
+}
