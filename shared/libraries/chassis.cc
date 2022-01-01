@@ -18,6 +18,7 @@ namespace control{
 	    type = robot_type;
 	    switch (type) {
 		    case HERO:
+		    // the same as STANDARD
 		    case STANDARD: {
 			    motors = new MotorCANBase *[4];
 			    auto* can1 = new bsp::CAN(&hcan1, 0x201);
