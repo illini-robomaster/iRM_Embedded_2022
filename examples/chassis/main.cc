@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2020                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,16 +18,25 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(buzzer)
-add_subdirectory(dbus)
-add_subdirectory(eigen)
-add_subdirectory(gimbal)
-add_subdirectory(imu)
-add_subdirectory(led)
-add_subdirectory(motor)
-add_subdirectory(sdio)
-add_subdirectory(uart)
-add_subdirectory(usb)
-add_subdirectory(chassis)
-add_subdirectory(shooter)
-add_subdirectory(rtos)
+#include "cmsis_os.h"
+#include "main.h"
+#include "dbus.h"
+#include "chassis.h"
+
+remote::DBUS* dbus = nullptr;
+control::Chassis* chassis = nullptr;
+
+void RM_RTOS_Init() {
+	dbus = new remote::DBUS(&huart1);
+	int motor_id[4] = {2, 3, 1, 4};
+	float chassis_pid[3] = {20, 8, 2};
+	chassis = new control::Chassis(control::STANDARD, motor_id, chassis_pid); // 5 3 0.1 / 20 8 2
+}
+
+void RM_RTOS_Default_Task(const void* args) {
+	UNUSED(args);
+	while (true) {
+		chassis->Move(dbus->ch0, dbus->ch1, dbus->ch2);
+		osDelay(10);
+	}
+}
