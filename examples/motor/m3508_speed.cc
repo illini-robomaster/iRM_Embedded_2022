@@ -32,8 +32,8 @@
 #define TARGET_SPEED1 0
 #define TARGET_SPEED2 80
 
-bsp::CAN* can1 = NULL;
-control::MotorCANBase* motor = NULL;
+bsp::CAN* can1 = nullptr;
+control::MotorCANBase* motor = nullptr;
 BoolEdgeDetecter detecter(false);
 
 void RM_RTOS_Init() {
@@ -48,7 +48,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   float target = TARGET_SPEED1;
 

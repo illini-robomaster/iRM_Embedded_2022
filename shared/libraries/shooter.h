@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2020                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,16 +18,41 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(buzzer)
-add_subdirectory(dbus)
-add_subdirectory(eigen)
-add_subdirectory(gimbal)
-add_subdirectory(imu)
-add_subdirectory(led)
-add_subdirectory(motor)
-add_subdirectory(sdio)
-add_subdirectory(uart)
-add_subdirectory(usb)
-add_subdirectory(chassis)
-add_subdirectory(shooter)
-add_subdirectory(rtos)
+#pragma once
+
+#include "motor.h"
+#include "controller.h"
+
+namespace control {
+
+typedef enum{
+	MOTOR_Left = 0,
+	MOTOR_Rright = 1,
+	MOTOR_Bullet = 2,
+} shooter_motor_t;
+
+typedef enum{
+	HERO = 0,
+	STANDARD = 1,
+	ENGINEER = 2,
+	AERIAL = 3,
+	SENTRY = 4,
+	DART = 5,
+	RADAR = 6
+} robot_type_t;
+
+class Shooter {
+public:
+    Shooter(robot_type_t robot_type, const int* motor_id, const float* fire_pid, const float* load_pid);
+    void Fire(float speed);
+    void Load(float speed);
+
+private:
+    PIDController pid_Left;
+    PIDController pid_Right;
+    PIDController pid_Bullet;
+    MotorCANBase** motors;
+    robot_type_t type;
+};
+
+}
