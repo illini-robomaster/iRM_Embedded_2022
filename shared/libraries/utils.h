@@ -54,3 +54,32 @@ T wrap(T value, T min, T max) {
   const T range = max - min;
   return value < min ? value + range : (value > max ? value - range : value);
 }
+
+class BoolEdgeDetecter {
+  public:
+    BoolEdgeDetecter(bool initial);
+    void input(bool signal);
+    bool edge();
+    bool posEdge();
+    bool negEdge();
+  private:
+
+    bool prev_;
+    bool posEdge_;
+    bool negEdge_;
+};
+
+class FloatEdgeDetecter {
+  public:
+    FloatEdgeDetecter(float initial, float threshold);
+    void input(float signal);
+    bool edge();
+    bool posEdge();
+    bool negEdge();
+  private:
+
+    float prev_;
+    float threshold_;
+    bool posEdge_;
+    bool negEdge_;
+};

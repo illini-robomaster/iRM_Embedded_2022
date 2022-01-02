@@ -33,6 +33,18 @@ class PIDController {
    */
   float ComputeOutput(float error);
 
+  /**
+   * @brief compute output base on current error but constraint to range of int16_t
+   *
+   * @param error error of the system, i.e. (target - actual)
+   *
+   * @return output value that could potentially drive the error to 0,
+   *         floored at -32768, ceiled at 32767
+   */
+  int16_t ComputeConstraintedOutput(float error);
+
+  void Reset();
+
  private:
   arm_pid_instance_f32 pid_f32_;
 };

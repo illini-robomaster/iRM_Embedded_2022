@@ -29,12 +29,14 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define TARGET_SPEED1 0
-#define TARGET_SPEED2 80
+#define NOTCH               (2 * PI / 2)
+#define GEARBOX_MULTIPLIER  19.22
+#define SPEED               80
 
 bsp::CAN* can1 = NULL;
 control::MotorCANBase* motor = NULL;
-BoolEdgeDetecter detecter(false);
+BoolEdgeDetecter key_detecter(false);
+BoolEdgeDetecter behavior_detecter(false);
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
@@ -46,28 +48,75 @@ void RM_RTOS_Init() {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {motor};
-  control::PIDController pid(20, 15, 30);
+  control::PIDController pid_move(20, 15, 30);
+  control::PIDController pid_hold(20, 40, 0);
 
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  osDelay(500);
 
-  float target = TARGET_SPEED1;
+  float target = 0;
+  float align_angle = motor->GetTheta();
+  FloatEdgeDetecter wrap_detecter(align_angle, PI);
+  float angle_offset = 0;
 
+  float motor_angle = 0, total_angle = 0;
+  bool hold = true;
   while (1) {
-    detecter.input(key.Read());
-    if (detecter.posEdge()) {
-      target = TARGET_SPEED2;
-      pid.Reset();
-    } else if (detecter.negEdge()) {
-      target = TARGET_SPEED1;
-      pid.Reset();
+    key_detecter.input(key.Read());
+    if (key_detecter.posEdge()) {
+      target = wrap<float>(target + NOTCH, -PI, PI);
+      hold = false;
+      print("move\r\n");
+      pid_move.Reset();
+      pid_hold.Reset();
     }
 
-    float diff = motor->GetOmegaDelta(target);
-    int16_t out = pid.ComputeConstraintedOutput(diff);
-    motor->SetOutput(out);
+    motor_angle = wrap<float>(motor->GetTheta() - align_angle, -PI, PI);
+    wrap_detecter.input(motor_angle);
+    if (wrap_detecter.negEdge()) {
+      angle_offset += 2 * PI / GEARBOX_MULTIPLIER;
+      angle_offset = wrap<float>(angle_offset, -PI, PI);
+    } else if (wrap_detecter.posEdge()) {
+      angle_offset -= 2 * PI / GEARBOX_MULTIPLIER;
+      angle_offset = wrap<float>(angle_offset, -PI, PI);
+    }
+
+    total_angle = angle_offset + motor_angle / GEARBOX_MULTIPLIER;
+  
+    float diff = wrap<float>(target - total_angle, -PI, PI);
+    
+    int16_t out;
+
+    if (abs(diff) < 0.05)
+      hold = true;
+
+    behavior_detecter.input(hold);
+    if (behavior_detecter.posEdge()) {
+      print("hold\r\n");
+      pid_move.Reset();
+    }
+
+
+    if (hold) {
+      out = pid_hold.ComputeConstraintedOutput(diff * GEARBOX_MULTIPLIER);
+      out += pid_move.ComputeConstraintedOutput(motor->GetOmegaDelta(0));
+      out = clip<float>(out, -32768, 32767);
+      motor->SetOutput(out);
+    } else {
+      out = pid_move.ComputeConstraintedOutput(motor->GetOmegaDelta(SPEED));
+      motor->SetOutput(out);
+    }
     control::MotorCANBase::TransmitOutput(motors, 1);
-    // motor->PrintData();
-    print("%10.4f %6d\r\n", diff, out);
+
+    static int i = 0;
+    if (i++ > 2) {
+      // print("%10.4f %10.4f\r\n", total_angle, angle_offset);
+      i = 0;
+    }
+    // static float last = 0;
+    // print("%10.4f\r\n", motor_angle - last);
+    // last = motor_angle;
+
     osDelay(10);
   }
 }
