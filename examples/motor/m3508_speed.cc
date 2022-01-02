@@ -32,13 +32,8 @@
 #define TARGET_SPEED1 0
 #define TARGET_SPEED2 80
 
-<<<<<<< HEAD
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
-=======
-bsp::CAN* can1 = NULL;
-control::MotorCANBase* motor = NULL;
->>>>>>> d32fbf5cb7e094b1c70373806e539c1d47f6b586
 BoolEdgeDetecter detecter(false);
 
 void RM_RTOS_Init() {
