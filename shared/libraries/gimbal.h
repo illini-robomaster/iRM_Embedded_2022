@@ -3,6 +3,7 @@
 #include "controller.h"
 #include "motor.h"
 #include "can.h"
+#include "utils.h"
 
 namespace control {
 
@@ -26,17 +27,17 @@ class Gimbal {
      */
     void target(float new_pitch, float new_yaw);
 
-    void shoot_start();
-    void shoot_stop();
-
-    void pluck_start();
-    void pluck_stop();
+    void shoot(bool status);
+    void pluck(bool status);
 
   private:
-    bsp::CAN* can = NULL;
-    // const float pitch_offset = 4.7251722;
-    const float pitch_offset = 4.5251722;
+#ifdef LEGACY_GIMBAL
+    const float pitch_offset = 4.7251722;
     const float yaw_offset = 3.406;
+#else
+    const float pitch_offset = 0;
+    const float yaw_offset = 0;
+#endif
     float pitch_angle;
     float yaw_angle;
 
@@ -44,6 +45,7 @@ class Gimbal {
     PIDController pid_yaw;
     PIDController pid_pluck;
 
+    bsp::CAN* can;
     MotorCANBase* motor_pitch;
     MotorCANBase* motor_yaw;
     MotorCANBase* motor_pluck;
@@ -51,6 +53,8 @@ class Gimbal {
 
     MotorPWMBase* motor1;
     MotorPWMBase* motor2;
+
+    BoolEdgeDetecter* pluck_command;
 };
 
 } // namespace control

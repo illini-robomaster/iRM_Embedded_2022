@@ -19,3 +19,45 @@
  ****************************************************************************/
 
 #include "utils.h"
+
+BoolEdgeDetecter::BoolEdgeDetecter(bool initial) {
+  prev_ = initial;
+}
+
+void BoolEdgeDetecter::input(bool signal) {
+  posEdge_ = false;
+  negEdge_ = false;
+  if (!prev_ && signal) 
+    posEdge_ = true;
+  else if (prev_ && !signal) 
+    negEdge_ = true;
+  prev_ = signal;
+}
+
+bool BoolEdgeDetecter::edge() { return posEdge_ || negEdge_; }
+
+bool BoolEdgeDetecter::posEdge() { return posEdge_; }
+
+bool BoolEdgeDetecter::negEdge() { return negEdge_; }
+
+FloatEdgeDetecter::FloatEdgeDetecter(float initial, float threshold) {
+  prev_ = initial;
+  threshold_ = threshold;
+}
+
+void FloatEdgeDetecter::input(float signal) {
+  posEdge_ = false;
+  negEdge_ = false;
+  float diff = signal - prev_;
+  if (diff > threshold_)
+    posEdge_ = true;
+  else if (diff < -threshold_)
+    negEdge_ = true;
+  prev_ = signal;
+}
+
+bool FloatEdgeDetecter::edge() { return posEdge_ || negEdge_; }
+
+bool FloatEdgeDetecter::posEdge() { return posEdge_; }
+
+bool FloatEdgeDetecter::negEdge() { return negEdge_; }

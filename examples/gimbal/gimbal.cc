@@ -28,7 +28,10 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
+#define LEGACY_GIMBAL
+
 control::Gimbal* gimbal = NULL;
+bool status = false;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
@@ -39,16 +42,12 @@ void RM_RTOS_Init() {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
-
+  // int i = 0;
   while (true) {
+    status = key.Read();
+    gimbal->shoot(status);
+    gimbal->pluck(status);
     gimbal->move();
-    if (key.Read()) {
-      gimbal->pluck_start();
-      gimbal->shoot_start();
-    } else {
-      gimbal->pluck_stop();
-      gimbal->shoot_stop();
-    }
     osDelay(10);
   }
 }
