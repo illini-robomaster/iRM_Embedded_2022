@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2020                                                    #
+#  Copyright (C) 2022                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,16 +18,34 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(buzzer)
-add_subdirectory(dbus)
-add_subdirectory(eigen)
-add_subdirectory(gimbal)
-add_subdirectory(imu)
-add_subdirectory(led)
-add_subdirectory(motor)
-add_subdirectory(sdio)
-add_subdirectory(uart)
-add_subdirectory(usb)
-add_subdirectory(chassis)
-add_subdirectory(shooter)
-add_subdirectory(rtos)
+#include "bsp_gpio.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "dbus.h"
+#include "shooter.h"
+
+#define LASER_Pin GPIO_PIN_13
+#define LASER_GPIO_Port GPIOG
+
+remote::DBUS* dbus = nullptr;
+control::Shooter* shooter = nullptr;
+
+void RM_RTOS_Init() {
+	dbus = new remote::DBUS(&huart1);
+	int motor_id[3] = {1, 2, 3};
+	float fire_pid[3] = {80, 3, 0.1};
+	float load_pid[3] = {30, 5, 0.1};
+	shooter= new control::Shooter(control::HERO, motor_id, fire_pid, load_pid);
+}
+
+void RM_RTOS_Default_Task(const void* args) {
+	UNUSED(args);
+	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+	while (true) {
+		laser.High();
+		shooter->Fire(dbus->ch1);
+		osDelay(10);
+		shooter->Load(dbus->ch3);
+		osDelay(10);
+	}
+}

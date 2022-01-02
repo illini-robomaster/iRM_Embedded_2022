@@ -48,7 +48,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   float target = TARGET_SPEED1;
 
