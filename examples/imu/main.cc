@@ -20,8 +20,6 @@
 
 #include "main.h"
 
-#include <cstring>
-
 #include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_os.h"
@@ -33,6 +31,11 @@
 #define PRING_UART huart8
 
 static bsp::MPU6500* imu;
+
+void RM_RTOS_Init(void) {
+	bsp::SetHighresClockTimer(&htim2);
+	print_use_uart(&PRING_UART);
+}
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
@@ -53,9 +56,4 @@ void RM_RTOS_Default_Task(const void* arguments) {
     print("\r\nTime Stamp: %lu us\r\n", imu->timestamp);
     osDelay(100);
   }
-}
-
-void RM_RTOS_Init(void) {
-  bsp::SetHighresClockTimer(&htim2);
-  print_use_uart(&PRING_UART);
 }
