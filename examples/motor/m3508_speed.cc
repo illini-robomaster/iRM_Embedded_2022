@@ -52,7 +52,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
   float target = TARGET_SPEED1;
 
-  while (1) {
+  while (true) {
     detecter.input(key.Read());
     if (detecter.posEdge()) {
       target = TARGET_SPEED2;
@@ -66,8 +66,7 @@ void RM_RTOS_Default_Task(const void* args) {
     int16_t out = pid.ComputeConstraintedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
-    // motor->PrintData();
-    print("%10.4f %6d\r\n", diff, out);
+    motor->PrintData();
     osDelay(10);
   }
 }

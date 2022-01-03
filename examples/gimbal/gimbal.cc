@@ -28,26 +28,56 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define LEGACY_GIMBAL
+#define NOTCH   (2 * PI / 8)
+#define SERVO_SPEED   (PI)
 
-control::Gimbal* gimbal = NULL;
+bsp::CAN* can = nullptr;
+control::MotorCANBase* pitch_motor = nullptr;
+control::MotorCANBase* yaw_motor = nullptr;
+control::MotorCANBase* pluck_motor = nullptr;
+control::Gimbal* gimbal = nullptr;
+control::ServoMotor* pluck = nullptr;
+BoolEdgeDetecter key_detecter(false);
 bool status = false;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  gimbal = new control::Gimbal();
-  osDelay(3000);
+  can = new bsp::CAN(&hcan1, 0x205);
+  pitch_motor = new control::Motor6020(can, 0x205);
+  yaw_motor = new control::Motor6020(can, 0x206);
+  pluck_motor = new control::Motor2006(can, 0x207);
+  
+  gimbal = new control::Gimbal(pitch_motor, yaw_motor, LEGACY_GIMBAL_POFF, LEGACY_GIMBAL_YOFF);
+  
+  control::servo_t servo_data;
+  servo_data.motor = pluck_motor;
+  servo_data.mode = SERVO_ANTICLOCKWISE;
+  servo_data.speed = SERVO_SPEED;
+  servo_data.transmission_ratio = M2006P36_RATIO;
+  servo_data.move_Kp = 20;
+  servo_data.move_Ki = 15;
+  servo_data.move_Kd = 30;
+  servo_data.hold_Kp = 40;
+  servo_data.hold_Ki = 15;
+  servo_data.hold_Kd = 5;
+  pluck = new control::ServoMotor(servo_data); 
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, pluck_motor};
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
-  // int i = 0;
+
+  float target = 0;
+
   while (true) {
-    status = key.Read();
-    gimbal->shoot(status);
-    gimbal->pluck(status);
-    gimbal->move();
+    key_detecter.input(key.Read());
+    if (key_detecter.posEdge() && pluck->SetTarget(target) != 0) {
+      target = wrap<float>(target + NOTCH, -PI, PI);
+    }
+    gimbal->CalcOutput();
+    pluck->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors, 3);
     osDelay(10);
   }
 }

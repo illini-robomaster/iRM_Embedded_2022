@@ -7,17 +7,34 @@
 
 namespace control {
 
+  
+/** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
+* @{
+*/
+#define LEGACY_GIMBAL_POFF 4.725  /*!< Lagacy gimbal pitch offset */
+#define LEGACY_GIMBAL_YOFF 3.406  /*!< Lagacy gimbal yaw offset   */
+/**
+  * @}
+  */
+
+typedef struct {
+  MotorCANBase* pitch_motor;
+  MotorCANBase* yaw_motor;
+  float pitch_offset;
+  float yaw_offset;
+} gimbal_t;
+
 class Gimbal {
   public:
     /**
      * @brief constructor for Gimbal instance
      */
-    Gimbal();
+    Gimbal(MotorCANBase* pitch, MotorCANBase* yaw, float pitch_offset, float yaw_offset);
 
     /**
      * @brief update the position of gimbal
      */
-    void move();
+    void CalcOutput();
 
     /**
      * @brief set motors to point to a new orientation
@@ -25,36 +42,28 @@ class Gimbal {
      * @param new_pitch new pitch angled
      * @param new_yaw   new yaw angled
      */
-    void target(float new_pitch, float new_yaw);
+    void TargetAbs(float new_pitch, float new_yaw);
 
-    void shoot(bool status);
-    void pluck(bool status);
+    /**
+     * @brief set motors to point to a new orientation
+     *
+     * @param new_pitch new pitch angled
+     * @param new_yaw   new yaw angled
+     */
+    void TargetRel(float new_pitch, float new_yaw);
 
   private:
-#ifdef LEGACY_GIMBAL
-    const float pitch_offset = 4.7251722;
-    const float yaw_offset = 3.406;
-#else
-    const float pitch_offset = 0;
-    const float yaw_offset = 0;
-#endif
-    float pitch_angle;
-    float yaw_angle;
+    MotorCANBase* pitch_motor_;
+    MotorCANBase* yaw_motor_;
 
-    PIDController pid_pitch;
-    PIDController pid_yaw;
-    PIDController pid_pluck;
+    float pitch_offset_;
+    float yaw_offset_;
 
-    bsp::CAN* can;
-    MotorCANBase* motor_pitch;
-    MotorCANBase* motor_yaw;
-    MotorCANBase* motor_pluck;
-    MotorCANBase** motors;
+    float pitch_angle_;
+    float yaw_angle_;
 
-    MotorPWMBase* motor1;
-    MotorPWMBase* motor2;
-
-    BoolEdgeDetecter* pluck_command;
+    PIDController pitch_pid_;
+    PIDController yaw_pid_;
 };
 
 } // namespace control

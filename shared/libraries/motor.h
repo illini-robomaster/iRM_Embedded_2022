@@ -22,6 +22,8 @@
 
 #include "bsp_can.h"
 #include "bsp_pwm.h"
+#include "controller.h"
+#include "utils.h"
 
 namespace control {
 
@@ -235,6 +237,110 @@ class Motor2305 : public MotorPWMBase {
  public:
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
+};
+
+
+/** @defgroup Servomotor Turning Mode
+* @{
+*/
+#define SERVO_CLOCKWISE     -1  /*!< Servomotor always turn clockwisely                       */
+#define SERVO_NEAREST        0  /*!< Servomotor turn in direction that make movement minimum  */
+#define SERVO_ANTICLOCKWISE  1  /*!< Servomotor always turn anticlockwisely                   */
+/**
+  * @}
+  */
+
+/** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
+* @{
+*/
+#define M3508P19_RATIO (3591.0 / 187) /*!< Transmission ratio of M3508P19 */
+#define M2006P36_RATIO 36             /*!< Transmission ratio of M2006P36 */
+/**
+  * @}
+  */
+
+typedef struct {
+  MotorCANBase* motor;
+  int mode;
+  float speed;
+  float transmission_ratio;
+  float move_Kp;
+  float move_Ki;
+  float move_Kd;
+  float hold_Kp;
+  float hold_Ki;
+  float hold_Kd;
+} servo_t;
+class ServoMotor {
+  public:
+    ServoMotor(servo_t servo, float proximity = 0.05);
+    int SetTarget(const float target);
+    int SetTarget(const float target, const int direction);
+    void SetSpeed(const float speed);
+    void CalcOutput();
+    bool Holding() const;
+
+    /**
+     * @brief print out motor data
+     */
+    void PrintData() const;
+
+    /**
+     * @brief get motor angle, in [rad]
+     *
+     * @return radian angle
+     */
+    float GetTheta() const;
+
+    /**
+     * @brief get angle difference (target - actual), in [rad]
+     *
+     * @param target  target angle, in [rad]
+     *
+     * @return angle difference
+     */
+    float GetThetaDelta(const float target) const;
+
+    /**
+     * @brief get angular velocity, in [rad / s]
+     *
+     * @return angular velocity
+     */
+    float GetOmega() const;
+
+    /**
+     * @brief get angular velocity difference (target - actual), in [rad / s]
+     *
+     * @param target  target angular velocity, in [rad / s]
+     *
+     * @return difference angular velocity
+     */
+    float GetOmegaDelta(const float target) const;
+
+  private:
+    MotorCANBase* motor_;
+    int mode_;
+    float speed_;
+    float transmission_ratio_;
+    float proximity_;
+
+    bool hold_;
+    float target_;
+    float align_angle_;
+    float motor_angle_;
+    float offset_angle_;
+    float servo_angle_;
+    int dir_;    
+
+    PIDController move_pid_;
+    PIDController hold_pid_;
+
+    FloatEdgeDetecter* wrap_detecter_;
+    BoolEdgeDetecter* hold_detecter_;
+
+    void AngleUpdate_();
+    void NearestModeFindDir_();
+  
 };
 
 } /* namespace control */
