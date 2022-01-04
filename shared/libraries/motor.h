@@ -239,16 +239,23 @@ class Motor2305 : public MotorPWMBase {
   void SetOutput(int16_t val) override final;
 };
 
-
-/** @defgroup Servomotor Turning Mode
-* @{
-*/
-#define SERVO_CLOCKWISE     -1  /*!< Servomotor always turn clockwisely                       */
-#define SERVO_NEAREST        0  /*!< Servomotor turn in direction that make movement minimum  */
-#define SERVO_ANTICLOCKWISE  1  /*!< Servomotor always turn anticlockwisely                   */
 /**
-  * @}
-  */
+ * @enum Servomotor turning mode
+ */
+typedef enum {
+  SERVO_CLOCKWISE       = -1,   /*!< Servomotor always turn clockwisely                       */
+  SERVO_NEAREST         =  0,   /*!< Servomotor turn in direction that make movement minimum  */
+  SERVO_ANTICLOCKWISE   =  1    /*!< Servomotor always turn anticlockwisely                   */
+} servo_mode_t;
+
+/**
+ * @enum Servomotor turning mode
+ */
+typedef enum {
+  TURNING_CLOCKWISE     = -1,   /*!< Servomotor is turning clockwisely                        */
+  INPUT_REJECT          =  0,   /*!< Servomotor rejecting current angle input                 */
+  TURNING_ANTICLOCKWISE =  1    /*!< Servomotor is turning anticlockwisely                    */
+} servo_status_t;
 
 /** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
 * @{
@@ -256,12 +263,12 @@ class Motor2305 : public MotorPWMBase {
 #define M3508P19_RATIO (3591.0 / 187) /*!< Transmission ratio of M3508P19 */
 #define M2006P36_RATIO 36             /*!< Transmission ratio of M2006P36 */
 /**
-  * @}
-  */
+* @}
+*/
 
 typedef struct {
   MotorCANBase* motor;
-  int mode;
+  servo_mode_t mode;
   float speed;
   float transmission_ratio;
   float move_Kp;
@@ -273,9 +280,9 @@ typedef struct {
 } servo_t;
 class ServoMotor {
   public:
-    ServoMotor(servo_t servo, float proximity = 0.05);
-    int SetTarget(const float target);
-    int SetTarget(const float target, const int direction);
+    ServoMotor(servo_t servo, float proximity = 0.1);
+    int SetTarget(const float target, bool override = false);
+    int SetTarget(const float target, const servo_mode_t mode, bool override = false);
     void SetSpeed(const float speed);
     void CalcOutput();
     bool Holding() const;
@@ -319,7 +326,7 @@ class ServoMotor {
 
   private:
     MotorCANBase* motor_;
-    int mode_;
+    servo_mode_t mode_;
     float speed_;
     float transmission_ratio_;
     float proximity_;
@@ -339,7 +346,8 @@ class ServoMotor {
     BoolEdgeDetecter* hold_detecter_;
 
     void AngleUpdate_();
-    void NearestModeFindDir_();
+    void NearestModeSetDir_();
+    void SetDirUsingMode_(servo_mode_t mode);
   
 };
 

@@ -25,34 +25,46 @@
 
 namespace control {
 
-typedef enum{
-	MOTOR_Left = 0,
-	MOTOR_Rright = 1,
-	MOTOR_Bullet = 2,
-} shooter_motor_t;
+typedef struct {
+	bool fire_using_can_motor;
+	MotorCANBase* left_fire_can_motor;
+	MotorCANBase* right_fire_can_motor;
+	MotorPWMBase* left_fire_pwm_motor;
+	MotorPWMBase* right_fire_pwm_motor;
+	bool left_fire_motor_invert;
+	bool right_fire_motor_invert;
+	ServoMotor* load_servo;
+	float fire_Kp;
+	float fire_Ki;
+	float fire_Kd;
+	float load_step_angle;
+} shooter_t;
 
-typedef enum{
-	HERO = 0,
-	STANDARD = 1,
-	ENGINEER = 2,
-	AERIAL = 3,
-	SENTRY = 4,
-	DART = 5,
-	RADAR = 6
-} robot_type_t;
 
 class Shooter {
 public:
-    Shooter(robot_type_t robot_type, const int* motor_id, const float* fire_pid, const float* load_pid);
-    void Fire(float speed);
-    void Load(float speed);
+	Shooter(shooter_t shooter);
+	void SetFireSpeed(float speed);
+	int LoadNext();
+	void CalcOutput();
 
 private:
-    PIDController pid_Left;
-    PIDController pid_Right;
-    PIDController pid_Bullet;
-    MotorCANBase** motors;
-    robot_type_t type;
+	bool fire_using_can_motor_;
+	MotorCANBase* left_fire_can_motor_;
+	MotorCANBase* right_fire_can_motor_;
+	MotorPWMBase* left_fire_pwm_motor_;
+	MotorPWMBase* right_fire_pwm_motor_;
+	bool left_fire_motor_invert_;
+	bool right_fire_motor_invert_;
+	ServoMotor* load_servo_;
+	float load_step_angle_;
+
+	PIDController left_pid_;
+	PIDController right_pid_;
+
+	float left_fire_speed_;
+	float right_fire_speed_;
+	float load_angle_;
 };
 
 }

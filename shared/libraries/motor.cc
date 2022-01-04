@@ -232,34 +232,25 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
   wrap_detecter_ = new FloatEdgeDetecter(align_angle_, PI);
   hold_detecter_ = new BoolEdgeDetecter(false);
 
-  if (mode_ == SERVO_ANTICLOCKWISE) {
-    dir_ = 1;
-  } else if (mode_ == SERVO_NEAREST) {
-    NearestModeFindDir_();
-  } else if (mode_ == SERVO_CLOCKWISE) {
-    dir_ = -1;
-  } else {
-    RM_ASSERT_TRUE(false, "Invalid servo turining mode");
-  }
+  SetDirUsingMode_(servo.mode);
 }
 
-int ServoMotor::SetTarget(const float target) {
-  if (!hold_)
-    return 0;
+int ServoMotor::SetTarget(const float target, bool override) {
+  if (!hold_ && !override)
+    return INPUT_REJECT;
   target_ = wrap<float>(target, -PI, PI);
   if (mode_ == SERVO_NEAREST) {
-    NearestModeFindDir_();
+    NearestModeSetDir_();
   }
   hold_ = false;
   return dir_;
 }
 
-int ServoMotor::SetTarget(const float target, const int direction) {
-  RM_ASSERT_TRUE(direction == SERVO_CLOCKWISE || direction == SERVO_ANTICLOCKWISE, "Invalid servo direction");
-  if (!hold_)
-    return 0;
+int ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
+  if (!hold_ && !override)
+    return INPUT_REJECT;
   target_ = wrap<float>(target, -PI, PI);
-  dir_ = direction;
+  SetDirUsingMode_(mode);
   hold_ = false;
   return dir_;
 }
@@ -324,10 +315,22 @@ void ServoMotor::AngleUpdate_() {
   servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
 }
 
-void ServoMotor::NearestModeFindDir_() {
+void ServoMotor::NearestModeSetDir_() {
   AngleUpdate_();
   float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
   dir_ = diff_angle > 0 ? 1 : -1;
+}
+
+void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
+  if (mode == SERVO_ANTICLOCKWISE) {
+    dir_ = 1;
+  } else if (mode == SERVO_NEAREST) {
+    NearestModeSetDir_();
+  } else if (mode == SERVO_CLOCKWISE) {
+    dir_ = -1;
+  } else {
+    RM_ASSERT_TRUE(false, "Invalid servo turining mode");
+  }
 }
 
 } /* namespace control */

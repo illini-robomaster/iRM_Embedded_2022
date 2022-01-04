@@ -1,0 +1,153 @@
+/****************************************************************************
+ *                                                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
+ *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+ *                                                                          *
+ *  This program is free software: you can redistribute it and/or modify    *
+ *  it under the terms of the GNU General Public License as published by    *
+ *  the Free Software Foundation, either version 3 of the License, or       *
+ *  (at your option) any later version.                                     *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                          *
+ ****************************************************************************/
+
+#include "bsp_gpio.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "gimbal.h"
+#include "shooter.h"
+#include "dbus.h"
+
+
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
+
+#define NOTCH         (2 * PI / 8)
+#define SERVO_SPEED   (PI)
+
+bsp::CAN* can = nullptr;
+control::MotorCANBase* pitch_motor = nullptr;
+control::MotorCANBase* yaw_motor = nullptr;
+control::MotorPWMBase* left_fire_motor = nullptr;
+control::MotorPWMBase* right_fire_motor = nullptr;
+control::MotorCANBase* load_motor = nullptr;
+BoolEdgeDetecter shoot_detector(false);
+BoolEdgeDetecter load_detecter(false);
+BoolEdgeDetecter abs_detecter(false);
+
+control::ServoMotor* load_servo = nullptr;
+
+control::Gimbal* gimbal = nullptr;
+control::Shooter* shooter = nullptr;
+remote::DBUS* dbus = nullptr;
+bool status = false;
+
+void RM_RTOS_Init() {
+  print_use_uart(&huart8);
+  can = new bsp::CAN(&hcan1, 0x205);
+  pitch_motor = new control::Motor6020(can, 0x205);
+  yaw_motor = new control::Motor6020(can, 0x206);
+  left_fire_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
+  right_fire_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
+  load_motor = new control::Motor2006(can, 0x207);
+
+  control::servo_t servo_data;
+  servo_data.motor = load_motor;
+  servo_data.mode = control::SERVO_ANTICLOCKWISE;
+  servo_data.speed = SERVO_SPEED;
+  servo_data.transmission_ratio = M2006P36_RATIO;
+  servo_data.move_Kp = 20;
+  servo_data.move_Ki = 15;
+  servo_data.move_Kd = 30;
+  servo_data.hold_Kp = 40;
+  servo_data.hold_Ki = 15;
+  servo_data.hold_Kd = 5;
+  load_servo = new control::ServoMotor(servo_data); 
+
+  control::gimbal_t gimbal_data;
+  gimbal_data.pitch_motor = pitch_motor;
+  gimbal_data.yaw_motor = yaw_motor;
+  gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
+  gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
+  gimbal_data.pitch_Kp = 10;
+  gimbal_data.pitch_Ki = 0.25;
+  gimbal_data.pitch_Kd = 0.15;
+  gimbal_data.yaw_Kp = 10;
+  gimbal_data.yaw_Ki = 0.15;
+  gimbal_data.yaw_Kd = 0.15;
+  gimbal = new control::Gimbal(gimbal_data);
+  
+  control::shooter_t shooter_data;
+  shooter_data.fire_using_can_motor = false;
+  shooter_data.left_fire_pwm_motor = left_fire_motor;
+  shooter_data.right_fire_pwm_motor = right_fire_motor;
+  shooter_data.load_servo = load_servo;
+  shooter_data.fire_Kp = 80;
+  shooter_data.fire_Ki = 3;
+  shooter_data.fire_Kd = 0.1;
+  shooter_data.load_step_angle = PI / 8;
+  shooter = new control::Shooter(shooter_data);  
+
+  dbus = new remote::DBUS(&huart1);
+}
+
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
+  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
+	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+	laser.High();
+
+  bool load = false;
+  bool abs_mode = true;
+
+  while (true) {
+    // Toggle gimbal control absolute or relative mode
+    //    To toggle push right joystick left or right to the end
+    abs_detecter.input(dbus->ch0 <= -500 || dbus->ch0 >= 500);
+    if (abs_detecter.posEdge()) {
+      abs_mode = !abs_mode;
+    }
+    if (abs_mode) {
+      gimbal->TargetAbs(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
+    } else {
+      gimbal->TargetRel(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
+    }
+
+    // Toggle load control contigious or single shot on right switch
+    //    Up for contiguous load
+    //    Mid for load per right joystick pushed up
+    bool load_trigger = dbus->ch1 <= -200;
+    load_detecter.input(load_trigger);
+    if (dbus->swr == remote::UP) {
+      load = load_trigger;
+    } else if (dbus->swr == remote::MID) {
+      load = load_detecter.posEdge();
+    }
+    if (load)
+      shooter->LoadNext();
+
+    // Toggle shoot status on or off on left switch
+    //    Up for shoot motor start
+    //    Mid for shoot motor stop
+    shoot_detector.input(dbus->swl == remote::UP);
+    if (shoot_detector.posEdge()) {
+      shooter->SetFireSpeed(150);
+    } else if (shoot_detector.negEdge()) {
+      shooter->SetFireSpeed(0);
+    }
+
+    // Calculate and send command
+    gimbal->CalcOutput();
+    shooter->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors, 3);
+    osDelay(10);
+  }
+}

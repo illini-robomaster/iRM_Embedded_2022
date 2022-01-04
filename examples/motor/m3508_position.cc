@@ -18,6 +18,8 @@
  *                                                                          *
  ****************************************************************************/
 
+#define WITH_CONTROLLER
+
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -25,17 +27,29 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
+#ifdef WITH_CONTROLLER
+#include "dbus.h"
+#endif
+
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define NOTCH               (2 * PI / 2)
+#define NOTCH               (2 * PI / 4)
 #define SPEED               (2 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
+#ifdef WITH_CONTROLLER
+remote::DBUS* dbus = nullptr;
+BoolEdgeDetecter joystick_detecter_abv(false);
+BoolEdgeDetecter joystick_detecter_rgt(false);
+BoolEdgeDetecter joystick_detecter_btm(false);
+BoolEdgeDetecter joystick_detecter_lft(false);
+#else
 BoolEdgeDetecter key_detecter(false);
+#endif
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
@@ -44,16 +58,20 @@ void RM_RTOS_Init() {
 
   control::servo_t servo_data;
   servo_data.motor = motor;
-  servo_data.mode = SERVO_ANTICLOCKWISE;
+  servo_data.mode = control::SERVO_NEAREST;
   servo_data.speed = SPEED;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.move_Kp = 20;
-  servo_data.move_Ki = 15;
-  servo_data.move_Kd = 30;
-  servo_data.hold_Kp = 40;
-  servo_data.hold_Ki = 15;
-  servo_data.hold_Kd = 5;
+  servo_data.move_Kp = 30;
+  servo_data.move_Ki = 10;
+  servo_data.move_Kd = 40;
+  servo_data.hold_Kp = 30;
+  servo_data.hold_Ki = 25;
+  servo_data.hold_Kd = 20;
   servo = new control::ServoMotor(servo_data);
+
+#ifdef WITH_CONTROLLER
+  dbus = new remote::DBUS(&huart1);
+#endif
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -61,15 +79,39 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 
-  float target = 0;
+  float target = NOTCH;
 
   while (true) {
+#ifdef WITH_CONTROLLER
+    joystick_detecter_abv.input(dbus->ch3 > 500);
+    joystick_detecter_rgt.input(dbus->ch2 < -500);
+    joystick_detecter_btm.input(dbus->ch3 < -500);
+    joystick_detecter_lft.input(dbus->ch2 > 500);
+    if (joystick_detecter_abv.posEdge()) {
+      target = 0;
+      servo->SetTarget(target);
+    } else if (joystick_detecter_rgt.posEdge()) {
+      target = PI / 2;
+      servo->SetTarget(target);
+    } else if (joystick_detecter_btm.posEdge()) {
+      target = PI;
+      servo->SetTarget(target);
+    } else if (joystick_detecter_lft.posEdge()) {
+      target = -PI / 2;
+      servo->SetTarget(target);
+    }
+#else
     key_detecter.input(key.Read());
     if (key_detecter.posEdge() && servo->SetTarget(target) != 0) {
       target = wrap<float>(target + NOTCH, -PI, PI);
     }
+#endif
     servo->CalcOutput();
-    // servo->PrintData();
+    static int i = 0;
+    if (++i >= 5) {
+      servo->PrintData();
+      i = 0;
+    }
     control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(10);
   }
