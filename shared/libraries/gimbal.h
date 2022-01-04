@@ -11,8 +11,8 @@ namespace control {
 /** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
 * @{
 */
-#define LEGACY_GIMBAL_POFF 4.725  /*!< Lagacy gimbal pitch offset */
-#define LEGACY_GIMBAL_YOFF 3.406  /*!< Lagacy gimbal yaw offset   */
+#define LEGACY_GIMBAL_POFF 4.725f /*!< Lagacy gimbal pitch offset */
+#define LEGACY_GIMBAL_YOFF 3.406f /*!< Lagacy gimbal yaw offset   */
 /**
   * @}
   */
@@ -22,6 +22,12 @@ typedef struct {
   MotorCANBase* yaw_motor;
   float pitch_offset;
   float yaw_offset;
+  float pitch_Kp;
+  float pitch_Ki;
+  float pitch_Kd;
+  float yaw_Kp;
+  float yaw_Ki;
+  float yaw_Kd;
 } gimbal_t;
 
 class Gimbal {
@@ -29,7 +35,7 @@ class Gimbal {
     /**
      * @brief constructor for Gimbal instance
      */
-    Gimbal(MotorCANBase* pitch, MotorCANBase* yaw, float pitch_offset, float yaw_offset);
+    Gimbal(gimbal_t gimbal);
 
     /**
      * @brief update the position of gimbal

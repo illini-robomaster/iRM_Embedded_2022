@@ -8,15 +8,15 @@ namespace control {
 //  pid_pitch(PIDController(10, 0.25, 0.15))
 //  pid_yaw(PIDController(10, 0.15, 0.15))
 
-Gimbal::Gimbal(MotorCANBase* pitch, MotorCANBase* yaw, float pitch_offset, float yaw_offset) : 
-      pitch_pid_(PIDController(10, 0.25, 0.15)),
-      yaw_pid_(PIDController(10, 0.15, 0.15)) {
-  pitch_motor_ = pitch;
-  yaw_motor_ = yaw;
-  pitch_offset_ = pitch_offset;
-  yaw_offset_ = yaw_offset;
-  pitch_angle_ = pitch_offset;
-  yaw_angle_ = yaw_offset;
+Gimbal::Gimbal(gimbal_t gimbal) : 
+      pitch_pid_(PIDController(gimbal.pitch_Kp, gimbal.pitch_Ki, gimbal.pitch_Kd)),
+      yaw_pid_(PIDController(gimbal.yaw_Kp, gimbal.yaw_Ki, gimbal.yaw_Kd)) {
+  pitch_motor_ = gimbal.pitch_motor;
+  yaw_motor_ = gimbal.yaw_motor;
+  pitch_offset_ = gimbal.pitch_offset;
+  yaw_offset_ = gimbal.yaw_offset;
+  pitch_angle_ = gimbal.pitch_offset;
+  yaw_angle_ = gimbal.yaw_offset;
 }
 
 void Gimbal::CalcOutput() {

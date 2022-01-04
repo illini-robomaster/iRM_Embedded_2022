@@ -46,8 +46,19 @@ void RM_RTOS_Init() {
   pitch_motor = new control::Motor6020(can, 0x205);
   yaw_motor = new control::Motor6020(can, 0x206);
   pluck_motor = new control::Motor2006(can, 0x207);
-  
-  gimbal = new control::Gimbal(pitch_motor, yaw_motor, LEGACY_GIMBAL_POFF, LEGACY_GIMBAL_YOFF);
+
+  control::gimbal_t gimbal_data;
+  gimbal_data.pitch_motor = pitch_motor;
+  gimbal_data.yaw_motor = yaw_motor;
+  gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
+  gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
+  gimbal_data.pitch_Kp = 10;
+  gimbal_data.pitch_Ki = 0.25;
+  gimbal_data.pitch_Kd = 0.15;
+  gimbal_data.yaw_Kp = 10;
+  gimbal_data.yaw_Ki = 0.15;
+  gimbal_data.yaw_Kd = 0.15;
+  gimbal = new control::Gimbal(gimbal_data);
   
   control::servo_t servo_data;
   servo_data.motor = pluck_motor;
