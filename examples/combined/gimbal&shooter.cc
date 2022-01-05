@@ -19,9 +19,8 @@
  ****************************************************************************/
 
 /**
- * @brief This example is intended to run on official legacy gimbal. Please 
- * read the instructions below to avoid possible danger.
- * @date 2022-01-05
+ * @brief This example is intended to run on official legacy gimbal. Please read the instructions below to 
+ * avoid possible danger.
  * 
  * Controller configuration
  * 
@@ -35,6 +34,8 @@
  * 
  * <-------------------------------------------!!! WARNING !!!------------------------------------------->
  * DO <NOT> STAND BY THE GIMBAL WHEN IT IS POWERED, MAKE SURE KILL SWITCH IS ACTIVATED BEFORE APPROACHING
+ * 
+ * @date 2022-01-05
  */
 
 #include "bsp_gpio.h"
