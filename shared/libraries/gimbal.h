@@ -31,8 +31,10 @@ namespace control {
 /** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
 * @{
 */
-#define LEGACY_GIMBAL_POFF 4.725f /*!< Lagacy gimbal pitch offset */
-#define LEGACY_GIMBAL_YOFF 3.406f /*!< Lagacy gimbal yaw offset   */
+#define LEGACY_GIMBAL_POFF 4.725f   /*!< Lagacy gimbal pitch offset */
+#define LEGACY_GIMBAL_YOFF 3.406f   /*!< Lagacy gimbal yaw offset   */
+#define LEGACY_GIMBAL_PMAX 0.408f   /*!< Lagacy gimbal pitch max    */
+#define LEGACY_GIMBAL_YMAX 1.511f   /*!< Lagacy gimbal yaw max      */
 /**
   * @}
   */
@@ -42,12 +44,22 @@ typedef struct {
   MotorCANBase* yaw_motor;
   float pitch_offset;
   float yaw_offset;
-  float pitch_Kp;
-  float pitch_Ki;
-  float pitch_Kd;
-  float yaw_Kp;
-  float yaw_Ki;
-  float yaw_Kd;
+  float pitch_max;
+  float yaw_max;
+  float pitch_proximity;
+  float yaw_proximity;
+  float pitch_move_Kp;
+  float pitch_move_Ki;
+  float pitch_move_Kd;
+  float yaw_move_Kp;
+  float yaw_move_Ki;
+  float yaw_move_Kd;
+  float pitch_hold_Kp;
+  float pitch_hold_Ki;
+  float pitch_hold_Kd;
+  float yaw_hold_Kp;
+  float yaw_hold_Ki;
+  float yaw_hold_Kd;
 } gimbal_t;
 
 class Gimbal {
@@ -81,15 +93,34 @@ class Gimbal {
   private:
     MotorCANBase* pitch_motor_;
     MotorCANBase* yaw_motor_;
-
+    
     float pitch_offset_;
     float yaw_offset_;
+    float pitch_max_;
+    float yaw_max_;
+    float pitch_proximity_;
+    float yaw_proximity_;
+
+    float pitch_move_Kp_;
+    float pitch_move_Ki_;
+    float pitch_move_Kd_;
+    float yaw_move_Kp_;
+    float yaw_move_Ki_;
+    float yaw_move_Kd_;
+    float pitch_hold_Kp_;
+    float pitch_hold_Ki_;
+    float pitch_hold_Kd_;
+    float yaw_hold_Kp_;
+    float yaw_hold_Ki_;
+    float yaw_hold_Kd_;
 
     float pitch_angle_;
     float yaw_angle_;
 
     PIDController pitch_pid_;
     PIDController yaw_pid_;
+    BoolEdgeDetector pitch_detector_;
+    BoolEdgeDetector yaw_detector_;
 };
 
 } // namespace control

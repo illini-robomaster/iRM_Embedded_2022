@@ -20,6 +20,7 @@
 
 #include "controller.h"
 #include "utils.h"
+#include "bsp_print.h"
 
 namespace control {
 
@@ -38,6 +39,14 @@ int16_t PIDController::ComputeConstraintedOutput(float error) {
   constexpr int MIN = -32768;
   constexpr int MAX = 32767;
   return clip<int>((int) arm_pid_f32(&pid_f32_, error), MIN, MAX); 
+}
+
+void PIDController::Reinit(float kp, float ki, float kd) { 
+  pid_f32_.Kp = kp;
+  pid_f32_.Ki = ki;
+  pid_f32_.Kd = kd;
+  print("%10.4f %10.4f %10.4f\r\n", kp, ki, kd);
+  arm_pid_init_f32(&pid_f32_, 0);
 }
 
 void PIDController::Reset() { 

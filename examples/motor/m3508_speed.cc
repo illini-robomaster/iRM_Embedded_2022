@@ -18,6 +18,8 @@
  *                                                                          *
  ****************************************************************************/
 
+#define WITH_CONTROLLER
+
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -25,6 +27,9 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
+#ifdef WITH_CONTROLLER
+#include "dbus.h"
+#endif
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -34,13 +39,20 @@
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
-BoolEdgeDetecter detecter(false);
+#ifdef WITH_CONTROLLER
+remote::DBUS* dbus = nullptr;
+#else
+BoolEdgeDetector detector(false);
+#endif
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
+
+#ifdef WITH_CONTROLLER
+  dbus = new remote::DBUS(&huart1);
+#endif
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -50,18 +62,31 @@ void RM_RTOS_Default_Task(const void* args) {
 
   bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
+#ifdef WITH_CONTROLLER
+  float target = 0;
+#else
   float target = TARGET_SPEED1;
+#endif
 
   while (true) {
-    detecter.input(key.Read());
-    if (detecter.posEdge()) {
+#ifdef WITH_CONTROLLER
+    if (dbus->ch3 > 10) {
+      target = 160;
+    } else if (dbus->ch3 < -10) {
+      target = -160;
+    } else {
+      target = 0;
+    }
+#else
+    detector.input(key.Read());
+    if (detector.posEdge()) {
       target = TARGET_SPEED2;
       pid.Reset();
-    } else if (detecter.negEdge()) {
+    } else if (detector.negEdge()) {
       target = TARGET_SPEED1;
       pid.Reset();
     }
-
+#endif
     float diff = motor->GetOmegaDelta(target);
     int16_t out = pid.ComputeConstraintedOutput(diff);
     motor->SetOutput(out);

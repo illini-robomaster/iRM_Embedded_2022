@@ -31,7 +31,7 @@
 #define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH         (2 * PI / 8)
-#define SERVO_SPEED   (PI)
+#define SERVO_SPEED   (2 * PI)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
@@ -39,9 +39,9 @@ control::MotorCANBase* yaw_motor = nullptr;
 control::MotorPWMBase* left_fire_motor = nullptr;
 control::MotorPWMBase* right_fire_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
-BoolEdgeDetecter shoot_detector(false);
-BoolEdgeDetecter load_detecter(false);
-BoolEdgeDetecter abs_detecter(false);
+BoolEdgeDetector shoot_detector(false);
+BoolEdgeDetector load_detector(false);
+BoolEdgeDetector abs_detector(false);
 
 control::ServoMotor* load_servo = nullptr;
 
@@ -77,12 +77,22 @@ void RM_RTOS_Init() {
   gimbal_data.yaw_motor = yaw_motor;
   gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
   gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
-  gimbal_data.pitch_Kp = 10;
-  gimbal_data.pitch_Ki = 0.25;
-  gimbal_data.pitch_Kd = 0.15;
-  gimbal_data.yaw_Kp = 10;
-  gimbal_data.yaw_Ki = 0.15;
-  gimbal_data.yaw_Kd = 0.15;
+  gimbal_data.pitch_max = LEGACY_GIMBAL_PMAX;
+  gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
+  gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
+  gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
+  gimbal_data.pitch_move_Kp = 800;
+  gimbal_data.pitch_move_Ki = 0;
+  gimbal_data.pitch_move_Kd = 100;
+  gimbal_data.yaw_move_Kp = 300;
+  gimbal_data.yaw_move_Ki = 0;
+  gimbal_data.yaw_move_Kd = 100;
+  gimbal_data.pitch_hold_Kp = 2000;
+  gimbal_data.pitch_hold_Ki = 100;
+  gimbal_data.pitch_hold_Kd = 100;
+  gimbal_data.yaw_hold_Kp = 1500;
+  gimbal_data.yaw_hold_Ki = 15;
+  gimbal_data.yaw_hold_Kd = 200;
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
@@ -93,7 +103,7 @@ void RM_RTOS_Init() {
   shooter_data.fire_Kp = 80;
   shooter_data.fire_Ki = 3;
   shooter_data.fire_Kd = 0.1;
-  shooter_data.load_step_angle = PI / 8;
+  shooter_data.load_step_angle = 2 * PI / 8;
   shooter = new control::Shooter(shooter_data);  
 
   dbus = new remote::DBUS(&huart1);
@@ -109,27 +119,34 @@ void RM_RTOS_Default_Task(const void* args) {
   bool abs_mode = true;
 
   while (true) {
+    // Kill switch for safety measure
+    if (dbus->swl == remote::DOWN) {
+      exit(1);
+    }
+
     // Toggle gimbal control absolute or relative mode
     //    To toggle push right joystick left or right to the end
-    abs_detecter.input(dbus->ch0 <= -500 || dbus->ch0 >= 500);
-    if (abs_detecter.posEdge()) {
+    abs_detector.input(dbus->ch0 <= -500 || dbus->ch0 >= 500);
+    if (abs_detector.posEdge()) {
       abs_mode = !abs_mode;
     }
+    float pitch_ratio = -dbus->ch3 / 600.0;
+    float yaw_ratio = -dbus->ch2 / 600.0;
     if (abs_mode) {
-      gimbal->TargetAbs(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
+      gimbal->TargetAbs(pitch_ratio * LEGACY_GIMBAL_PMAX, yaw_ratio * LEGACY_GIMBAL_YMAX);
     } else {
-      gimbal->TargetRel(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
+      gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
     }
 
     // Toggle load control contigious or single shot on right switch
     //    Up for contiguous load
     //    Mid for load per right joystick pushed up
-    bool load_trigger = dbus->ch1 <= -200;
-    load_detecter.input(load_trigger);
+    bool load_trigger = dbus->ch1 >= 200;
+    load_detector.input(load_trigger);
     if (dbus->swr == remote::UP) {
       load = load_trigger;
     } else if (dbus->swr == remote::MID) {
-      load = load_detecter.posEdge();
+      load = load_detector.posEdge();
     }
     if (load)
       shooter->LoadNext();
@@ -142,7 +159,7 @@ void RM_RTOS_Default_Task(const void* args) {
       shooter->SetFireSpeed(150);
     } else if (shoot_detector.negEdge()) {
       shooter->SetFireSpeed(0);
-    }
+    } 
 
     // Calculate and send command
     gimbal->CalcOutput();

@@ -229,8 +229,8 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
-  wrap_detecter_ = new FloatEdgeDetecter(align_angle_, PI);
-  hold_detecter_ = new BoolEdgeDetecter(false);
+  wrap_detector_ = new FloatEdgeDetector(align_angle_, PI);
+  hold_detector_ = new BoolEdgeDetector(false);
 
   SetDirUsingMode_(servo.mode);
 }
@@ -265,10 +265,10 @@ void ServoMotor::CalcOutput() {
   if (abs(diff_angle) < proximity_)
     hold_ = true;
 
-  hold_detecter_->input(hold_);
-  if (hold_detecter_->edge())
+  hold_detector_->input(hold_);
+  if (hold_detector_->edge())
     move_pid_.Reset();
-  if (hold_detecter_->posEdge())
+  if (hold_detector_->posEdge())
     hold_pid_.Reset();
   
   int16_t command;
@@ -307,10 +307,10 @@ float ServoMotor::GetOmegaDelta(const float target) const {
 
 void ServoMotor::AngleUpdate_() {
   motor_angle_ = wrap<float>(motor_->GetTheta() - align_angle_, -PI, PI);
-  wrap_detecter_->input(motor_angle_);
-  if (wrap_detecter_->negEdge())
+  wrap_detector_->input(motor_angle_);
+  if (wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, -PI, PI);
-  else if (wrap_detecter_->posEdge())
+  else if (wrap_detector_->posEdge())
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, -PI, PI);
   servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
 }

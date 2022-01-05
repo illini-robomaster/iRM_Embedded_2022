@@ -36,7 +36,6 @@
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
-BoolEdgeDetecter abs_detecter(false);
 
 control::Gimbal* gimbal = nullptr;
 remote::DBUS* dbus = nullptr;
@@ -53,12 +52,22 @@ void RM_RTOS_Init() {
   gimbal_data.yaw_motor = yaw_motor;
   gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
   gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
-  gimbal_data.pitch_Kp = 10;
-  gimbal_data.pitch_Ki = 0.25;
-  gimbal_data.pitch_Kd = 0.15;
-  gimbal_data.yaw_Kp = 10;
-  gimbal_data.yaw_Ki = 0.15;
-  gimbal_data.yaw_Kd = 0.15;
+  gimbal_data.pitch_max = LEGACY_GIMBAL_PMAX;
+  gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
+  gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
+  gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
+  gimbal_data.pitch_move_Kp = 800;
+  gimbal_data.pitch_move_Ki = 0;
+  gimbal_data.pitch_move_Kd = 100;
+  gimbal_data.yaw_move_Kp = 300;
+  gimbal_data.yaw_move_Ki = 0;
+  gimbal_data.yaw_move_Kd = 100;
+  gimbal_data.pitch_hold_Kp = 2000;
+  gimbal_data.pitch_hold_Ki = 100;
+  gimbal_data.pitch_hold_Kd = 100;
+  gimbal_data.yaw_hold_Kp = 1500;
+  gimbal_data.yaw_hold_Ki = 15;
+  gimbal_data.yaw_hold_Kd = 200;
   gimbal = new control::Gimbal(gimbal_data);
 
   dbus = new remote::DBUS(&huart1);
@@ -68,22 +77,21 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
 
-  bool abs_mode = true;
-
   while (true) {
-    abs_detecter.input(dbus->ch0 <= -500 || dbus->ch0 >= 500);
-    if (abs_detecter.posEdge()) {
-      abs_mode = !abs_mode;
-    }
+    float pitch_ratio = -dbus->ch3 / 600.0;
+    float yaw_ratio = -dbus->ch2 / 600.0;
+    if (dbus->swr == remote::UP) {
+      gimbal->TargetAbs(pitch_ratio * LEGACY_GIMBAL_PMAX, yaw_ratio * LEGACY_GIMBAL_YMAX);
+    } else if (dbus->swr == remote::MID) {
+      gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
+    } 
     
-    if (abs_mode) {
-      gimbal->TargetAbs(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
-    } else {
-      gimbal->TargetRel(-dbus->ch2 / 512 * PI, -dbus->ch3 / 512 * PI);
+    if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
+      exit(1);
     }
 
     gimbal->CalcOutput();
-    control::MotorCANBase::TransmitOutput(motors, 3);
+    control::MotorCANBase::TransmitOutput(motors, 2);
     osDelay(10);
   }
 }

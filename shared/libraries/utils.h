@@ -55,9 +55,9 @@ T wrap(T value, T min, T max) {
   return value < min ? value + range : (value > max ? value - range : value);
 }
 
-class BoolEdgeDetecter {
+class BoolEdgeDetector {
   public:
-    BoolEdgeDetecter(bool initial);
+    BoolEdgeDetector(bool initial);
     void input(bool signal);
     bool edge();
     bool posEdge();
@@ -69,9 +69,9 @@ class BoolEdgeDetecter {
     bool negEdge_;
 };
 
-class FloatEdgeDetecter {
+class FloatEdgeDetector {
   public:
-    FloatEdgeDetecter(float initial, float threshold);
+    FloatEdgeDetector(float initial, float threshold);
     void input(float signal);
     bool edge();
     bool posEdge();

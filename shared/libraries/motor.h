@@ -342,8 +342,8 @@ class ServoMotor {
     PIDController move_pid_;
     PIDController hold_pid_;
 
-    FloatEdgeDetecter* wrap_detecter_;
-    BoolEdgeDetecter* hold_detecter_;
+    FloatEdgeDetector* wrap_detector_;
+    BoolEdgeDetector* hold_detector_;
 
     void AngleUpdate_();
     void NearestModeSetDir_();

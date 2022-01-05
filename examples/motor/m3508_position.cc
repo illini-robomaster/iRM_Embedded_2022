@@ -43,12 +43,12 @@ control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
 #ifdef WITH_CONTROLLER
 remote::DBUS* dbus = nullptr;
-BoolEdgeDetecter joystick_detecter_abv(false);
-BoolEdgeDetecter joystick_detecter_rgt(false);
-BoolEdgeDetecter joystick_detecter_btm(false);
-BoolEdgeDetecter joystick_detecter_lft(false);
+BoolEdgeDetector joystick_detector_abv(false);
+BoolEdgeDetector joystick_detector_rgt(false);
+BoolEdgeDetector joystick_detector_btm(false);
+BoolEdgeDetector joystick_detector_lft(false);
 #else
-BoolEdgeDetecter key_detecter(false);
+BoolEdgeDetector key_detector(false);
 #endif
 
 void RM_RTOS_Init() {
@@ -82,27 +82,28 @@ void RM_RTOS_Default_Task(const void* args) {
   float target = NOTCH;
 
   while (true) {
+    print("%d %d", dbus->ch3, dbus->ch2);
 #ifdef WITH_CONTROLLER
-    joystick_detecter_abv.input(dbus->ch3 > 500);
-    joystick_detecter_rgt.input(dbus->ch2 < -500);
-    joystick_detecter_btm.input(dbus->ch3 < -500);
-    joystick_detecter_lft.input(dbus->ch2 > 500);
-    if (joystick_detecter_abv.posEdge()) {
+    joystick_detector_abv.input(dbus->ch3 > 500);
+    joystick_detector_rgt.input(dbus->ch2 < -500);
+    joystick_detector_btm.input(dbus->ch3 < -500);
+    joystick_detector_lft.input(dbus->ch2 > 500);
+    if (joystick_detector_abv.posEdge()) {
       target = 0;
       servo->SetTarget(target);
-    } else if (joystick_detecter_rgt.posEdge()) {
+    } else if (joystick_detector_rgt.posEdge()) {
       target = PI / 2;
       servo->SetTarget(target);
-    } else if (joystick_detecter_btm.posEdge()) {
+    } else if (joystick_detector_btm.posEdge()) {
       target = PI;
       servo->SetTarget(target);
-    } else if (joystick_detecter_lft.posEdge()) {
+    } else if (joystick_detector_lft.posEdge()) {
       target = -PI / 2;
       servo->SetTarget(target);
     }
 #else
-    key_detecter.input(key.Read());
-    if (key_detecter.posEdge() && servo->SetTarget(target) != 0) {
+    key_detector.input(key.Read());
+    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
       target = wrap<float>(target + NOTCH, -PI, PI);
     }
 #endif

@@ -63,6 +63,7 @@ class PIDController {
    */
   int16_t ComputeConstraintedOutput(float error);
 
+  void Reinit(float kp, float ki, float kd);
   void Reset();
 
  private:
