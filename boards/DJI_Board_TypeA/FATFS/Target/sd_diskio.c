@@ -70,7 +70,7 @@ See BSP_SD_ErrorCallback() and BSP_SD_AbortCallback() below
 /* USER CODE END disableSDInit */
 
 /*
- * when using cachable memory region, it may be needed to maintain the cache
+ * when using cacheable memory region, it may be needed to maintain the cache
  * validity. Enable the define below to activate a cache maintenance at each
  * read and write operation.
  * Notice: This is applicable only for cortex M7 based platform.
@@ -80,7 +80,7 @@ See BSP_SD_ErrorCallback() and BSP_SD_AbortCallback() below
 /* USER CODE END enableSDDmaCacheMaintenance */
 
 /*
-* Some DMA requires 4-Byte aligned address buffer to correctly read/wite data,
+* Some DMA requires 4-Byte aligned address buffer to correctly read/write data,
 * in FatFs some accesses aren't thus we need a 4-byte aligned scratch buffer to correctly
 * transfer data
 */
@@ -139,7 +139,7 @@ const Diskio_drvTypeDef  SD_Driver =
 static int SD_CheckStatusWithTimeout(uint32_t timeout)
 {
   uint32_t timer;
-  /* block until SDIO peripherial is ready again or a timeout occur */
+  /* block until SDIO peripheral is ready again or a timeout occur */
 #if (osCMSIS <= 0x20000U)
   timer = osKernelSysTick();
   while( osKernelSysTick() - timer < timeout)
@@ -250,6 +250,7 @@ DSTATUS SD_status(BYTE lun)
 
 DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
+  uint8_t ret;
   DRESULT res = RES_ERROR;
   uint32_t timer;
 #if (osCMSIS < 0x20000U)
@@ -275,7 +276,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   {
 #endif
     /* Fast path cause destination buffer is correctly aligned */
-    uint8_t ret = BSP_SD_ReadBlocks_DMA((uint32_t*)buff, (uint32_t)(sector), count);
+    ret = BSP_SD_ReadBlocks_DMA((uint32_t*)buff, (uint32_t)(sector), count);
 
     if (ret == MSD_OK) {
 #if (osCMSIS < 0x20000U)
@@ -688,6 +689,3 @@ void BSP_SD_AbortCallback(void)
 /* USER CODE BEGIN lastSection */
 /* can be used to modify / undefine previous code or add new code */
 /* USER CODE END lastSection */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
