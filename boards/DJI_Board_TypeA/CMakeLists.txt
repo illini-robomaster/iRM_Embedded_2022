@@ -36,7 +36,9 @@ add_library(${PROJECT_NAME}_interface INTERFACE)
 target_compile_definitions(${PROJECT_NAME}_interface INTERFACE ${MCU_LINE}
     ARM_MATH_CM4
     BOARD_HAS_SD_FATFS BOARD_HAS_UART_DMA_DOUBLE_BUFFER)
-target_compile_options(${PROJECT_NAME}_interface INTERFACE ${MCU_OPTIONS})
+# TODO(alvin): remove this -Wno-unused-parameter whenever a future
+#              firmware release fixes this god damn ADC header
+target_compile_options(${PROJECT_NAME}_interface INTERFACE ${MCU_OPTIONS} -Wno-unused-parameter)
 target_link_options(${PROJECT_NAME}_interface INTERFACE
     ${MCU_OPTIONS} -T${CMAKE_CURRENT_SOURCE_DIR}/${MCU_LINKER_SCRIPT})
 
