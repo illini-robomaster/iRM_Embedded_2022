@@ -24,33 +24,33 @@
 
 namespace control {
 	Shooter::Shooter(shooter_t shooter):
-			left_pid_(PIDController(shooter.fire_Kp, shooter.fire_Ki, shooter.fire_Kd)),
-			right_pid_(PIDController(shooter.fire_Kp, shooter.fire_Ki, shooter.fire_Kd)) {
-		fire_using_can_motor_ = shooter.fire_using_can_motor;
-		if (shooter.fire_using_can_motor) {
-			left_fire_can_motor_ = shooter.left_fire_can_motor;
-			right_fire_can_motor_ = shooter.right_fire_can_motor;
-			left_fire_motor_invert_ = shooter.left_fire_motor_invert;
-			right_fire_motor_invert_ = shooter.right_fire_motor_invert;
+			left_pid_(PIDController(shooter.acc_Kp, shooter.acc_Ki, shooter.acc_Kd)),
+			right_pid_(PIDController(shooter.acc_Kp, shooter.acc_Ki, shooter.acc_Kd)) {
+		acc_using_can_motor_ = shooter.acc_using_can_motor;
+		if (shooter.acc_using_can_motor) {
+			left_acc_can_motor_ = shooter.left_acc_can_motor;
+			right_acc_can_motor_ = shooter.right_acc_can_motor;
+			left_acc_motor_invert_ = shooter.left_acc_motor_invert;
+			right_acc_motor_invert_ = shooter.right_acc_motor_invert;
 		} else {
-			left_fire_pwm_motor_ = shooter.left_fire_pwm_motor;
-			right_fire_pwm_motor_ = shooter.right_fire_pwm_motor;
+			left_acc_pwm_motor_ = shooter.left_acc_pwm_motor;
+			right_acc_pwm_motor_ = shooter.right_acc_pwm_motor;
 		}
 		load_servo_ = shooter.load_servo;
 		load_step_angle_ = shooter.load_step_angle;
 
-		left_fire_speed_ = 0;
-		right_fire_speed_ = 0;
+		left_acc_speed_ = 0;
+		right_acc_speed_ = 0;
 		load_angle_ = 0;
 	}
 
-	void Shooter::SetFireSpeed(float speed) {
-		if (fire_using_can_motor_) {
-			left_fire_speed_ = left_fire_motor_invert_ ? -speed : speed;
-			right_fire_speed_ = right_fire_motor_invert_ ? -speed : speed;
+	void Shooter::SetAccSpeed(float speed) {
+		if (acc_using_can_motor_) {
+			left_acc_speed_ = left_acc_motor_invert_ ? -speed : speed;
+			right_acc_speed_ = right_acc_motor_invert_ ? -speed : speed;
 		} else {
-			left_fire_pwm_motor_->SetOutput(speed);
-			right_fire_pwm_motor_->SetOutput(speed);
+			left_acc_pwm_motor_->SetOutput(speed);
+			right_acc_pwm_motor_->SetOutput(speed);
 		}
 	}
 
@@ -63,11 +63,11 @@ namespace control {
 	}
 
 	void Shooter::CalcOutput() {
-		if (fire_using_can_motor_) {
-			float left_diff = left_fire_can_motor_->GetOmegaDelta(left_fire_speed_);
-			float right_diff = right_fire_can_motor_->GetOmegaDelta(right_fire_speed_);
-			left_fire_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));
-			right_fire_can_motor_->SetOutput(right_pid_.ComputeOutput(right_diff));	
+		if (acc_using_can_motor_) {
+			float left_diff = left_acc_can_motor_->GetOmegaDelta(left_acc_speed_);
+			float right_diff = right_acc_can_motor_->GetOmegaDelta(right_acc_speed_);
+			left_acc_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));
+			right_acc_can_motor_->SetOutput(right_pid_.ComputeOutput(right_diff));	
 		}
 		load_servo_->CalcOutput();
 	}

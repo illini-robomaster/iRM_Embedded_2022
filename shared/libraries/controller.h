@@ -63,7 +63,19 @@ class PIDController {
    */
   int16_t ComputeConstraintedOutput(float error);
 
+  /**
+   * @brief reinitialize the pid instance using another set of gains, but does not clear 
+   *        current status
+   * 
+   * @param kp new proportional gain
+   * @param ki new integral gain
+   * @param kd new derivative gain
+   */
   void Reinit(float kp, float ki, float kd);
+
+  /**
+   * @brief clear the remembered states of the controller
+   */
   void Reset();
 
  private:

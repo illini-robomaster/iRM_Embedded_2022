@@ -243,48 +243,95 @@ class Motor2305 : public MotorPWMBase {
  * @enum Servomotor turning mode
  */
 typedef enum {
-  SERVO_CLOCKWISE       = -1,   /*!< Servomotor always turn clockwisely                       */
-  SERVO_NEAREST         =  0,   /*!< Servomotor turn in direction that make movement minimum  */
-  SERVO_ANTICLOCKWISE   =  1    /*!< Servomotor always turn anticlockwisely                   */
+  SERVO_CLOCKWISE       = -1,   /* Servomotor always turn clockwisely                      */
+  SERVO_NEAREST         =  0,   /* Servomotor turn in direction that make movement minimum */
+  SERVO_ANTICLOCKWISE   =  1    /* Servomotor always turn anticlockwisely                  */
 } servo_mode_t;
 
 /**
- * @enum Servomotor turning mode
+ * @brief servomotor turning mode
  */
 typedef enum {
-  TURNING_CLOCKWISE     = -1,   /*!< Servomotor is turning clockwisely                        */
-  INPUT_REJECT          =  0,   /*!< Servomotor rejecting current angle input                 */
-  TURNING_ANTICLOCKWISE =  1    /*!< Servomotor is turning anticlockwisely                    */
+  TURNING_CLOCKWISE     = -1,   /* Servomotor is turning clockwisely         */
+  INPUT_REJECT          =  0,   /* Servomotor rejecting current target input */
+  TURNING_ANTICLOCKWISE =  1    /* Servomotor is turning anticlockwisely     */
 } servo_status_t;
 
-/** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
-* @{
-*/
-#define M3508P19_RATIO (3591.0 / 187) /*!< Transmission ratio of M3508P19 */
-#define M2006P36_RATIO 36             /*!< Transmission ratio of M2006P36 */
 /**
-* @}
-*/
+ * @brief transmission ratios of DJI motors, reference to motor manuals for more details
+ */
+#define M3508P19_RATIO (3591.0 / 187) /* Transmission ratio of M3508P19 */
+#define M2006P36_RATIO 36             /* Transmission ratio of M2006P36 */
 
+/**
+ * @brief structure used when servomotor instance is initialized
+ */
 typedef struct {
-  MotorCANBase* motor;
-  servo_mode_t mode;
-  float speed;
-  float transmission_ratio;
-  float move_Kp;
-  float move_Ki;
-  float move_Kd;
-  float hold_Kp;
-  float hold_Ki;
-  float hold_Kd;
+  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor */
+  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t  */
+  float speed;              /* desired turning speed of motor, in [rad/s]   */
+  float transmission_ratio; /* transmission ratio of motor                  */
+  float move_Kp;            /* Kp of pid that used to control omega         */
+  float move_Ki;            /* Ki of pid that used to control omega         */
+  float move_Kd;            /* Kd of pid that used to control omega         */
+  float hold_Kp;            /* Kp of pid that used to control theta         */
+  float hold_Ki;            /* Ki of pid that used to control theta         */
+  float hold_Kd;            /* Kd of pid that used to control theta         */
 } servo_t;
+
+/**
+ * @brief wrapper class for motor to enable it to be controlled as a servomotor
+ * @note the sampling frequency (the frequency of calling CalcOutput) should be high enough (refer to
+ *       Nyquist sampling frequency) and input PID should not be to "hard", otherwise the calculations 
+ *       could be wrong.
+ */
 class ServoMotor {
   public:
+    /**
+     * @brief base constructor
+     *
+     * @param servo     initialization struct, refer to type servo_t
+     * @param proximity critical difference angle for the motor to stop turining when approaching target
+     */
     ServoMotor(servo_t servo, float proximity = 0.1);
+
+    /**
+     * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+     * 
+     * @param target next target for the motor in [rad]
+     * @return int   current turning mode of motor, refer to type servo_status_t
+     */
     int SetTarget(const float target, bool override = false);
+
+    /**
+     * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+     * 
+     * @param target next target for the motor in [rad]
+     * @param mode   servomotor turning mode override, will only have one-time effect
+     * @return int   current turning mode of motor, refer to type servo_status_t
+     */
     int SetTarget(const float target, const servo_mode_t mode, bool override = false);
+
+    /**
+     * @brief set turning speed of motor when moving, should always be positive
+     * 
+     * @param speed speed of desired turning speed, in [rad/s]
+     */
     void SetSpeed(const float speed);
+
+    /**
+     * @brief calculate the output of the motors under current configuration
+     * @note should have high calling frequency to ensure best result
+     * @note this function will not transmit output to motor, it only calculate the desired input
+     */
     void CalcOutput();
+
+    /**
+     * @brief if the motor is holding
+     * 
+     * @return true  the motor is in holding state (i.e. not turning)
+     * @return false the motor is not holding (i.e. turning)
+     */
     bool Holding() const;
 
     /**
@@ -345,8 +392,22 @@ class ServoMotor {
     FloatEdgeDetector* wrap_detector_;
     BoolEdgeDetector* hold_detector_;
 
+    /**
+     * @brief update the current theta for the servomotor
+     */
     void AngleUpdate_();
+
+    /**
+     * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
+     * 
+     */
     void NearestModeSetDir_();
+
+    /**
+     * @brief set turning direction of the motor using specified turning mode
+     * 
+     * @param mode mode of servomotor, refer to type servo_mode_t
+     */
     void SetDirUsingMode_(servo_mode_t mode);
   
 };

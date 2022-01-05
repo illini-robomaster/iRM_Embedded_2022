@@ -28,49 +28,55 @@
 namespace control {
 
   
-/** @defgroup Transmission Ratios of DJI motors, reference to motor manuals.
-* @{
-*/
-#define LEGACY_GIMBAL_POFF 4.725f   /*!< Lagacy gimbal pitch offset */
-#define LEGACY_GIMBAL_YOFF 3.406f   /*!< Lagacy gimbal yaw offset   */
-#define LEGACY_GIMBAL_PMAX 0.408f   /*!< Lagacy gimbal pitch max    */
-#define LEGACY_GIMBAL_YMAX 1.511f   /*!< Lagacy gimbal yaw max      */
 /**
-  * @}
-  */
+ * @brief offset and max angles of different gimbals
+ * @note these should be obtained by reading encoder values through uart/gdb
+ */
+#define LEGACY_GIMBAL_POFF 4.725f   /* legacy gimbal pitch offset */
+#define LEGACY_GIMBAL_YOFF 3.406f   /* legacy gimbal yaw offset   */
+#define LEGACY_GIMBAL_PMAX 0.408f   /* legacy gimbal pitch max    */
+#define LEGACY_GIMBAL_YMAX 1.511f   /* legacy gimbal yaw max      */
 
+/**
+ * @brief structure used when gimbal instance is initialized
+ */
 typedef struct {
-  MotorCANBase* pitch_motor;
-  MotorCANBase* yaw_motor;
-  float pitch_offset;
-  float yaw_offset;
-  float pitch_max;
-  float yaw_max;
-  float pitch_proximity;
-  float yaw_proximity;
-  float pitch_move_Kp;
-  float pitch_move_Ki;
-  float pitch_move_Kd;
-  float yaw_move_Kp;
-  float yaw_move_Ki;
-  float yaw_move_Kd;
-  float pitch_hold_Kp;
-  float pitch_hold_Ki;
-  float pitch_hold_Kd;
-  float yaw_hold_Kp;
-  float yaw_hold_Ki;
-  float yaw_hold_Kd;
+  MotorCANBase* pitch_motor; /* pitch motor instance                                    */
+  MotorCANBase* yaw_motor;   /* yaw motor instance                                      */
+  float pitch_offset;        /* pitch motor offset                                      */
+  float yaw_offset;          /* yaw motor offset                                        */
+  float pitch_max;           /* pitch motor max turning angle                           */ 
+  float yaw_max;             /* yaw motor max turning angle                             */
+  float pitch_proximity;     /* critical pitch diff angle for pid control to toggle     */
+  float yaw_proximity;       /* critical yaw diff angle for pid control to toggle       */
+  float pitch_move_Kp;       /* Kp of pid that used to control pitch motor when moving  */
+  float pitch_move_Ki;       /* Ki of pid that used to control pitch motor when moving  */
+  float pitch_move_Kd;       /* Kd of pid that used to control pitch motor when moving  */
+  float yaw_move_Kp;         /* Kp of pid that used to control yaw motor when moving    */
+  float yaw_move_Ki;         /* Ki of pid that used to control yaw motor when moving    */
+  float yaw_move_Kd;         /* Kd of pid that used to control yaw motor when moving    */
+  float pitch_hold_Kp;       /* Kp of pid that used to control pitch motor when holding */
+  float pitch_hold_Ki;       /* Kd of pid that used to control pitch motor when holding */
+  float pitch_hold_Kd;       /* Ki of pid that used to control pitch motor when holding */
+  float yaw_hold_Kp;         /* Kp of pid that used to control yaw motor when holding   */
+  float yaw_hold_Ki;         /* Ki of pid that used to control yaw motor when holding   */
+  float yaw_hold_Kd;         /* Kd of pid that used to control yaw motor when holding   */
 } gimbal_t;
 
+/**
+ * @brief wrapper class for gimbal
+ */
 class Gimbal {
   public:
     /**
      * @brief constructor for Gimbal instance
+     * 
+     * @param gimbal structure that used to initialize gimbal, refer to type gimbal_t
      */
     Gimbal(gimbal_t gimbal);
 
     /**
-     * @brief update the position of gimbal
+     * @brief calculate the output of the motors under current configuration
      */
     void CalcOutput();
 

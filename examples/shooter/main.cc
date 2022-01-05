@@ -28,8 +28,8 @@
 #define LASER_GPIO_Port GPIOG
 
 bsp::CAN* can = nullptr;
-control::MotorCANBase* left_fire_motor = nullptr;
-control::MotorCANBase* right_fire_motor = nullptr;
+control::MotorCANBase* left_acc_motor = nullptr;
+control::MotorCANBase* right_acc_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
 
 remote::DBUS* dbus = nullptr;
@@ -40,8 +40,8 @@ void RM_RTOS_Init() {
 	dbus = new remote::DBUS(&huart1);
 
 	can = new bsp::CAN(&hcan1, 0x201);
-	left_fire_motor = new control::Motor3508(can, 0x201);
-	right_fire_motor = new control::Motor3508(can, 0x202);
+	left_acc_motor = new control::Motor3508(can, 0x201);
+	right_acc_motor = new control::Motor3508(can, 0x202);
 	load_motor = new control::Motor3508(can, 0x203);
 
 	control::servo_t servo_data;
@@ -58,27 +58,27 @@ void RM_RTOS_Init() {
 	load_servo = new control::ServoMotor(servo_data);
 
 	control::shooter_t shooter_data;
-	shooter_data.fire_using_can_motor = true;
-	shooter_data.left_fire_can_motor = left_fire_motor;
-	shooter_data.right_fire_can_motor = right_fire_motor;
-	shooter_data.left_fire_motor_invert = false;
-	shooter_data.right_fire_motor_invert = true;
+	shooter_data.acc_using_can_motor = true;
+	shooter_data.left_acc_can_motor = left_acc_motor;
+	shooter_data.right_acc_can_motor = right_acc_motor;
+	shooter_data.left_acc_motor_invert = false;
+	shooter_data.right_acc_motor_invert = true;
 	shooter_data.load_servo = load_servo;
-	shooter_data.fire_Kp = 80;
-	shooter_data.fire_Ki = 3;
-	shooter_data.fire_Kd = 0.1;
+	shooter_data.acc_Kp = 80;
+	shooter_data.acc_Ki = 3;
+	shooter_data.acc_Kd = 0.1;
 	shooter_data.load_step_angle = PI / 8;
 	shooter = new control::Shooter(shooter_data);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
 	UNUSED(args);
-  control::MotorCANBase* motors[] = {left_fire_motor, right_fire_motor, load_motor};
+  control::MotorCANBase* motors[] = {left_acc_motor, right_acc_motor, load_motor};
 	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
 	laser.High();
 
 	while (true) {
-		shooter->SetFireSpeed(dbus->ch1);
+		shooter->SetAccSpeed(dbus->ch1);
 		if (dbus->ch3 > 500)
 			shooter->LoadNext();
 		shooter->CalcOutput();

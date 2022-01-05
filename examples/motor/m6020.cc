@@ -47,8 +47,8 @@ void RM_RTOS_Default_Task(const void* args) {
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
   while (1) {
     if (key.Read()) {
-      motor1->SetOutput(8000);
-      motor2->SetOutput(8000);
+      motor1->SetOutput(800);
+      motor2->SetOutput(800);
     } else {
       motor1->SetOutput(0);
       motor2->SetOutput(0);

@@ -276,8 +276,6 @@ void ServoMotor::CalcOutput() {
     float out = hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
     out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
     command = clip<float>((int) out, -32768, 32767);
-    // float out = hold_pid_.ComputeConstraintedOutput(diff_angle * transmission_ratio_);
-    // motor_->SetOutput(out);
   } else {
     command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
   }

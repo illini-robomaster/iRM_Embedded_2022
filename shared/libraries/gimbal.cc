@@ -4,10 +4,6 @@
 
 namespace control {
 
-// PID parameters lagecy gimbal
-//  pid_pitch(PIDController(10, 0.25, 0.15))
-//  pid_yaw(PIDController(10, 0.15, 0.15))
-
 Gimbal::Gimbal(gimbal_t gimbal) : 
       pitch_pid_(PIDController(gimbal.pitch_hold_Kp, gimbal.pitch_hold_Ki, gimbal.pitch_hold_Kd)),
       yaw_pid_(PIDController(gimbal.yaw_hold_Kp, gimbal.yaw_hold_Ki, gimbal.yaw_hold_Kd)),

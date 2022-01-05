@@ -25,46 +25,73 @@
 
 namespace control {
 
+/**
+ * @brief structure used when shooter instance is initialized
+ */
 typedef struct {
-	bool fire_using_can_motor;
-	MotorCANBase* left_fire_can_motor;
-	MotorCANBase* right_fire_can_motor;
-	MotorPWMBase* left_fire_pwm_motor;
-	MotorPWMBase* right_fire_pwm_motor;
-	bool left_fire_motor_invert;
-	bool right_fire_motor_invert;
-	ServoMotor* load_servo;
-	float fire_Kp;
-	float fire_Ki;
-	float fire_Kd;
-	float load_step_angle;
+  bool acc_using_can_motor;					 /* if accelerate motors are using CAN protocal  */
+  MotorCANBase* left_acc_can_motor;	 /* CAN motor instance of left accelerate motor  */
+  MotorCANBase* right_acc_can_motor; /* CAN motor instance of right accelerate motor */
+  MotorPWMBase* left_acc_pwm_motor;	 /* PWM motor instance of left accelerate motor  */
+  MotorPWMBase* right_acc_pwm_motor; /* PWM motor instance of right accelerate motor */
+  bool left_acc_motor_invert;				 /* if left accelrate motor is inverted					 */
+  bool right_acc_motor_invert;			 /* if right accelrate motor is inverted				 */
+  ServoMotor* load_servo;            /* servomotor instance of load motor            */
+  float acc_Kp;                      /* Kp of pid controlling accelerate motor speed */ 
+  float acc_Ki;                      /* Ki of pid controlling accelerate motor speed */
+  float acc_Kd;                      /* Kd of pid controlling accelerate motor speed */
+  float load_step_angle;             /* step size of loading motor, in [rad]         */
 } shooter_t;
 
-
+/**
+ * @brief wrapper class for shooter
+ */
 class Shooter {
 public:
-	Shooter(shooter_t shooter);
-	void SetFireSpeed(float speed);
-	int LoadNext();
-	void CalcOutput();
+  /**
+   * @brief constructor for Shooter instance
+   * 
+   * @param shooter structure that used to initialize gimbal, refer to type shooter_t
+   */
+  Shooter(shooter_t shooter);
+
+  /**
+   * @brief set the speed of accelerating motors
+   * 
+   * @param speed 
+   */
+  void SetAccSpeed(float speed);
+
+  /**
+   * @brief load the next bullet
+   * 
+   * @return int servomotor status, refer to type servo_status_t
+   */
+  int LoadNext();
+
+  /**
+   * @brief calculate the output of the motors under current configuration
+   * 
+   */
+  void CalcOutput();
 
 private:
-	bool fire_using_can_motor_;
-	MotorCANBase* left_fire_can_motor_;
-	MotorCANBase* right_fire_can_motor_;
-	MotorPWMBase* left_fire_pwm_motor_;
-	MotorPWMBase* right_fire_pwm_motor_;
-	bool left_fire_motor_invert_;
-	bool right_fire_motor_invert_;
-	ServoMotor* load_servo_;
-	float load_step_angle_;
+  bool acc_using_can_motor_;
+  MotorCANBase* left_acc_can_motor_;
+  MotorCANBase* right_acc_can_motor_;
+  MotorPWMBase* left_acc_pwm_motor_;
+  MotorPWMBase* right_acc_pwm_motor_;
+  bool left_acc_motor_invert_;
+  bool right_acc_motor_invert_;
+  ServoMotor* load_servo_;
+  float load_step_angle_;
 
-	PIDController left_pid_;
-	PIDController right_pid_;
+  PIDController left_pid_;
+  PIDController right_pid_;
 
-	float left_fire_speed_;
-	float right_fire_speed_;
-	float load_angle_;
+  float left_acc_speed_;
+  float right_acc_speed_;
+  float load_angle_;
 };
 
 }

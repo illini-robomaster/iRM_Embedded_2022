@@ -18,6 +18,25 @@
  *                                                                          *
  ****************************************************************************/
 
+/**
+ * @brief This example is intended to run on official legacy gimbal. Please 
+ * read the instructions below to avoid possible danger.
+ * @date 2022-01-05
+ * 
+ * Controller configuration
+ * 
+ *  shooting motor on UP                                                  UP auto-shooting mode
+ * shooting motor off MID    Left Switch                 Right Switch    MID single shot mode
+ *        kill switch DOWN                                              DOWN not implemented
+ *                Left Joystick                                   Right Joystick
+ *       increase pitch ^                                                 ^ shoot
+ *      decrease yaw <     > increase yaw   change gimbal control mode <     > change gimbal control mode
+ *       decrease pitch v                                                 v not implemented
+ * 
+ * <-------------------------------------------!!! WARNING !!!------------------------------------------->
+ * DO <NOT> STAND BY THE GIMBAL WHEN IT IS POWERED, MAKE SURE KILL SWITCH IS ACTIVATED BEFORE APPROACHING
+ */
+
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -36,8 +55,8 @@
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
-control::MotorPWMBase* left_fire_motor = nullptr;
-control::MotorPWMBase* right_fire_motor = nullptr;
+control::MotorPWMBase* left_acc_motor = nullptr;
+control::MotorPWMBase* right_acc_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
 BoolEdgeDetector shoot_detector(false);
 BoolEdgeDetector load_detector(false);
@@ -55,8 +74,8 @@ void RM_RTOS_Init() {
   can = new bsp::CAN(&hcan1, 0x205);
   pitch_motor = new control::Motor6020(can, 0x205);
   yaw_motor = new control::Motor6020(can, 0x206);
-  left_fire_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
-  right_fire_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
+  left_acc_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
+  right_acc_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
   load_motor = new control::Motor2006(can, 0x207);
 
   control::servo_t servo_data;
@@ -96,13 +115,13 @@ void RM_RTOS_Init() {
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
-  shooter_data.fire_using_can_motor = false;
-  shooter_data.left_fire_pwm_motor = left_fire_motor;
-  shooter_data.right_fire_pwm_motor = right_fire_motor;
+  shooter_data.acc_using_can_motor = false;
+  shooter_data.left_acc_pwm_motor = left_acc_motor;
+  shooter_data.right_acc_pwm_motor = right_acc_motor;
   shooter_data.load_servo = load_servo;
-  shooter_data.fire_Kp = 80;
-  shooter_data.fire_Ki = 3;
-  shooter_data.fire_Kd = 0.1;
+  shooter_data.acc_Kp = 80;
+  shooter_data.acc_Ki = 3;
+  shooter_data.acc_Kd = 0.1;
   shooter_data.load_step_angle = 2 * PI / 8;
   shooter = new control::Shooter(shooter_data);  
 
@@ -156,9 +175,9 @@ void RM_RTOS_Default_Task(const void* args) {
     //    Mid for shoot motor stop
     shoot_detector.input(dbus->swl == remote::UP);
     if (shoot_detector.posEdge()) {
-      shooter->SetFireSpeed(150);
+      shooter->SetAccSpeed(150);
     } else if (shoot_detector.negEdge()) {
-      shooter->SetFireSpeed(0);
+      shooter->SetAccSpeed(0);
     } 
 
     // Calculate and send command
