@@ -18,8 +18,6 @@
  *                                                                          *
  ****************************************************************************/
 
-#include <cstring>
-
 #include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_os.h"
@@ -44,6 +42,12 @@ static bsp::VirtualUSB* usb = nullptr;
 
 static imu_data_t imu_data;
 
+void RM_RTOS_Init(void) {
+	bsp::SetHighresClockTimer(&htim2);
+	imu_data.header = 's';
+	imu_data.terminator = '\0';
+}
+
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
@@ -60,10 +64,4 @@ void RM_RTOS_Default_Task(const void* arguments) {
     usb->Write((uint8_t*)&imu_data, sizeof(imu_data));
     osDelay(10);
   }
-}
-
-void RM_RTOS_Init(void) {
-  bsp::SetHighresClockTimer(&htim2);
-  imu_data.header = 's';
-  imu_data.terminator = '\0';
 }
