@@ -73,6 +73,8 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
 	UNUSED(args);
+	osDelay(500); // DBUS initialization needs time
+	
   control::MotorCANBase* motors[] = {left_acc_motor, right_acc_motor, load_motor};
 	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
 	laser.High();

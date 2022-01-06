@@ -101,10 +101,10 @@ void RM_RTOS_Init() {
   gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
   gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
   gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
-  gimbal_data.pitch_move_Kp = 800;
+  gimbal_data.pitch_move_Kp = 1000;
   gimbal_data.pitch_move_Ki = 0;
   gimbal_data.pitch_move_Kd = 100;
-  gimbal_data.yaw_move_Kp = 300;
+  gimbal_data.yaw_move_Kp = 600;
   gimbal_data.yaw_move_Ki = 0;
   gimbal_data.yaw_move_Kd = 100;
   gimbal_data.pitch_hold_Kp = 2000;
@@ -137,6 +137,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   bool load = false;
   bool abs_mode = true;
+
+	osDelay(500); // DBUS initialization needs time
 
   while (true) {
     // Kill switch for safety measure

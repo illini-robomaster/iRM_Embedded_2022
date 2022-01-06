@@ -75,6 +75,9 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+
+	osDelay(500); // DBUS initialization needs time
+  
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
 
   while (true) {

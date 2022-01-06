@@ -57,6 +57,10 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+#ifdef WITH_CONTROLLER
+	osDelay(500); // DBUS initialization needs time
+#endif
+
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
