@@ -35,8 +35,13 @@ float PIDController::ComputeOutput(float error) {
 }
 
 int16_t PIDController::ComputeConstraintedOutput(float error) { 
-  constexpr int MIN = -32768;
-  constexpr int MAX = 32767;
+  /* 
+   * CAN protocal uses a 16-bit signed number to drive the motors, so this version
+   * of the output computation can make sure that no unexpected behavior (overflow)
+   * can happen.
+   */
+  constexpr int MIN = -32768; /* Minimum that a 16-bit number can represent */
+  constexpr int MAX = 32767;  /* Maximum that a 16-bit number can represent */
   return clip<int>((int) arm_pid_f32(&pid_f32_, error), MIN, MAX); 
 }
 
