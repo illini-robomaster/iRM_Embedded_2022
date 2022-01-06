@@ -27,17 +27,17 @@ namespace bsp {
 class LASER {
 public:
 	/**
-   * @brief constructor for laser
-   */
-		LASER();
+	 * @brief constructor for laser
+	 */
+	 LASER();
 	/**
 	 * @brief Turn on the laser
 	 */
-		void On();
+	 void On();
 	/**
 	 * @brief Turn off the laser
 	 */
-		void Off();
+	 void Off();
 
 private:
 		GPIO laser;
