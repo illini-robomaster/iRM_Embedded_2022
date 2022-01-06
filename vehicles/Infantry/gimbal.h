@@ -1,6 +1,6 @@
 /****************************************************************************
  *                                                                          *
- *  Copyright (C) 2021 RoboMaster.                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
  *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
  *                                                                          *
  *  This program is free software: you can redistribute it and/or modify    *
@@ -36,5 +36,3 @@ const osThreadAttr_t gimbalTaskAttribute = {
 
 // function declaration
 void gimbalTask (void* arg);
-
-

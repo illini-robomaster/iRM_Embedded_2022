@@ -1,6 +1,6 @@
 /****************************************************************************
  *                                                                          *
- *  Copyright (C) 2020 RoboMaster.                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
  *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
  *                                                                          *
  *  This program is free software: you can redistribute it and/or modify    *
@@ -45,7 +45,7 @@ void RM_RTOS_Default_Task(const void* args) {
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
   motor2->SetOutput(5);
 
-  while (1) {
+  while (true) {
     if (key.Read()) {
       motor1->SetOutput(300);
       motor2->SetOutput(300);

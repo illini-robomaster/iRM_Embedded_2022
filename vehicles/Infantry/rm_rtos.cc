@@ -34,7 +34,7 @@ extern void gimbalTask (void* arg);
 
 
 void RM_RTOS_Threads_Init(void) {
-  gimbalTaskHandle = osThreadNew(gimbalTask, NULL, &gimbalTaskAttribute);
+  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
 }
 
 void RM_RTOS_Init(void) {

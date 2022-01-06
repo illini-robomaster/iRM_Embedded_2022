@@ -20,7 +20,6 @@
 
 #include "controller.h"
 #include "utils.h"
-#include "bsp_print.h"
 
 namespace control {
 

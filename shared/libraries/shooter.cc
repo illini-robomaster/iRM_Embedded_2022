@@ -19,8 +19,6 @@
  ****************************************************************************/
 
 #include "shooter.h"
-#include "can.h"
-#include "bsp_error_handler.h"
 
 namespace control {
 	Shooter::Shooter(shooter_t shooter):

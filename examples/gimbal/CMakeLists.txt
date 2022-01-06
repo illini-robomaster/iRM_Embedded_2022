@@ -20,7 +20,6 @@
 
 project(example_gimbal ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_official
+irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES official.cc)
-
