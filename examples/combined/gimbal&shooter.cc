@@ -141,7 +141,7 @@ void RM_RTOS_Default_Task(const void* args) {
   while (true) {
     // Kill switch for safety measure
     if (dbus->swl == remote::DOWN) {
-      exit(1);
+      RM_ASSERT_TRUE(false, "Operation killed");
     }
 
     // Toggle gimbal control absolute or relative mode

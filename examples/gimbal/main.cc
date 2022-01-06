@@ -86,8 +86,9 @@ void RM_RTOS_Default_Task(const void* args) {
       gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
     } 
     
+    // Kill switch
     if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
-      exit(1);
+      RM_ASSERT_TRUE(false, "Operation killed");
     }
 
     gimbal->CalcOutput();
