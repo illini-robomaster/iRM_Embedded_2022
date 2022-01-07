@@ -86,6 +86,8 @@ void RM_RTOS_Default_Task(const void *argument);
 #define MOS_CTL3_GPIO_Port GPIOH
 #define MOS_CTL4_Pin GPIO_PIN_5
 #define MOS_CTL4_GPIO_Port GPIOH
+#define ULTRASONIC_Echo_Pin GPIO_PIN_2
+#define ULTRASONIC_Echo_GPIO_Port GPIOC
 #define USB_KEY_Pin GPIO_PIN_2
 #define USB_KEY_GPIO_Port GPIOB
 #define BEEP_Pin GPIO_PIN_6
@@ -96,6 +98,8 @@ void RM_RTOS_Default_Task(const void *argument);
 #define LED_RED_GPIO_Port GPIOE
 #define OLED_MOSI_Pin GPIO_PIN_7
 #define OLED_MOSI_GPIO_Port GPIOA
+#define ULTRASONIC_Trig_Pin GPIO_PIN_0
+#define ULTRASONIC_Trig_GPIO_Port GPIOB
 #define LED_GREEN_Pin GPIO_PIN_14
 #define LED_GREEN_GPIO_Port GPIOF
 #define SD_EXTI_Pin GPIO_PIN_15
