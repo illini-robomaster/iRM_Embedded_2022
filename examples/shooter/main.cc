@@ -22,16 +22,16 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "dbus.h"
+#include "bsp_laser.h"
 #include "shooter.h"
 
-#define LASER_Pin GPIO_PIN_13
-#define LASER_GPIO_Port GPIOG
-
-remote::DBUS* dbus = nullptr;
-control::Shooter* shooter = nullptr;
+static remote::DBUS* dbus = nullptr;
+static control::Shooter* shooter = nullptr;
+static bsp::Laser* laser = nullptr;
 
 void RM_RTOS_Init() {
 	dbus = new remote::DBUS(&huart1);
+  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
 	int motor_id[3] = {1, 2, 3};
 	float fire_pid[3] = {80, 3, 0.1};
 	float load_pid[3] = {30, 5, 0.1};
@@ -40,9 +40,8 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
 	UNUSED(args);
-	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
 	while (true) {
-		laser.High();
+		laser->On();
 		shooter->Fire(dbus->ch1);
 		osDelay(10);
 		shooter->Load(dbus->ch3);
