@@ -17,34 +17,32 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *                                                                          *
  ****************************************************************************/
- 
-#include "main.h"
 
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "main.h"
 
-int32_t pub = 0;
-
-osMutexId_t addLockHandle;
+static int32_t pub = 0;
+static osMutexId_t addLockHandle;
 
 const osMutexAttr_t addLock = {
   .name = "addLock",
   .attr_bits = osMutexRecursive,
-  .cb_mem = NULL,
+  .cb_mem = nullptr,
   .cb_size = 0
 };
 
 /* init new task START */
-osThreadId_t ADD_TaskHandle;
+static osThreadId_t ADD_TaskHandle;
 
 const osThreadAttr_t AddTask_attributes = {
   .name = "AddTask",
   .attr_bits = osThreadDetached,
-  .cb_mem = NULL,
+  .cb_mem = nullptr,
   .cb_size = 0,
-  .stack_mem = NULL,
+  .stack_mem = nullptr,
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
   .tz_module = 0,
   .reserved = 0
 };
@@ -52,10 +50,10 @@ const osThreadAttr_t AddTask_attributes = {
 void AddTask(void *argument) {
   UNUSED(argument);
   osStatus_t ret;
-  while (1) {
+  while (true) {
     ret = osMutexAcquire(addLockHandle, osWaitForever);
     if(ret == osOK) {
-      pub += 1;
+      ++pub;
       print("%d, by thread 2\r\n", pub);
     }
     osMutexRelease(addLockHandle);
@@ -70,26 +68,20 @@ void RM_RTOS_Mutexes_Init(void) {
 }
 
 void RM_RTOS_Threads_Init(void) {
-  ADD_TaskHandle = osThreadNew(AddTask, NULL, &AddTask_attributes);
-}
-
-
-void RM_RTOS_Init(void) {
-
+  ADD_TaskHandle = osThreadNew(AddTask, nullptr, &AddTask_attributes);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   osStatus_t ret;
   print_use_uart(&huart8);
-  while (1) {
+  while (true) {
     ret = osMutexAcquire(addLockHandle, osWaitForever);
     if(ret == osOK) {  
-      pub += 1;
+      ++pub;
       print("%d, by thread 1\r\n", pub);
     }
     osMutexRelease(addLockHandle);
     osDelay(3000);
   }
 }
-

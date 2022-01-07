@@ -27,8 +27,8 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-bsp::CAN* can1 = nullptr;
-control::MotorCANBase* motor = nullptr;
+static bsp::CAN* can1 = nullptr;
+static control::MotorCANBase* motor = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
