@@ -39,6 +39,7 @@ namespace bsp {
         curr = timer_->CNT;
       trig_.Low();
       base = timer_->CNT;
+      // when the echo is emitted, echo turned to 1. 
       while (!echo_.Read()) {
         if ((timer_->CNT - base) > 12000) {
           return -1;
