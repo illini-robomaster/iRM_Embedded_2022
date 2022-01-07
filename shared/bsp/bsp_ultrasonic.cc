@@ -19,7 +19,8 @@
  ****************************************************************************/
 
 #include "bsp_ultrasonic.h"
-
+#define TIME_OUT 12000
+#define SOUND_SPEED_CM_PER_US 0.0343
 namespace bsp {
 
     Ultrasonic::Ultrasonic(GPIO_TypeDef* trig_group,
