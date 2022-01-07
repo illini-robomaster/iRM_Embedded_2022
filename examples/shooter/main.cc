@@ -22,6 +22,7 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "dbus.h"
+#include "bsp_laser.h"
 #include "shooter.h"
 
 #define LASER_Pin GPIO_PIN_13

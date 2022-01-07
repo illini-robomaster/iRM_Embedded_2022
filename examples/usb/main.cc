@@ -65,7 +65,7 @@ void RM_RTOS_Default_Task(const void* argument) {
 
   UNUSED(argument);
 
-  while (1) {
+  while (true) {
     /* wait until rx data is available */
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
     if (flags & RX_SIGNAL) {  // unnecessary check

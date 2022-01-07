@@ -22,12 +22,6 @@
 #include "cmsis_os.h"
 #include "main.h"
 
-#define LED_RED_Pin GPIO_PIN_11
-#define LED_RED_GPIO_Port GPIOE
-
-#define LED_GREEN_Pin GPIO_PIN_14
-#define LED_GREEN_GPIO_Port GPIOF
-
 static bsp::GPIO *gpio_red, *gpio_green;
 
 void RM_RTOS_Init(void) {
@@ -39,7 +33,7 @@ void RM_RTOS_Init(void) {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  while (1) {
+  while (true) {
     gpio_red->Toggle();
     gpio_green->Toggle();
     osDelay(500);
