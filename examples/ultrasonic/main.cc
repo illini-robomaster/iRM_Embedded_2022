@@ -41,11 +41,13 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   while (true) {
     float distance = ultrasonic->GetDistance();
+    set_cursor(0, 0);
+    clear_screen();
     if (distance > 0) {
-      set_cursor(0, 0);
-      clear_screen();
       print("Distance: %.2f cm\r\n", distance);
+    } else {
+      print("ERROR!!!\r\n");
     }
-    osDelay(50);
+    osDelay(20);
   }
 }
