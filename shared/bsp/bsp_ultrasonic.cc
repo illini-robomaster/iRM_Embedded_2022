@@ -46,6 +46,7 @@ namespace bsp {
         }
       }
       base = timer_->CNT;
+      // when the echo is received, echo turned to 0.
       while(echo_.Read()) {
         if ((timer_->CNT - base) > 12000) {
           return -1;
