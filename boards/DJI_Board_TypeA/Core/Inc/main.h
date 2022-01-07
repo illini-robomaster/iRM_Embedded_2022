@@ -92,6 +92,8 @@ void RM_RTOS_Default_Task(const void *argument);
 #define BEEP_GPIO_Port GPIOH
 #define OLED_BUTTON_Pin GPIO_PIN_6
 #define OLED_BUTTON_GPIO_Port GPIOA
+#define RELAY_Pin GPIO_PIN_5
+#define RELAY_GPIO_Port GPIOC
 #define LED_RED_Pin GPIO_PIN_11
 #define LED_RED_GPIO_Port GPIOE
 #define OLED_MOSI_Pin GPIO_PIN_7
