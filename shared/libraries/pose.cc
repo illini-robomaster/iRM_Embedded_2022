@@ -23,7 +23,7 @@
 
 namespace control {
 
-Pose::Pose(bsp::MPU6500* _imu) {
+Pose::Pose(bsp::MPU6500* _imu) : imu(_imu) {
   if (_imu == nullptr) {
     RM_ASSERT_TRUE(false, "invalid imu");
   }
@@ -38,25 +38,29 @@ Pose::Pose(bsp::MPU6500* _imu) {
  *  
 **/
 void Pose::PoseInit(void) {
-  timestamp = 0;
-  pose.x = 0;
-  pose.y = 0;
-  pose.z = 0;
+  timestamp = imu->timestamp;
+  x = 0;
+  y = 0;
+  z = 0;
 }
 
 
 /** description: read estimated pose
  *  
 **/
-bsp::vec3f_t Pose::GetPose(void) {
-  return pose;
+void Pose::GetPose(bsp::vec3f_t *_pose) {
+  _pose->x = x;
+  _pose->y = y;
+  _pose->z = z;
 }
 
 
 /** description: set weight for gyroData
  *  
 **/
-void Pose::SetAlpha(float _alpha) : alpha(_alpha) {}
+void Pose::SetAlpha(float _alpha) {
+  alpha = _alpha;
+}
 
 
 /** description: update pose with complementary filter 
@@ -64,14 +68,22 @@ void Pose::SetAlpha(float _alpha) : alpha(_alpha) {}
  *        ~<10ms
  *  reference: https://www.pieter-jan.com/node/11
 **/
-bsp::vec3f_t ComplementaryFilterUpdate(void) {
-
-  pose.x = alpha * (pose.x + imu->gyro.x * (imu->timestamp - timestamp)) + 
-           (1 - alpha) * imu->acc.x;
-  pose.y = alpha * (pose.y + imu->gyro.y * (imu->timestamp - timestamp)) + 
-           (1 - alpha) * imu->acc.y;
-  pose.z = alpha * (pose.z + imu->gyro.z * (imu->timestamp - timestamp)) + 
-           (1 - alpha) * imu->acc.z;
+void Pose::ComplementaryFilterUpdate(void) {
+  
+  bsp::vec3f_t gyro{imu->gyro.x, imu->gyro.y, imu->gyro.z};
+  //bsp::vec3f_t acce{imu->acce.x, imu->acce.y, imu->acce.z};
+  int32_t ts = imu->timestamp;
+  
+  x = (x + gyro.x * (ts - timestamp));
+           //alpha * (pose.x + gyro.x * (ts - timestamp)) + 
+           //(1 - alpha) * acce.x;
+  y = (y + gyro.y * (ts - timestamp));
+           //alpha * (pose.y + gyro.y * (ts - timestamp)) + 
+           //(1 - alpha) * acce.y;
+  z = (z + gyro.z * (ts - timestamp));
+           //alpha * (pose.z + gyro.z * (ts - timestamp)) + 
+           //(1 - alpha) * acce.z;
+  timestamp = imu->timestamp;
   
 }
 

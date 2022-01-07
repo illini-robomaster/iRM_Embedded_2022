@@ -28,20 +28,22 @@ class Pose {
 public:
   Pose(bsp::MPU6500* _imu);
   void PoseInit(void);
-  bsp::vec3f_t GetPose(void);
+  void GetPose(bsp::vec3f_t *_pose);
   void SetAlpha(float _alpha);
-  bsp::vec3f_t ComplementaryFilter(void);
+  void ComplementaryFilterUpdate(void);
 
 private:
   bsp::MPU6500* imu;
   // last pose
-  bsp::vec3f_t pose;
+  float x;
+  float y;
+  float z;
   // last timestamp
-  float timestamp;
+  uint32_t timestamp;
   
   float alpha;
    
-} // class Pose end
+}; // class Pose end
 
 
 } // ns end

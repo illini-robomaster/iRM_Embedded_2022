@@ -129,13 +129,25 @@ void MPU6500::SPITxRxCpltCallback() {
   for (size_t i = 0; i < MPU6500_SIZEOF_DATA; i += 2)
     array[i / 2] = (int16_t)(buff[i] << 8 | buff[i + 1]);
 
+  
   acce.x = (float)array[0] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
   acce.y = (float)array[1] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
   acce.z = (float)array[2] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
+  /*
+  acce.x = (float)array[0] / MPU6500_ACC_FACTOR;
+  acce.y = (float)array[1] / MPU6500_ACC_FACTOR;
+  acce.z = (float)array[2] / MPU6500_ACC_FACTOR;
+  */
   temp = (float)array[3] / MPU6500_TEMP_FACTOR + MPU6500_TEMP_OFFSET;
+  
   gyro.x = DEG2RAD((float)array[4] / MPU6500_GYRO_FACTOR);
   gyro.y = DEG2RAD((float)array[5] / MPU6500_GYRO_FACTOR);
   gyro.z = DEG2RAD((float)array[6] / MPU6500_GYRO_FACTOR);
+  /*
+  gyro.x = (float)array[4];
+  gyro.y = (float)array[5];
+  gyro.z = (float)array[6];
+  */
   mag.x = (float)array[7];
   mag.y = (float)array[8];
   mag.z = (float)array[9];
