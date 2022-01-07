@@ -19,51 +19,54 @@
  ****************************************************************************/
 
 #include "shooter.h"
-#include "can.h"
-#include "bsp_error_handler.h"
-
-extern CAN_HandleTypeDef hcan1;
 
 namespace control {
-    Shooter::Shooter(robot_type_t robot_type, const int* motor_id, const float* fire_pid, const float* load_pid):
-    pid_Left(PIDController(fire_pid[0], fire_pid[1], fire_pid[2])),
-    pid_Right(PIDController(fire_pid[0], fire_pid[1], fire_pid[2])),
-    pid_Bullet(PIDController(load_pid[0], load_pid[1], load_pid[2])){
-	    type = robot_type;
-	    motors = new MotorCANBase *[3];
-	    auto* can1 = new bsp::CAN(&hcan1, 0x201);
-	    motors[MOTOR_Left] = new Motor3508(can1, 0x200 + motor_id[0]);
-	    motors[MOTOR_Rright] = new Motor3508(can1, 0x200 + motor_id[1]);
-	    switch (type) {
-		    case HERO:
-			    motors[MOTOR_Bullet] = new Motor3508(can1, 0x200 + motor_id[2]);
-			    break;
-		    case STANDARD:
-			    motors[MOTOR_Bullet] = new Motor2006(can1, 0x200 + motor_id[2]);
-			    break;
-		    default:
-			    RM_EXPECT_TRUE(false, "not supported robot type");
-	    }
-    }
-    void Shooter::Fire(float speed) {
-//	    constexpr int MAX_ABS_CURRENT = 12288;  // ~20A
-//	    constexpr int MAX_ABS_REMOTE = 32767;
-//	    speed = speed * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
-	    motors[MOTOR_Left]->SetOutput(pid_Left.ComputeOutput(motors[MOTOR_Left]->GetOmegaDelta( speed)));
-	    motors[MOTOR_Rright]->SetOutput(pid_Right.ComputeOutput(motors[MOTOR_Rright]->GetOmegaDelta(-1 * speed)));
-	    control::MotorCANBase::TransmitOutput(motors, 2);
-    }
-    void Shooter::Load(float speed) {
-	    switch (type) {
-		    case HERO:
-			    speed = -1 * speed / 10;
-			    break;
-		    case STANDARD:
-			    break;
-		    default:
-			    RM_EXPECT_TRUE(false, "not supported robot type");
-	    }
-	    motors[MOTOR_Bullet]->SetOutput(pid_Bullet.ComputeOutput(motors[MOTOR_Bullet]->GetOmegaDelta(speed)));
-	    control::MotorCANBase::TransmitOutput(&motors[2], 1);
-    }
+	Shooter::Shooter(shooter_t shooter):
+			left_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
+			right_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)) {
+		fly_using_can_motor_ = shooter.fly_using_can_motor;
+		if (shooter.fly_using_can_motor) {
+			left_fly_can_motor_ = shooter.left_fly_can_motor;
+			right_fly_can_motor_ = shooter.right_fly_can_motor;
+			left_fly_motor_invert_ = shooter.left_fly_motor_invert;
+			right_fly_motor_invert_ = shooter.right_fly_motor_invert;
+		} else {
+			left_fly_pwm_motor_ = shooter.left_fly_pwm_motor;
+			right_fly_pwm_motor_ = shooter.right_fly_pwm_motor;
+		}
+		load_servo_ = shooter.load_servo;
+		load_step_angle_ = shooter.load_step_angle;
+
+		left_fly_speed_ = 0;
+		right_fly_speed_ = 0;
+		load_angle_ = 0;
+	}
+
+	void Shooter::SetFlywheelSpeed(float speed) {
+		if (fly_using_can_motor_) {
+			left_fly_speed_ = left_fly_motor_invert_ ? -speed : speed;
+			right_fly_speed_ = right_fly_motor_invert_ ? -speed : speed;
+		} else {
+			left_fly_pwm_motor_->SetOutput(speed);
+			right_fly_pwm_motor_->SetOutput(speed);
+		}
+	}
+
+	int Shooter::LoadNext() {
+		int val = load_servo_->SetTarget(load_angle_ + load_step_angle_);
+		if (val != 0) {
+			load_angle_ = wrap<float>(load_angle_ + load_step_angle_, -PI, PI);
+		}
+		return val;
+	}
+
+	void Shooter::CalcOutput() {
+		if (fly_using_can_motor_) {
+			float left_diff = left_fly_can_motor_->GetOmegaDelta(left_fly_speed_);
+			float right_diff = right_fly_can_motor_->GetOmegaDelta(right_fly_speed_);
+			left_fly_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));
+			right_fly_can_motor_->SetOutput(right_pid_.ComputeOutput(right_diff));	
+		}
+		load_servo_->CalcOutput();
+	}
 }

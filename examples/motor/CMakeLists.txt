@@ -24,10 +24,22 @@ irm_add_arm_executable(${PROJECT_NAME}_m3508
     TARGET DJI_Board_TypeA
     SOURCES m3508.cc)
 
+irm_add_arm_executable(${PROJECT_NAME}_m3508_speed
+    TARGET DJI_Board_TypeA
+    SOURCES m3508_speed.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_m3508_position
+    TARGET DJI_Board_TypeA
+    SOURCES m3508_position.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_m6020
+    TARGET DJI_Board_TypeA
+    SOURCES m6020.cc)
+
 irm_add_arm_executable(${PROJECT_NAME}_m6623
     TARGET DJI_Board_TypeA
     SOURCES m6623.cc)
 
-irm_add_arm_executable(${PROJECT_NAME}_m3508_speed
+irm_add_arm_executable(${PROJECT_NAME}_pwm
     TARGET DJI_Board_TypeA
-    SOURCES m3508_speed.cc)
+    SOURCES pwm.cc)

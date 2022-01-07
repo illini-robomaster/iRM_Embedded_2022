@@ -18,46 +18,42 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "utils.h"
+#include "bsp_gpio.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "motor.h"
 
-BoolEdgeDetector::BoolEdgeDetector(bool initial) {
-  prev_ = initial;
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
+
+bsp::CAN* can1 = NULL;
+control::MotorCANBase* motor1 = NULL;
+control::MotorCANBase* motor2 = NULL;
+
+
+void RM_RTOS_Init() {
+  print_use_uart(&huart8);
+
+  can1 = new bsp::CAN(&hcan1, 0x205);
+  motor1 = new control::Motor6020(can1, 0x205);
+  motor2 = new control::Motor6020(can1, 0x206);
 }
 
-void BoolEdgeDetector::input(bool signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  if (!prev_ && signal) 
-    posEdge_ = true;
-  else if (prev_ && !signal) 
-    negEdge_ = true;
-  prev_ = signal;
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
+  control::MotorCANBase* motors[] = {motor1};
+
+  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  while (true) {
+    if (key.Read()) {
+      motor1->SetOutput(800);
+      motor2->SetOutput(800);
+    } else {
+      motor1->SetOutput(0);
+      motor2->SetOutput(0);
+    }
+    control::MotorCANBase::TransmitOutput(motors, 1);
+    osDelay(100);
+  }
 }
-
-bool BoolEdgeDetector::edge() { return posEdge_ || negEdge_; }
-
-bool BoolEdgeDetector::posEdge() { return posEdge_; }
-
-bool BoolEdgeDetector::negEdge() { return negEdge_; }
-
-FloatEdgeDetector::FloatEdgeDetector(float initial, float threshold) {
-  prev_ = initial;
-  threshold_ = threshold;
-}
-
-void FloatEdgeDetector::input(float signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  float diff = signal - prev_;
-  if (diff > threshold_)
-    posEdge_ = true;
-  else if (diff < -threshold_)
-    negEdge_ = true;
-  prev_ = signal;
-}
-
-bool FloatEdgeDetector::edge() { return posEdge_ || negEdge_; }
-
-bool FloatEdgeDetector::posEdge() { return posEdge_; }
-
-bool FloatEdgeDetector::negEdge() { return negEdge_; }

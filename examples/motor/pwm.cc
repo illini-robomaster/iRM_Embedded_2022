@@ -18,46 +18,50 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "utils.h"
+#include "bsp_gpio.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "motor.h"
 
-BoolEdgeDetector::BoolEdgeDetector(bool initial) {
-  prev_ = initial;
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
+
+// Refer to typeA datasheet for channel detail 
+#define LEFT_MOTOR_PWM_CHANNEL    1
+#define RIGHT_MOTOR_PWM_CHANNEL   4
+#define TIM_CLOCK_FREQ            1000000
+#define MOTOR_OUT_FREQ            500
+#define SNAIL_IDLE_THROTTLE       1080
+
+control::MotorPWMBase* motor1;
+control::MotorPWMBase* motor2;
+
+
+void RM_RTOS_Init() {
+  print_use_uart(&huart8);
+  motor1 = new control::MotorPWMBase(
+      &htim1, LEFT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  motor2 = new control::MotorPWMBase(
+      &htim1, RIGHT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  motor1->SetOutput(0);
+  motor2->SetOutput(0);
+  // Snail need to be run at idle throttle for some
+  osDelay(3000); 
 }
 
-void BoolEdgeDetector::input(bool signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  if (!prev_ && signal) 
-    posEdge_ = true;
-  else if (prev_ && !signal) 
-    negEdge_ = true;
-  prev_ = signal;
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
+  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+
+  while (true) {
+    if (key.Read()) {
+      motor1->SetOutput(300);
+      motor2->SetOutput(300);
+    } else {
+      motor1->SetOutput(0);
+      motor2->SetOutput(0);
+    }
+    osDelay(1000);
+  }
 }
-
-bool BoolEdgeDetector::edge() { return posEdge_ || negEdge_; }
-
-bool BoolEdgeDetector::posEdge() { return posEdge_; }
-
-bool BoolEdgeDetector::negEdge() { return negEdge_; }
-
-FloatEdgeDetector::FloatEdgeDetector(float initial, float threshold) {
-  prev_ = initial;
-  threshold_ = threshold;
-}
-
-void FloatEdgeDetector::input(float signal) {
-  posEdge_ = false;
-  negEdge_ = false;
-  float diff = signal - prev_;
-  if (diff > threshold_)
-    posEdge_ = true;
-  else if (diff < -threshold_)
-    negEdge_ = true;
-  prev_ = signal;
-}
-
-bool FloatEdgeDetector::edge() { return posEdge_ || negEdge_; }
-
-bool FloatEdgeDetector::posEdge() { return posEdge_; }
-
-bool FloatEdgeDetector::negEdge() { return negEdge_; }

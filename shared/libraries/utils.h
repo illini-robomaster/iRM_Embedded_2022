@@ -54,3 +54,52 @@ T wrap(T value, T min, T max) {
   const T range = max - min;
   return value < min ? value + range : (value > max ? value - range : value);
 }
+
+class BoolEdgeDetector {
+  public:
+    BoolEdgeDetector(bool initial);
+    void input(bool signal);
+    bool edge();
+    bool posEdge();
+    bool negEdge();
+  private:
+
+    bool prev_;
+    bool posEdge_;
+    bool negEdge_;
+};
+
+class FloatEdgeDetector {
+  public:
+    FloatEdgeDetector(float initial, float threshold);
+    void input(float signal);
+    bool edge();
+    bool posEdge();
+    bool negEdge();
+  private:
+
+    float prev_;
+    float threshold_;
+    bool posEdge_;
+    bool negEdge_;
+};
+
+/** @defgroup Transmission magic numbers
+* @{
+*/
+#define MESSAGE_HEADER_GIMBAL_REL   0xAA
+#define MESSAGE_HEADER_GIMBAL_ABS   0xAB
+
+
+#define MESSAGE_END                 0xFF
+/**
+  * @}
+  */
+
+// typedef struct data_pact {
+//   uint8_t msg_header; 
+//   uint64_t len;
+//   uint8_t[] msg;
+//   uint8_t msg_end;
+// } __packed;
+

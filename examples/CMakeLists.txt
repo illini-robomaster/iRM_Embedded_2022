@@ -19,15 +19,17 @@
 # ---------------------------------------------------------------------- #
 
 add_subdirectory(buzzer)
+add_subdirectory(chassis)
 add_subdirectory(dbus)
 add_subdirectory(eigen)
+add_subdirectory(gimbal)
 add_subdirectory(imu)
 add_subdirectory(led)
 add_subdirectory(motor)
 add_subdirectory(sdio)
+add_subdirectory(turret)
 add_subdirectory(uart)
 add_subdirectory(usb)
-add_subdirectory(chassis)
 add_subdirectory(shooter)
 add_subdirectory(rtos)
 add_subdirectory(laser)
