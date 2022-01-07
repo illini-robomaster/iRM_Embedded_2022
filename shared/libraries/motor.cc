@@ -232,6 +232,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
   wrap_detector_ = new FloatEdgeDetector(align_angle_, PI);
   hold_detector_ = new BoolEdgeDetector(false);
 
+  // dir_ is initialized here
   SetDirUsingMode_(servo.mode);
 }
 

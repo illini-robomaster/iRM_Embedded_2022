@@ -28,8 +28,8 @@
 #define LASER_GPIO_Port GPIOG
 
 bsp::CAN* can = nullptr;
-control::MotorCANBase* left_acc_motor = nullptr;
-control::MotorCANBase* right_acc_motor = nullptr;
+control::MotorCANBase* left_fly_motor = nullptr;
+control::MotorCANBase* right_fly_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
 
 remote::DBUS* dbus = nullptr;
@@ -40,8 +40,8 @@ void RM_RTOS_Init() {
 	dbus = new remote::DBUS(&huart1);
 
 	can = new bsp::CAN(&hcan1, 0x201);
-	left_acc_motor = new control::Motor3508(can, 0x201);
-	right_acc_motor = new control::Motor3508(can, 0x202);
+	left_fly_motor = new control::Motor3508(can, 0x201);
+	right_fly_motor = new control::Motor3508(can, 0x202);
 	load_motor = new control::Motor3508(can, 0x203);
 
 	control::servo_t servo_data;
@@ -59,10 +59,10 @@ void RM_RTOS_Init() {
 
 	control::shooter_t shooter_data;
 	shooter_data.acc_using_can_motor = true;
-	shooter_data.left_acc_can_motor = left_acc_motor;
-	shooter_data.right_acc_can_motor = right_acc_motor;
-	shooter_data.left_acc_motor_invert = false;
-	shooter_data.right_acc_motor_invert = true;
+	shooter_data.left_fly_can_motor = left_fly_motor;
+	shooter_data.right_fly_can_motor = right_fly_motor;
+	shooter_data.left_fly_motor_invert = false;
+	shooter_data.right_fly_motor_invert = true;
 	shooter_data.load_servo = load_servo;
 	shooter_data.acc_Kp = 80;
 	shooter_data.acc_Ki = 3;
@@ -75,12 +75,12 @@ void RM_RTOS_Default_Task(const void* args) {
 	UNUSED(args);
 	osDelay(500); // DBUS initialization needs time
 	
-  control::MotorCANBase* motors[] = {left_acc_motor, right_acc_motor, load_motor};
+  control::MotorCANBase* motors[] = {left_fly_motor, right_fly_motor, load_motor};
 	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
 	laser.High();
 
 	while (true) {
-		shooter->SetAccSpeed(dbus->ch1);
+		shooter->SetFlywheelSpeed(dbus->ch1);
 		if (dbus->ch3 > 500)
 			shooter->LoadNext();
 		shooter->CalcOutput();

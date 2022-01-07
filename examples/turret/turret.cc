@@ -56,8 +56,8 @@
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
-control::MotorPWMBase* left_acc_motor = nullptr;
-control::MotorPWMBase* right_acc_motor = nullptr;
+control::MotorPWMBase* left_fly_motor = nullptr;
+control::MotorPWMBase* right_fly_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
 BoolEdgeDetector shoot_detector(false);
 BoolEdgeDetector load_detector(false);
@@ -75,8 +75,8 @@ void RM_RTOS_Init() {
   can = new bsp::CAN(&hcan1, 0x205);
   pitch_motor = new control::Motor6020(can, 0x205);
   yaw_motor = new control::Motor6020(can, 0x206);
-  left_acc_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
-  right_acc_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
+  left_fly_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
+  right_fly_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
   load_motor = new control::Motor2006(can, 0x207);
 
   control::servo_t servo_data;
@@ -117,8 +117,8 @@ void RM_RTOS_Init() {
   
   control::shooter_t shooter_data;
   shooter_data.acc_using_can_motor = false;
-  shooter_data.left_acc_pwm_motor = left_acc_motor;
-  shooter_data.right_acc_pwm_motor = right_acc_motor;
+  shooter_data.left_fly_pwm_motor = left_fly_motor;
+  shooter_data.right_fly_pwm_motor = right_fly_motor;
   shooter_data.load_servo = load_servo;
   shooter_data.acc_Kp = 80;
   shooter_data.acc_Ki = 3;
@@ -178,9 +178,9 @@ void RM_RTOS_Default_Task(const void* args) {
     //    Mid for shoot motor stop
     shoot_detector.input(dbus->swl == remote::UP);
     if (shoot_detector.posEdge()) {
-      shooter->SetAccSpeed(150);
+      shooter->SetFlywheelSpeed(150);
     } else if (shoot_detector.negEdge()) {
-      shooter->SetAccSpeed(0);
+      shooter->SetFlywheelSpeed(0);
     } 
 
     // Calculate and send command

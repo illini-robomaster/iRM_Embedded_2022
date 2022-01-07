@@ -30,14 +30,14 @@ namespace control {
  */
 typedef struct {
   bool acc_using_can_motor;					 /* if accelerate motors are using CAN protocal  */
-  MotorCANBase* left_acc_can_motor;	 /* CAN motor instance of left accelerate motor  */
-  MotorCANBase* right_acc_can_motor; /* CAN motor instance of right accelerate motor */
-  MotorPWMBase* left_acc_pwm_motor;	 /* PWM motor instance of left accelerate motor  */
-  MotorPWMBase* right_acc_pwm_motor; /* PWM motor instance of right accelerate motor */
-  bool left_acc_motor_invert;				 /* if left accelrate motor is inverted					 */
-  bool right_acc_motor_invert;			 /* if right accelrate motor is inverted				 */
+  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left accelerate motor  */
+  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right accelerate motor */
+  MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left accelerate motor  */
+  MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right accelerate motor */
+  bool left_fly_motor_invert;				 /* if left flywheel motor is inverted           */
+  bool right_fly_motor_invert;			 /* if right flywheel motor is inverted          */
   ServoMotor* load_servo;            /* servomotor instance of load motor            */
-  float acc_Kp;                      /* Kp of pid controlling accelerate motor speed */ 
+  float acc_Kp;                      /* Kp of pid controlling accelerate motor speed */
   float acc_Ki;                      /* Ki of pid controlling accelerate motor speed */
   float acc_Kd;                      /* Kd of pid controlling accelerate motor speed */
   float load_step_angle;             /* step size of loading motor, in [rad]         */
@@ -60,7 +60,7 @@ public:
    * 
    * @param speed 
    */
-  void SetAccSpeed(float speed);
+  void SetFlywheelSpeed(float speed);
 
   /**
    * @brief load the next bullet
@@ -77,20 +77,20 @@ public:
 
 private:
   bool acc_using_can_motor_;
-  MotorCANBase* left_acc_can_motor_;
-  MotorCANBase* right_acc_can_motor_;
-  MotorPWMBase* left_acc_pwm_motor_;
-  MotorPWMBase* right_acc_pwm_motor_;
-  bool left_acc_motor_invert_;
-  bool right_acc_motor_invert_;
+  MotorCANBase* left_fly_can_motor_;
+  MotorCANBase* right_fly_can_motor_;
+  MotorPWMBase* left_fly_pwm_motor_;
+  MotorPWMBase* right_fly_pwm_motor_;
+  bool left_fly_motor_invert_;
+  bool right_fly_motor_invert_;
   ServoMotor* load_servo_;
   float load_step_angle_;
 
   PIDController left_pid_;
   PIDController right_pid_;
 
-  float left_acc_speed_;
-  float right_acc_speed_;
+  float left_fly_speed_;
+  float right_fly_speed_;
   float load_angle_;
 };
 
