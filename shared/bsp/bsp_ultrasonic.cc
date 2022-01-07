@@ -54,7 +54,7 @@ namespace bsp {
         }
       }
       curr = timer_->CNT;
-      return (curr - base) / 2.0 * 0.0343;
+      return (curr - base) / 2.0 * SOUND_SPEED_CM_PER_US;
     }
 
 }
