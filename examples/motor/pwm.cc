@@ -27,23 +27,32 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
+// Refer to typeA datasheet for channel detail 
+#define LEFT_MOTOR_PWM_CHANNEL    1
+#define RIGHT_MOTOR_PWM_CHANNEL   4
+#define TIM_CLOCK_FREQ            1000000
+#define MOTOR_OUT_FREQ            500
+#define SNAIL_IDLE_THROTTLE       1080
+
 control::MotorPWMBase* motor1;
 control::MotorPWMBase* motor2;
 
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  motor1 = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
-  motor2 = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
+  motor1 = new control::MotorPWMBase(
+      &htim1, LEFT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  motor2 = new control::MotorPWMBase(
+      &htim1, RIGHT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
   motor1->SetOutput(0);
   motor2->SetOutput(0);
-  osDelay(3000);
+  // Snail need to be run at idle throttle for some
+  osDelay(3000); 
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
-  motor2->SetOutput(5);
 
   while (true) {
     if (key.Read()) {

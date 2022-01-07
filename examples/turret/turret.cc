@@ -50,8 +50,10 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define NOTCH         (2 * PI / 8)
-#define SERVO_SPEED   (2 * PI)
+#define NOTCH               (2 * PI / 8)
+#define SERVO_SPEED         (2 * PI)
+#define GIMBAL_SPEED        PI
+#define JOYSTICK_THRESHOLD  500
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
@@ -75,6 +77,7 @@ void RM_RTOS_Init() {
   can = new bsp::CAN(&hcan1, 0x205);
   pitch_motor = new control::Motor6020(can, 0x205);
   yaw_motor = new control::Motor6020(can, 0x206);
+  // See pwm example
   left_fly_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
   right_fly_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
   load_motor = new control::Motor2006(can, 0x207);
@@ -147,23 +150,25 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 
     // Toggle gimbal control absolute or relative mode
+    // 
     //    To toggle push right joystick left or right to the end
-    abs_detector.input(dbus->ch0 <= -500 || dbus->ch0 >= 500);
+    abs_detector.input(dbus->ch0 <= -JOYSTICK_THRESHOLD || dbus->ch0 >= JOYSTICK_THRESHOLD);
     if (abs_detector.posEdge()) {
       abs_mode = !abs_mode;
     }
-    float pitch_ratio = -dbus->ch3 / 600.0;
-    float yaw_ratio = -dbus->ch2 / 600.0;
+    float pitch_ratio = -dbus->ch3 / remote::DBUS::ROCKER_MAX;
+    float yaw_ratio = -dbus->ch2 / remote::DBUS::ROCKER_MAX;
     if (abs_mode) {
       gimbal->TargetAbs(pitch_ratio * LEGACY_GIMBAL_PMAX, yaw_ratio * LEGACY_GIMBAL_YMAX);
     } else {
-      gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
+      // divide by 100 since osDelay is 10
+      gimbal->TargetRel(pitch_ratio * GIMBAL_SPEED / 100, yaw_ratio * GIMBAL_SPEED / 100);
     }
 
     // Toggle load control contigious or single shot on right switch
     //    Up for contiguous load
     //    Mid for load per right joystick pushed up
-    bool load_trigger = dbus->ch1 >= 200;
+    bool load_trigger = dbus->ch1 >= JOYSTICK_THRESHOLD;
     load_detector.input(load_trigger);
     if (dbus->swr == remote::UP) {
       load = load_trigger;
