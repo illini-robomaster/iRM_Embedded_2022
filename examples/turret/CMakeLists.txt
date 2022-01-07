@@ -18,8 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_combined ASM C CXX)
+project(example_turret ASM C CXX)
 
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
-    SOURCES gimbal&shooter.cc)
+    SOURCES turret.cc)
