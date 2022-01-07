@@ -116,13 +116,13 @@ void RM_RTOS_Init() {
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
-  shooter_data.acc_using_can_motor = false;
+  shooter_data.fly_using_can_motor = false;
   shooter_data.left_fly_pwm_motor = left_fly_motor;
   shooter_data.right_fly_pwm_motor = right_fly_motor;
   shooter_data.load_servo = load_servo;
-  shooter_data.acc_Kp = 80;
-  shooter_data.acc_Ki = 3;
-  shooter_data.acc_Kd = 0.1;
+  shooter_data.fly_Kp = 80;
+  shooter_data.fly_Ki = 3;
+  shooter_data.fly_Kd = 0.1;
   shooter_data.load_step_angle = 2 * PI / 8;
   shooter = new control::Shooter(shooter_data);  
 

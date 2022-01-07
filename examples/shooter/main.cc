@@ -58,15 +58,15 @@ void RM_RTOS_Init() {
 	load_servo = new control::ServoMotor(servo_data);
 
 	control::shooter_t shooter_data;
-	shooter_data.acc_using_can_motor = true;
+	shooter_data.fly_using_can_motor = true;
 	shooter_data.left_fly_can_motor = left_fly_motor;
 	shooter_data.right_fly_can_motor = right_fly_motor;
 	shooter_data.left_fly_motor_invert = false;
 	shooter_data.right_fly_motor_invert = true;
 	shooter_data.load_servo = load_servo;
-	shooter_data.acc_Kp = 80;
-	shooter_data.acc_Ki = 3;
-	shooter_data.acc_Kd = 0.1;
+	shooter_data.fly_Kp = 80;
+	shooter_data.fly_Ki = 3;
+	shooter_data.fly_Kd = 0.1;
 	shooter_data.load_step_angle = PI / 8;
 	shooter = new control::Shooter(shooter_data);
 }

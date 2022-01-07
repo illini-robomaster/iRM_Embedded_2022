@@ -22,10 +22,10 @@
 
 namespace control {
 	Shooter::Shooter(shooter_t shooter):
-			left_pid_(PIDController(shooter.acc_Kp, shooter.acc_Ki, shooter.acc_Kd)),
-			right_pid_(PIDController(shooter.acc_Kp, shooter.acc_Ki, shooter.acc_Kd)) {
-		acc_using_can_motor_ = shooter.acc_using_can_motor;
-		if (shooter.acc_using_can_motor) {
+			left_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
+			right_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)) {
+		fly_using_can_motor_ = shooter.fly_using_can_motor;
+		if (shooter.fly_using_can_motor) {
 			left_fly_can_motor_ = shooter.left_fly_can_motor;
 			right_fly_can_motor_ = shooter.right_fly_can_motor;
 			left_fly_motor_invert_ = shooter.left_fly_motor_invert;
@@ -43,7 +43,7 @@ namespace control {
 	}
 
 	void Shooter::SetFlywheelSpeed(float speed) {
-		if (acc_using_can_motor_) {
+		if (fly_using_can_motor_) {
 			left_fly_speed_ = left_fly_motor_invert_ ? -speed : speed;
 			right_fly_speed_ = right_fly_motor_invert_ ? -speed : speed;
 		} else {
@@ -61,7 +61,7 @@ namespace control {
 	}
 
 	void Shooter::CalcOutput() {
-		if (acc_using_can_motor_) {
+		if (fly_using_can_motor_) {
 			float left_diff = left_fly_can_motor_->GetOmegaDelta(left_fly_speed_);
 			float right_diff = right_fly_can_motor_->GetOmegaDelta(right_fly_speed_);
 			left_fly_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));

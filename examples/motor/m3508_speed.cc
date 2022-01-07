@@ -18,6 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
+// If want controller to be used
 #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
@@ -34,8 +35,12 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
+#ifdef WITH_CONTROLLER
+#define TARGET_SPEED 160
+#else
 #define TARGET_SPEED1 0
 #define TARGET_SPEED2 80
+#endif
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -75,9 +80,9 @@ void RM_RTOS_Default_Task(const void* args) {
   while (true) {
 #ifdef WITH_CONTROLLER
     if (dbus->ch3 > 10) {
-      target = 160;
+      target = TARGET_SPEED;
     } else if (dbus->ch3 < -10) {
-      target = -160;
+      target = -TARGET_SPEED;
     } else {
       target = 0;
     }

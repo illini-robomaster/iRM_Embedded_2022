@@ -29,18 +29,18 @@ namespace control {
  * @brief structure used when shooter instance is initialized
  */
 typedef struct {
-  bool acc_using_can_motor;					 /* if accelerate motors are using CAN protocal  */
-  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left accelerate motor  */
-  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right accelerate motor */
-  MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left accelerate motor  */
-  MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right accelerate motor */
-  bool left_fly_motor_invert;				 /* if left flywheel motor is inverted           */
-  bool right_fly_motor_invert;			 /* if right flywheel motor is inverted          */
-  ServoMotor* load_servo;            /* servomotor instance of load motor            */
-  float acc_Kp;                      /* Kp of pid controlling accelerate motor speed */
-  float acc_Ki;                      /* Ki of pid controlling accelerate motor speed */
-  float acc_Kd;                      /* Kd of pid controlling accelerate motor speed */
-  float load_step_angle;             /* step size of loading motor, in [rad]         */
+  bool fly_using_can_motor;					 /* if flywheel motors are using CAN protocal   */
+  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left flywheel motor   */
+  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right flywheel motor  */
+  MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left flywheel motor   */
+  MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right flywheel motor  */
+  bool left_fly_motor_invert;				 /* if left flywheel motor is inverted          */
+  bool right_fly_motor_invert;			 /* if right flywheel motor is inverted         */
+  ServoMotor* load_servo;            /* servomotor instance of load motor           */
+  float fly_Kp;                      /* Kp of pid controlling flywheel motor speed  */
+  float fly_Ki;                      /* Ki of pid controlling flywheel motor speed  */
+  float fly_Kd;                      /* Kd of pid controlling flywheel motor speed  */
+  float load_step_angle;             /* step size of loading motor, in [rad]        */
 } shooter_t;
 
 /**
@@ -76,7 +76,7 @@ public:
   void CalcOutput();
 
 private:
-  bool acc_using_can_motor_;
+  bool fly_using_can_motor_;
   MotorCANBase* left_fly_can_motor_;
   MotorCANBase* right_fly_can_motor_;
   MotorPWMBase* left_fly_pwm_motor_;

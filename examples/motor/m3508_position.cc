@@ -88,6 +88,7 @@ void RM_RTOS_Default_Task(const void* args) {
   while (true) {
     print("%d %d", dbus->ch3, dbus->ch2);
 #ifdef WITH_CONTROLLER
+    // joystick input range from -660 to 660
     joystick_detector_abv.input(dbus->ch3 > 500);
     joystick_detector_rgt.input(dbus->ch2 < -500);
     joystick_detector_btm.input(dbus->ch3 < -500);
@@ -112,11 +113,7 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 #endif
     servo->CalcOutput();
-    static int i = 0;
-    if (++i >= 5) {
-      servo->PrintData();
-      i = 0;
-    }
+    servo->PrintData();
     control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(10);
   }
