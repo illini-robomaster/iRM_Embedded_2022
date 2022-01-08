@@ -41,8 +41,6 @@ void RM_RTOS_Init(void) {
 	                                  ULTRASONIC2_Echo_GPIO_Port,
 	                                  ULTRASONIC2_Echo_Pin,
 	                                  TIM2);
-
-
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
