@@ -19,8 +19,7 @@
  ****************************************************************************/
 
 #include "bsp_ultrasonic.h"
-#define TIME_OUT 12000
-#define SOUND_SPEED_CM_PER_US 0.0343
+
 namespace bsp {
 
     Ultrasonic::Ultrasonic(GPIO_TypeDef* trig_group,
@@ -33,6 +32,8 @@ namespace bsp {
     timer_(timer) {}
 
     float Ultrasonic::GetDistance() {
+      constexpr int TIME_OUT = 12000;
+      constexpr float SOUND_SPEED_CM_PER_US = 0.0343;
       uint32_t base = timer_->CNT;
       uint32_t curr = base;
       trig_.High();
@@ -49,7 +50,7 @@ namespace bsp {
       base = timer_->CNT;
       // when the echo is received, echo turned to 0.
       while(echo_.Read()) {
-        if ((timer_->CNT - base) > TIME_OUT ) {
+        if ((timer_->CNT - base) > TIME_OUT) {
           return -1;
         }
       }
