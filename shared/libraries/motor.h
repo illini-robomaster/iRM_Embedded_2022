@@ -56,6 +56,7 @@ class MotorCANBase : public MotorBase {
 
   /**
    * @brief update motor feedback data
+   * @note only used in CAN callback, do not call elsewhere
    *
    * @param data[]  raw data bytes
    */
@@ -69,7 +70,7 @@ class MotorCANBase : public MotorBase {
   /**
    * @brief get motor angle, in [rad]
    *
-   * @return radian angle
+   * @return radian angle, range between [0, 2PI]
    */
   virtual float GetTheta() const;
 
@@ -78,7 +79,7 @@ class MotorCANBase : public MotorBase {
    *
    * @param target  target angle, in [rad]
    *
-   * @return angle difference
+   * @return angle difference, range between [-PI, PI]
    */
   virtual float GetThetaDelta(const float target) const;
 
@@ -105,6 +106,13 @@ class MotorCANBase : public MotorBase {
    * @param num_motors  number of motors to transmit
    */
   static void TransmitOutput(MotorCANBase* motors[], uint8_t num_motors);
+
+  /**
+   * @brief set ServoMotor and AntiJam as friend of MotorCANBase since they need to use
+   *        many of the private parameters of MotorCANBase.
+   */
+  friend class ServoMotor;
+  friend class AntiJam;
 
  protected:
   volatile float theta_;
@@ -240,7 +248,9 @@ class Motor2305 : public MotorPWMBase {
 };
 
 /**
- * @enum Servomotor turning mode
+ * @enum servomotor turning mode
+ * @note the turning direction is determined as if user is facing the motor, may subject to 
+ *       change depending on motor type
  */
 typedef enum {
   SERVO_CLOCKWISE       = -1,   /* Servomotor always turn clockwisely                      */
@@ -249,7 +259,9 @@ typedef enum {
 } servo_mode_t;
 
 /**
- * @brief servomotor turning mode
+ * @brief servomotor status
+ * @note the turning direction is determined as if user is facing the motor, may subject to 
+ *       change depending on motor type
  */
 typedef enum {
   TURNING_CLOCKWISE     = -1,   /* Servomotor is turning clockwisely         */
@@ -281,135 +293,147 @@ typedef struct {
 
 /**
  * @brief wrapper class for motor to enable it to be controlled as a servomotor
- * @note the sampling frequency (the frequency of calling CalcOutput) should be high enough (refer to
- *       Nyquist sampling frequency) and input PID should not be to "hard", otherwise the calculations 
- *       could be wrong.
  */
 class ServoMotor {
-  public:
-    /**
-     * @brief base constructor
-     *
-     * @param servo     initialization struct, refer to type servo_t
-     * @param proximity critical difference angle for the motor to stop turining when approaching target
-     */
-    ServoMotor(servo_t servo, float proximity = 0.1);
+ public:
+  /**
+   * @brief base constructor
+   *
+   * @param servo     initialization struct, refer to type servo_t
+   * @param proximity critical difference angle for the motor to stop turining when approaching target
+   */
+  ServoMotor(servo_t servo, float proximity = 0.1);
 
-    /**
-     * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-     * 
-     * @param target next target for the motor in [rad]
-     * @return int   current turning mode of motor, refer to type servo_status_t
-     */
-    int SetTarget(const float target, bool override = false);
+  /**
+   * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+   * 
+   * @param target next target for the motor in [rad]
+   * @return servo_status_t current turning mode of motor
+   */
+  servo_status_t SetTarget(const float target, bool override = false);
 
-    /**
-     * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-     * 
-     * @param target next target for the motor in [rad]
-     * @param mode   servomotor turning mode override, will only have one-time effect
-     * @return int   current turning mode of motor, refer to type servo_status_t
-     */
-    int SetTarget(const float target, const servo_mode_t mode, bool override = false);
+  /**
+   * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+   * 
+   * @param target next target for the motor in [rad]
+   * @param mode   servomotor turning mode override, will only have one-time effect
+   * @return servo_status_t current turning mode of motor
+   */
+  servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
-    /**
-     * @brief set turning speed of motor when moving, should always be positive
-     * 
-     * @param speed speed of desired turning speed, in [rad/s]
-     */
-    void SetSpeed(const float speed);
+  /**
+   * @brief set turning speed of motor when moving, should always be positive
+   * 
+   * @param speed speed of desired turning speed, in [rad/s]
+   */
+  void SetSpeed(const float speed);
 
-    /**
-     * @brief calculate the output of the motors under current configuration
-     * @note should have high calling frequency to ensure best result
-     * @note this function will not transmit output to motor, it only calculate the desired input
-     */
-    void CalcOutput();
+  /**
+   * @brief calculate the output of the motors under current configuration
+   * @note this function will not transmit output to motor, it only calculate the desired input
+   */
+  void CalcOutput();
 
-    /**
-     * @brief if the motor is holding
-     * 
-     * @return true  the motor is in holding state (i.e. not turning)
-     * @return false the motor is not holding (i.e. turning)
-     */
-    bool Holding() const;
+  /**
+   * @brief if the motor is holding
+   * 
+   * @return true  the motor is in holding state (i.e. not turning)
+   * @return false the motor is not holding (i.e. turning)
+   */
+  bool Holding() const;
 
-    /**
-     * @brief print out motor data
-     */
-    void PrintData() const;
+  /**
+   * @brief print out motor data
+   */
+  void PrintData() const;
 
-    /**
-     * @brief get motor angle, in [rad]
-     *
-     * @return radian angle
-     */
-    float GetTheta() const;
+  /**
+   * @brief get motor angle, in [rad]
+   *
+   * @return radian angle, range between [0, 2PI]
+   */
+  float GetTheta() const;
 
-    /**
-     * @brief get angle difference (target - actual), in [rad]
-     *
-     * @param target  target angle, in [rad]
-     *
-     * @return angle difference
-     */
-    float GetThetaDelta(const float target) const;
+  /**
+   * @brief get angle difference (target - actual), in [rad]
+   *
+   * @param target  target angle, in [rad]
+   *
+   * @return angle difference, range between [-PI, PI]
+   */
+  float GetThetaDelta(const float target) const;
 
-    /**
-     * @brief get angular velocity, in [rad / s]
-     *
-     * @return angular velocity
-     */
-    float GetOmega() const;
+  /**
+   * @brief get angular velocity, in [rad / s]
+   *
+   * @return angular velocity
+   */
+  float GetOmega() const;
 
-    /**
-     * @brief get angular velocity difference (target - actual), in [rad / s]
-     *
-     * @param target  target angular velocity, in [rad / s]
-     *
-     * @return difference angular velocity
-     */
-    float GetOmegaDelta(const float target) const;
+  /**
+   * @brief get angular velocity difference (target - actual), in [rad / s]
+   *
+   * @param target  target angular velocity, in [rad / s]
+   *
+   * @return difference angular velocity
+   */
+  float GetOmegaDelta(const float target) const;
 
-  private:
-    MotorCANBase* motor_;
-    servo_mode_t mode_;
-    float speed_;
-    float transmission_ratio_;
-    float proximity_;
+  /**
+   * @brief update the current theta for the servomotor
+   * @note only used in CAN callback, do not call elsewhere
+   * 
+   * @param data[]  raw data bytes
+   */
+  void UpdateData(const uint8_t data[]);
 
-    bool hold_;
-    float target_;
-    float align_angle_;
-    float motor_angle_;
-    float offset_angle_;
-    float servo_angle_;
-    int dir_;    
+ private:
+  MotorCANBase* motor_;
+  servo_mode_t mode_;
+  float speed_;
+  float transmission_ratio_;
+  float proximity_;
 
-    PIDController move_pid_;
-    PIDController hold_pid_;
+  bool hold_;
+  float target_;
+  float align_angle_;
+  float motor_angle_;
+  float offset_angle_;
+  float servo_angle_;
+  servo_status_t dir_;    
 
-    FloatEdgeDetector* wrap_detector_;
-    BoolEdgeDetector* hold_detector_;
+  PIDController move_pid_;
+  PIDController hold_pid_;
 
-    /**
-     * @brief update the current theta for the servomotor
-     */
-    void AngleUpdate_();
+  FloatEdgeDetector* wrap_detector_;
+  BoolEdgeDetector* hold_detector_;
 
-    /**
-     * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
-     * 
-     */
-    void NearestModeSetDir_();
+  /**
+   * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
+   * 
+   */
+  void NearestModeSetDir_();
 
-    /**
-     * @brief set turning direction of the motor using specified turning mode
-     * 
-     * @param mode mode of servomotor, refer to type servo_mode_t
-     */
-    void SetDirUsingMode_(servo_mode_t mode);
+  /**
+   * @brief set turning direction of the motor using specified turning mode
+   * 
+   * @param mode mode of servomotor, refer to type servo_mode_t
+   */
+  void SetDirUsingMode_(servo_mode_t mode);
   
+};
+
+typedef void (*jam_callback_t)();
+
+typedef struct {
+  MotorCANBase* motor;
+
+  void* jam_callback;
+} antijam_t;
+
+class AntiJam {
+  public:
+    AntiJam();
 };
 
 } /* namespace control */

@@ -33,6 +33,11 @@ static void can_motor_callback(const uint8_t data[], void* args) {
   motor->UpdateData(data);
 }
 
+static void servomotor_callback(const uint8_t data[], void* args) {
+  ServoMotor* servo = reinterpret_cast<ServoMotor*>(args);
+  servo->UpdateData(data);
+}
+
 MotorCANBase::MotorCANBase(bsp::CAN* can, uint16_t rx_id)
     : theta_(0), omega_(0), can_(can), rx_id_(rx_id) {
   constexpr uint16_t GROUP_SIZE = 4;
@@ -225,7 +230,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 
   hold_ = true;
   target_ = 0;
-  align_angle_ = motor_->GetTheta();
+  align_angle_ = motor_->theta_;
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
@@ -234,9 +239,12 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 
   // dir_ is initialized here
   SetDirUsingMode_(servo.mode);
+
+  // override origianal motor rx callback with servomotor callback
+  servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
 }
 
-int ServoMotor::SetTarget(const float target, bool override) {
+servo_status_t ServoMotor::SetTarget(const float target, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
   target_ = wrap<float>(target, -PI, PI);
@@ -247,7 +255,7 @@ int ServoMotor::SetTarget(const float target, bool override) {
   return dir_;
 }
 
-int ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
+servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
   target_ = wrap<float>(target, -PI, PI);
@@ -261,11 +269,6 @@ void ServoMotor::SetSpeed(const float speed) {
 }
 
 void ServoMotor::CalcOutput() {
-  AngleUpdate_();
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  if (abs(diff_angle) < proximity_)
-    hold_ = true;
-
   hold_detector_->input(hold_);
   if (hold_detector_->edge())
     move_pid_.Reset();
@@ -274,7 +277,9 @@ void ServoMotor::CalcOutput() {
   
   int16_t command;
   if (hold_) {
-    float out = hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
+    float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+    float out = 0;
+    out += hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
     out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
     command = clip<float>((int) out, -32768, 32767);
   } else {
@@ -289,8 +294,8 @@ bool ServoMotor::Holding() const {
 
 void ServoMotor::PrintData() const { 
   print("servo theta: %.4f ", servo_angle_);
-  print("servo omega: %.4f\r\n", GetOmega());
-  // motor_->PrintData();
+  print("servo omega: %.4f ", GetOmega());
+  motor_->PrintData();
 }
 
 float ServoMotor::GetTheta() const { return servo_angle_; }
@@ -300,33 +305,38 @@ float ServoMotor::GetThetaDelta(const float target) const {
 }
 
 float ServoMotor::GetOmega() const { return motor_->GetOmega() / transmission_ratio_; }
+
 float ServoMotor::GetOmegaDelta(const float target) const { 
   return target - motor_->GetOmega() / transmission_ratio_;
 }
 
-void ServoMotor::AngleUpdate_() {
-  motor_angle_ = wrap<float>(motor_->GetTheta() - align_angle_, -PI, PI);
+void ServoMotor::UpdateData(const uint8_t data[]) {
+  motor_->UpdateData(data);
+  motor_angle_ = wrap<float>(motor_->theta_ - align_angle_, -PI, PI);
   wrap_detector_->input(motor_angle_);
   if (wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, -PI, PI);
   else if (wrap_detector_->posEdge())
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, -PI, PI);
   servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
+
+  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+  if (abs(diff_angle) < proximity_)
+    hold_ = true;
 }
 
 void ServoMotor::NearestModeSetDir_() {
-  AngleUpdate_();
   float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  dir_ = diff_angle > 0 ? 1 : -1;
+  dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
 }
 
 void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
   if (mode == SERVO_ANTICLOCKWISE) {
-    dir_ = 1;
+    dir_ = TURNING_ANTICLOCKWISE;
   } else if (mode == SERVO_NEAREST) {
     NearestModeSetDir_();
   } else if (mode == SERVO_CLOCKWISE) {
-    dir_ = -1;
+    dir_ = TURNING_CLOCKWISE;
   } else {
     RM_ASSERT_TRUE(false, "Invalid servo turining mode");
   }
