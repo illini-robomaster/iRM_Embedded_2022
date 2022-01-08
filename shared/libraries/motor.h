@@ -248,7 +248,7 @@ class Motor2305 : public MotorPWMBase {
 };
 
 /**
- * @enum servomotor turning mode
+ * @brief servomotor turning mode
  * @note the turning direction is determined as if user is facing the motor, may subject to 
  *       change depending on motor type
  */
@@ -302,21 +302,25 @@ class ServoMotor {
    * @param servo     initialization struct, refer to type servo_t
    * @param proximity critical difference angle for the motor to stop turining when approaching target
    */
-  ServoMotor(servo_t servo, float proximity = 0.1);
+  ServoMotor(servo_t servo, float proximity = 0.05);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+   * @note if motor is not holding, call to this function will have no effect unless overridden
    * 
    * @param target next target for the motor in [rad]
+   * @param override if true, override current target even if motor is not holding right now 
    * @return servo_status_t current turning mode of motor
    */
   servo_status_t SetTarget(const float target, bool override = false);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
+   * @note if motor is not holding, call to this function will have no effect unless overridden
    * 
    * @param target next target for the motor in [rad]
    * @param mode   servomotor turning mode override, will only have one-time effect
+   * @param override if true, override current target even if motor is not holding right now 
    * @return servo_status_t current turning mode of motor
    */
   servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);

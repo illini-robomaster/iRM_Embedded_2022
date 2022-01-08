@@ -64,9 +64,9 @@ void RM_RTOS_Init() {
   servo_data.move_Kp = 30;
   servo_data.move_Ki = 10;
   servo_data.move_Kd = 40;
-  servo_data.hold_Kp = 500;
-  servo_data.hold_Ki = 25;
-  servo_data.hold_Kd = 30;
+  servo_data.hold_Kp = 1500;
+  servo_data.hold_Ki = 15;
+  servo_data.hold_Kd = 100;
   servo = new control::ServoMotor(servo_data);
 
 #ifdef WITH_CONTROLLER

@@ -102,10 +102,10 @@ void Motor3508::UpdateData(const uint8_t data[]) {
 }
 
 void Motor3508::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw temperature: %d ", raw_temperature_);
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw temperature: %3d ", raw_temperature_);
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor3508::SetOutput(int16_t val) {
@@ -130,10 +130,10 @@ void Motor6020::UpdateData(const uint8_t data[]) {
 }
 
 void Motor6020::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw temperature: %d ", raw_temperature_);
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw temperature: %3d ", raw_temperature_);
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor6020::SetOutput(int16_t val) {
@@ -155,9 +155,9 @@ void Motor6623::UpdateData(const uint8_t data[]) {
 }
 
 void Motor6623::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("raw current get: %d ", raw_current_get_);
-  print("raw current set: %d \r\n", raw_current_set_);
+  print("theta: % .4f ", GetTheta());
+  print("raw current get: % d ", raw_current_get_);
+  print("raw current set: % d \r\n", raw_current_set_);
 }
 
 void Motor6623::SetOutput(int16_t val) {
@@ -192,9 +192,9 @@ void Motor2006::UpdateData(const uint8_t data[]) {
 }
 
 void Motor2006::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor2006::SetOutput(int16_t val) {
@@ -293,8 +293,8 @@ bool ServoMotor::Holding() const {
 }
 
 void ServoMotor::PrintData() const { 
-  print("servo theta: %.4f ", servo_angle_);
-  print("servo omega: %.4f ", GetOmega());
+  print("servo theta: % .4f ", servo_angle_);
+  print("servo omega: % .4f ", GetOmega());
   motor_->PrintData();
 }
 
@@ -312,13 +312,13 @@ float ServoMotor::GetOmegaDelta(const float target) const {
 
 void ServoMotor::UpdateData(const uint8_t data[]) {
   motor_->UpdateData(data);
-  motor_angle_ = wrap<float>(motor_->theta_ - align_angle_, -PI, PI);
+  motor_angle_ = motor_->theta_ - align_angle_;
   wrap_detector_->input(motor_angle_);
   if (wrap_detector_->negEdge())
-    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, -PI, PI);
+    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
   else if (wrap_detector_->posEdge())
-    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, -PI, PI);
-  servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
+    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
+  servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
 
   float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
   if (abs(diff_angle) < proximity_)
