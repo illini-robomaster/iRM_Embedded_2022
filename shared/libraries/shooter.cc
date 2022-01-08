@@ -55,7 +55,7 @@ namespace control {
 	int Shooter::LoadNext() {
 		int val = load_servo_->SetTarget(load_angle_ + load_step_angle_);
 		if (val != 0) {
-			load_angle_ = wrap<float>(load_angle_ + load_step_angle_, -PI, PI);
+			load_angle_ = wrap<float>(load_angle_ + load_step_angle_, 0, 2 * PI);
 		}
 		return val;
 	}

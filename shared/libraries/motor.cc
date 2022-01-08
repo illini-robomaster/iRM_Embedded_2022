@@ -253,7 +253,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
-  target_ = wrap<float>(target, -PI, PI);
+  target_ = wrap<float>(target, 0, 2 * PI);
   SetDirUsingMode_(mode_);
   hold_ = false;
   return dir_;
@@ -262,7 +262,7 @@ servo_status_t ServoMotor::SetTarget(const float target, bool override) {
 servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
-  target_ = wrap<float>(target, -PI, PI);
+  target_ = wrap<float>(target, 0, 2 * PI);
   SetDirUsingMode_(mode);
   hold_ = false;
   return dir_;

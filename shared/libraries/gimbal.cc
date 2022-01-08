@@ -58,13 +58,13 @@ void Gimbal::CalcOutput() {
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {
-  pitch_angle_ = wrap<float>(clip<float>(abs_pitch, -pitch_max_, pitch_max_) + pitch_offset_, -PI, PI);
-  yaw_angle_ = wrap<float>(clip<float>(abs_yaw, -yaw_max_, yaw_max_) + yaw_offset_, -PI, PI);
+  pitch_angle_ = wrap<float>(clip<float>(abs_pitch, -pitch_max_, pitch_max_) + pitch_offset_, 0, 2 * PI);
+  yaw_angle_ = wrap<float>(clip<float>(abs_yaw, -yaw_max_, yaw_max_) + yaw_offset_, 0, 2 * PI);
 }
 
 void Gimbal::TargetRel(float rel_pitch, float rel_yaw) {
-  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- pitch_offset_, -PI, PI);
-  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- yaw_offset_, -PI, PI);
+  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- pitch_offset_, 0, 2 * PI);
+  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- yaw_offset_, 0, 2 * PI);
   TargetAbs(abs_pitch, abs_yaw);
 }
     
