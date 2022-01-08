@@ -1,3 +1,4 @@
+
 /****************************************************************************
  *                                                                          *
  *  Copyright (C) 2022 RoboMaster.                                          *
@@ -24,29 +25,42 @@
 #include "main.h"
 #include "tim.h"
 
-bsp::Ultrasonic* ultrasonic;
+bsp::Ultrasonic* ultrasonic1;
+bsp::Ultrasonic* ultrasonic2;
 
 void RM_RTOS_Init(void) {
 	print_use_uart(&huart8);
   HAL_TIM_Base_Start_IT(&htim2);
-  ultrasonic = new bsp::Ultrasonic(ULTRASONIC_Trig_GPIO_Port,
-                                   ULTRASONIC_Trig_Pin,
-                                   ULTRASONIC_Echo_GPIO_Port,
-                                   ULTRASONIC_Echo_Pin,
+  ultrasonic1 = new bsp::Ultrasonic(ULTRASONIC1_Trig_GPIO_Port,
+                                   ULTRASONIC1_Trig_Pin,
+                                   ULTRASONIC1_Echo_GPIO_Port,
+                                   ULTRASONIC1_Echo_Pin,
                                    TIM2);
+	ultrasonic2 = new bsp::Ultrasonic(ULTRASONIC2_Trig_GPIO_Port,
+	                                  ULTRASONIC2_Trig_Pin,
+	                                  ULTRASONIC2_Echo_GPIO_Port,
+	                                  ULTRASONIC2_Echo_Pin,
+	                                  TIM2);
+
+
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
 	UNUSED(arguments);
 
   while (true) {
-    float distance = ultrasonic->GetDistance();
+    float distance1 = ultrasonic1->GetDistance();
+		float distance2 = ultrasonic2->GetDistance();
     set_cursor(0, 0);
     clear_screen();
-    if (distance > 0) {
-      print("Distance: %.2f cm\r\n", distance);
+    if (distance1 > 0 && distance2 > 0) {
+      print("Distance1: %.2f cm   Distance2:  %.2f cm\r\n", distance1, distance2);
+    } else if (distance1 > 0 && distance2 < 0) {
+	    print("Distance1: %.2f cm   ERROR!!!\r\n", distance1);
+		} else if (distance2 > 0 && distance1 < 0) {
+	    print("ERROR!!!   Distance2: %.2f cm\r\n", distance2);
     } else {
-      print("ERROR!!!\r\n");
+      print("BOTH ERROR!!!\r\n");
     }
     osDelay(20);
   }

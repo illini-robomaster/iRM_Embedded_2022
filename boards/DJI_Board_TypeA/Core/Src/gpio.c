@@ -60,7 +60,7 @@ void MX_GPIO_Init(void)
                           |GPIO_PIN_1, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, OLED_DC_Pin|ULTRASONIC_Trig_Pin|OLED_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, OLED_DC_Pin|ULTRASONIC1_Trig_Pin|OLED_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, MOS_CTL1_Pin|MOS_CTL2_Pin|MOS_CTL3_Pin|MOS_CTL4_Pin, GPIO_PIN_SET);
@@ -69,7 +69,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6|LED_GREEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, LED_RED_Pin|ULTRASONIC2_Trig_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = MPU6500_IT_Pin;
@@ -91,6 +91,12 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PEPin PE5 */
   GPIO_InitStruct.Pin = POKER_IT_Pin|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PEPin PEPin */
+  GPIO_InitStruct.Pin = ULTRASONIC2_Echo_Pin|SD_EXTI_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
@@ -116,10 +122,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = ULTRASONIC_Echo_Pin;
+  GPIO_InitStruct.Pin = ULTRASONIC1_Echo_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(ULTRASONIC_Echo_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(ULTRASONIC1_Echo_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = USB_KEY_Pin;
@@ -135,17 +141,18 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(LED_RED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = ULTRASONIC_Trig_Pin;
+  GPIO_InitStruct.Pin = ULTRASONIC1_Trig_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(ULTRASONIC_Trig_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(ULTRASONIC1_Trig_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = SD_EXTI_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pin = ULTRASONIC2_Trig_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SD_EXTI_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(ULTRASONIC2_Trig_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
