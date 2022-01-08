@@ -108,11 +108,10 @@ class MotorCANBase : public MotorBase {
   static void TransmitOutput(MotorCANBase* motors[], uint8_t num_motors);
 
   /**
-   * @brief set ServoMotor and AntiJam as friend of MotorCANBase since they need to use
+   * @brief set ServoMotor as friend of MotorCANBase since they need to use
    *        many of the private parameters of MotorCANBase.
    */
   friend class ServoMotor;
-  friend class AntiJam;
 
  protected:
   volatile float theta_;
@@ -275,6 +274,9 @@ typedef enum {
 #define M3508P19_RATIO (3591.0 / 187) /* Transmission ratio of M3508P19 */
 #define M2006P36_RATIO 36             /* Transmission ratio of M2006P36 */
 
+class ServoMotor;
+typedef void (*jam_callback_t)(ServoMotor* servo);
+
 /**
  * @brief structure used when servomotor instance is initialized
  */
@@ -346,6 +348,12 @@ class ServoMotor {
    */
   bool Holding() const;
 
+  servo_status_t GetCurrentDir() const;
+
+  float GetCurrentTarget() const;
+
+  void RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold);
+
   /**
    * @brief print out motor data
    */
@@ -406,11 +414,19 @@ class ServoMotor {
   float servo_angle_;
   servo_status_t dir_;    
 
+  jam_callback_t jam_callback_;
+  int detect_head_;
+  int detect_period_;
+  int detect_total_;
+  int detect_threshold_;
+  int16_t* detect_buf_;
+
   PIDController move_pid_;
   PIDController hold_pid_;
 
   FloatEdgeDetector* wrap_detector_;
   BoolEdgeDetector* hold_detector_;
+  BoolEdgeDetector* jam_detector_;
 
   /**
    * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
@@ -425,19 +441,6 @@ class ServoMotor {
    */
   void SetDirUsingMode_(servo_mode_t mode);
   
-};
-
-typedef void (*jam_callback_t)();
-
-typedef struct {
-  MotorCANBase* motor;
-
-  void* jam_callback;
-} antijam_t;
-
-class AntiJam {
-  public:
-    AntiJam();
 };
 
 } /* namespace control */

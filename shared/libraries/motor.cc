@@ -242,15 +242,19 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 
   // override origianal motor rx callback with servomotor callback
   servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
+
+  jam_callback_ = nullptr;
+  detect_head_ = -1;
+  detect_period_ = -1;
+  detect_total_ = 0;
+  detect_buf_ = nullptr;
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
   target_ = wrap<float>(target, -PI, PI);
-  if (mode_ == SERVO_NEAREST) {
-    NearestModeSetDir_();
-  }
+  SetDirUsingMode_(mode_);
   hold_ = false;
   return dir_;
 }
@@ -286,10 +290,35 @@ void ServoMotor::CalcOutput() {
     command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
   }
   motor_->SetOutput(command);
+
+  if (detect_buf_ != nullptr) {
+    detect_total_ += command - detect_buf_[detect_head_];
+    detect_buf_[detect_head_] = command;
+    detect_head_ = detect_head_ + 1 < detect_period_ ? detect_head_ + 1 : 0;
+    jam_detector_->input(abs(detect_total_) >= detect_threshold_);
+    if (jam_detector_->posEdge())
+      jam_callback_(this);
+  }
 }
 
-bool ServoMotor::Holding() const {
-  return hold_;
+bool ServoMotor::Holding() const { return hold_; }
+
+servo_status_t ServoMotor::GetCurrentDir() const { return dir_; }
+
+float ServoMotor::GetCurrentTarget() const { return target_; }
+
+void ServoMotor::RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold) {
+  RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1, "Effort threshold should between 0 and 1");
+  jam_callback_ = callback;
+  detect_head_ = 0;
+  detect_period_ = detect_period;
+  detect_total_ = 0;
+  detect_threshold_ = 32768 * effort_threshold * detect_period;
+  if (detect_buf_ != nullptr)
+    delete detect_buf_;
+  detect_buf_ = new int16_t[detect_period];
+  memset(detect_buf_, 0, detect_period);
+  jam_detector_ = new BoolEdgeDetector(false);
 }
 
 void ServoMotor::PrintData() const { 
@@ -331,13 +360,17 @@ void ServoMotor::NearestModeSetDir_() {
 }
 
 void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
-  if (mode == SERVO_ANTICLOCKWISE) {
+  switch (mode) {
+  case SERVO_ANTICLOCKWISE:
     dir_ = TURNING_ANTICLOCKWISE;
-  } else if (mode == SERVO_NEAREST) {
+    return;
+  case SERVO_NEAREST:
     NearestModeSetDir_();
-  } else if (mode == SERVO_CLOCKWISE) {
+    return;
+  case SERVO_CLOCKWISE:
     dir_ = TURNING_CLOCKWISE;
-  } else {
+    return;
+  default:
     RM_ASSERT_TRUE(false, "Invalid servo turining mode");
   }
 }

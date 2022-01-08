@@ -108,7 +108,7 @@ void RM_RTOS_Default_Task(const void* args) {
 #else
     key_detector.input(key.Read());
     if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, -PI, PI);
+      target = wrap<float>(target + NOTCH, 0, 2 * PI);
     }
 #endif
     servo->CalcOutput();
