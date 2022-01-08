@@ -78,7 +78,6 @@ void RM_RTOS_Default_Task(const void* arguments) {
   uint32_t ts = imu->timestamp;
   //uint32_t curr_ts = 0;
   
-  uint16_t i = 0;
   while (true) {
     
     pitchAcc = atan2f(imu->acce.y - ACC_Y_OFF, imu->acce.z - ACC_Z_OFF);
@@ -97,14 +96,11 @@ void RM_RTOS_Default_Task(const void* arguments) {
     ts = imu->timestamp;
 
     osDelay(10);
-    i = i + 1;
-    if (i >= 50) {
-      set_cursor(0, 0);
-      clear_screen();
-      print("ALPHA: %1.2f \r\n", alpha);
-      print("PITCH: %8.4f ROLL: %8.4f \r\n", pitchAcc, rollAcc);
-      print("PITCH: %8.4f ROLL: %8.4f \r\n", pitch, roll);
-      i = 0;
-    }
+
+    set_cursor(0, 0);
+    clear_screen();
+    print("ALPHA: %1.2f \r\n", alpha);
+    print("PITCH: %8.4f ROLL: %8.4f \r\n", pitchAcc, rollAcc);
+    print("PITCH: %8.4f ROLL: %8.4f \r\n", pitch, roll);
   }
 }
