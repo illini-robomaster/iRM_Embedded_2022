@@ -306,7 +306,7 @@ typedef struct {
 /**
  * @brief wrapper class for motor to enable the motor shaft angle to be precisely controlled with 
  *        possible external gearbox present
- * @note This is a calculation class that calculate the motor output for desired output, but it does not 
+ * @note this is a calculation class that calculate the motor output for desired output, but it does not 
  *       directly command a motor to turn. 
  */
 class ServoMotor {
@@ -375,7 +375,8 @@ class ServoMotor {
    *       Everytime the average of inputs is greater than 
    *       effect_threshold * 32768(maximum command a motor can accept), the jam callback function will 
    *       be triggered once. The callback will only be triggered once each time the rolling average 
-   *       cross the threshold from lower to higher.
+   *       cross the threshold from lower to higher. For a standard jam callback function, refer to 
+   *       example motor_m3508_antijam
    * 
    * @param callback         callback function to be registered
    * @param effort_threshold threshold for motor to be determined as jammed, ranged between (0, 1)
@@ -429,33 +430,38 @@ class ServoMotor {
   void UpdateData(const uint8_t data[]);
 
  private:
+  // refer to servo_t for details
   MotorCANBase* motor_;
   servo_mode_t mode_;
   float speed_;
   float transmission_ratio_;
   float proximity_;
 
-  bool hold_;
-  float target_;
-  float align_angle_;
-  float motor_angle_;
-  float offset_angle_;
-  float servo_angle_;
-  servo_status_t dir_;    
+  // angle control
+  bool hold_;          /* true if motor is holding now, otherwise moving now                      */
+  float target_;       /* desired target angle, range between [0, 2PI] in [rad]                   */
+  float align_angle_;  /* motor angle when a instance of this class is created with that motor    */
+  float motor_angle_;  /* current motor angle in [rad], with align_angle subtracted               */
+  float offset_angle_; /* cumulative offset angle of motor shaft, range between [0, 2PI] in [rad] */
+  float servo_angle_;  /* current angle of motor shaft, range between [0, 2PI] in [rad]           */
+  servo_status_t dir_; /* current moving direction of motor (and motor shaft)                     */
 
-  jam_callback_t jam_callback_;
-  int detect_head_;
-  int detect_period_;
-  int detect_total_;
-  int jam_threshold_;
-  int16_t* detect_buf_;
+  // jam detection
+  jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed             */ 
+  int detect_head_;             /* circular buffer current head                                       */
+  int detect_period_;           /* circular buffer length                                             */
+  int detect_total_;            /* rolling sum of motor inputs                                        */
+  int jam_threshold_;           /* threshold for rolling sum for the motor to be considered as jammed */
+  int16_t* detect_buf_;         /* circular buffer                                                    */
 
-  PIDController move_pid_;
-  PIDController hold_pid_;
+  // pid controllers
+  PIDController move_pid_; /* pid for motor when it is in moving state  */
+  PIDController hold_pid_; /* pid for motor when it is in holding state */
 
-  FloatEdgeDetector* wrap_detector_; // detect motor motion across encoder boarder
-  BoolEdgeDetector* hold_detector_;  // detect motor is in mode toggling, reset pid accordingly
-  BoolEdgeDetector* jam_detector_;   // detect motor jam toggling, call jam callback accordingly
+  // edge detectors
+  FloatEdgeDetector* wrap_detector_; /* detect motor motion across encoder boarder               */
+  BoolEdgeDetector* hold_detector_;  /* detect motor is in mode toggling, reset pid accordingly  */
+  BoolEdgeDetector* jam_detector_;   /* detect motor jam toggling, call jam callback accordingly */
 
   /**
    * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn

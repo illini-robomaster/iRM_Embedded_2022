@@ -223,8 +223,8 @@ void Motor2305::SetOutput(int16_t val) {
 /**
  * @brief default servomotor callback that overrides the standard can motor callback
  * 
- * @param data 
- * @param args 
+ * @param data data that come from motor 
+ * @param args pointer to a ServoMotor instance
  */
 static void servomotor_callback(const uint8_t data[], void* args) {
   ServoMotor* servo = reinterpret_cast<ServoMotor*>(args);
@@ -252,7 +252,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
   // dir_ is initialized here
   SetDirUsingMode_(servo.mode);
 
-  // Override origianal motor rx callback with servomotor callback
+  // override origianal motor rx callback with servomotor callback
   servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
 
   // Initially jam detection is not enabled, it is enabled only if user calls
@@ -373,6 +373,9 @@ float ServoMotor::GetOmegaDelta(const float target) const {
 void ServoMotor::UpdateData(const uint8_t data[]) {
   motor_->UpdateData(data);
   motor_angle_ = motor_->theta_ - align_angle_;
+  // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
+  // edge, which means that the motor is turning in positive direction when crossing encoder
+  // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
   wrap_detector_->input(motor_angle_);
   if (wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
