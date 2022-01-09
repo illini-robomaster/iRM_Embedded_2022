@@ -64,7 +64,7 @@ void RM_RTOS_Init() {
   servo_data.hold_Kd = 100;
   servo = new control::ServoMotor(servo_data);
 
-  servo->RegisterJamCallback(jam_callback, 50, 0.6);
+  servo->RegisterJamCallback(jam_callback, 0.6);
 }
 
 void RM_RTOS_Default_Task(const void* args) {

@@ -57,7 +57,7 @@ Shooter::Shooter(shooter_t shooter):
 	right_fly_speed_ = 0;
 	load_angle_ = 0;
 
-	load_servo_->RegisterJamCallback(jam_callback, 50, 0.6);
+	load_servo_->RegisterJamCallback(jam_callback, 0.6);
 }
 
 void Shooter::SetFlywheelSpeed(float speed) {

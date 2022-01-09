@@ -287,29 +287,33 @@ void ServoMotor::SetSpeed(const float speed) {
 }
 
 void ServoMotor::CalcOutput() {
+  // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
   if (hold_detector_->edge())
     move_pid_.Reset();
   if (hold_detector_->posEdge())
     hold_pid_.Reset();
   
+  // calculate desired output with pid
   int16_t command;
   if (hold_) {
     float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
     float out = 0;
     out += hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
     out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
+    // CAN motor can only accept input in range [-32768, 32767]
     command = clip<float>((int) out, -32768, 32767);
   } else {
     command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
   }
   motor_->SetOutput(command);
 
+  // jam detection machenism
   if (detect_buf_ != nullptr) {
     detect_total_ += command - detect_buf_[detect_head_];
     detect_buf_[detect_head_] = command;
     detect_head_ = detect_head_ + 1 < detect_period_ ? detect_head_ + 1 : 0;
-    jam_detector_->input(abs(detect_total_) >= detect_threshold_);
+    jam_detector_->input(abs(detect_total_) >= jam_threshold_);
     if (jam_detector_->posEdge()) {
       servo_jam_t data;
       data.mode = mode_;
@@ -324,29 +328,34 @@ bool ServoMotor::Holding() const { return hold_; }
 
 float ServoMotor::GetTarget() const { return target_; }
 
-void ServoMotor::RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold) {
-  constexpr int maximum_command = 32768;
+void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold, uint8_t detect_period) {
+  constexpr int maximum_command = 32768; // maximum command that a CAN motor can accept
   RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1, "Effort threshold should between 0 and 1");
+  // storing funcion pointer for future invocation
   jam_callback_ = callback;
+
+  // create and initialize circular buffer
   detect_head_ = 0;
   detect_period_ = detect_period;
   detect_total_ = 0;
-  detect_threshold_ = maximum_command * effort_threshold * detect_period;
   if (detect_buf_ != nullptr)
     delete detect_buf_;
   detect_buf_ = new int16_t[detect_period];
   memset(detect_buf_, 0, detect_period);
+
+  // calculate callback trigger threshold and triggering facility 
+  jam_threshold_ = maximum_command * effort_threshold * detect_period;
   jam_detector_ = new BoolEdgeDetector(false);
 }
 
 void ServoMotor::PrintData() const { 
-  print("servo theta: % .4f ", servo_angle_);
-  print("servo omega: % .4f ", GetOmega());
-  print("servo target: % .4f", target_);
+  print("theta: % .4f ", servo_angle_);
+  print("omega: % .4f ", GetOmega());
+  print("target: % .4f ", target_);
   if (hold_) 
-    print("servo status: holding\r\n");
+    print("status: holding\r\n");
   else
-    print("servo status: moving\r\n");
+    print("status: moving\r\n");
 }
 
 float ServoMotor::GetTheta() const { return servo_angle_; }

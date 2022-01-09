@@ -304,7 +304,10 @@ typedef struct {
 } servo_t;
 
 /**
- * @brief wrapper class for motor to enable it to be controlled as a servomotor
+ * @brief wrapper class for motor to enable the motor shaft angle to be precisely controlled with 
+ *        possible external gearbox present
+ * @note This is a calculation class that calculate the motor output for desired output, but it does not 
+ *       directly command a motor to turn. 
  */
 class ServoMotor {
  public:
@@ -318,22 +321,22 @@ class ServoMotor {
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-   * @note if motor is not holding, call to this function will have no effect unless overridden
+   * @note if motor is not holding, call to this function will have no effect unless override is true
    * 
    * @param target   next target for the motor in [rad]
    * @param override if true, override current target even if motor is not holding right now 
-   * @return servo_status_t current turning mode of motor
+   * @return current turning mode of motor
    */
   servo_status_t SetTarget(const float target, bool override = false);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-   * @note if motor is not holding, call to this function will have no effect unless overridden
+   * @note if motor is not holding, call to this function will have no effect unless override is true
    * 
    * @param target   next target for the motor in [rad]
    * @param mode     servomotor turning mode override, will only have one-time effect
    * @param override if true, override current target even if motor is not holding right now 
-   * @return servo_status_t current turning mode of motor
+   * @return current turning mode of motor
    */
   servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
@@ -346,7 +349,7 @@ class ServoMotor {
 
   /**
    * @brief calculate the output of the motors under current configuration
-   * @note this function will not transmit output to motor, it only calculate the desired input
+   * @note this function will not command the motor, it only calculate the desired input
    */
   void CalcOutput();
 
@@ -358,11 +361,27 @@ class ServoMotor {
    */
   bool Holding() const;
 
+  /**
+   * @brief get current servomotor target, in [rad]
+   * 
+   * @return current target angle, range between [0, 2PI] 
+   */
   float GetTarget() const;
 
-  void RegisterDefaultJamCallback(uint8_t detect_period, float effort_threshold);
-
-  void RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold);
+  /**
+   * @brief register a callback function that would be called if motor is jammed
+   * @note Jam detection uses a moving window across inputs to the motor. It uses a circular buffer of 
+   *       size detect_period to store history inputs and calculates a rolling average of the inputs. 
+   *       Everytime the average of inputs is greater than 
+   *       effect_threshold * 32768(maximum command a motor can accept), the jam callback function will 
+   *       be triggered once. The callback will only be triggered once each time the rolling average 
+   *       cross the threshold from lower to higher.
+   * 
+   * @param callback         callback function to be registered
+   * @param effort_threshold threshold for motor to be determined as jammed, ranged between (0, 1)
+   * @param detect_period    detection window length
+   */
+  void RegisterJamCallback(jam_callback_t callback, float effort_threshold, uint8_t detect_period = 50);
 
   /**
    * @brief print out motor data
@@ -428,15 +447,15 @@ class ServoMotor {
   int detect_head_;
   int detect_period_;
   int detect_total_;
-  int detect_threshold_;
+  int jam_threshold_;
   int16_t* detect_buf_;
 
   PIDController move_pid_;
   PIDController hold_pid_;
 
-  FloatEdgeDetector* wrap_detector_;
-  BoolEdgeDetector* hold_detector_;
-  BoolEdgeDetector* jam_detector_;
+  FloatEdgeDetector* wrap_detector_; // detect motor motion across encoder boarder
+  BoolEdgeDetector* hold_detector_;  // detect motor is in mode toggling, reset pid accordingly
+  BoolEdgeDetector* jam_detector_;   // detect motor jam toggling, call jam callback accordingly
 
   /**
    * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
