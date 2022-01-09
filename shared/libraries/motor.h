@@ -274,8 +274,18 @@ typedef enum {
 #define M3508P19_RATIO (3591.0 / 187) /* Transmission ratio of M3508P19 */
 #define M2006P36_RATIO 36             /* Transmission ratio of M2006P36 */
 
-class ServoMotor;
-typedef void (*jam_callback_t)(ServoMotor* servo);
+
+typedef struct {
+  servo_mode_t mode;
+  servo_status_t dir;
+  float speed;
+} servo_jam_t;
+
+class ServoMotor; // declare first for jam_callback_t to have correct param type
+/**
+ * @brief jam callback template
+ */
+typedef void (*jam_callback_t)(ServoMotor* servo, const servo_jam_t data);
 
 /**
  * @brief structure used when servomotor instance is initialized
@@ -310,7 +320,7 @@ class ServoMotor {
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
    * @note if motor is not holding, call to this function will have no effect unless overridden
    * 
-   * @param target next target for the motor in [rad]
+   * @param target   next target for the motor in [rad]
    * @param override if true, override current target even if motor is not holding right now 
    * @return servo_status_t current turning mode of motor
    */
@@ -320,8 +330,8 @@ class ServoMotor {
    * @brief set next target for servomotor, will have no effect if last set target has not been achieved
    * @note if motor is not holding, call to this function will have no effect unless overridden
    * 
-   * @param target next target for the motor in [rad]
-   * @param mode   servomotor turning mode override, will only have one-time effect
+   * @param target   next target for the motor in [rad]
+   * @param mode     servomotor turning mode override, will only have one-time effect
    * @param override if true, override current target even if motor is not holding right now 
    * @return servo_status_t current turning mode of motor
    */
@@ -343,14 +353,14 @@ class ServoMotor {
   /**
    * @brief if the motor is holding
    * 
-   * @return true  the motor is in holding state (i.e. not turning)
+   * @return true  the motor is holding (i.e. not turning)
    * @return false the motor is not holding (i.e. turning)
    */
   bool Holding() const;
 
-  servo_status_t GetCurrentDir() const;
+  float GetTarget() const;
 
-  float GetCurrentTarget() const;
+  void RegisterDefaultJamCallback(uint8_t detect_period, float effort_threshold);
 
   void RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold);
 

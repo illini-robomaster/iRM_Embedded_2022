@@ -28,14 +28,15 @@ using namespace bsp;
 
 namespace control {
 
+/**
+ * @brief standard can motor callback, used to update motor data
+ * 
+ * @param data data that come from motor 
+ * @param args pointer to a MotorCANBase instance
+ */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
   motor->UpdateData(data);
-}
-
-static void servomotor_callback(const uint8_t data[], void* args) {
-  ServoMotor* servo = reinterpret_cast<ServoMotor*>(args);
-  servo->UpdateData(data);
 }
 
 MotorCANBase::MotorCANBase(bsp::CAN* can, uint16_t rx_id)
@@ -219,6 +220,17 @@ void Motor2305::SetOutput(int16_t val) {
   MotorPWMBase::SetOutput(clip<int16_t>(val, MIN_OUTPUT, MAX_OUTPUT));
 }
 
+/**
+ * @brief default servomotor callback that overrides the standard can motor callback
+ * 
+ * @param data 
+ * @param args 
+ */
+static void servomotor_callback(const uint8_t data[], void* args) {
+  ServoMotor* servo = reinterpret_cast<ServoMotor*>(args);
+  servo->UpdateData(data);
+}
+
 ServoMotor::ServoMotor(servo_t servo, float proximity) : 
       move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)), 
       hold_pid_(PIDController(servo.hold_Kp, servo.hold_Ki, servo.hold_Kd)) {
@@ -240,9 +252,11 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
   // dir_ is initialized here
   SetDirUsingMode_(servo.mode);
 
-  // override origianal motor rx callback with servomotor callback
+  // Override origianal motor rx callback with servomotor callback
   servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
 
+  // Initially jam detection is not enabled, it is enabled only if user calls
+  // RegisterJamCallback in the future.
   jam_callback_ = nullptr;
   detect_head_ = -1;
   detect_period_ = -1;
@@ -296,24 +310,28 @@ void ServoMotor::CalcOutput() {
     detect_buf_[detect_head_] = command;
     detect_head_ = detect_head_ + 1 < detect_period_ ? detect_head_ + 1 : 0;
     jam_detector_->input(abs(detect_total_) >= detect_threshold_);
-    if (jam_detector_->posEdge())
-      jam_callback_(this);
+    if (jam_detector_->posEdge()) {
+      servo_jam_t data;
+      data.mode = mode_;
+      data.dir = dir_;
+      data.speed = speed_;
+      jam_callback_(this, data);
+    }
   }
 }
 
 bool ServoMotor::Holding() const { return hold_; }
 
-servo_status_t ServoMotor::GetCurrentDir() const { return dir_; }
-
-float ServoMotor::GetCurrentTarget() const { return target_; }
+float ServoMotor::GetTarget() const { return target_; }
 
 void ServoMotor::RegisterJamCallback(jam_callback_t callback, uint8_t detect_period, float effort_threshold) {
+  constexpr int maximum_command = 32768;
   RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1, "Effort threshold should between 0 and 1");
   jam_callback_ = callback;
   detect_head_ = 0;
   detect_period_ = detect_period;
   detect_total_ = 0;
-  detect_threshold_ = 32768 * effort_threshold * detect_period;
+  detect_threshold_ = maximum_command * effort_threshold * detect_period;
   if (detect_buf_ != nullptr)
     delete detect_buf_;
   detect_buf_ = new int16_t[detect_period];
@@ -324,7 +342,11 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, uint8_t detect_per
 void ServoMotor::PrintData() const { 
   print("servo theta: % .4f ", servo_angle_);
   print("servo omega: % .4f ", GetOmega());
-  motor_->PrintData();
+  print("servo target: % .4f", target_);
+  if (hold_) 
+    print("servo status: holding\r\n");
+  else
+    print("servo status: moving\r\n");
 }
 
 float ServoMotor::GetTheta() const { return servo_angle_; }
@@ -333,7 +355,7 @@ float ServoMotor::GetThetaDelta(const float target) const {
   return wrap<float>(target - servo_angle_, -PI, PI); 
 }
 
-float ServoMotor::GetOmega() const { return motor_->GetOmega() / transmission_ratio_; }
+float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
 
 float ServoMotor::GetOmegaDelta(const float target) const { 
   return target - motor_->GetOmega() / transmission_ratio_;

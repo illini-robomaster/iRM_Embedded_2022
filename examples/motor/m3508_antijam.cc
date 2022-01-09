@@ -40,14 +40,10 @@ control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
 BoolEdgeDetector key_detector(false);
 
-float target = NOTCH;
-
-void jam_callback(control::ServoMotor* servo) {
-  float prev = wrap<float>(servo->GetCurrentTarget() - NOTCH, 0, 2 * PI);
-  target = wrap<float>(target - NOTCH, 0, 2 * PI);
-  servo->SetTarget(prev, control::SERVO_CLOCKWISE, true);
-  print("ACTIVATE\r\n");
-  print("ATAR: %10.4f\r\n", target);
+void jam_callback(control::ServoMotor* servo, const control::servo_jam_t data) {
+  float prev_target = wrap<float>(servo->GetTarget() - NOTCH, 0, 2 * PI);
+  servo->SetTarget(prev_target, static_cast<control::servo_mode_t>(-data.dir), true);
+  print("Antijam engage\r\n");
 }
 
 void RM_RTOS_Init() {
@@ -79,9 +75,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   while (true) {
     key_detector.input(key.Read());
-    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      print("TAR: %10.4f\r\n", target);
-      target = wrap<float>(target + NOTCH, 0, 2 * PI);
+    if (key_detector.posEdge() && servo->SetTarget(servo->GetTarget() + NOTCH) != 0) {
+      print("Servomotor step forward\r\n");
     }
     servo->CalcOutput();
     control::MotorCANBase::TransmitOutput(motors, 1);
