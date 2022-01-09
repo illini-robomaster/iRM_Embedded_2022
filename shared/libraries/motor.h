@@ -276,9 +276,9 @@ typedef enum {
 
 
 typedef struct {
-  servo_mode_t mode;
-  servo_status_t dir;
-  float speed;
+  servo_mode_t mode;  /* turning mode of servomotor, refer to type servo_mode_t                */
+  servo_status_t dir; /* current turning direction of servomotor, refer to type servo_status_t */
+  float speed;        /* motor shaft turning speed                                             */  
 } servo_jam_t;
 
 class ServoMotor; // declare first for jam_callback_t to have correct param type
@@ -291,16 +291,16 @@ typedef void (*jam_callback_t)(ServoMotor* servo, const servo_jam_t data);
  * @brief structure used when servomotor instance is initialized
  */
 typedef struct {
-  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor */
-  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t  */
-  float speed;              /* desired turning speed of motor, in [rad/s]   */
-  float transmission_ratio; /* transmission ratio of motor                  */
-  float move_Kp;            /* Kp of pid that used to control omega         */
-  float move_Ki;            /* Ki of pid that used to control omega         */
-  float move_Kd;            /* Kd of pid that used to control omega         */
-  float hold_Kp;            /* Kp of pid that used to control theta         */
-  float hold_Ki;            /* Ki of pid that used to control theta         */
-  float hold_Kd;            /* Kd of pid that used to control theta         */
+  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor     */
+  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t      */
+  float speed;              /* desired turning speed of motor shaft, in [rad/s] */
+  float transmission_ratio; /* transmission ratio of motor                      */
+  float move_Kp;            /* Kp of pid that used to control omega             */
+  float move_Ki;            /* Ki of pid that used to control omega             */
+  float move_Kd;            /* Kd of pid that used to control omega             */
+  float hold_Kp;            /* Kp of pid that used to control theta             */
+  float hold_Ki;            /* Ki of pid that used to control theta             */
+  float hold_Kd;            /* Kd of pid that used to control theta             */
 } servo_t;
 
 /**
@@ -341,9 +341,10 @@ class ServoMotor {
   servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
   /**
-   * @brief set turning speed of motor when moving, should always be positive
+   * @brief set turning speed of motor when moving, should always be positive, negative inputs will be 
+   *        ignored
    * 
-   * @param speed speed of desired turning speed, in [rad/s]
+   * @param speed speed of desired motor shaft turning speed, in [rad/s]
    */
   void SetSpeed(const float speed);
 

@@ -26,23 +26,23 @@ namespace control {
 static auto step_angles_ = std::unordered_map<ServoMotor*, float>();
 
 void jam_callback(ServoMotor* servo, const servo_jam_t data) {
-	RM_ASSERT_TRUE(step_angles_.find(servo) != step_angles_.end(), "Servo not found");
   float prev_target = wrap<float>(servo->GetTarget() - step_angles_[servo], 0, 2 * PI);
   servo->SetTarget(prev_target, static_cast<servo_mode_t>(-data.dir), true);
 }
 
 Shooter::Shooter(shooter_t shooter):
 		left_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
-		right_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)) {
-	fly_using_can_motor_ = shooter.fly_using_can_motor;
+		right_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
+		fly_turning_detector_(BoolEdgeDetector(false)) {
 	// Because legacy gimbal uses snail M2305 motors that can only be driven using PWM,
 	// interfaces are reserved since the old gimbal could be used for demonstratio 
 	// purposes in the future.
+	fly_using_can_motor_ = shooter.fly_using_can_motor;
 	if (shooter.fly_using_can_motor) {
 		left_fly_can_motor_ = shooter.left_fly_can_motor;
 		right_fly_can_motor_ = shooter.right_fly_can_motor;
-		left_fly_motor_invert_ = shooter.left_fly_motor_invert;
-		right_fly_motor_invert_ = shooter.right_fly_motor_invert;
+		left_fly_motor_invert_ = shooter.left_fly_motor_invert ? -1 : 1;
+		right_fly_motor_invert_ = shooter.right_fly_motor_invert ? -1 : 1;
 	} else {
 		left_fly_pwm_motor_ = shooter.left_fly_pwm_motor;
 		right_fly_pwm_motor_ = shooter.right_fly_pwm_motor;
@@ -53,35 +53,29 @@ Shooter::Shooter(shooter_t shooter):
 	// specific servomotor instance.  
 	step_angles_[shooter.load_servo] = shooter.load_step_angle;
 
-	left_fly_speed_ = 0;
-	right_fly_speed_ = 0;
-	load_angle_ = 0;
+	speed_ = 0;
 
 	load_servo_->RegisterJamCallback(jam_callback, 0.6);
 }
 
 void Shooter::SetFlywheelSpeed(float speed) {
-	if (fly_using_can_motor_) {
-		left_fly_speed_ = left_fly_motor_invert_ ? -speed : speed;
-		right_fly_speed_ = right_fly_motor_invert_ ? -speed : speed;
-	} else {
+	speed_ = speed;
+	if (!fly_using_can_motor_) {
+		// PWM motor cannot be inverted
 		left_fly_pwm_motor_->SetOutput(speed);
 		right_fly_pwm_motor_->SetOutput(speed);
 	}
 }
 
 int Shooter::LoadNext() {
-	int val = load_servo_->SetTarget(load_angle_ + load_step_angle_);
-	if (val != 0) {
-		load_angle_ = wrap<float>(load_angle_ + load_step_angle_, 0, 2 * PI);
-	}
-	return val;
+	return load_servo_->SetTarget(load_servo_->GetTarget() + load_step_angle_);
 }
 
 void Shooter::CalcOutput() {
 	if (fly_using_can_motor_) {
-		float left_diff = left_fly_can_motor_->GetOmegaDelta(left_fly_speed_);
-		float right_diff = right_fly_can_motor_->GetOmegaDelta(right_fly_speed_);
+		fly_turning_detector_.input(left_fly_can_motor_ == 0);
+		float left_diff = left_fly_can_motor_->GetOmegaDelta(left_fly_motor_invert_ * speed_);
+		float right_diff = right_fly_can_motor_->GetOmegaDelta(right_fly_motor_invert_ * speed_);
 		left_fly_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));
 		right_fly_can_motor_->SetOutput(right_pid_.ComputeOutput(right_diff));	
 	}

@@ -265,12 +265,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
-  if (!hold_ && !override)
-    return INPUT_REJECT;
-  target_ = wrap<float>(target, 0, 2 * PI);
-  SetDirUsingMode_(mode_);
-  hold_ = false;
-  return dir_;
+  return SetTarget(target, mode_, override);
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
@@ -283,7 +278,7 @@ servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode
 }
 
 void ServoMotor::SetSpeed(const float speed) {
-  speed_ = speed > 0 ? speed : 0;
+  speed_ = speed > 0 ? transmission_ratio_ * speed : speed_;
 }
 
 void ServoMotor::CalcOutput() {
@@ -310,15 +305,18 @@ void ServoMotor::CalcOutput() {
 
   // jam detection machenism
   if (detect_buf_ != nullptr) {
+    // update rolling sum and circular buffer
     detect_total_ += command - detect_buf_[detect_head_];
     detect_buf_[detect_head_] = command;
     detect_head_ = detect_head_ + 1 < detect_period_ ? detect_head_ + 1 : 0;
+
+    // detect if motor is jammed
     jam_detector_->input(abs(detect_total_) >= jam_threshold_);
     if (jam_detector_->posEdge()) {
       servo_jam_t data;
       data.mode = mode_;
       data.dir = dir_;
-      data.speed = speed_;
+      data.speed = speed_ / transmission_ratio_;
       jam_callback_(this, data);
     }
   }
@@ -383,8 +381,8 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
 
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  if (abs(diff_angle) < proximity_)
+  // determine if the motor should be in hold state
+  if (!hold_ && abs(wrap<float>(target_ - servo_angle_, -PI, PI)) < proximity_)
     hold_ = true;
 }
 
