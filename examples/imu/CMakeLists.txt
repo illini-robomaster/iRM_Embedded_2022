@@ -30,9 +30,6 @@ irm_add_arm_executable(imu_calibrate
     
 irm_add_arm_executable(imu_estimate
     TARGET DJI_Board_TypeA
-    SOURCES estimate.cc)
+    SOURCES poseEstimate.cc)
     
-irm_add_arm_executable(imu_naive_calibrate
-    TARGET DJI_Board_TypeA
-    SOURCES naive_calibrate.cc)
 

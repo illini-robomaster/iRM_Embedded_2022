@@ -28,20 +28,37 @@ class Pose {
 public:
   Pose(bsp::MPU6500* _imu);
   void PoseInit(void);
-  void GetPose(bsp::vec3f_t *_pose);
+  void Calibrate(void);
+  void Calibrate(int16_t _num);
+  float GetGravity(void);
+  void SetOffset(float acc_x_off, float acc_y_off, float acc_z_off, 
+                 float gyro_x_off, float gyro_y_off, float gyro_z_off);
+  float GetRoll(void);
+  float GetPitch(void);
   void SetAlpha(float _alpha);
   void ComplementaryFilterUpdate(void);
 
 private:
   bsp::MPU6500* imu;
   // last pose
-  float x;
-  float y;
-  float z;
+  float pitch;
+  float roll;
+  
+  float acc_x_off;
+  float acc_y_off;
+  float acc_z_off;
+  float gyro_x_off;
+  float gyro_y_off;
+  float gyro_z_off;
+  
   // last timestamp
   uint32_t timestamp;
   
+  // alpha used in complementary filter
   float alpha;
+  
+  float pitchAcc;
+  float rollAcc;
    
 }; // class Pose end
 

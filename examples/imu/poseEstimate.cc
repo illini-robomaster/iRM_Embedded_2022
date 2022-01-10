@@ -35,11 +35,6 @@
 #define ONBOARD_IMU_CS_PIN GPIO_PIN_6
 #define PRING_UART huart8
 
-#define DEG2RAD(x) ((x) / 180 * M_PI)
-#define MPU6500_ACC_FACTOR 4096.0f
-#define MPU6500_GYRO_FACTOR 32.768f
-#define USEC_TO_SEC 1000000.0f
-
 static bsp::MPU6500* imu;
 
 void RM_RTOS_Init(void) {
@@ -49,58 +44,57 @@ void RM_RTOS_Init(void) {
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-
+  
+  // init IMU instance
   bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
   imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
-
-  //control::Pose estimator(imu);
-  //bsp::vec3f_t *pose = new bsp::vec3f_t{0, 0, 0};
-
-  print("IMU Initialized!\r\n");
   osDelay(3000);
+  print("IMU Initialized!\r\n");
+    
+  // init pose estimator instance
+  control::Pose poseEstimator(imu);
   
-  // measured with naive_calibrate.cc
-  const float ACC_X_OFF = 0.0394;
-  const float ACC_Y_OFF = -0.0892;
-  const float ACC_Z_OFF = -0.0806;
-  /*
-  const float GYRO_X_OFF = -0.0285;
-  const float GYRO_Y_OFF = 0.0110;
-  const float GYRO_Z_OFF = 0.0115;
-  */
-  //float yaw = 0;
+  // Set alpha for the complementary filter in the pose estimator
+  poseEstimator.SetAlpha(0.95);
+  
+  // init params
   float roll = 0;
   float pitch = 0;
-  float a = 0.95;
-  float alpha = a;
-  float pitchAcc = 0;
-  float rollAcc = 0;
-  uint32_t ts = imu->timestamp;
-  //uint32_t curr_ts = 0;
+  uint32_t i = 0;
+  float degRoll = 0;
+  float degPitch = 0;
+  
+  // calibrate the Offset for IMU acce meter and gyro
+  poseEstimator.Calibrate();
+  
+  // reset timer and pose for IMU
+  poseEstimator.PoseInit();
+  
+  /* NOTE: IMU SHOULD BE PLACED ON A FLAT PLANE WHILE RUNNING THE FUNCTIONS ABOVE */
   
   while (true) {
+    // update estimated pose with complementary filter
+    poseEstimator.ComplementaryFilterUpdate();
+    osDelay(10);
     
-    pitchAcc = atan2f(imu->acce.y - ACC_Y_OFF, imu->acce.z - ACC_Z_OFF);
-    rollAcc = atan2f(imu->acce.x - ACC_X_OFF, imu->acce.z - ACC_Z_OFF);
-    
-    // 
-    // RAD 1.3 and 1.4 are measured values where pitch / roll error might be > 0.1
-    if (abs(rollAcc) > 1.0 || abs(pitchAcc) > 1.0) {
-      alpha = 1.0;
-    } else {
-      alpha = a;
+    // print pose every 200ms
+    i += 1;
+    if (i >= 20) {
+      set_cursor(0, 0);
+      clear_screen();
+      // get roll and pitch, in RAD
+      roll = poseEstimator.GetRoll();
+      pitch = poseEstimator.GetPitch();
+      print("PITCH: %6.4f ROLL: %6.4f \r\n", pitch, roll);
+
+      // convert to DEG
+      degRoll = roll * 180 / 3.14;
+      degPitch = pitch * 180 / 3.14;
+      print("P_DEG: %6.4f R_DEG: %6.4f \r\n", degPitch, degRoll);
+      
+      
+      i = 0;
     }
     
-    pitch = alpha * (pitch + (imu->gyro.x) * (float)(imu->timestamp - ts) / USEC_TO_SEC) + (1.0 - alpha) * pitchAcc;
-    roll = alpha * (roll + (imu->gyro.y) * (float)(imu->timestamp - ts) / USEC_TO_SEC) - (1.0 - alpha) * rollAcc;
-    ts = imu->timestamp;
-
-    osDelay(10);
-
-    set_cursor(0, 0);
-    clear_screen();
-    print("ALPHA: %1.2f \r\n", alpha);
-    print("PITCH: %8.4f ROLL: %8.4f \r\n", pitchAcc, rollAcc);
-    print("PITCH: %8.4f ROLL: %8.4f \r\n", pitch, roll);
   }
 }
