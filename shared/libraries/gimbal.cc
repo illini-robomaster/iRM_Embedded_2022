@@ -10,10 +10,10 @@ Gimbal::Gimbal(gimbal_t gimbal) :
   yaw_motor_ = gimbal.yaw_motor;
 
 #if defined(GIMBAL_2019)
-  pitch_offset_ = GIMBAL_2019_POFF;
-  yaw_offset_ = GIMBAL_2019_YOFF;
-  pitch_max_ = GIMBAL_2019_PMAX;
-  yaw_max_ = GIMBAL_2019_YMAX;
+  pitch_offset_ = GIMBAL_PITCH_OFF;
+  yaw_offset_ = GIMBAL_YAW_OFF;
+  pitch_max_ = GIMBAL_PITCH_MAX;
+  yaw_max_ = GIMBAL_YAW_MAX;
   pitch_proximity_ = GIMBAL_2019_PMAX / 3.0;
   yaw_proximity_ = GIMBAL_2019_YMAX / 6.0;
 

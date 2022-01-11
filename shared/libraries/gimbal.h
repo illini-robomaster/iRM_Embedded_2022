@@ -33,10 +33,17 @@ namespace control {
  * @note these should be obtained by reading encoder values through uart/gdb
  */
 #if defined(GIMBAL_2019)
-  #define GIMBAL_PITCH_OFF 4.725f   /* legacy gimbal pitch offset */
-  #define GIMBAL_YAW_OFF 3.406f   /* legacy gimbal yaw offset   */
-  #define GIMBAL_PITCH_MAX 0.408f   /* legacy gimbal pitch max    */
-  #define GIMBAL_YAW_MAX 1.511f   /* legacy gimbal yaw max      */
+  /* 2019 standard gimbal */
+  #define GIMBAL_PITCH_OFF 4.725f
+  #define GIMBAL_YAW_OFF 3.406f
+  #define GIMBAL_PITCH_MAX 0.408f
+  #define GIMBAL_YAW_MAX 1.511f
+#else
+  /* default value, should not be used */
+  #define GIMBAL_PITCH_OFF 0f
+  #define GIMBAL_YAW_OFF 0f
+  #define GIMBAL_PITCH_MAX 0f
+  #define GIMBAL_YAW_MAX 0f
 #endif
 
 /**
