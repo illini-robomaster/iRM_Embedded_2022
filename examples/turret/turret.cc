@@ -38,7 +38,8 @@
  * @date 2022-01-05
  */
 
-#define GIMBAL_2019
+#define GIMBAL_STANDARD_ZERO
+#define SHOOTER_STANDARD_ZERO
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -84,33 +85,15 @@ void RM_RTOS_Init() {
   right_fly_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
   load_motor = new control::Motor2006(can, 0x207);
 
-  control::servo_t servo_data;
-  servo_data.motor = load_motor;
-  servo_data.mode = control::SERVO_ANTICLOCKWISE;
-  servo_data.speed = SERVO_SPEED;
-  servo_data.transmission_ratio = M2006P36_RATIO;
-  servo_data.move_Kp = 20;
-  servo_data.move_Ki = 15;
-  servo_data.move_Kd = 30;
-  servo_data.hold_Kp = 40;
-  servo_data.hold_Ki = 15;
-  servo_data.hold_Kd = 5;
-  load_servo = new control::ServoMotor(servo_data); 
-
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
-  shooter_data.fly_using_can_motor = false;
-  shooter_data.left_fly_pwm_motor = left_fly_motor;
-  shooter_data.right_fly_pwm_motor = right_fly_motor;
-  shooter_data.load_servo = load_servo;
-  shooter_data.fly_Kp = 80;
-  shooter_data.fly_Ki = 3;
-  shooter_data.fly_Kd = 0.1;
-  shooter_data.load_step_angle = 2 * PI / 8;
+  shooter_data.left_flywheel_motor = left_fly_motor;
+  shooter_data.right_flywheel_motor = right_fly_motor;
+  shooter_data.load_motor = load_motor;
   shooter = new control::Shooter(shooter_data);  
 
   dbus = new remote::DBUS(&huart1);
@@ -174,7 +157,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
     // Update and send command
     gimbal->Update();
-    shooter->CalcOutput();
+    shooter->Update();
     control::MotorCANBase::TransmitOutput(motors, 3);
     osDelay(10);
   }

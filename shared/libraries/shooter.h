@@ -29,14 +29,14 @@ namespace control {
  * @brief structure used when shooter instance is initialized
  */
 typedef struct {
-#if defined(SHOOTER_STANDARD_2019)
-  MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left flywheel motor   */
-  MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right flywheel motor  */
+#if defined(SHOOTER_STANDARD_ZERO)
+  MotorPWMBase* left_flywheel_motor;	 /* PWM motor instance of left flywheel motor   */
+  MotorPWMBase* right_flywheel_motor; /* PWM motor instance of right flywheel motor  */
 #else
-  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left flywheel motor   */
-  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right flywheel motor  */
+  MotorCANBase* left_flywheel_motor;	 /* CAN motor instance of left flywheel motor   */
+  MotorCANBase* right_flywheel_motor; /* CAN motor instance of right flywheel motor  */
 #endif
-  ServoMotor* load_servo;            /* servomotor instance of load motor           */
+  MotorCANBase* load_motor;            /* servomotor instance of load motor           */
   jam_callback_t jam_callback;
 } shooter_t;
 
@@ -67,29 +67,26 @@ public:
   int LoadNext();
 
   /**
-   * @brief calculate the output of the motors under current configuration
+   * @brief update the output of the motors under current configuration
    * 
    */
-  void CalcOutput();
+  void Update();
 
 private:
   // refer to shooter_t for details
-  bool fly_using_can_motor_;
-  MotorCANBase* left_fly_can_motor_;
-  MotorCANBase* right_fly_can_motor_;
-  MotorPWMBase* left_fly_pwm_motor_;
-  MotorPWMBase* right_fly_pwm_motor_;
-  int left_fly_motor_invert_;
-  int right_fly_motor_invert_;
-  ServoMotor* load_servo_;
-  float load_step_angle_;
-
+#if defined(SHOOTER_STANDARD_ZERO)
+  MotorPWMBase* left_flywheel_motor_;
+  MotorPWMBase* right_flywheel_motor_;
+#else
+  MotorCANBase* left_flywheel_motor_;
+  MotorCANBase* right_flywheel_motor_;
   PIDController* left_pid_;  /* pid for left flywheel  */
   PIDController* right_pid_; /* pid for right flywheel */
-
-  float speed_;           /* raw speed before inverting */
-
-  BoolEdgeDetector fly_turning_detector_;
+  BoolEdgeDetector* flywheel_turning_detector_;
+  float speed_;
+#endif
+  ServoMotor* load_servo_;
+  float load_step_angle_;
 };
 
 }
