@@ -37,25 +37,25 @@ Shooter::Shooter(shooter_t shooter):
 	// Because legacy gimbal uses snail M2305 motors that can only be driven using PWM,
 	// interfaces are reserved since the old gimbal could be used for demonstratio 
 	// purposes in the future.
-	fly_using_can_motor_ = shooter.fly_using_can_motor;
-	if (shooter.fly_using_can_motor) {
-		left_fly_can_motor_ = shooter.left_fly_can_motor;
-		right_fly_can_motor_ = shooter.right_fly_can_motor;
-		left_fly_motor_invert_ = shooter.left_fly_motor_invert ? -1 : 1;
-		right_fly_motor_invert_ = shooter.right_fly_motor_invert ? -1 : 1;
-	} else {
-		left_fly_pwm_motor_ = shooter.left_fly_pwm_motor;
-		right_fly_pwm_motor_ = shooter.right_fly_pwm_motor;
-	}
+#if defined(SHOOTER_2019)
+	left_fly_pwm_motor_ = shooter.left_fly_pwm_motor;
+	right_fly_pwm_motor_ = shooter.right_fly_pwm_motor;
 	load_servo_ = shooter.load_servo;
-	load_step_angle_ = shooter.load_step_angle;
+	load_step_angle_ = 2 * PI / 8;
+#elif defined(SHOOTER_STANDARD_2022)
+	left_fly_can_motor_ = shooter.left_fly_can_motor;
+	right_fly_can_motor_ = shooter.right_fly_can_motor;
+	load_servo_ = shooter.load_servo;
+	load_servo_->RegisterJamCallback(jam_callback, 0.6);
+#else
+	RM_ASSERT_TRUE(false, "No shooter type specified");
+#endif
 	// Register in step_angles_ so callback function can find step angle corresponding to
 	// specific servomotor instance.  
-	step_angles_[shooter.load_servo] = shooter.load_step_angle;
+	step_angles_[shooter.load_servo] = load_step_angle_;
 
+	// Initialize flywheel speed
 	speed_ = 0;
-
-	load_servo_->RegisterJamCallback(jam_callback, 0.6);
 }
 
 void Shooter::SetFlywheelSpeed(float speed) {

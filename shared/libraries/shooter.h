@@ -29,18 +29,15 @@ namespace control {
  * @brief structure used when shooter instance is initialized
  */
 typedef struct {
-  bool fly_using_can_motor;					 /* if flywheel motors are using CAN protocal   */
-  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left flywheel motor   */
-  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right flywheel motor  */
+#if defined(SHOOTER_2019)
   MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left flywheel motor   */
   MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right flywheel motor  */
-  bool left_fly_motor_invert;				 /* if left flywheel motor is inverted          */
-  bool right_fly_motor_invert;			 /* if right flywheel motor is inverted         */
+#else
+  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left flywheel motor   */
+  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right flywheel motor  */
+#endif
   ServoMotor* load_servo;            /* servomotor instance of load motor           */
-  float fly_Kp;                      /* Kp of pid controlling flywheel motor speed  */
-  float fly_Ki;                      /* Ki of pid controlling flywheel motor speed  */
-  float fly_Kd;                      /* Kd of pid controlling flywheel motor speed  */
-  float load_step_angle;             /* step size of loading motor, in [rad]        */
+  jam_callback_t jam_callback;
 } shooter_t;
 
 /**
@@ -87,8 +84,8 @@ private:
   ServoMotor* load_servo_;
   float load_step_angle_;
 
-  PIDController left_pid_;  /* pid for left flywheel  */
-  PIDController right_pid_; /* pid for right flywheel */
+  PIDController* left_pid_;  /* pid for left flywheel  */
+  PIDController* right_pid_; /* pid for right flywheel */
 
   float speed_;           /* raw speed before inverting */
 
