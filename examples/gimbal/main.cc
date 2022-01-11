@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-#define GIMBAL_2019
+#define GIMBAL_STANDARD_ZERO
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"

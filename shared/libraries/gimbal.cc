@@ -9,7 +9,7 @@ Gimbal::Gimbal(gimbal_t gimbal) :
   pitch_motor_ = gimbal.pitch_motor;
   yaw_motor_ = gimbal.yaw_motor;
 
-#if defined(GIMBAL_2019)
+#if defined(GIMBAL_STANDARD_ZERO)
   pitch_offset_ = GIMBAL_PITCH_OFF;
   yaw_offset_ = GIMBAL_YAW_OFF;
   pitch_max_ = GIMBAL_PITCH_MAX;
@@ -71,7 +71,6 @@ void Gimbal::TargetRel(float rel_pitch, float rel_yaw) {
   float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- pitch_offset_, 0, 2 * PI);
   float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- yaw_offset_, 0, 2 * PI);
   TargetAbs(abs_pitch, abs_yaw);
-  RM_EXPECT_TRUE(false, "Invalid complementary filter weight");
 }
     
 } // namespace control

@@ -32,7 +32,7 @@ namespace control {
  * @brief offset and max angles of different gimbals
  * @note these should be obtained by reading encoder values through uart/gdb
  */
-#if defined(GIMBAL_2019)
+#if defined(GIMBAL_STANDARD_ZERO)
   /* 2019 standard gimbal */
   #define GIMBAL_PITCH_OFF 4.725f
   #define GIMBAL_YAW_OFF 3.406f

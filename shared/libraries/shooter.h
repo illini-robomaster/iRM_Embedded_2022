@@ -29,7 +29,7 @@ namespace control {
  * @brief structure used when shooter instance is initialized
  */
 typedef struct {
-#if defined(SHOOTER_2019)
+#if defined(SHOOTER_STANDARD_2019)
   MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left flywheel motor   */
   MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right flywheel motor  */
 #else
