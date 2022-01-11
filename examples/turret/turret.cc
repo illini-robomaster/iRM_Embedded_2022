@@ -38,6 +38,8 @@
  * @date 2022-01-05
  */
 
+#define GIMBAL_2019
+
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -98,24 +100,6 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
-  gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
-  gimbal_data.pitch_max = LEGACY_GIMBAL_PMAX;
-  gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
-  gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
-  gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
-  gimbal_data.pitch_move_Kp = 1000;
-  gimbal_data.pitch_move_Ki = 0;
-  gimbal_data.pitch_move_Kd = 100;
-  gimbal_data.yaw_move_Kp = 600;
-  gimbal_data.yaw_move_Ki = 0;
-  gimbal_data.yaw_move_Kd = 100;
-  gimbal_data.pitch_hold_Kp = 2000;
-  gimbal_data.pitch_hold_Ki = 100;
-  gimbal_data.pitch_hold_Kd = 100;
-  gimbal_data.yaw_hold_Kp = 1500;
-  gimbal_data.yaw_hold_Ki = 15;
-  gimbal_data.yaw_hold_Kd = 200;
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
@@ -159,7 +143,7 @@ void RM_RTOS_Default_Task(const void* args) {
     float pitch_ratio = -dbus->ch3 / remote::DBUS::ROCKER_MAX;
     float yaw_ratio = -dbus->ch2 / remote::DBUS::ROCKER_MAX;
     if (abs_mode) {
-      gimbal->TargetAbs(pitch_ratio * LEGACY_GIMBAL_PMAX, yaw_ratio * LEGACY_GIMBAL_YMAX);
+      gimbal->TargetAbs(pitch_ratio * GIMBAL_PITCH_MAX, yaw_ratio * GIMBAL_YAW_MAX);
     } else {
       // divide by 100 since osDelay is 10
       gimbal->TargetRel(pitch_ratio * GIMBAL_SPEED / 100, yaw_ratio * GIMBAL_SPEED / 100);
@@ -188,8 +172,8 @@ void RM_RTOS_Default_Task(const void* args) {
       shooter->SetFlywheelSpeed(0);
     } 
 
-    // Calculate and send command
-    gimbal->CalcOutput();
+    // Update and send command
+    gimbal->Update();
     shooter->CalcOutput();
     control::MotorCANBase::TransmitOutput(motors, 3);
     osDelay(10);

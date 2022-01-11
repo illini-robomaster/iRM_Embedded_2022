@@ -18,6 +18,8 @@
  *                                                                          *
  ****************************************************************************/
 
+#define GIMBAL_2019
+
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -25,7 +27,6 @@
 #include "gimbal.h"
 #include "shooter.h"
 #include "dbus.h"
-
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -50,24 +51,6 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
-  gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
-  gimbal_data.pitch_max = LEGACY_GIMBAL_PMAX;
-  gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
-  gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
-  gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
-  gimbal_data.pitch_move_Kp = 800;
-  gimbal_data.pitch_move_Ki = 0;
-  gimbal_data.pitch_move_Kd = 100;
-  gimbal_data.yaw_move_Kp = 300;
-  gimbal_data.yaw_move_Ki = 0;
-  gimbal_data.yaw_move_Kd = 100;
-  gimbal_data.pitch_hold_Kp = 2000;
-  gimbal_data.pitch_hold_Ki = 100;
-  gimbal_data.pitch_hold_Kd = 100;
-  gimbal_data.yaw_hold_Kp = 1500;
-  gimbal_data.yaw_hold_Ki = 15;
-  gimbal_data.yaw_hold_Kd = 200;
   gimbal = new control::Gimbal(gimbal_data);
 
   dbus = new remote::DBUS(&huart1);
@@ -84,7 +67,7 @@ void RM_RTOS_Default_Task(const void* args) {
     float pitch_ratio = -dbus->ch3 / 600.0;
     float yaw_ratio = -dbus->ch2 / 600.0;
     if (dbus->swr == remote::UP) {
-      gimbal->TargetAbs(pitch_ratio * LEGACY_GIMBAL_PMAX, yaw_ratio * LEGACY_GIMBAL_YMAX);
+      gimbal->TargetAbs(pitch_ratio * GIMBAL_PITCH_MAX, yaw_ratio * GIMBAL_YAW_MAX);
     } else if (dbus->swr == remote::MID) {
       gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
     } 
@@ -94,7 +77,7 @@ void RM_RTOS_Default_Task(const void* args) {
       RM_ASSERT_TRUE(false, "Operation killed");
     }
 
-    gimbal->CalcOutput();
+    gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors, 2);
     osDelay(10);
   }

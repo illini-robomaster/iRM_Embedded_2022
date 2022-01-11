@@ -44,6 +44,8 @@ class PIDController {
    */
   PIDController(float kp, float ki, float kd);
 
+  PIDController(float param[3]);
+
   /**
    * @brief compute output base on current error
    *
@@ -72,6 +74,8 @@ class PIDController {
    * @param kd new derivative gain
    */
   void Reinit(float kp, float ki, float kd);
+
+  void Reinit(float* param);
 
   /**
    * @brief clear the remembered states of the controller
