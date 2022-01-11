@@ -25,14 +25,10 @@
 #include <cmath>
 
 // Factor from us to s
-static const float USEC_TO_SEC = 1000000;
-static const float GRAVITY = 9.81;
+static const float USEC_TO_SEC = 1000000.0;
 
 namespace control {
 
-/** @description: constructor for Pose
- *  @param: _imu: imu pointer
-**/
 Pose::Pose(bsp::MPU6500* _imu) : imu(_imu) {
   if (_imu == nullptr) {
     RM_ASSERT_TRUE(false, "invalid imu");
@@ -46,31 +42,19 @@ Pose::Pose(bsp::MPU6500* _imu) : imu(_imu) {
 }
 
 
-/** @description: reset all accumulated variables to 0
- *  
-**/
 void Pose::PoseInit(void) {
   timestamp = imu->timestamp;
   roll = 0;
   pitch = 0;
 }
 
-/** @description: naive calibration for all offsets
- *                read from IMU and compute the average for 100 times
- *  @param: num, IMU reads to compute the average offset
- *  @note : by default takes 1s to calibrate
-**/
+
 void Pose::Calibrate(void) {
   // measure 100 times to compute the average
   Calibrate(100);
 }
 
 
-/** @description: naive calibration for all offsets
- *                read from IMU and compute the average for given times
- *  @param: num, IMU reads to compute the average offset
- *  @note : it takes _num * 10ms to calibrate
-**/
 void Pose::Calibrate(int16_t _num) {
   float acce_x = 0;
   float acce_y = 0;
@@ -90,6 +74,14 @@ void Pose::Calibrate(int16_t _num) {
   
   acc_x_off = acce_x / (float) _num;
   acc_y_off = acce_y / (float) _num;
+  
+  /** Explanation: For calibration, we want the mean of noise distribution (bias)
+   *  to be zeroed when IMU is placed on a flat plane.
+   *  Note that acc_z_off should have a constant gravity offset on a flat plane, 
+   *  which also has a noise in measuring.
+   *  Since the value of the gravity doesn't matter (only ratio matters), we can
+   *  assign the noise bias to the gravity noise bias. So acc_z_off is always zero. 
+  **/ 
   acc_z_off = 0;
   
   gyro_x_off = gyro_x / (float) _num;
@@ -99,9 +91,6 @@ void Pose::Calibrate(int16_t _num) {
 }
 
 
-/** @description: naive computation for gravity
- *  @note : it takes 1s
-**/
 float Pose::GetGravity(void) {
   float acce_z = 0;
   const int32_t NUM = 100;
@@ -113,9 +102,6 @@ float Pose::GetGravity(void) {
 }
 
 
-/** @description: set offset for the 6 inputs
- *  
-**/
 void Pose::SetOffset(float _acc_x_off, float _acc_y_off, float _acc_z_off, 
                float _gyro_x_off, float _gyro_y_off, float _gyro_z_off) {
   acc_x_off = _acc_x_off;
@@ -123,30 +109,20 @@ void Pose::SetOffset(float _acc_x_off, float _acc_y_off, float _acc_z_off,
   acc_z_off = _acc_z_off;
   gyro_x_off = _gyro_x_off;
   gyro_y_off = _gyro_y_off;
-  gyro_z_off = _gyro_z_off;
-  
+  gyro_z_off = _gyro_z_off;  
 }
 
 
-/** @description: read estimated pitch in RAD
- *  @note: this error gets larger as ROLL gets larger. When ROLL get close to +/-90 deg, this value is not usable.
-**/
 float Pose::GetPitch(void) {
   return pitch;
 }
 
 
-/** @description: read estimated roll in RAD
- *  @note: this error gets larger as PITCH gets larger. When PITCH get close to +/-90 deg, this value is not usable.
-**/
 float Pose::GetRoll(void) {
   return roll;
 }
 
 
-/** @description: set complementary filter weight
- *  @note: should be close to 1.0
-**/
 void Pose::SetAlpha(float _alpha) {
   if (_alpha > 1.0 || _alpha < 0.0) {
     return;
@@ -155,11 +131,6 @@ void Pose::SetAlpha(float _alpha) {
 }
 
 
-/** @description: update pose with complementary filter from IMU's gyro and acce
- *  @note: delay between 2 ComplementaryFilterUpdate() calls should be as small as possible
- *         ideally ~10ms
- *  @reference: https://www.pieter-jan.com/node/11
-**/
 void Pose::ComplementaryFilterUpdate(void) {
 
   // compute pitch and roll based on acce meter

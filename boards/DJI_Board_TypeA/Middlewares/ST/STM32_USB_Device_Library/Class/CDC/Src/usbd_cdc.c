@@ -446,6 +446,8 @@ __ALIGN_BEGIN static uint8_t USBD_CDC_OtherSpeedCfgDesc[USB_CDC_CONFIG_DESC_SIZ]
   * @{
   */
 
+static USBD_CDC_HandleTypeDef hcdc_mem;
+
 /**
   * @brief  USBD_CDC_Init
   *         Initialize the CDC interface
