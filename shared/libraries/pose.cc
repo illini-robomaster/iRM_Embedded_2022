@@ -125,7 +125,7 @@ float Pose::GetRoll(void) {
 
 void Pose::SetAlpha(float _alpha) {
   if (_alpha > 1.0 || _alpha < 0.0) {
-    return;
+    RM_EXPECT_TRUE(false, "Invalid complementary filter weight");
   }
   alpha = _alpha;
 }
