@@ -97,7 +97,9 @@ void RM_RTOS_Default_Task(const void* argument) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("Chassis Volt: %hu, Chassis Curr: %hu", referee->power_heat_data.chassis_volt, referee->power_heat_data.chassis_current);
+    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
     osDelay(100);
   }
 }

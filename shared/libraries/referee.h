@@ -23,6 +23,7 @@
 #include "bsp_error_handler.h"
 
 namespace RoboMaster {
+    constexpr int MAX_FRAME_LEN = 300;
 
 /* Information From Referee */
 
@@ -247,6 +248,7 @@ public:
     bool Update(const uint8_t* data, int length);
 
 private:
+    uint8_t buffer[MAX_FRAME_LEN];
     bool CheckHeader(const uint8_t* data, int length);
     bool CheckFrame(const uint8_t* data, int length);
     bool ProcessData(int cmd_id, const uint8_t* data, int length);

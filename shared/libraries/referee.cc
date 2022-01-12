@@ -23,7 +23,7 @@
 
 #include <cstring>
 
-static const int SOF = 0xA5;
+static const uint8_t SOF = 0xA5;
 static const int FRAME_HEADER_LEN = 5;
 static const int CMD_ID_LEN = 2;
 static const int FRAME_TAIL_LEN = 2;
@@ -31,27 +31,17 @@ static const int BYTE = 8;
 
 namespace RoboMaster {
     bool Referee::Update(const uint8_t* data, int length) {
-      uint8_t debug[300];
-      memcpy(debug, data, length);
-      uint8_t gg = data[0];
+      memcpy(buffer, data, length);
       int start_idx;
       int end_idx = 0;
       while (end_idx < length) {
         start_idx = end_idx;
-        for (; end_idx < length; ++end_idx) {
-          uint8_t tmp = data[0];
-          if (tmp == SOF) {
-            //set
-            start_idx = gg;
-          }
-        }
-        for (; ++end_idx < length && data[end_idx] != SOF;);
+        for (; ++end_idx < length && buffer[end_idx] != SOF;);
         if (end_idx - start_idx > FRAME_HEADER_LEN + CMD_ID_LEN + FRAME_TAIL_LEN) {
-          int DATA_LENGTH = data[start_idx + 2] << BYTE | data[start_idx + 1];
-          if (CheckHeader(data + start_idx, FRAME_HEADER_LEN) && CheckFrame(data + start_idx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN)) {
-            int cmd_id = data[start_idx + FRAME_HEADER_LEN + 1] | data[start_idx + FRAME_HEADER_LEN];
-            if (!ProcessData(cmd_id , data + start_idx + FRAME_HEADER_LEN + CMD_ID_LEN, DATA_LENGTH))
-              return false;
+          int DATA_LENGTH = buffer[start_idx + 2] << BYTE | buffer[start_idx + 1];
+          if (CheckHeader(buffer + start_idx, FRAME_HEADER_LEN) && CheckFrame(buffer + start_idx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN)) {
+            int cmd_id = buffer[start_idx + FRAME_HEADER_LEN + 1] << BYTE | buffer[start_idx + FRAME_HEADER_LEN];
+            ProcessData(cmd_id , buffer + start_idx + FRAME_HEADER_LEN + CMD_ID_LEN, DATA_LENGTH);
           }
         }
       }
