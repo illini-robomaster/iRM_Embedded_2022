@@ -6,29 +6,34 @@ namespace control {
 
 Gimbal::Gimbal(gimbal_t gimbal) : 
     pitch_detector_(BoolEdgeDetector(false)), yaw_detector_(BoolEdgeDetector(false)) {
+  // acquired from user
   pitch_motor_ = gimbal.pitch_motor;
   yaw_motor_ = gimbal.yaw_motor;
+  model_ = gimbal.model;
 
-#if defined(GIMBAL_STANDARD_ZERO)
-  pitch_offset_ = GIMBAL_PITCH_OFF;
-  yaw_offset_ = GIMBAL_YAW_OFF;
-  pitch_max_ = GIMBAL_PITCH_MAX;
-  yaw_max_ = GIMBAL_YAW_MAX;
-  pitch_proximity_ = GIMBAL_2019_PMAX / 3.0;
-  yaw_proximity_ = GIMBAL_2019_YMAX / 6.0;
+  // data initialization using acquired model
+  switch (gimbal.model) {
+    case GIMBAL_STANDARD_ZERO:
+      data_.pitch_offset_ = 4.725f;
+      data_.yaw_offset_ = 3.506f;
+      data_.pitch_max_ = 0.408f;
+      data_.yaw_max_ = 1.511f;
+      data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
+      data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
 
-  pitch_move_pid_param_ = new float[3] {1000, 0, 100};
-  pitch_hold_pid_param_ = new float[3] {2000, 100, 100};
-  yaw_move_pid_param_ = new float[3] {600, 0, 100};
-  yaw_hold_pid_param_ = new float[3] {1500, 15, 200};
-  pitch_pid_ = new PIDController(pid_move_param_);
-  yaw_pid_ = new PIDController(pid_hold_param_);
-#else
-  RM_ASSERT_TRUE(false, "No gimbal type specified");
-#endif
+      pitch_move_pid_param_ = new float[3] {1000, 0, 100};
+      pitch_hold_pid_param_ = new float[3] {2000, 150, 200};
+      yaw_move_pid_param_ = new float[3] {1000, 0, 100};
+      yaw_hold_pid_param_ = new float[3] {1500, 35, 300};
+      pitch_pid_ = new PIDController(pitch_move_pid_param_);
+      yaw_pid_ = new PIDController(yaw_move_pid_param_);
+      break;
+    default:
+      RM_ASSERT_TRUE(false, "No gimbal type specified");
+  }
 
-  pitch_angle_ = pitch_offset_;
-  yaw_angle_ = yaw_offset_;
+  pitch_angle_ = data_.pitch_offset_;
+  yaw_angle_ = data_.yaw_offset_;
 }
 
 Gimbal::~Gimbal() {
@@ -40,11 +45,15 @@ Gimbal::~Gimbal() {
   delete yaw_pid_;
 }
 
+gimbal_data_t Gimbal::GetData() const {
+  return data_;
+}
+
 void Gimbal::Update() {
   float pitch_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
   float yaw_diff = yaw_motor_->GetThetaDelta(yaw_angle_);
-  pitch_detector_.input(abs(pitch_diff) > pitch_proximity_);
-  yaw_detector_.input(abs(yaw_diff) > yaw_proximity_);
+  pitch_detector_.input(abs(pitch_diff) > data_.pitch_proximity_);
+  yaw_detector_.input(abs(yaw_diff) > data_.yaw_proximity_);
 
   if (pitch_detector_.posEdge()) {
     pitch_pid_->Reinit(pitch_move_pid_param_);
@@ -63,13 +72,15 @@ void Gimbal::Update() {
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {
-  pitch_angle_ = wrap<float>(clip<float>(abs_pitch, -pitch_max_, pitch_max_) + pitch_offset_, 0, 2 * PI);
-  yaw_angle_ = wrap<float>(clip<float>(abs_yaw, -yaw_max_, yaw_max_) + yaw_offset_, 0, 2 * PI);
+  float clipped_pitch = clip<float>(abs_pitch, -data_.pitch_max_, data_.pitch_max_);
+  float clipped_yaw = clip<float>(abs_yaw, -data_.yaw_max_, data_.yaw_max_);
+  pitch_angle_ = wrap<float>(clipped_pitch + data_.pitch_offset_, 0, 2 * PI);
+  yaw_angle_ = wrap<float>(clipped_yaw + data_.yaw_offset_, 0, 2 * PI);
 }
 
 void Gimbal::TargetRel(float rel_pitch, float rel_yaw) {
-  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- pitch_offset_, 0, 2 * PI);
-  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- yaw_offset_, 0, 2 * PI);
+  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- data_.pitch_offset_, -PI, PI);
+  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- data_.yaw_offset_, -PI, PI);
   TargetAbs(abs_pitch, abs_yaw);
 }
     

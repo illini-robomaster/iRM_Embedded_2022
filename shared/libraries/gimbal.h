@@ -32,19 +32,21 @@ namespace control {
  * @brief offset and max angles of different gimbals
  * @note these should be obtained by reading encoder values through uart/gdb
  */
-#if defined(GIMBAL_STANDARD_ZERO)
-  /* 2019 standard gimbal */
-  #define GIMBAL_PITCH_OFF 4.725f
-  #define GIMBAL_YAW_OFF 3.406f
-  #define GIMBAL_PITCH_MAX 0.408f
-  #define GIMBAL_YAW_MAX 1.511f
-#else
-  /* default value, should not be used */
-  #define GIMBAL_PITCH_OFF 0f
-  #define GIMBAL_YAW_OFF 0f
-  #define GIMBAL_PITCH_MAX 0f
-  #define GIMBAL_YAW_MAX 0f
-#endif
+
+typedef enum {
+  GIMBAL_MODEL_START = 0,
+  GIMBAL_STANDARD_ZERO = 0,
+  GIMBAL_MODEL_END
+} gimbal_model_t;
+
+typedef struct {
+  float pitch_offset_;    /* pitch offset angle (angle when muzzle is at vertical center) */
+  float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */
+  float pitch_max_;       /* maximum pitch angle the gimbal can turn from center          */
+  float yaw_max_;         /* maximum yaw angle the gimbal can turn from center            */
+  float pitch_proximity_; /* pitch angle diff from center to toggle pid modes             */
+  float yaw_proximity_;   /* yaw angle diff from center to toggle pid modes               */
+} gimbal_data_t;
 
 /**
  * @brief structure used when gimbal instance is initialized
@@ -52,6 +54,7 @@ namespace control {
 typedef struct {
   MotorCANBase* pitch_motor; /* pitch motor instance */
   MotorCANBase* yaw_motor;   /* yaw motor instance   */
+  gimbal_model_t model;      /* gimbal model         */
 } gimbal_t;
 
 /**
@@ -70,6 +73,13 @@ class Gimbal {
    * @brief destructor for gimbal
    */
   ~Gimbal();
+
+  /**
+   * @brief get gimbal related constants
+   * 
+   * @return refer to gimbal_data_t 
+   */
+  gimbal_data_t GetData() const;
 
   /**
    * @brief calculate the output of the motors under current configuration
@@ -96,14 +106,10 @@ class Gimbal {
   // Acquired from user
   MotorCANBase* pitch_motor_;
   MotorCANBase* yaw_motor_;
+  gimbal_model_t model_;
   
   // pitch and yaw constants
-  float pitch_offset_;    /* pitch offset angle (angle when muzzle is at vertical center) */
-  float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */
-  float pitch_max_;       /* maximum pitch angle the gimbal can turn from center          */
-  float yaw_max_;         /* maximum yaw angle the gimbal can turn from center            */
-  float pitch_proximity_; /* pitch angle diff from center to toggle pid modes             */
-  float yaw_proximity_;   /* yaw angle diff from center to toggle pid modes               */
+  gimbal_data_t data_;
 
   // pitch and yaw pid
   float* pitch_move_pid_param_; /* pid param that used to control pitch motor when moving  */

@@ -18,8 +18,6 @@
  *                                                                          *
  ****************************************************************************/
 
-#define GIMBAL_STANDARD_ZERO
-
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -62,12 +60,13 @@ void RM_RTOS_Default_Task(const void* args) {
 	osDelay(500); // DBUS initialization needs time
   
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
+  control::gimbal_data_t gimbal_data = gimbal->GetData();
 
   while (true) {
     float pitch_ratio = -dbus->ch3 / 600.0;
     float yaw_ratio = -dbus->ch2 / 600.0;
     if (dbus->swr == remote::UP) {
-      gimbal->TargetAbs(pitch_ratio * GIMBAL_PITCH_MAX, yaw_ratio * GIMBAL_YAW_MAX);
+      gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else if (dbus->swr == remote::MID) {
       gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
     } 

@@ -38,7 +38,6 @@
  * @date 2022-01-05
  */
 
-#define GIMBAL_STANDARD_ZERO
 #define SHOOTER_STANDARD_ZERO
 
 #include "bsp_gpio.h"
@@ -102,6 +101,7 @@ void RM_RTOS_Init() {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
+  control::gimbal_data_t gimbal_data = gimbal->GetData();
 	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
 	laser.High();
 
@@ -126,7 +126,7 @@ void RM_RTOS_Default_Task(const void* args) {
     float pitch_ratio = -dbus->ch3 / remote::DBUS::ROCKER_MAX;
     float yaw_ratio = -dbus->ch2 / remote::DBUS::ROCKER_MAX;
     if (abs_mode) {
-      gimbal->TargetAbs(pitch_ratio * GIMBAL_PITCH_MAX, yaw_ratio * GIMBAL_YAW_MAX);
+      gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else {
       // divide by 100 since osDelay is 10
       gimbal->TargetRel(pitch_ratio * GIMBAL_SPEED / 100, yaw_ratio * GIMBAL_SPEED / 100);
