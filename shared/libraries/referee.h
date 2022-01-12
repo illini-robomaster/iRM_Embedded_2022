@@ -23,7 +23,8 @@
 #include "bsp_error_handler.h"
 
 namespace RoboMaster {
-    constexpr int MAX_FRAME_LEN = 300;
+
+constexpr int MAX_FRAME_LEN = 300;
 
 /* Information From Referee */
 
@@ -225,6 +226,9 @@ typedef struct {
     uint16_t operate_launch_cmd_time;
 } __packed dart_client_cmd_t;
 
+/**
+ * @brief referee system class
+ */
 class Referee {
 public:
     game_status_t game_status;
@@ -245,12 +249,41 @@ public:
     rfid_status_t rfid_status;
     dart_client_cmd_t dart_client_cmd;
 
+    /**
+     * @brief update the information from referee system
+     *
+     * @param data      address for received data read from UART for referee
+     * @param length    number of bytes in received data
+     * @return true for success; false for failure
+     */
     bool Update(const uint8_t* data, int length);
 
 private:
     uint8_t buffer[MAX_FRAME_LEN];
+    /**
+     * @brief check the header of frame with crc8
+     *
+     * @param data      address for header data
+     * @param length    number of bytes in header data
+     * @return true for success; false for failure
+     */
     bool CheckHeader(const uint8_t* data, int length);
+    /**
+     * @brief check the frame with crc16
+     *
+     * @param data      address for frame data
+     * @param length    number of bytes in frame data
+     * @return true for success; false for failure
+     */
     bool CheckFrame(const uint8_t* data, int length);
+    /**
+     * @brief process the data for certain command and update corresponding status variables
+     *
+     * @param cmd_id    command id
+     * @param data      address for command data
+     * @param length    number of bytes in command data
+     * @return true for success; false for failure
+     */
     bool ProcessData(int cmd_id, const uint8_t* data, int length);
 };
 
