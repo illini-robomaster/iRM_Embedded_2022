@@ -84,7 +84,7 @@ class UART {
    *       of bytes successfully transmitted
    */
   template <bool FromISR = false>
-  int32_t Write(const uint8_t *data, uint32_t length);
+  int32_t Write(const uint8_t* data, uint32_t length);
 
  protected:
   /**
