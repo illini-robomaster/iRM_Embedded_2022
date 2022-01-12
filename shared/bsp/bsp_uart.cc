@@ -204,7 +204,7 @@ template int32_t UART::Read<true>(uint8_t** data);
 template int32_t UART::Read<false>(uint8_t** data);
 
 template <bool FromISR>
-int32_t UART::Write(const uint8_t* data, uint32_t length) {
+int32_t UART::Write(uint8_t *data, uint32_t length) {
   // enter critical session
   UBaseType_t isrflags;
   if (FromISR) {
@@ -235,8 +235,8 @@ int32_t UART::Write(const uint8_t* data, uint32_t length) {
   return length;
 }
 
-template int32_t UART::Write<true>(const uint8_t* data, uint32_t length);
-template int32_t UART::Write<false>(const uint8_t* data, uint32_t length);
+template int32_t UART::Write<true>(uint8_t *data, uint32_t length);
+template int32_t UART::Write<false>(uint8_t *data, uint32_t length);
 
 void UART::TxCompleteCallback() {
   uint8_t* tmp;

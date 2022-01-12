@@ -27,8 +27,5 @@
 **/
 void gimbalTask (void* arg) {
   UNUSED(arg);
-
-  while (1) {
-    
-  }
+  while (true);
 }

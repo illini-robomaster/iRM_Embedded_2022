@@ -20,62 +20,84 @@
 
 #include "main.h"
 
-#include <memory>
-
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "cmsis_os.h"
-
-/**
- * sample client Python code to verify transmission correctness of this example program
- *
- * ```
- * import serial
- *
- * ser = serial.Serial('/dev/ttyUSB0', baudrate=115200)
- * some_str = 'this is my data!'
- *
- * for i in range(1000):
- *     ser.write(some_str)
- *     while ser.in_waiting < 3 * len(some_str):
- *         continue
- *     ret = ser.read_all()
- *     assert ret == 3 * some_str
- * ```
- */
+#include "referee.h"
 
 #define RX_SIGNAL (1 << 0)
 
 extern osThreadId_t defaultTaskHandle;
 
-class CustomUART : public bsp::UART {
- public:
-  using bsp::UART::UART;
+const osThreadAttr_t refereeTaskAttribute = {
+        .name = "refereeTask",
+        .attr_bits = osThreadDetached,
+        .cb_mem = nullptr,
+        .cb_size = 0,
+        .stack_mem = nullptr,
+        .stack_size = 128 * 4,
+        .priority = (osPriority_t) osPriorityNormal,
+        .tz_module = 0,
+        .reserved = 0
+};
+osThreadId_t refereeTaskHandle;
 
- protected:
-  /* notify application when rx data is pending read */
-  void RxCompleteCallback() override final { osThreadFlagsSet(defaultTaskHandle, RX_SIGNAL); }
+class CustomUART : public bsp::UART {
+public:
+    using bsp::UART::UART;
+
+protected:
+    /* notify application when rx data is pending read */
+    void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
 };
 
-void RM_RTOS_Default_Task(const void* argument) {
-  UNUSED(argument);
+RoboMaster::Referee* referee = nullptr;
+CustomUART* referee_uart = nullptr;
 
+void refereeTask (void* arg) {
+  UNUSED(arg);
   uint32_t length;
   uint8_t* data;
-
-  auto uart = std::make_unique<CustomUART>(&UART_HANDLE);  // see cmake for which uart
-  uart->SetupRx(50);
-  uart->SetupTx(50);
 
   while (true) {
     /* wait until rx data is available */
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
     if (flags & RX_SIGNAL) {  // unnecessary check
       /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
-      length = uart->Read(&data);
-      uart->Write(data, length);
-      uart->Write(data, length);
-      uart->Write(data, length);
+//      length = referee_uart->Read(&data);
+//      set_cursor(0, 0);
+//      clear_screen();
+//      for (uint32_t i = 0; i < length; ++i) {
+//        print("%02X ", data[i]);
+//      }
+//      print("\r\n");
+      length = referee_uart->Read(&data);
+      referee->Update(data, length);
     }
+  }
+}
+
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart8);
+
+  referee_uart = new CustomUART(&huart7);
+  referee_uart->SetupRx(300);
+  referee_uart->SetupTx(300);
+
+  referee = new RoboMaster::Referee;
+}
+
+void RM_RTOS_Threads_Init(void) {
+  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
+}
+
+void RM_RTOS_Default_Task(const void* argument) {
+  UNUSED(argument);
+
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    print("Chassis Volt: %hu, Chassis Curr: %hu", referee->power_heat_data.chassis_volt, referee->power_heat_data.chassis_current);
+    osDelay(100);
   }
 }
