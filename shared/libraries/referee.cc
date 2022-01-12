@@ -65,6 +65,51 @@ namespace RoboMaster {
         case SHOOT_DATA:
           memcpy(&shoot_data, data, length);
           break;
+        case GAME_STATUS:
+          memcpy(&game_status, data, length);
+          break;
+        case GAME_RESULT:
+          memcpy(&game_result, data, length);
+          break;
+        case GAME_ROBOT_HP:
+          memcpy(&game_robot_HP, data, length);
+          break;
+        case EVENT_DATA:
+          memcpy(&event_data, data, length);
+          break;          
+        case SUPPLY_PROJECTILE_ACTION:
+          memcpy(&supply_projectile_action, data, length);
+          break;
+        case REFEREE_WARNING:
+          memcpy(&referee_warning, data, length);
+          break;  
+        case DART_REMAINING_TIME:
+          memcpy(&dart_remaining_time, data, length);
+          break;  
+        case GAME_ROBOT_STATUS:
+          memcpy(&game_robot_status, data, length);
+          break;
+        case GAME_ROBOT_POS:
+          memcpy(&game_robot_pos, data, length);
+          break;
+        case BUFF:
+          memcpy(&buff, data, length);
+          break;
+        case AERIAL_ROBOT_ENERGY:
+          memcpy(&aerial_robot_energy, data, length);
+          break;
+        case ROBOT_HURT:
+          memcpy(&robot_hurt, data, length);
+          break;
+        case BULLET_REMAINING:
+          memcpy(&bullet_remaining, data, length);
+          break;  
+        case RFID_STATUS:
+          memcpy(&rfid_status, data, length);
+          break; 
+        case DART_CLIENT_CMD:
+          memcpy(&dart_client_cmd, data, length);
+          break; 
         default:
           return false;
       }
