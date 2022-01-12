@@ -39,7 +39,8 @@ namespace RoboMaster {
         for (; ++end_idx < length && buffer[end_idx] != SOF;);
         if (end_idx - start_idx > FRAME_HEADER_LEN + CMD_ID_LEN + FRAME_TAIL_LEN) {
           int DATA_LENGTH = buffer[start_idx + 2] << BYTE | buffer[start_idx + 1];
-          if (CheckHeader(buffer + start_idx, FRAME_HEADER_LEN) && CheckFrame(buffer + start_idx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN)) {
+          if (CheckHeader(buffer + start_idx, FRAME_HEADER_LEN) &&
+              CheckFrame(buffer + start_idx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN)) {
             int cmd_id = buffer[start_idx + FRAME_HEADER_LEN + 1] << BYTE | buffer[start_idx + FRAME_HEADER_LEN];
             ProcessData(cmd_id , buffer + start_idx + FRAME_HEADER_LEN + CMD_ID_LEN, DATA_LENGTH);
           }
