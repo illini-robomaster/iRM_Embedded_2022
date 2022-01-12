@@ -15,14 +15,14 @@ Gimbal::Gimbal(gimbal_t gimbal) :
   switch (gimbal.model) {
     case GIMBAL_STANDARD_ZERO:
       data_.pitch_offset_ = 4.725f;
-      data_.yaw_offset_ = 3.506f;
+      data_.yaw_offset_ = 3.406f;
       data_.pitch_max_ = 0.408f;
-      data_.yaw_max_ = 1.511f;
+      data_.yaw_max_ = 1.551f;
       data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
       data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
 
       pitch_move_pid_param_ = new float[3] {1000, 0, 100};
-      pitch_hold_pid_param_ = new float[3] {2000, 150, 200};
+      pitch_hold_pid_param_ = new float[3] {2000, 130, 200};
       yaw_move_pid_param_ = new float[3] {1000, 0, 100};
       yaw_hold_pid_param_ = new float[3] {1500, 35, 300};
       pitch_pid_ = new PIDController(pitch_move_pid_param_);

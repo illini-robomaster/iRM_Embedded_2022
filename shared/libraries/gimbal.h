@@ -27,18 +27,18 @@
 
 namespace control {
 
+/**
+ * @brief gimbal models 
+ */
+typedef enum {
+  GIMBAL_STANDARD_ZERO
+} gimbal_model_t;
   
 /**
- * @brief offset and max angles of different gimbals
- * @note these should be obtained by reading encoder values through uart/gdb
+ * @brief offset, max, and proximity angles of different gimbals
+ * @note except for proximity is determined by user, these should be obtained by reading 
+ *       encoder values through uart/gdb
  */
-
-typedef enum {
-  GIMBAL_MODEL_START = 0,
-  GIMBAL_STANDARD_ZERO = 0,
-  GIMBAL_MODEL_END
-} gimbal_model_t;
-
 typedef struct {
   float pitch_offset_;    /* pitch offset angle (angle when muzzle is at vertical center) */
   float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */

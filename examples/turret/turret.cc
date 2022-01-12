@@ -38,8 +38,6 @@
  * @date 2022-01-05
  */
 
-#define SHOOTER_STANDARD_ZERO
-
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
@@ -87,12 +85,14 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
+  gimbal_data.model = control::GIMBAL_STANDARD_ZERO;
   gimbal = new control::Gimbal(gimbal_data);
   
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_fly_motor;
   shooter_data.right_flywheel_motor = right_fly_motor;
   shooter_data.load_motor = load_motor;
+  shooter_data.model = control::SHOOTER_STANDARD_ZERO;
   shooter = new control::Shooter(shooter_data);  
 
   dbus = new remote::DBUS(&huart1);
@@ -123,8 +123,8 @@ void RM_RTOS_Default_Task(const void* args) {
     if (abs_detector.posEdge()) {
       abs_mode = !abs_mode;
     }
-    float pitch_ratio = -dbus->ch3 / remote::DBUS::ROCKER_MAX;
-    float yaw_ratio = -dbus->ch2 / remote::DBUS::ROCKER_MAX;
+    float pitch_ratio = float(-dbus->ch3) / remote::DBUS::ROCKER_MAX;
+    float yaw_ratio = float(-dbus->ch2) / remote::DBUS::ROCKER_MAX;
     if (abs_mode) {
       gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else {

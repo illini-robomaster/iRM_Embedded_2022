@@ -26,18 +26,24 @@
 namespace control {
 
 /**
+ * @brief gimbal models 
+ */
+typedef enum {
+  SHOOTER_STANDARD_ZERO,
+  SHOOTER_STANDARD_2022,
+} shooter_model_t;
+
+/**
  * @brief structure used when shooter instance is initialized
+ * @note Because shooter ZERO uses snail M2305 motors that can only be driven using PWM,
+ *       interfaces are reserved since the old shooter could be used for demonstratio 
+ *       purposes in the future.
  */
 typedef struct {
-#if defined(SHOOTER_STANDARD_ZERO)
-  MotorPWMBase* left_flywheel_motor;	 /* PWM motor instance of left flywheel motor   */
-  MotorPWMBase* right_flywheel_motor; /* PWM motor instance of right flywheel motor  */
-#else
-  MotorCANBase* left_flywheel_motor;	 /* CAN motor instance of left flywheel motor   */
-  MotorCANBase* right_flywheel_motor; /* CAN motor instance of right flywheel motor  */
-#endif
-  MotorCANBase* load_motor;            /* servomotor instance of load motor           */
-  jam_callback_t jam_callback;
+  MotorBase* left_flywheel_motor;  /* motor instance of left flywheel motor  */
+  MotorBase* right_flywheel_motor; /* motor instance of right flywheel motor */
+  MotorCANBase* load_motor;        /* CAN motor instance of load motor       */
+  shooter_model_t model;
 } shooter_t;
 
 /**
@@ -73,20 +79,17 @@ public:
   void Update();
 
 private:
-  // refer to shooter_t for details
-#if defined(SHOOTER_STANDARD_ZERO)
-  MotorPWMBase* left_flywheel_motor_;
-  MotorPWMBase* right_flywheel_motor_;
-#else
-  MotorCANBase* left_flywheel_motor_;
-  MotorCANBase* right_flywheel_motor_;
+  MotorBase* left_flywheel_motor_;
+  MotorBase* right_flywheel_motor_;
+  ServoMotor* load_servo_;
+  shooter_model_t model_;
+  
   PIDController* left_pid_;  /* pid for left flywheel  */
   PIDController* right_pid_; /* pid for right flywheel */
   BoolEdgeDetector* flywheel_turning_detector_;
-  float speed_;
-#endif
-  ServoMotor* load_servo_;
   float load_step_angle_;
+  float speed_;
+  
 };
 
 }
