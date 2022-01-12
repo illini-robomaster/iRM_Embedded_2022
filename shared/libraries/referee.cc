@@ -61,6 +61,9 @@ namespace RoboMaster {
         case POWER_HEAT_DATA:
           memcpy(&power_heat_data, data, length);
           break;
+        case SHOOT_DATA:
+          memcpy(&shoot_data, data, length);
+          break;
         default:
           return false;
       }
