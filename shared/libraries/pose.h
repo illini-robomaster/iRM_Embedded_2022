@@ -67,12 +67,17 @@ public:
   /** @description: read estimated pitch in RAD
    *  @note: this error gets larger as ROLL gets larger. When ROLL get close to +/-90 deg, this value is not usable.
   **/
-  float GetRoll(void);
+  float GetPitch(void);
 
   /** @description: read estimated roll in RAD
    *  @note: this error gets larger as PITCH gets larger. When PITCH get close to +/-90 deg, this value is not usable.
   **/
-  float GetPitch(void);
+  float GetRoll(void);
+  
+  /** @description: read estimated yaw in RAD
+   *  @note: this function is only based on gyro and it will drift.
+  **/
+  float GetYaw(void);
   
   /** @description: set complementary filter weight
    *  @note: should be close to 1.0
@@ -91,6 +96,7 @@ private:
   // last pose
   float pitch;
   float roll;
+  float yaw;
   
   // noise bias correction offset for 3 axis of acce and gyro
   float acc_x_off;

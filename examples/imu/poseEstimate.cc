@@ -60,10 +60,11 @@ void RM_RTOS_Default_Task(const void* arguments) {
   // init params
   float roll = 0;
   float pitch = 0;
+  float yaw = 0;
   uint32_t i = 0;
   float degRoll = 0;
   float degPitch = 0;
-  
+  float degYaw = 0;
   // calibrate the Offset for IMU acce meter and gyro
   poseEstimator.Calibrate();
   
@@ -85,13 +86,15 @@ void RM_RTOS_Default_Task(const void* arguments) {
       // get roll and pitch, in RAD
       roll = poseEstimator.GetRoll();
       pitch = poseEstimator.GetPitch();
+      yaw = poseEstimator.GetYaw();
       print("PITCH: %6.4f ROLL: %6.4f \r\n", pitch, roll);
-
+      print("YAW: %6.4f \r\n", yaw);
       // convert to DEG
       degRoll = roll * 180 / 3.14;
       degPitch = pitch * 180 / 3.14;
+      degYaw = yaw * 180 / 3.14;
       print("P_DEG: %6.4f R_DEG: %6.4f \r\n", degPitch, degRoll);
-      
+      print("Y_DEG: %6.4f \r\n", degYaw);
       
       i = 0;
     }

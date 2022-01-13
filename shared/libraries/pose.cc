@@ -22,6 +22,8 @@
 #include "bsp_imu.h"
 #include "pose.h"
 
+#include "arm_math.h"
+#include "utils.h"
 #include <cmath>
 
 // Factor from us to s
@@ -122,6 +124,9 @@ float Pose::GetRoll(void) {
   return roll;
 }
 
+float Pose::GetYaw(void) {
+  return yaw;
+}
 
 void Pose::SetAlpha(float _alpha) {
   if (_alpha > 1.0 || _alpha < 0.0) {
@@ -144,6 +149,12 @@ void Pose::ComplementaryFilterUpdate(void) {
   roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC)
           - (1.0 - alpha) * rollAcc;
   
+  // yaw cannot rely on acce.
+  // TODO fuse yaw with 
+  yaw = yaw + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
+  // limit yaw to -Pi to Pi
+  yaw = wrap<float>(yaw, -PI, PI);
+
   // update timestamp
   timestamp = imu->timestamp;
 }
