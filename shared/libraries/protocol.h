@@ -355,7 +355,7 @@ private:
  * 0x0401 PACK
  */
 
-/* TODO(neo): above information with [x] should be implemented when needed in the future*/
+/* TODO(neo): the PACK command is for test only, please add real command structures in the future for the communication between host and serve */
 
 typedef enum {
     PACK = 0x0401,
