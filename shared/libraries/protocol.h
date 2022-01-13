@@ -390,4 +390,4 @@ private:
     int ProcessDataTx(int cmd_id, uint8_t *data) final;
 };
 
-}
+} /* namespace communication */

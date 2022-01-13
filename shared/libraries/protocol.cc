@@ -172,4 +172,4 @@ int Host::ProcessDataTx(int cmd_id, uint8_t *data) {
   return data_len;
 }
 
-}
+} /* namespace communication */
