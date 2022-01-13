@@ -42,6 +42,12 @@ public:
      */
     bool Receive(package_t package);
 
+    /**
+     * @brief prepare the information to be sent and zip as a package
+     *
+     * @param cmd_id    command id
+     * @return package that includes data and length
+     */
     package_t Transmit(int cmd_id);
 
 private:
@@ -92,10 +98,17 @@ private:
      */
     void AppendFrame(uint8_t* data, int length);
 
+    /**
+     * @brief process the information for certain command and copy it into the buffer named as data
+     *
+     * @param cmd_id
+     * @param data
+     * @return length of the data that is copied into buffer
+     */
     virtual int ProcessDataTx(int cmd_id, uint8_t* data) = 0;
 };
 
-/* Information From Referee */
+/* Command for Referee */
 
 /*
  * 0x0001 GAME_STATUS
@@ -316,23 +329,64 @@ public:
     dart_client_cmd_t dart_client_cmd{};
 
 private:
+    /**
+     * @brief process the data for certain command and update corresponding status variables
+     *
+     * @param cmd_id    command id
+     * @param data      address for command data
+     * @param length    number of bytes in command data
+     * @return true for success; false for failure
+     */
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
+
+    /**
+     * @brief process the information for certain command and copy it into the buffer named as data
+     *
+     * @param cmd_id
+     * @param data
+     * @return length of the data that is copied into buffer
+     */
     int ProcessDataTx(int cmd_id, uint8_t *data) final;
 };
+
+/* Command for Host */
+
+/*
+ * 0x0401 PACK
+ */
+
+/* TODO(neo): above information with [x] should be implemented when needed in the future*/
 
 typedef enum {
     PACK = 0x0401,
 } host_cmd;
 
+/* ===== PACK 0x0401 ===== */
 typedef struct {
-    char chars[256];
+    char chars[256];  // a string with maximum 256 chars
 } __packed pack_t;
 
 class Host: public Protocol {
 public:
     pack_t pack{};
 private:
+    /**
+     * @brief process the data for certain command and update corresponding status variables
+     *
+     * @param cmd_id    command id
+     * @param data      address for command data
+     * @param length    number of bytes in command data
+     * @return true for success; false for failure
+     */
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
+
+    /**
+     * @brief process the information for certain command and copy it into the buffer named as data
+     *
+     * @param cmd_id
+     * @param data
+     * @return length of the data that is copied into buffer
+     */
     int ProcessDataTx(int cmd_id, uint8_t *data) final;
 };
 
