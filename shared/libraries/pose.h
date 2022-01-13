@@ -119,4 +119,4 @@ private:
 }; // class Pose end
 
 
-} // ns end
+} /* namespace control */
