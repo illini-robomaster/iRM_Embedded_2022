@@ -27,28 +27,41 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
+// Refer to typeA datasheet for channel detail 
+#define LEFT_MOTOR_PWM_CHANNEL    1
+#define RIGHT_MOTOR_PWM_CHANNEL   4
+#define TIM_CLOCK_FREQ            1000000
+#define MOTOR_OUT_FREQ            500
+#define SNAIL_IDLE_THROTTLE       1080
+
+control::MotorPWMBase* motor1;
+control::MotorPWMBase* motor2;
+
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor6623(can1, 0x209);
+  motor1 = new control::MotorPWMBase(
+      &htim1, LEFT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  motor2 = new control::MotorPWMBase(
+      &htim1, RIGHT_MOTOR_PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  motor1->SetOutput(0);
+  motor2->SetOutput(0);
+  // Snail need to be run at idle throttle for some
+  osDelay(3000); 
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
+  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
   while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(400);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(100);
+    if (key.Read()) {
+      motor1->SetOutput(300);
+      motor2->SetOutput(300);
+    } else {
+      motor1->SetOutput(0);
+      motor2->SetOutput(0);
+    }
+    osDelay(1000);
   }
 }

@@ -18,37 +18,29 @@
  *                                                                          *
  ****************************************************************************/
 
+#pragma once
+
 #include "bsp_gpio.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+namespace bsp {
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
+class Laser {
+public:
+	/**
+	 * @brief constructor for laser
+	 */
+	 Laser(GPIO_TypeDef* group, uint16_t pin);
+	/**
+	 * @brief Turn on the laser
+	 */
+	 void On();
+	/**
+	 * @brief Turn off the laser
+	 */
+	 void Off();
 
-void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+private:
+		GPIO laser_;
+};
 
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor6623(can1, 0x209);
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
-
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-  while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(400);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(100);
-  }
-}
+} /* namespace bsp */

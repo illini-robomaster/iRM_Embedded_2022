@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------- #
 #                                                                        #
-#  Copyright (C) 2022                                                    #
+#  Copyright (C) 2021                                                    #
 #  Illini RoboMaster @ University of Illinois at Urbana-Champaign.       #
 #                                                                        #
 #  This program is free software: you can redistribute it and/or modify  #
@@ -18,8 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(Infantry ASM C CXX)
+project(example_gimbal ASM C CXX)
 
-irm_add_arm_executable(Infantry
+irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
-    SOURCES rm_rtos.cc gimbal.cc)
+    SOURCES main.cc)

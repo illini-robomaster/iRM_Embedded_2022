@@ -35,6 +35,9 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
 	UNUSED(args);
+
+	osDelay(500); // DBUS initialization needs time
+
 	while (true) {
 		chassis->Move(dbus->ch0, dbus->ch1, dbus->ch2);
 		osDelay(10);

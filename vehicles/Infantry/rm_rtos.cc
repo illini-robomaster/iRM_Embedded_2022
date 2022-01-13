@@ -20,13 +20,32 @@
 
 #include "bsp_print.h"
 #include "main.h"
+#include "cmsis_os.h"
+
+#include "dbus.h"
+#include "gimbal.h"
+
+// gimbalTask() task handler and attribute
+extern const osThreadAttr_t gimbalTaskAttribute;
+osThreadId_t gimbalTaskHandle;
+
+// gimbalTask() declaration
+extern void gimbalTask (void* arg);
+
+
+void RM_RTOS_Threads_Init(void) {
+  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
+}
+
+void RM_RTOS_Init(void) {
+
+}
+
 
 void RM_RTOS_Default_Task(const void* argument) {
   UNUSED(argument);
-  print("Default Task Started\r\n");
 
-  uint32_t i = 0;
   while (1) {
-    print("my num: %d\r\n", i++);
+
   }
 }

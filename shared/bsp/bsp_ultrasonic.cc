@@ -18,37 +18,44 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
+#include "bsp_ultrasonic.h"
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+namespace bsp {
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
+    Ultrasonic::Ultrasonic(GPIO_TypeDef* trig_group,
+                           uint16_t trig_pin,
+                           GPIO_TypeDef* echo_group,
+                           uint16_t echo_pin,
+                           TIM_TypeDef* timer):
+    trig_(trig_group, trig_pin),
+    echo_(echo_group, echo_pin),
+    timer_(timer) {}
 
-void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+    float Ultrasonic::GetDistance() {
+      constexpr int TIME_OUT = 12000;
+      constexpr float SOUND_SPEED_CM_PER_US = 0.0343;
+      uint32_t base = timer_->CNT;
+      uint32_t curr = base;
+      trig_.High();
+      while (curr - base < 20)
+        curr = timer_->CNT;
+      trig_.Low();
+      base = timer_->CNT;
+      // when the echo is emitted, echo turned to 1. 
+      while (!echo_.Read()) {
+        if ((timer_->CNT - base) > TIME_OUT) {
+          return -1;
+        }
+      }
+      base = timer_->CNT;
+      // when the echo is received, echo turned to 0.
+      while(echo_.Read()) {
+        if ((timer_->CNT - base) > TIME_OUT) {
+          return -1;
+        }
+      }
+      curr = timer_->CNT;
+      return (curr - base) / 2.0 * SOUND_SPEED_CM_PER_US;
+    }
 
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor6623(can1, 0x209);
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
-
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-  while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(400);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(100);
-  }
 }

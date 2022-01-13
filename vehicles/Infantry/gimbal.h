@@ -18,37 +18,21 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
-#include "bsp_print.h"
+#pragma once
 #include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+// task attribute for gimbalTask init in rm_rtos.cc
+const osThreadAttr_t gimbalTaskAttribute = {
+  .name = "gimbalTask",
+  .attr_bits = osThreadDetached,
+  .cb_mem = nullptr,
+  .cb_size = 0,
+  .stack_mem = nullptr,
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+  .tz_module = 0,
+  .reserved = 0
+};
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
-
-void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor6623(can1, 0x209);
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
-
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-  while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(400);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(100);
-  }
-}
+// function declaration
+void gimbalTask (void* arg);

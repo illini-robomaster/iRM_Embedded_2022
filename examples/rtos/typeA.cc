@@ -22,32 +22,26 @@
 #include "cmsis_os.h"
 #include "main.h"
 
-#define LED_RED_Pin GPIO_PIN_11
-#define LED_RED_GPIO_Port GPIOE
-
-#define LED_GREEN_Pin GPIO_PIN_14
-#define LED_GREEN_GPIO_Port GPIOF
-
 static bsp::GPIO *gpio_red, *gpio_green;
 
 /* init new task START */
-osThreadId_t LED_GREEN_TaskHandle;
+static osThreadId_t LED_GREEN_TaskHandle;
 
 const osThreadAttr_t LED2Task_attributes = {
   .name = "LEDGreenTask",
   .attr_bits = osThreadDetached,
-  .cb_mem = NULL,
+  .cb_mem = nullptr,
   .cb_size = 0,
-  .stack_mem = NULL,
+  .stack_mem = nullptr,
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
   .tz_module = 0,
   .reserved = 0
 };
 
 void LED_GREEN_Task(void *argument) {
   UNUSED(argument);
-  while (1) {
+  while (true) {
     gpio_green->Toggle();
     osDelay(200);
   }
@@ -56,7 +50,7 @@ void LED_GREEN_Task(void *argument) {
 
 
 void RM_RTOS_Threads_Init(void) {
-  LED_GREEN_TaskHandle = osThreadNew(LED_GREEN_Task, NULL, &LED2Task_attributes);
+  LED_GREEN_TaskHandle = osThreadNew(LED_GREEN_Task, nullptr, &LED2Task_attributes);
 }
 
 
@@ -69,7 +63,7 @@ void RM_RTOS_Init(void) {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  while (1) {
+  while (true) {
     gpio_red->Toggle();
     osDelay(500);
   }

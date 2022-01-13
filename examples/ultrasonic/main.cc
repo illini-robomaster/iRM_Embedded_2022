@@ -18,37 +18,32 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
 #include "bsp_print.h"
+#include "bsp_ultrasonic.h"
 #include "cmsis_os.h"
 #include "main.h"
-#include "motor.h"
+#include "tim.h"
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+bsp::Ultrasonic* ultrasonic;
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
-
-void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor6623(can1, 0x209);
+void RM_RTOS_Init(void) {
+	print_use_uart(&huart8);
+  HAL_TIM_Base_Start_IT(&htim2);
+  ultrasonic = new bsp::Ultrasonic(M2_OUTPUT_GPIO_Port, M2_OUTPUT_Pin, M1_INPUT_GPIO_Port, M1_INPUT_Pin, TIM2);
 }
 
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
+void RM_RTOS_Default_Task(const void* arguments) {
+	UNUSED(arguments);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
   while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(400);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(100);
+    float distance = ultrasonic->GetDistance();
+    set_cursor(0, 0);
+    clear_screen();
+    if (distance > 0) {
+      print("Distance: %.2f cm\r\n", distance);
+    } else {
+      print("ERROR!!!\r\n");
+    }
+    osDelay(20);
   }
 }

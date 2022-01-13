@@ -18,8 +18,9 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(Infantry ASM C CXX)
+project(example_laser ASM C CXX)
 
-irm_add_arm_executable(Infantry
+irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
-    SOURCES rm_rtos.cc gimbal.cc)
+    SOURCES main.cc)
+

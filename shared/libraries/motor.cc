@@ -108,6 +108,34 @@ void Motor3508::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
+Motor6020::Motor6020(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
+  can->RegisterRxCallback(rx_id, can_motor_callback, this);
+}
+
+void Motor6020::UpdateData(const uint8_t data[]) {
+  const int16_t raw_theta = data[0] << 8 | data[1];
+  const int16_t raw_omega = data[2] << 8 | data[3];
+  raw_current_get_ = data[4] << 8 | data[5];
+  raw_temperature_ = data[6];
+
+  constexpr float THETA_SCALE = 2 * PI / 8192;  // digital -> rad
+  constexpr float OMEGA_SCALE = 2 * PI / 60;    // rpm -> rad / sec
+  theta_ = raw_theta * THETA_SCALE;
+  omega_ = raw_omega * OMEGA_SCALE;
+}
+
+void Motor6020::PrintData() const {
+  print("theta: %.4f ", GetTheta());
+  print("omega: %.4f ", GetOmega());
+  print("raw temperature: %d ", raw_temperature_);
+  print("raw current get: %d \r\n", raw_current_get_);
+}
+
+void Motor6020::SetOutput(int16_t val) {
+  constexpr int16_t MAX_ABS_CURRENT = 30000;  // ~
+  output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
+}
+
 Motor6623::Motor6623(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
 }
@@ -184,6 +212,124 @@ void Motor2305::SetOutput(int16_t val) {
   constexpr int16_t MIN_OUTPUT = 0;
   constexpr int16_t MAX_OUTPUT = 700;
   MotorPWMBase::SetOutput(clip<int16_t>(val, MIN_OUTPUT, MAX_OUTPUT));
+}
+
+ServoMotor::ServoMotor(servo_t servo, float proximity) : 
+      move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)), 
+      hold_pid_(PIDController(servo.hold_Kp, servo.hold_Ki, servo.hold_Kd)) {
+  motor_ = servo.motor;
+  mode_ = servo.mode;
+  speed_ = servo.transmission_ratio * servo.speed;
+  transmission_ratio_ = servo.transmission_ratio;
+  proximity_ = proximity;
+
+  hold_ = true;
+  target_ = 0;
+  align_angle_ = motor_->GetTheta();
+  motor_angle_ = 0;
+  offset_angle_ = 0;
+  servo_angle_ = 0;
+  wrap_detector_ = new FloatEdgeDetector(align_angle_, PI);
+  hold_detector_ = new BoolEdgeDetector(false);
+
+  // dir_ is initialized here
+  SetDirUsingMode_(servo.mode);
+}
+
+int ServoMotor::SetTarget(const float target, bool override) {
+  if (!hold_ && !override)
+    return INPUT_REJECT;
+  target_ = wrap<float>(target, -PI, PI);
+  if (mode_ == SERVO_NEAREST) {
+    NearestModeSetDir_();
+  }
+  hold_ = false;
+  return dir_;
+}
+
+int ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
+  if (!hold_ && !override)
+    return INPUT_REJECT;
+  target_ = wrap<float>(target, -PI, PI);
+  SetDirUsingMode_(mode);
+  hold_ = false;
+  return dir_;
+}
+
+void ServoMotor::SetSpeed(const float speed) {
+  speed_ = speed > 0 ? speed : 0;
+}
+
+void ServoMotor::CalcOutput() {
+  AngleUpdate_();
+  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+  if (abs(diff_angle) < proximity_)
+    hold_ = true;
+
+  hold_detector_->input(hold_);
+  if (hold_detector_->edge())
+    move_pid_.Reset();
+  if (hold_detector_->posEdge())
+    hold_pid_.Reset();
+  
+  int16_t command;
+  if (hold_) {
+    float out = hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
+    out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
+    command = clip<float>((int) out, -32768, 32767);
+  } else {
+    command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
+  }
+  motor_->SetOutput(command);
+}
+
+bool ServoMotor::Holding() const {
+  return hold_;
+}
+
+void ServoMotor::PrintData() const { 
+  print("servo theta: %.4f ", servo_angle_);
+  print("servo omega: %.4f\r\n", GetOmega());
+  // motor_->PrintData();
+}
+
+float ServoMotor::GetTheta() const { return servo_angle_; }
+
+float ServoMotor::GetThetaDelta(const float target) const { 
+  return wrap<float>(target - servo_angle_, -PI, PI); 
+}
+
+float ServoMotor::GetOmega() const { return motor_->GetOmega() / transmission_ratio_; }
+float ServoMotor::GetOmegaDelta(const float target) const { 
+  return target - motor_->GetOmega() / transmission_ratio_;
+}
+
+void ServoMotor::AngleUpdate_() {
+  motor_angle_ = wrap<float>(motor_->GetTheta() - align_angle_, -PI, PI);
+  wrap_detector_->input(motor_angle_);
+  if (wrap_detector_->negEdge())
+    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, -PI, PI);
+  else if (wrap_detector_->posEdge())
+    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, -PI, PI);
+  servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
+}
+
+void ServoMotor::NearestModeSetDir_() {
+  AngleUpdate_();
+  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+  dir_ = diff_angle > 0 ? 1 : -1;
+}
+
+void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
+  if (mode == SERVO_ANTICLOCKWISE) {
+    dir_ = 1;
+  } else if (mode == SERVO_NEAREST) {
+    NearestModeSetDir_();
+  } else if (mode == SERVO_CLOCKWISE) {
+    dir_ = -1;
+  } else {
+    RM_ASSERT_TRUE(false, "Invalid servo turining mode");
+  }
 }
 
 } /* namespace control */
