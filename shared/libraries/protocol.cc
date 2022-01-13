@@ -85,7 +85,7 @@ bool Referee::ProcessDataRx(int cmd_id, const uint8_t *data, int length) {
   return true;
 }
 
-bool Referee::ProcessDataTx(int cmd_id, const uint8_t *data, int length) {
+bool Referee::ProcessDataTx(int cmd_id, uint8_t *data, int length) {
 
 }
 
@@ -97,7 +97,7 @@ bool Host::ProcessDataRx(int cmd_id, const uint8_t *data, int length) {
   return true;
 }
 
-bool Host::ProcessDataTx(int cmd_id, const uint8_t *data, int length) {
+bool Host::ProcessDataTx(int cmd_id, uint8_t *data, int length) {
 
 }
 

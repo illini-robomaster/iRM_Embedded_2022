@@ -92,7 +92,7 @@ private:
      */
     void AppendFrame(uint8_t* data, int length);
 
-    virtual bool ProcessDataTx(int cmd_id, const uint8_t* data, int length) = 0;
+    virtual bool ProcessDataTx(int cmd_id, uint8_t* data, int length) = 0;
 };
 
 /* Information From Referee */
@@ -317,7 +317,7 @@ public:
 
 private:
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
-    bool ProcessDataTx(int cmd_id, const uint8_t *data, int length) final;
+    bool ProcessDataTx(int cmd_id, uint8_t *data, int length) final;
 };
 
 typedef enum {
@@ -333,7 +333,7 @@ public:
 
 private:
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
-    bool ProcessDataTx(int cmd_id, const uint8_t *data, int length) final;
+    bool ProcessDataTx(int cmd_id, uint8_t *data, int length) final;
 };
 
 }
