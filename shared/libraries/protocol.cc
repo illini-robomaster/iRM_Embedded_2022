@@ -52,7 +52,17 @@ bool Protocol::Receive(package_t package) {
 }
 
 package_t Protocol::Transmit(int cmd_id) {
-
+  bufferTx[0] = SOF;
+  int DATA_LENGTH = ProcessDataTx(cmd_id, bufferTx + FRAME_HEADER_LEN + CMD_ID_LEN);
+  if (DATA_LENGTH < 0)
+    return package_t{nullptr, 0};
+  bufferTx[1] = (uint8_t)((uint32_t)DATA_LENGTH & 0xFF);
+  bufferTx[2] = (uint8_t)((uint32_t)DATA_LENGTH >> BYTE);
+  AppendHeader(bufferTx, FRAME_HEADER_LEN);
+  bufferTx[5] = (uint8_t)((uint32_t)cmd_id & 0xFF);
+  bufferTx[6] = (uint8_t)((uint32_t)cmd_id >> BYTE);
+  AppendFrame(bufferTx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN);
+  return package_t{bufferTx, FRAME_HEADER_LEN + CMD_ID_LEN + DATA_LENGTH + FRAME_TAIL_LEN};
 }
 
 bool Protocol::VerifyHeader(const uint8_t* data, int length) {
@@ -85,20 +95,34 @@ bool Referee::ProcessDataRx(int cmd_id, const uint8_t *data, int length) {
   return true;
 }
 
-bool Referee::ProcessDataTx(int cmd_id, uint8_t *data, int length) {
-
+int Referee::ProcessDataTx(int cmd_id, uint8_t *data) {
+  UNUSED(cmd_id);
+  UNUSED(data);
+  return 0;
 }
 
 bool Host::ProcessDataRx(int cmd_id, const uint8_t *data, int length) {
   switch (cmd_id) {
+    case PACK:
+      memcpy(&pack, data, length);
+      break;
     default:
       return false;
   }
   return true;
 }
 
-bool Host::ProcessDataTx(int cmd_id, uint8_t *data, int length) {
-
+int Host::ProcessDataTx(int cmd_id, uint8_t *data) {
+  int data_len;
+  switch (cmd_id) {
+    case PACK:
+      data_len = sizeof(pack_t);
+      memcpy(data, &pack, data_len);
+      break;
+    default:
+      data_len = -1;
+  }
+  return data_len;
 }
 
 }

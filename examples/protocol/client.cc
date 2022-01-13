@@ -22,6 +22,7 @@
 
 #include "bsp_print.h"
 #include "bsp_uart.h"
+#include "bsp_gpio.h"
 #include "cmsis_os.h"
 #include "protocol.h"
 
@@ -29,8 +30,8 @@
 
 extern osThreadId_t defaultTaskHandle;
 
-const osThreadAttr_t refereeTaskAttribute = {
-        .name = "refereeTask",
+const osThreadAttr_t clientTaskAttribute = {
+        .name = "clientTask",
         .attr_bits = osThreadDetached,
         .cb_mem = nullptr,
         .cb_size = 0,
@@ -40,7 +41,7 @@ const osThreadAttr_t refereeTaskAttribute = {
         .tz_module = 0,
         .reserved = 0
 };
-osThreadId_t refereeTaskHandle;
+osThreadId_t clientTaskHandle;
 
 class CustomUART : public bsp::UART {
 public:
@@ -48,13 +49,14 @@ public:
 
 protected:
     /* notify application when rx data is pending read */
-    void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
+    void RxCompleteCallback() final { osThreadFlagsSet(clientTaskHandle, RX_SIGNAL); }
 };
 
-communication::Referee* referee = nullptr;
-CustomUART* referee_uart = nullptr;
+static communication::Host* host = nullptr;
+static CustomUART* host_uart = nullptr;
+static bsp::GPIO *gpio_red, *gpio_green;
 
-void refereeTask (void* arg) {
+void clientTask (void* arg) {
   UNUSED(arg);
   uint32_t length;
   uint8_t* data;
@@ -64,15 +66,11 @@ void refereeTask (void* arg) {
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
     if (flags & RX_SIGNAL) {  // unnecessary check
       /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
-//      length = referee_uart->Read(&data);
-//      set_cursor(0, 0);
-//      clear_screen();
-//      for (uint32_t i = 0; i < length; ++i) {
-//        print("%02X ", data[i]);
-//      }
-//      print("\r\n");
-      length = referee_uart->Read(&data);
-      referee->Receive(communication::package_t{data, (int)length});
+      length = host_uart->Read(&data);
+      host->Receive(communication::package_t{data, (int)length});
+      gpio_green->Low();
+      osDelay(200);
+      gpio_green->High();
     }
   }
 }
@@ -80,15 +78,20 @@ void refereeTask (void* arg) {
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);
 
-  referee_uart = new CustomUART(&huart7);
-  referee_uart->SetupRx(300);
-  referee_uart->SetupTx(300);
+  host_uart = new CustomUART(&huart6);
+  host_uart->SetupRx(300);
+  host_uart->SetupTx(300);
 
-  referee = new communication::Referee;
+  host = new communication::Host;
+
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
+  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+  gpio_red->High();
+  gpio_green->High();
 }
 
 void RM_RTOS_Threads_Init(void) {
-  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
+  clientTaskHandle = osThreadNew(clientTask, nullptr, &clientTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* argument) {
@@ -97,13 +100,7 @@ void RM_RTOS_Default_Task(const void* argument) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
-    print("\r\n");
-    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
-    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+    print("%s", host->pack.chars);
     osDelay(100);
   }
 }

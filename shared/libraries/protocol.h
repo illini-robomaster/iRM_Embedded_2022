@@ -92,7 +92,7 @@ private:
      */
     void AppendFrame(uint8_t* data, int length);
 
-    virtual bool ProcessDataTx(int cmd_id, uint8_t* data, int length) = 0;
+    virtual int ProcessDataTx(int cmd_id, uint8_t* data) = 0;
 };
 
 /* Information From Referee */
@@ -317,7 +317,7 @@ public:
 
 private:
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
-    bool ProcessDataTx(int cmd_id, uint8_t *data, int length) final;
+    int ProcessDataTx(int cmd_id, uint8_t *data) final;
 };
 
 typedef enum {
@@ -325,15 +325,15 @@ typedef enum {
 } host_cmd;
 
 typedef struct {
-    char pack[200];
+    char chars[256];
 } __packed pack_t;
 
 class Host: public Protocol {
 public:
-
+    pack_t pack{};
 private:
     bool ProcessDataRx(int cmd_id, const uint8_t *data, int length) final;
-    bool ProcessDataTx(int cmd_id, uint8_t *data, int length) final;
+    int ProcessDataTx(int cmd_id, uint8_t *data) final;
 };
 
 }
