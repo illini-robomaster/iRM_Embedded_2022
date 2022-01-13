@@ -29,7 +29,7 @@ bsp::Ultrasonic* ultrasonic;
 void RM_RTOS_Init(void) {
 	print_use_uart(&huart8);
   HAL_TIM_Base_Start_IT(&htim2);
-  ultrasonic = new bsp::Ultrasonic(L1_INPUT_GPIO_Port, L1_INPUT_Pin, L2_OUTPUT_GPIO_Port, L2_OUTPUT_Pin, TIM2);
+  ultrasonic = new bsp::Ultrasonic(M2_OUTPUT_GPIO_Port, M2_OUTPUT_Pin, M1_INPUT_GPIO_Port, M1_INPUT_Pin, TIM2);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
