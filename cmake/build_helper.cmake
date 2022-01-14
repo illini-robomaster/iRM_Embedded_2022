@@ -82,4 +82,3 @@ function(irm_add_board_specific_library name)
         PRIVATE ${ARG_DEPENDS})
     target_include_directories(${name} PUBLIC ${ARG_INCLUDES})
 endfunction(irm_add_board_specific_library)
-
