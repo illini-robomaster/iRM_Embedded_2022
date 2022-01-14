@@ -18,14 +18,31 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "bsp_relay.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
 #include "main.h"
-#include "gimbal.h"
 
-/**
- *@description thread for gimbal
- *TODO implement this
-**/
-void gimbalTask (void* arg) {
-  UNUSED(arg);
-  while (true);
+static bsp::Relay* relay;
+
+void RM_RTOS_Init(void) {
+	print_use_uart(&huart8);
+	relay = new bsp::Relay(L2_OUTPUT_GPIO_Port, L2_OUTPUT_Pin);
+}
+
+void RM_RTOS_Default_Task(const void* arguments) {
+	UNUSED(arguments);
+
+	while (true) {
+		set_cursor(0, 0);
+		clear_screen();
+		relay->On();
+		print("relay on\r\n");
+		osDelay(1000);
+		set_cursor(0, 0);
+		clear_screen();
+		relay->Off();
+		print("relay off\r\n");
+		osDelay(1000);
+	}
 }

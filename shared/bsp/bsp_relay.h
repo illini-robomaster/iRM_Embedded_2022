@@ -18,14 +18,35 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-#include "gimbal.h"
+#pragma once
 
-/**
- *@description thread for gimbal
- *TODO implement this
-**/
-void gimbalTask (void* arg) {
-  UNUSED(arg);
-  while (true);
-}
+#include "bsp_error_handler.h"
+#include "bsp_gpio.h"
+#include "main.h"
+
+namespace bsp {
+
+class Relay{
+ public:
+  /**
+   * @brief Constructor for relay
+   *
+   * @param relay_group relay GPIO group
+   * @param relay_pin   relay GPIO pin number
+   */
+  Relay(GPIO_TypeDef* relay_group, uint16_t relay_pin);
+
+  /**
+   * @brief Turn on relay
+   */
+  void On();
+
+  /**
+   * @brief Turn off relay
+   */
+  void Off();
+ private:
+  GPIO relay_;
+};
+
+} /* namespace bsp */
