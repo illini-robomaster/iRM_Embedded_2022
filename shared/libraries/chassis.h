@@ -36,9 +36,9 @@ typedef enum {
  * @brief structure used when chassis instance is initialized
  */
 typedef struct {
-	MotorCANBase** motors; /* motor instances of all chassis motors */
-	float** pid_params; 	 /* pid parameters of motors							*/
-	chassis_model_t model; /* chassis model													*/
+  MotorCANBase** motors; /* motor instances of all chassis motors */
+  float** pid_params; 	 /* pid parameters of motors              */
+  chassis_model_t model; /* chassis model                         */
 } chassis_t;
 
 /**
@@ -46,12 +46,12 @@ typedef struct {
  */
 struct FourWheel {
   enum {
-		front_left,
-		front_right,
-		back_left,
-		back_right,
-		motor_num
-	};
+    front_left,
+    front_right,
+    back_left,
+    back_right,
+    motor_num
+  };
 };
 
 /**
@@ -64,37 +64,37 @@ class Chassis {
    * 
    * @param chassis structure that used to initialize chassis, refer to type chassis_t
    */
-	Chassis(const chassis_t chassis);
+  Chassis(const chassis_t chassis);
 
   /**
    * @brief destructor for chassis
    */
-	~Chassis();
+  ~Chassis();
 
-	/**
-	 * @brief set the speed for chassis motors
-	 * 
-	 * @param x_speed chassis speed on x-direction
-	 * @param y_speed chassis speed on y-direction
-	 * @param turn_speed chassis clockwise turning speed
-	 */
-	void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
+  /**
+   * @brief set the speed for chassis motors
+   * 
+   * @param x_speed chassis speed on x-direction
+   * @param y_speed chassis speed on y-direction
+   * @param turn_speed chassis clockwise turning speed
+   */
+  void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
 
 
   /**
    * @brief calculate the output of the motors under current configuration
    * @note does not command the motor immediately
    */
-	void Update();
+  void Update();
 
  private:
-	// acquired from user
-	MotorCANBase** motors_;
-	chassis_model_t model_;
+  // acquired from user
+  MotorCANBase** motors_;
+  chassis_model_t model_;
 
-	// pids and current speeds for each motor on the chassis
-	PIDController** pids_;
-	float* speeds_;
+  // pids and current speeds for each motor on the chassis
+  PIDController** pids_;
+  float* speeds_;
 };
 
 }
