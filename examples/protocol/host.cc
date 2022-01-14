@@ -19,13 +19,45 @@
  ****************************************************************************/
 
 #include "main.h"
-#include "gimbal.h"
 
-/**
- *@description thread for gimbal
- *TODO implement this
-**/
-void gimbalTask (void* arg) {
-  UNUSED(arg);
-  while (true);
+#include "bsp_uart.h"
+#include "bsp_gpio.h"
+#include "cmsis_os.h"
+#include "protocol.h"
+
+#include <cstring>
+
+static communication::Host* host = nullptr;
+static bsp::UART* client = nullptr;
+static bsp::GPIO *gpio_red, *gpio_green;
+
+void RM_RTOS_Init(void) {
+  client = new bsp::UART(&huart6);
+  client->SetupTx(300);
+  client->SetupRx(300);
+
+  host = new communication::Host;
+
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
+  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+  gpio_red->High();
+  gpio_green->High();
+}
+
+void RM_RTOS_Default_Task(const void* argument) {
+  UNUSED(argument);
+  communication::package_t frame;
+  communication::pack_t message[3] = {{"Sazabi Gundam!"}, {"Sinanju Gundam!"}, {"Kshatriya Gundam!"}};
+
+  while (true) {
+    for (int i = 0; i < 3; ++i) {
+      memcpy(&host->pack, message + i, sizeof(communication::pack_t));
+      frame = host->Transmit(communication::PACK);
+      client->Write(frame.data, frame.length);
+      gpio_red->Low();
+      osDelay(200);
+      gpio_red->High();
+      osDelay(300);
+    }
+  }
 }
