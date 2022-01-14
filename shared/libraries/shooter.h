@@ -59,6 +59,12 @@ public:
   Shooter(shooter_t shooter);
 
   /**
+   * @brief destructor for shooter
+   * 
+   */
+  ~Shooter();
+
+  /**
    * @brief set the speed of accelerating motors
    * 
    * @param speed 
