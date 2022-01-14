@@ -26,18 +26,24 @@
 namespace control {
 
 /**
- * @brief gimbal models 
+ * @brief chassis models 
  */
 typedef enum {
   CHASSIS_STANDARD_ZERO
 } chassis_model_t;
 
+/**
+ * @brief structure used when chassis instance is initialized
+ */
 typedef struct {
-	MotorCANBase** motors;
-	float** pid_params; 
-	chassis_model_t model;
+	MotorCANBase** motors; /* motor instances of all chassis motors */
+	float** pid_params; 	 /* pid parameters of motors							*/
+	chassis_model_t model; /* chassis model													*/
 } chassis_t;
 
+/**
+ * @brief motor configs for four wheel vehicles
+ */
 struct FourWheel {
   enum {
 		front_left,
@@ -48,14 +54,37 @@ struct FourWheel {
 	};
 };
 
+/**
+ * @brief wrapper class for chassis
+ */
 class Chassis {
  public:
+  /**
+   * @brief constructor for chassis
+   * 
+   * @param chassis structure that used to initialize chassis, refer to type chassis_t
+   */
 	Chassis(const chassis_t chassis);
 
+  /**
+   * @brief destructor for chassis
+   */
 	~Chassis();
 
+	/**
+	 * @brief set the speed for chassis motors
+	 * 
+	 * @param x_speed chassis speed on x-direction
+	 * @param y_speed chassis speed on y-direction
+	 * @param turn_speed chassis clockwise turning speed
+	 */
 	void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
 
+
+  /**
+   * @brief calculate the output of the motors under current configuration
+   * @note does not command the motor immediately
+   */
 	void Update();
 
  private:
@@ -63,6 +92,7 @@ class Chassis {
 	MotorCANBase** motors_;
 	chassis_model_t model_;
 
+	// pids and current speeds for each motor on the chassis
 	PIDController** pids_;
 	float* speeds_;
 };

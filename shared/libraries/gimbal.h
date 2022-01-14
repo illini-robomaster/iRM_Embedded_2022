@@ -83,6 +83,7 @@ class Gimbal {
 
   /**
    * @brief calculate the output of the motors under current configuration
+   * @note does not command the motor immediately
    */
   void Update();
 
@@ -103,7 +104,7 @@ class Gimbal {
   void TargetRel(float new_pitch, float new_yaw);
 
  private:
-  // Acquired from user
+  // acquired from user
   MotorCANBase* pitch_motor_;
   MotorCANBase* yaw_motor_;
   gimbal_model_t model_;

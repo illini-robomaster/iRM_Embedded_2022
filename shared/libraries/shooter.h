@@ -74,11 +74,12 @@ public:
 
   /**
    * @brief update the output of the motors under current configuration
-   * 
+   * @note does not command the motor immediately
    */
   void Update();
 
 private:
+  // acquired from user
   MotorBase* left_flywheel_motor_;
   MotorBase* right_flywheel_motor_;
   ServoMotor* load_servo_;
@@ -86,9 +87,10 @@ private:
   
   PIDController* left_pid_;  /* pid for left flywheel  */
   PIDController* right_pid_; /* pid for right flywheel */
-  BoolEdgeDetector* flywheel_turning_detector_;
-  float load_step_angle_;
-  float speed_;
+
+  BoolEdgeDetector* flywheel_turning_detector_; /* flywheel turning state detector */
+  float load_step_angle_; /* angle rotated for every bullet loaded */
+  float speed_; /* current turning speed of flywheels */
   
 };
 
