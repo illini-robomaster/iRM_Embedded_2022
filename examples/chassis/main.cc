@@ -18,19 +18,43 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "bsp_print.h"
 #include "cmsis_os.h"
 #include "main.h"
-#include "dbus.h"
 #include "chassis.h"
+#include "dbus.h"
 
-remote::DBUS* dbus = nullptr;
+bsp::CAN* can = nullptr;
+control::MotorCANBase* fl_motor = nullptr;
+control::MotorCANBase* fr_motor = nullptr;
+control::MotorCANBase* bl_motor = nullptr;
+control::MotorCANBase* br_motor = nullptr;
+
 control::Chassis* chassis = nullptr;
+remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
+	print_use_uart(&huart8);
+	can = new bsp::CAN(&hcan1, 0x200);
+	fl_motor = new control::Motor3508(can, 0x202);
+	fr_motor = new control::Motor3508(can, 0x201);
+	bl_motor = new control::Motor3508(can, 0x203);
+	br_motor = new control::Motor3508(can, 0x204);
+
+  control::MotorCANBase* motors[control::FourWheel::motor_num];
+	motors[control::FourWheel::front_left] = fl_motor;
+	motors[control::FourWheel::front_right] = fr_motor;
+	motors[control::FourWheel::back_left] = bl_motor;
+	motors[control::FourWheel::back_right] = br_motor;
+	float* pid_param = new float[3] { 20, 8, 2 }; // { 5, 3, 0.1 }
+
+	control::chassis_t chassis_data;
+	chassis_data.motors = motors;
+	chassis_data.pid_params = &pid_param;
+	chassis_data.model = control::CHASSIS_STANDARD_ZERO;
+	chassis = new control::Chassis(chassis_data);
+
 	dbus = new remote::DBUS(&huart1);
-	int motor_id[4] = {2, 3, 1, 4};
-	float chassis_pid[3] = {20, 8, 2};
-	chassis = new control::Chassis(control::STANDARD, motor_id, chassis_pid); // 5 3 0.1 / 20 8 2
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -38,8 +62,18 @@ void RM_RTOS_Default_Task(const void* args) {
 
 	osDelay(500); // DBUS initialization needs time
 
+  control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
+
 	while (true) {
-		chassis->Move(dbus->ch0, dbus->ch1, dbus->ch2);
+		chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
+
+    // Kill switch
+    if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
+      RM_ASSERT_TRUE(false, "Operation killed");
+    }
+		
+		chassis->Update();
+    control::MotorCANBase::TransmitOutput(motors, 4);
 		osDelay(10);
 	}
 }

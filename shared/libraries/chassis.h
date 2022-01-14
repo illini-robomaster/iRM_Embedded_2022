@@ -25,35 +25,46 @@
 
 namespace control {
 
-typedef enum{
-	MOTOR_FL = 0,
-	MOTOR_BL = 1,
-	MOTOR_FR = 2,
-	MOTOR_BR = 3
-} chassis_motor_t;
+/**
+ * @brief gimbal models 
+ */
+typedef enum {
+  CHASSIS_STANDARD_ZERO
+} chassis_model_t;
 
-typedef enum{
-	HERO = 0,
-	STANDARD = 1,
-	ENGINEER = 2,
-	AERIAL = 3,
-	SENTRY = 4,
-	DART = 5,
-	RADAR = 6
-} robot_type_t;
+typedef struct {
+	MotorCANBase** motors;
+	float** pid_params; 
+	chassis_model_t model;
+} chassis_t;
+
+struct FourWheel {
+  enum {
+		front_left,
+		front_right,
+		back_left,
+		back_right,
+		motor_num
+	};
+};
 
 class Chassis {
-public:
-    Chassis(robot_type_t robot_type, const int* motor_id, const float* pid);
-    void Move(float x, float y, float z);
+ public:
+	Chassis(const chassis_t chassis);
 
-private:
-    PIDController pid_FL;
-    PIDController pid_BL;
-    PIDController pid_FR;
-    PIDController pid_BR;
-    MotorCANBase** motors;
-    robot_type_t type;
+	~Chassis();
+
+	void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
+
+	void Update();
+
+ private:
+	// acquired from user
+	MotorCANBase** motors_;
+	chassis_model_t model_;
+
+	PIDController** pids_;
+	float* speeds_;
 };
 
 }

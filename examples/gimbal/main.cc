@@ -18,16 +18,11 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "main.h"
 #include "gimbal.h"
-#include "shooter.h"
 #include "dbus.h"
-
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH         (2 * PI / 8)
 #define SERVO_SPEED   (PI)

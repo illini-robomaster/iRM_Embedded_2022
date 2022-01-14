@@ -21,69 +21,93 @@
 #include "chassis.h"
 #include "can.h"
 #include "bsp_error_handler.h"
- #include "cmath"
+#include "cmath"
 
-extern CAN_HandleTypeDef hcan1;
+namespace control {
 
-namespace control{
-    Chassis::Chassis(robot_type_t robot_type, const int* motor_id, const float* pid):
-    pid_FL(PIDController(pid[0], pid[1], pid[2])),
-    pid_BL(PIDController(pid[0], pid[1], pid[2])),
-    pid_FR(PIDController(pid[0], pid[1], pid[2])),
-    pid_BR(PIDController(pid[0], pid[1], pid[2])) {
-	    type = robot_type;
-	    switch (type) {
-		    case HERO:
-		    // the same as STANDARD
-		    case STANDARD: {
-			    motors = new MotorCANBase *[4];
-			    auto* can1 = new bsp::CAN(&hcan1, 0x201);
-			    motors[MOTOR_FL] = new Motor3508(can1, 0x200 + motor_id[0]);
-			    motors[MOTOR_BL] = new Motor3508(can1, 0x200 + motor_id[1]);
-			    motors[MOTOR_FR] = new Motor3508(can1, 0x200 + motor_id[2]);
-			    motors[MOTOR_BR] = new Motor3508(can1, 0x200 + motor_id[3]);
-			    break;
-		    }
-		    case ENGINEER: {
-			    // TODO: chassis engineer not implemented
-			    break;
-		    }
-		    default:
-			    RM_EXPECT_TRUE(false, "not supported robot type");
-	    }
-    }
-    void Chassis::Move(float x, float y, float z) {
-	    constexpr int MAX_ABS_CURRENT = 12288;  // ~20A
-	    constexpr int MAX_ABS_REMOTE = 32767;
-	    switch (type) {
-		    case HERO:
-		    case STANDARD: {
-			    x = x * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
-			    y = y * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
-			    z = z * MAX_ABS_CURRENT / MAX_ABS_REMOTE;
-			    float moveSum = fabs(x) + fabs(y) + fabs(z);
-			    if (moveSum >= MAX_ABS_CURRENT) {
-				    float k = MAX_ABS_CURRENT / moveSum;
-				    x *= k;
-				    y *= k;
-				    z *= k;
-			    }
-			    float FL_speed = y + x + z;
+Chassis::Chassis(const chassis_t chassis) {
+	// acquired from user
+	model_ = chassis.model;
 
-			    float BL_speed = y - x + z;
-			    float FR_speed = -1 * (y - x - z);
-			    float BR_speed = -1 * (y + x - z);
-			    motors[MOTOR_FL]->SetOutput(pid_FL.ComputeOutput(motors[MOTOR_FL]->GetOmegaDelta(FL_speed)));
-			    motors[MOTOR_BL]->SetOutput(pid_BL.ComputeOutput(motors[MOTOR_BL]->GetOmegaDelta(BL_speed)));
-			    motors[MOTOR_FR]->SetOutput(pid_FR.ComputeOutput(motors[MOTOR_FR]->GetOmegaDelta(FR_speed)));
-			    motors[MOTOR_BR]->SetOutput(pid_BR.ComputeOutput(motors[MOTOR_BR]->GetOmegaDelta(BR_speed)));
-			    control::MotorCANBase::TransmitOutput(motors, 4);
-		    }
-		    case ENGINEER:
-			    // TODO: chassis engineer not implemented
-			    break;
-		    default:
-			    RM_EXPECT_TRUE(false, "not supported robot type");
-	    }
-    }
+  // data initialization using acquired model
+	switch (chassis.model) {
+		case CHASSIS_STANDARD_ZERO:
+			motors_ = new MotorCANBase*[FourWheel::motor_num];
+			motors_[FourWheel::front_left] = chassis.motors[FourWheel::front_left];
+			motors_[FourWheel::front_right] = chassis.motors[FourWheel::front_right];
+			motors_[FourWheel::back_left] = chassis.motors[FourWheel::back_left];
+			motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
+
+			pids_ = new PIDController*[FourWheel::motor_num];
+			pids_[FourWheel::front_left] = new PIDController(*chassis.pid_params);
+			pids_[FourWheel::front_right] = new PIDController(*chassis.pid_params);
+			pids_[FourWheel::back_left] = new PIDController(*chassis.pid_params);
+			pids_[FourWheel::back_right] = new PIDController(*chassis.pid_params);
+
+			speeds_ = new float[FourWheel::motor_num];
+			for (int i = 0; i < FourWheel::motor_num; i++)
+				speeds_[i] = 0;
+			break;
+		default:
+      RM_ASSERT_TRUE(false, "No chassis type specified");
+	}
 }
+
+Chassis::~Chassis() {
+	switch (model_) {
+		case CHASSIS_STANDARD_ZERO:
+			motors_[FourWheel::front_left] = nullptr;
+			motors_[FourWheel::front_right] = nullptr;
+			motors_[FourWheel::back_left] = nullptr;
+			motors_[FourWheel::back_right] = nullptr;
+			delete[] motors_;
+			motors_ = nullptr;
+
+			pids_[FourWheel::front_left] = nullptr;
+			pids_[FourWheel::front_right] = nullptr;
+			pids_[FourWheel::back_left] = nullptr;
+			pids_[FourWheel::back_right] = nullptr;
+			delete[] pids_;
+			pids_ = nullptr;
+
+			delete[] speeds_;
+			speeds_ = nullptr;
+			break;
+	}
+}
+
+void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
+	switch (model_) {
+		case CHASSIS_STANDARD_ZERO:
+			constexpr int MAX_ABS_CURRENT = 12288; // refer to MotorM3508 for details
+			float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
+			float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
+			
+			speeds_[FourWheel::front_left] = scale * (y_speed + x_speed + turn_speed);
+			speeds_[FourWheel::back_left] = scale * (y_speed - x_speed + turn_speed);
+			speeds_[FourWheel::front_right] = -scale * (y_speed - x_speed - turn_speed);
+			speeds_[FourWheel::back_right] = -scale * (y_speed + x_speed - turn_speed);
+			break;
+	}
+}
+
+void Chassis::Update() {
+	switch (model_) {
+		case CHASSIS_STANDARD_ZERO:
+			motors_[FourWheel::front_left]->SetOutput(
+					pids_[FourWheel::front_left]->ComputeConstraintedOutput(
+					motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
+			motors_[FourWheel::back_left]->SetOutput(
+					pids_[FourWheel::back_left]->ComputeConstraintedOutput(
+					motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
+			motors_[FourWheel::front_right]->SetOutput(
+					pids_[FourWheel::front_right]->ComputeConstraintedOutput(
+					motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_left])));
+			motors_[FourWheel::back_right]->SetOutput(
+					pids_[FourWheel::back_right]->ComputeConstraintedOutput(
+					motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
+			break;
+	}
+}
+
+} /* namespace control */
