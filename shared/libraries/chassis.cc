@@ -26,88 +26,88 @@
 namespace control {
 
 Chassis::Chassis(const chassis_t chassis) {
-	// acquired from user
-	model_ = chassis.model;
+  // acquired from user
+  model_ = chassis.model;
 
   // data initialization using acquired model
-	switch (chassis.model) {
-		case CHASSIS_STANDARD_ZERO:
-			motors_ = new MotorCANBase*[FourWheel::motor_num];
-			motors_[FourWheel::front_left] = chassis.motors[FourWheel::front_left];
-			motors_[FourWheel::front_right] = chassis.motors[FourWheel::front_right];
-			motors_[FourWheel::back_left] = chassis.motors[FourWheel::back_left];
-			motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
+  switch (chassis.model) {
+    case CHASSIS_STANDARD_ZERO:
+      motors_ = new MotorCANBase*[FourWheel::motor_num];
+      motors_[FourWheel::front_left] = chassis.motors[FourWheel::front_left];
+      motors_[FourWheel::front_right] = chassis.motors[FourWheel::front_right];
+      motors_[FourWheel::back_left] = chassis.motors[FourWheel::back_left];
+      motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
-			pids_ = new PIDController*[FourWheel::motor_num];
-			pids_[FourWheel::front_left] = new PIDController(*chassis.pid_params);
-			pids_[FourWheel::front_right] = new PIDController(*chassis.pid_params);
-			pids_[FourWheel::back_left] = new PIDController(*chassis.pid_params);
-			pids_[FourWheel::back_right] = new PIDController(*chassis.pid_params);
+      pids_ = new PIDController*[FourWheel::motor_num];
+      pids_[FourWheel::front_left] = new PIDController(*chassis.pid_params);
+      pids_[FourWheel::front_right] = new PIDController(*chassis.pid_params);
+      pids_[FourWheel::back_left] = new PIDController(*chassis.pid_params);
+      pids_[FourWheel::back_right] = new PIDController(*chassis.pid_params);
 
-			speeds_ = new float[FourWheel::motor_num];
-			for (int i = 0; i < FourWheel::motor_num; i++)
-				speeds_[i] = 0;
-			break;
-		default:
+      speeds_ = new float[FourWheel::motor_num];
+      for (int i = 0; i < FourWheel::motor_num; i++)
+        speeds_[i] = 0;
+      break;
+    default:
       RM_ASSERT_TRUE(false, "No chassis type specified");
-	}
+  }
 }
 
 Chassis::~Chassis() {
-	switch (model_) {
-		case CHASSIS_STANDARD_ZERO:
-			motors_[FourWheel::front_left] = nullptr;
-			motors_[FourWheel::front_right] = nullptr;
-			motors_[FourWheel::back_left] = nullptr;
-			motors_[FourWheel::back_right] = nullptr;
-			delete[] motors_;
-			motors_ = nullptr;
+  switch (model_) {
+    case CHASSIS_STANDARD_ZERO:
+      motors_[FourWheel::front_left] = nullptr;
+      motors_[FourWheel::front_right] = nullptr;
+      motors_[FourWheel::back_left] = nullptr;
+      motors_[FourWheel::back_right] = nullptr;
+      delete[] motors_;
+      motors_ = nullptr;
 
-			pids_[FourWheel::front_left] = nullptr;
-			pids_[FourWheel::front_right] = nullptr;
-			pids_[FourWheel::back_left] = nullptr;
-			pids_[FourWheel::back_right] = nullptr;
-			delete[] pids_;
-			pids_ = nullptr;
+      pids_[FourWheel::front_left] = nullptr;
+      pids_[FourWheel::front_right] = nullptr;
+      pids_[FourWheel::back_left] = nullptr;
+      pids_[FourWheel::back_right] = nullptr;
+      delete[] pids_;
+      pids_ = nullptr;
 
-			delete[] speeds_;
-			speeds_ = nullptr;
-			break;
-	}
+      delete[] speeds_;
+      speeds_ = nullptr;
+      break;
+  }
 }
 
 void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
-	switch (model_) {
-		case CHASSIS_STANDARD_ZERO:
-			constexpr int MAX_ABS_CURRENT = 12288; // refer to MotorM3508 for details
-			float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
-			float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
-			
-			speeds_[FourWheel::front_left] = scale * (y_speed + x_speed + turn_speed);
-			speeds_[FourWheel::back_left] = scale * (y_speed - x_speed + turn_speed);
-			speeds_[FourWheel::front_right] = -scale * (y_speed - x_speed - turn_speed);
-			speeds_[FourWheel::back_right] = -scale * (y_speed + x_speed - turn_speed);
-			break;
-	}
+  switch (model_) {
+    case CHASSIS_STANDARD_ZERO:
+      constexpr int MAX_ABS_CURRENT = 12288; // refer to MotorM3508 for details
+      float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
+      float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
+      
+      speeds_[FourWheel::front_left] = scale * (y_speed + x_speed + turn_speed);
+      speeds_[FourWheel::back_left] = scale * (y_speed - x_speed + turn_speed);
+      speeds_[FourWheel::front_right] = -scale * (y_speed - x_speed - turn_speed);
+      speeds_[FourWheel::back_right] = -scale * (y_speed + x_speed - turn_speed);
+      break;
+  }
 }
 
 void Chassis::Update() {
-	switch (model_) {
-		case CHASSIS_STANDARD_ZERO:
-			motors_[FourWheel::front_left]->SetOutput(
-					pids_[FourWheel::front_left]->ComputeConstraintedOutput(
-					motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
-			motors_[FourWheel::back_left]->SetOutput(
-					pids_[FourWheel::back_left]->ComputeConstraintedOutput(
-					motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
-			motors_[FourWheel::front_right]->SetOutput(
-					pids_[FourWheel::front_right]->ComputeConstraintedOutput(
-					motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_left])));
-			motors_[FourWheel::back_right]->SetOutput(
-					pids_[FourWheel::back_right]->ComputeConstraintedOutput(
-					motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
-			break;
-	}
+  switch (model_) {
+    case CHASSIS_STANDARD_ZERO:
+      motors_[FourWheel::front_left]->SetOutput(
+          pids_[FourWheel::front_left]->ComputeConstraintedOutput(
+          motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
+      motors_[FourWheel::back_left]->SetOutput(
+          pids_[FourWheel::back_left]->ComputeConstraintedOutput(
+          motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
+      motors_[FourWheel::front_right]->SetOutput(
+          pids_[FourWheel::front_right]->ComputeConstraintedOutput(
+          motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_left])));
+      motors_[FourWheel::back_right]->SetOutput(
+          pids_[FourWheel::back_right]->ComputeConstraintedOutput(
+          motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
+      break;
+  }
 }
 
 } /* namespace control */
