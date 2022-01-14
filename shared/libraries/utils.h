@@ -84,22 +84,3 @@ class FloatEdgeDetector {
     bool negEdge_;
 };
 
-/** @defgroup Transmission magic numbers
-* @{
-*/
-#define MESSAGE_HEADER_GIMBAL_REL   0xAA
-#define MESSAGE_HEADER_GIMBAL_ABS   0xAB
-
-
-#define MESSAGE_END                 0xFF
-/**
-  * @}
-  */
-
-// typedef struct data_pact {
-//   uint8_t msg_header; 
-//   uint64_t len;
-//   uint8_t[] msg;
-//   uint8_t msg_end;
-// } __packed;
-
