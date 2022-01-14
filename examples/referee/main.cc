@@ -64,13 +64,6 @@ void refereeTask (void* arg) {
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
     if (flags & RX_SIGNAL) {  // unnecessary check
       /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
-//      length = referee_uart->Read(&data);
-//      set_cursor(0, 0);
-//      clear_screen();
-//      for (uint32_t i = 0; i < length; ++i) {
-//        print("%02X ", data[i]);
-//      }
-//      print("\r\n");
       length = referee_uart->Read(&data);
       referee->Receive(communication::package_t{data, (int)length});
     }
