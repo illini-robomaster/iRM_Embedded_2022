@@ -53,7 +53,7 @@
 #define NOTCH               (2 * PI / 8)
 #define SERVO_SPEED         (2 * PI)
 #define GIMBAL_SPEED        PI
-#define JOYSTICK_THRESHOLD  500
+#define JOYSTICK_THRESHOLD  (remote::DBUS::ROCKER_MAX * 4 / 5)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;

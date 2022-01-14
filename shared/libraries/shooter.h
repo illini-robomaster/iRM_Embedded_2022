@@ -76,22 +76,23 @@ public:
   void CalcOutput();
 
 private:
+  // refer to shooter_t for details
   bool fly_using_can_motor_;
   MotorCANBase* left_fly_can_motor_;
   MotorCANBase* right_fly_can_motor_;
   MotorPWMBase* left_fly_pwm_motor_;
   MotorPWMBase* right_fly_pwm_motor_;
-  bool left_fly_motor_invert_;
-  bool right_fly_motor_invert_;
+  int left_fly_motor_invert_;
+  int right_fly_motor_invert_;
   ServoMotor* load_servo_;
   float load_step_angle_;
 
-  PIDController left_pid_;
-  PIDController right_pid_;
+  PIDController left_pid_;  /* pid for left flywheel  */
+  PIDController right_pid_; /* pid for right flywheel */
 
-  float left_fly_speed_;
-  float right_fly_speed_;
-  float load_angle_;
+  float speed_;           /* raw speed before inverting */
+
+  BoolEdgeDetector fly_turning_detector_;
 };
 
 }

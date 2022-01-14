@@ -27,9 +27,6 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
-#ifdef WITH_CONTROLLER
-#include "dbus.h"
-#endif
 
 
 #define KEY_GPIO_GROUP GPIOB
@@ -41,15 +38,13 @@
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
-#ifdef WITH_CONTROLLER
-remote::DBUS* dbus = nullptr;
-BoolEdgeDetector joystick_detector_abv(false);
-BoolEdgeDetector joystick_detector_rgt(false);
-BoolEdgeDetector joystick_detector_btm(false);
-BoolEdgeDetector joystick_detector_lft(false);
-#else
 BoolEdgeDetector key_detector(false);
-#endif
+
+void jam_callback(control::ServoMotor* servo, const control::servo_jam_t data) {
+  float prev_target = wrap<float>(servo->GetTarget() - NOTCH, 0, 2 * PI);
+  servo->SetTarget(prev_target, static_cast<control::servo_mode_t>(-data.dir), true);
+  print("Antijam engage\r\n");
+}
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
@@ -58,7 +53,7 @@ void RM_RTOS_Init() {
 
   control::servo_t servo_data;
   servo_data.motor = motor;
-  servo_data.mode = control::SERVO_NEAREST;
+  servo_data.mode = control::SERVO_ANTICLOCKWISE;
   servo_data.speed = SPEED;
   servo_data.transmission_ratio = M3508P19_RATIO;
   servo_data.move_Kp = 30;
@@ -69,50 +64,21 @@ void RM_RTOS_Init() {
   servo_data.hold_Kd = 100;
   servo = new control::ServoMotor(servo_data);
 
-#ifdef WITH_CONTROLLER
-  dbus = new remote::DBUS(&huart1);
-#endif
+  servo->RegisterJamCallback(jam_callback, 0.6);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-#ifdef WITH_CONTROLLER
-	osDelay(500); // DBUS initialization needs time
-#endif
 
   control::MotorCANBase* motors[] = {motor};
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 
-  float target = NOTCH;
-
   while (true) {
-#ifdef WITH_CONTROLLER
-    // joystick input range from -660 to 660
-    joystick_detector_abv.input(dbus->ch3 > 500);
-    joystick_detector_rgt.input(dbus->ch2 < -500);
-    joystick_detector_btm.input(dbus->ch3 < -500);
-    joystick_detector_lft.input(dbus->ch2 > 500);
-    if (joystick_detector_abv.posEdge()) {
-      target = 0;
-      servo->SetTarget(target);
-    } else if (joystick_detector_rgt.posEdge()) {
-      target = PI / 2;
-      servo->SetTarget(target);
-    } else if (joystick_detector_btm.posEdge()) {
-      target = PI;
-      servo->SetTarget(target);
-    } else if (joystick_detector_lft.posEdge()) {
-      target = -PI / 2;
-      servo->SetTarget(target);
-    }
-#else
     key_detector.input(key.Read());
-    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, 0, 2 * PI);
+    if (key_detector.posEdge() && servo->SetTarget(servo->GetTarget() + NOTCH) != 0) {
+      print("Servomotor step forward\r\n");
     }
-#endif
     servo->CalcOutput();
-    servo->PrintData();
     control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(10);
   }
