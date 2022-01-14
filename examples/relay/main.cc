@@ -18,32 +18,31 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "bsp_relay.h"
 #include "bsp_print.h"
-#include "bsp_ultrasonic.h"
 #include "cmsis_os.h"
 #include "main.h"
-#include "tim.h"
 
-bsp::Ultrasonic* ultrasonic;
+static bsp::Relay* relay;
 
 void RM_RTOS_Init(void) {
 	print_use_uart(&huart8);
-  HAL_TIM_Base_Start_IT(&htim2);
-  ultrasonic = new bsp::Ultrasonic(M2_OUTPUT_GPIO_Port, M2_OUTPUT_Pin, M1_INPUT_GPIO_Port, M1_INPUT_Pin, TIM2);
+	relay = new bsp::Relay(L2_OUTPUT_GPIO_Port, L2_OUTPUT_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
 	UNUSED(arguments);
 
-  while (true) {
-    float distance = ultrasonic->GetDistance();
-    set_cursor(0, 0);
-    clear_screen();
-    if (distance > 0) {
-      print("Distance: %.2f cm\r\n", distance);
-    } else {
-      print("ERROR!!!\r\n");
-    }
-    osDelay(20);
-  }
+	while (true) {
+		set_cursor(0, 0);
+		clear_screen();
+		relay->On();
+		print("relay on\r\n");
+		osDelay(1000);
+		set_cursor(0, 0);
+		clear_screen();
+		relay->Off();
+		print("relay off\r\n");
+		osDelay(1000);
+	}
 }

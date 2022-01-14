@@ -18,32 +18,35 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
-#include "bsp_ultrasonic.h"
-#include "cmsis_os.h"
+#pragma once
+
+#include "bsp_error_handler.h"
+#include "bsp_gpio.h"
 #include "main.h"
-#include "tim.h"
 
-bsp::Ultrasonic* ultrasonic;
+namespace bsp {
 
-void RM_RTOS_Init(void) {
-	print_use_uart(&huart8);
-  HAL_TIM_Base_Start_IT(&htim2);
-  ultrasonic = new bsp::Ultrasonic(M2_OUTPUT_GPIO_Port, M2_OUTPUT_Pin, M1_INPUT_GPIO_Port, M1_INPUT_Pin, TIM2);
-}
+class Relay{
+ public:
+  /**
+   * @brief Constructor for relay
+   *
+   * @param relay_group relay GPIO group
+   * @param relay_pin   relay GPIO pin number
+   */
+  Relay(GPIO_TypeDef* relay_group, uint16_t relay_pin);
 
-void RM_RTOS_Default_Task(const void* arguments) {
-	UNUSED(arguments);
+  /**
+   * @brief Turn on relay
+   */
+  void On();
 
-  while (true) {
-    float distance = ultrasonic->GetDistance();
-    set_cursor(0, 0);
-    clear_screen();
-    if (distance > 0) {
-      print("Distance: %.2f cm\r\n", distance);
-    } else {
-      print("ERROR!!!\r\n");
-    }
-    osDelay(20);
-  }
-}
+  /**
+   * @brief Turn off relay
+   */
+  void Off();
+ private:
+  GPIO relay_;
+};
+
+} /* namespace bsp */
