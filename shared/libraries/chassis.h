@@ -37,7 +37,6 @@ typedef enum {
  */
 typedef struct {
   MotorCANBase** motors; /* motor instances of all chassis motors */
-  float** pid_params; 	 /* pid parameters of motors              */
   chassis_model_t model; /* chassis model                         */
 } chassis_t;
 

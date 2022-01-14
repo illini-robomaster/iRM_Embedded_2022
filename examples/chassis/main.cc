@@ -46,11 +46,9 @@ void RM_RTOS_Init() {
 	motors[control::FourWheel::front_right] = fr_motor;
 	motors[control::FourWheel::back_left] = bl_motor;
 	motors[control::FourWheel::back_right] = br_motor;
-	float* pid_param = new float[3] { 20, 8, 2 }; // { 5, 3, 0.1 }
 
 	control::chassis_t chassis_data;
 	chassis_data.motors = motors;
-	chassis_data.pid_params = &pid_param;
 	chassis_data.model = control::CHASSIS_STANDARD_ZERO;
 	chassis = new control::Chassis(chassis_data);
 
@@ -71,7 +69,7 @@ void RM_RTOS_Default_Task(const void* args) {
     if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
       RM_ASSERT_TRUE(false, "Operation killed");
     }
-		
+
 		chassis->Update();
     control::MotorCANBase::TransmitOutput(motors, 4);
 		osDelay(10);

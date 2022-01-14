@@ -38,11 +38,13 @@ Chassis::Chassis(const chassis_t chassis) {
       motors_[FourWheel::back_left] = chassis.motors[FourWheel::back_left];
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
-      pids_ = new PIDController*[FourWheel::motor_num];
-      pids_[FourWheel::front_left] = new PIDController(*chassis.pid_params);
-      pids_[FourWheel::front_right] = new PIDController(*chassis.pid_params);
-      pids_[FourWheel::back_left] = new PIDController(*chassis.pid_params);
-      pids_[FourWheel::back_right] = new PIDController(*chassis.pid_params);
+      {
+      float* pid_param = new float[3] {20, 8, 2}; // {5, 3, 0.1}
+      pids_[FourWheel::front_left] = new PIDController(pid_param);
+      pids_[FourWheel::front_right] = new PIDController(pid_param);
+      pids_[FourWheel::back_left] = new PIDController(pid_param);
+      pids_[FourWheel::back_right] = new PIDController(pid_param);
+      }
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++)

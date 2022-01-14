@@ -38,11 +38,17 @@ Gimbal::Gimbal(gimbal_t gimbal) :
 
 Gimbal::~Gimbal() {
   delete pitch_move_pid_param_;
+  pitch_move_pid_param_ = nullptr;
   delete pitch_hold_pid_param_;
+  pitch_hold_pid_param_ = nullptr;
   delete yaw_move_pid_param_;
+  yaw_move_pid_param_ = nullptr;
   delete yaw_hold_pid_param_;
+  yaw_hold_pid_param_ = nullptr;
   delete pitch_pid_;
+  pitch_pid_ = nullptr;
   delete yaw_pid_;
+  yaw_pid_ = nullptr;
 }
 
 gimbal_data_t Gimbal::GetData() const {
