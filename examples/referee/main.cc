@@ -20,62 +20,83 @@
 
 #include "main.h"
 
-#include <memory>
-
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "cmsis_os.h"
-
-/**
- * sample client Python code to verify transmission correctness of this example program
- *
- * ```
- * import serial
- *
- * ser = serial.Serial('/dev/ttyUSB0', baudrate=115200)
- * some_str = 'this is my data!'
- *
- * for i in range(1000):
- *     ser.write(some_str)
- *     while ser.in_waiting < 3 * len(some_str):
- *         continue
- *     ret = ser.read_all()
- *     assert ret == 3 * some_str
- * ```
- */
+#include "protocol.h"
 
 #define RX_SIGNAL (1 << 0)
 
 extern osThreadId_t defaultTaskHandle;
 
-class CustomUART : public bsp::UART {
- public:
-  using bsp::UART::UART;
+const osThreadAttr_t refereeTaskAttribute = {
+        .name = "refereeTask",
+        .attr_bits = osThreadDetached,
+        .cb_mem = nullptr,
+        .cb_size = 0,
+        .stack_mem = nullptr,
+        .stack_size = 128 * 4,
+        .priority = (osPriority_t) osPriorityNormal,
+        .tz_module = 0,
+        .reserved = 0
+};
+osThreadId_t refereeTaskHandle;
 
- protected:
-  /* notify application when rx data is pending read */
-  void RxCompleteCallback() override final { osThreadFlagsSet(defaultTaskHandle, RX_SIGNAL); }
+class CustomUART : public bsp::UART {
+public:
+    using bsp::UART::UART;
+
+protected:
+    /* notify application when rx data is pending read */
+    void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
 };
 
-void RM_RTOS_Default_Task(const void* argument) {
-  UNUSED(argument);
+communication::Referee* referee = nullptr;
+CustomUART* referee_uart = nullptr;
 
+void refereeTask (void* arg) {
+  UNUSED(arg);
   uint32_t length;
   uint8_t* data;
-
-  auto uart = std::make_unique<CustomUART>(&UART_HANDLE);  // see cmake for which uart
-  uart->SetupRx(50);
-  uart->SetupTx(50);
 
   while (true) {
     /* wait until rx data is available */
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
     if (flags & RX_SIGNAL) {  // unnecessary check
       /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
-      length = uart->Read(&data);
-      uart->Write(data, length);
-      uart->Write(data, length);
-      uart->Write(data, length);
+      length = referee_uart->Read(&data);
+      referee->Receive(communication::package_t{data, (int)length});
     }
+  }
+}
+
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart8);
+
+  referee_uart = new CustomUART(&huart7);
+  referee_uart->SetupRx(300);
+  referee_uart->SetupTx(300);
+
+  referee = new communication::Referee;
+}
+
+void RM_RTOS_Threads_Init(void) {
+  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
+}
+
+void RM_RTOS_Default_Task(const void* argument) {
+  UNUSED(argument);
+
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
+    print("\r\n");
+    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
+    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
+    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+    osDelay(100);
   }
 }

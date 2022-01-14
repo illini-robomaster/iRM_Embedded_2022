@@ -66,7 +66,15 @@ const uint16_t wCRC_Table[256] = {
     0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330, 0x7bc7, 0x6a4e, 0x58d5, 0x495c,
     0x3de3, 0x2c6a, 0x1ef1, 0x0f78};
 
-static uint8_t get_crc8_check_sum(uint8_t* pchMessage, uint16_t dwLength, uint8_t ucCRC8) {
+/**
+ * CRC8 checksum calculation
+ *
+ * @param  pchMessage Message to check
+ * @param  dwLength   Length of the message
+ * @param  ucCRC8     Initialized checksum
+ * @return            CRC checksum
+ */
+static uint8_t get_crc8_check_sum(const uint8_t* pchMessage, uint16_t dwLength, uint8_t ucCRC8) {
   uint8_t ucIndex;
   while (dwLength--) {
     ucIndex = ucCRC8 ^ (*pchMessage++);
@@ -75,7 +83,7 @@ static uint8_t get_crc8_check_sum(uint8_t* pchMessage, uint16_t dwLength, uint8_
   return (ucCRC8);
 }
 
-uint8_t verify_crc8_check_sum(uint8_t* pchMessage, uint16_t dwLength) {
+uint8_t verify_crc8_check_sum(const uint8_t* pchMessage, uint16_t dwLength) {
   uint8_t ucExpected = 0;
   if ((pchMessage == 0) || (dwLength <= 2)) return 0;
   ucExpected = get_crc8_check_sum(pchMessage, dwLength - 1, CRC8_INIT);
@@ -89,7 +97,15 @@ void append_crc8_check_sum(uint8_t* pchMessage, uint16_t dwLength) {
   pchMessage[dwLength - 1] = ucCRC;
 }
 
-uint16_t get_crc16_check_sum(uint8_t* pchMessage, uint32_t dwLength, uint16_t wCRC) {
+/**
+ * CRC16 checksum calculation
+ *
+ * @param  pchMessage Message to check
+ * @param  dwLength   Length of the message
+ * @param  wCRC       Initialized checksum
+ * @return            CRC checksum
+ */
+uint16_t get_crc16_check_sum(const uint8_t* pchMessage, uint32_t dwLength, uint16_t wCRC) {
   uint8_t chData;
   if (pchMessage == NULL) {
     return 0xFFFF;
@@ -101,7 +117,7 @@ uint16_t get_crc16_check_sum(uint8_t* pchMessage, uint32_t dwLength, uint16_t wC
   return wCRC;
 }
 
-uint8_t verify_crc16_check_sum(uint8_t* pchMessage, uint32_t dwLength) {
+uint8_t verify_crc16_check_sum(const uint8_t* pchMessage, uint32_t dwLength) {
   uint16_t wExpected = 0;
   if ((pchMessage == NULL) || (dwLength <= 2)) {
     return 0;

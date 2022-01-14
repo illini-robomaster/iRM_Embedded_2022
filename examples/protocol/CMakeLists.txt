@@ -18,8 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_laser ASM C CXX)
+project(example_protocol ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
-    TARGET DJI_Board_TypeA
-    SOURCES main.cc)
+irm_add_arm_executable(${PROJECT_NAME}_host
+        TARGET DJI_Board_TypeA
+        SOURCES host.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_client
+        TARGET DJI_Board_TypeA
+        SOURCES client.cc)
