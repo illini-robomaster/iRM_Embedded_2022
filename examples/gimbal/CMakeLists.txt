@@ -23,3 +23,7 @@ project(example_gimbal ASM C CXX)
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES main.cc)
+    
+irm_add_arm_executable(${PROJECT_NAME}_imu
+    TARGET DJI_Board_TypeA
+    SOURCES imu_stablized.cc)
