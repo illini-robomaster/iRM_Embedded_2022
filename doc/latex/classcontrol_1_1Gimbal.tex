@@ -1,0 +1,117 @@
+\hypertarget{classcontrol_1_1Gimbal}{}\doxysection{control\+::Gimbal Class Reference}
+\label{classcontrol_1_1Gimbal}\index{control::Gimbal@{control::Gimbal}}
+
+
+wrapper class for gimbal  
+
+
+
+
+{\ttfamily \#include $<$gimbal.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1Gimbal_a7213f1b408fbdcf31f53f41bdb664b10}{Gimbal}} (\mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\+\_\+t}} gimbal)
+\begin{DoxyCompactList}\small\item\em constructor for gimbal \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_ae3a23400c9306085a02956c4f7f72857}\label{classcontrol_1_1Gimbal_ae3a23400c9306085a02956c4f7f72857}} 
+{\bfseries $\sim$\+Gimbal} ()
+\begin{DoxyCompactList}\small\item\em destructor for gimbal \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\+\_\+data\+\_\+t}} \mbox{\hyperlink{classcontrol_1_1Gimbal_af3edfd9714b959bf07f11934aea0a8f9}{Get\+Data}} () const
+\begin{DoxyCompactList}\small\item\em get gimbal related constants \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Gimbal_a5afc5351b6e061b74eb44e26650252b3}{Update}} ()
+\begin{DoxyCompactList}\small\item\em calculate the output of the motors under current configuration \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Gimbal_ab330d7d2e5fdb71bbc57b96379a3df01}{Target\+Abs}} (float new\+\_\+pitch, float new\+\_\+yaw)
+\begin{DoxyCompactList}\small\item\em set motors to point to a new orientation \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Gimbal_a8e86f77674776444168c7e611be06c0b}{Target\+Rel}} (float new\+\_\+pitch, float new\+\_\+yaw)
+\begin{DoxyCompactList}\small\item\em set motors to point to a new orientation \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+wrapper class for gimbal 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_a7213f1b408fbdcf31f53f41bdb664b10}\label{classcontrol_1_1Gimbal_a7213f1b408fbdcf31f53f41bdb664b10}} 
+\index{control::Gimbal@{control::Gimbal}!Gimbal@{Gimbal}}
+\index{Gimbal@{Gimbal}!control::Gimbal@{control::Gimbal}}
+\doxysubsubsection{\texorpdfstring{Gimbal()}{Gimbal()}}
+{\footnotesize\ttfamily control\+::\+Gimbal\+::\+Gimbal (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\+\_\+t}}}]{gimbal }\end{DoxyParamCaption})}
+
+
+
+constructor for gimbal 
+
+
+\begin{DoxyParams}{Parameters}
+{\em gimbal} & structure that used to initialize gimbal, refer to type \mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\+\_\+t}} \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_af3edfd9714b959bf07f11934aea0a8f9}\label{classcontrol_1_1Gimbal_af3edfd9714b959bf07f11934aea0a8f9}} 
+\index{control::Gimbal@{control::Gimbal}!GetData@{GetData}}
+\index{GetData@{GetData}!control::Gimbal@{control::Gimbal}}
+\doxysubsubsection{\texorpdfstring{GetData()}{GetData()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\+\_\+data\+\_\+t}} control\+::\+Gimbal\+::\+Get\+Data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+get gimbal related constants 
+
+\begin{DoxyReturn}{Returns}
+refer to \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\+\_\+data\+\_\+t}} 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_ab330d7d2e5fdb71bbc57b96379a3df01}\label{classcontrol_1_1Gimbal_ab330d7d2e5fdb71bbc57b96379a3df01}} 
+\index{control::Gimbal@{control::Gimbal}!TargetAbs@{TargetAbs}}
+\index{TargetAbs@{TargetAbs}!control::Gimbal@{control::Gimbal}}
+\doxysubsubsection{\texorpdfstring{TargetAbs()}{TargetAbs()}}
+{\footnotesize\ttfamily void control\+::\+Gimbal\+::\+Target\+Abs (\begin{DoxyParamCaption}\item[{float}]{new\+\_\+pitch,  }\item[{float}]{new\+\_\+yaw }\end{DoxyParamCaption})}
+
+
+
+set motors to point to a new orientation 
+
+
+\begin{DoxyParams}{Parameters}
+{\em new\+\_\+pitch} & new pitch angled \\
+\hline
+{\em new\+\_\+yaw} & new yaw angled \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_a8e86f77674776444168c7e611be06c0b}\label{classcontrol_1_1Gimbal_a8e86f77674776444168c7e611be06c0b}} 
+\index{control::Gimbal@{control::Gimbal}!TargetRel@{TargetRel}}
+\index{TargetRel@{TargetRel}!control::Gimbal@{control::Gimbal}}
+\doxysubsubsection{\texorpdfstring{TargetRel()}{TargetRel()}}
+{\footnotesize\ttfamily void control\+::\+Gimbal\+::\+Target\+Rel (\begin{DoxyParamCaption}\item[{float}]{new\+\_\+pitch,  }\item[{float}]{new\+\_\+yaw }\end{DoxyParamCaption})}
+
+
+
+set motors to point to a new orientation 
+
+
+\begin{DoxyParams}{Parameters}
+{\em new\+\_\+pitch} & new pitch angled \\
+\hline
+{\em new\+\_\+yaw} & new yaw angled \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1Gimbal_a5afc5351b6e061b74eb44e26650252b3}\label{classcontrol_1_1Gimbal_a5afc5351b6e061b74eb44e26650252b3}} 
+\index{control::Gimbal@{control::Gimbal}!Update@{Update}}
+\index{Update@{Update}!control::Gimbal@{control::Gimbal}}
+\doxysubsubsection{\texorpdfstring{Update()}{Update()}}
+{\footnotesize\ttfamily void control\+::\+Gimbal\+::\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+calculate the output of the motors under current configuration 
+
+\begin{DoxyNote}{Note}
+does not command the motor immediately 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/gimbal.\+h\item 
+shared/libraries/gimbal.\+cc\end{DoxyCompactItemize}

@@ -1,0 +1,70 @@
+\hypertarget{bsp__gpio_8h_source}{}\doxysection{bsp\+\_\+gpio.\+h}
+\label{bsp__gpio_8h_source}\index{shared/bsp/bsp\_gpio.h@{shared/bsp/bsp\_gpio.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#include "{}bsp\_error\_handler.h"{}}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#include "{}main.h"{}}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#define NUM\_GPITS 16}}
+\DoxyCodeLine{37 }
+\DoxyCodeLine{38 \textcolor{keyword}{namespace }bsp \{}
+\DoxyCodeLine{39 }
+\DoxyCodeLine{40 \textcolor{keyword}{class }\mbox{\hyperlink{classbsp_1_1GPIO}{GPIO}} \{}
+\DoxyCodeLine{41  \textcolor{keyword}{public}:}
+\DoxyCodeLine{48   \mbox{\hyperlink{classbsp_1_1GPIO_a384d673c80186e50be4897d3c52e2eca}{GPIO}}(GPIO\_TypeDef* group, uint16\_t pin);}
+\DoxyCodeLine{49 }
+\DoxyCodeLine{53   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1GPIO_a1817c2502124501f81608cb092a895ac}{High}}();}
+\DoxyCodeLine{54 }
+\DoxyCodeLine{58   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1GPIO_aa06020baa8309ab37ef0ab883ba39d70}{Low}}();}
+\DoxyCodeLine{59 }
+\DoxyCodeLine{63   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1GPIO_a25556586ff08de68b9a096e1839a484e}{Toggle}}();}
+\DoxyCodeLine{64 }
+\DoxyCodeLine{70   uint8\_t \mbox{\hyperlink{classbsp_1_1GPIO_a9f320ae77cf9fc0723b87cb98fd2821a}{Read}}();}
+\DoxyCodeLine{71 }
+\DoxyCodeLine{72  \textcolor{keyword}{private}:}
+\DoxyCodeLine{73   GPIO\_TypeDef* group\_;}
+\DoxyCodeLine{74   uint16\_t pin\_;}
+\DoxyCodeLine{75   uint8\_t state\_;}
+\DoxyCodeLine{76 \};}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78 \textcolor{keyword}{class }\mbox{\hyperlink{classbsp_1_1GPIT}{GPIT}} \{}
+\DoxyCodeLine{79  \textcolor{keyword}{public}:}
+\DoxyCodeLine{85   \mbox{\hyperlink{classbsp_1_1GPIT_a270a6ad853a2aa6b3f03bfefab92b870}{GPIT}}(uint16\_t pin);}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{90   \textcolor{keyword}{virtual} \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1GPIT_a4c1dfc6f8a6e023e9b8aa7b7adc75b15}{IntCallback}}() = 0;}
+\DoxyCodeLine{91 }
+\DoxyCodeLine{97   \textcolor{keyword}{static} \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1GPIT_a4c1dfc6f8a6e023e9b8aa7b7adc75b15}{IntCallback}}(uint16\_t pin);}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99  \textcolor{keyword}{private}:}
+\DoxyCodeLine{100   \textcolor{keyword}{static} \textcolor{keywordtype}{int} GetGPIOIndex(uint16\_t pin);}
+\DoxyCodeLine{101 }
+\DoxyCodeLine{102   \textcolor{keyword}{static} \mbox{\hyperlink{classbsp_1_1GPIT}{GPIT}}* gpits[NUM\_GPITS];}
+\DoxyCodeLine{103 }
+\DoxyCodeLine{104   uint16\_t pin\_;}
+\DoxyCodeLine{105 \};}
+\DoxyCodeLine{106 }
+\DoxyCodeLine{107 \} \textcolor{comment}{/* namespace bsp */}}
+
+\end{DoxyCode}

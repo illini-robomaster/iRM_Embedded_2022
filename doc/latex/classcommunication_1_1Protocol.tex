@@ -1,0 +1,62 @@
+\hypertarget{classcommunication_1_1Protocol}{}\doxysection{communication\+::Protocol Class Reference}
+\label{classcommunication_1_1Protocol}\index{communication::Protocol@{communication::Protocol}}
+Inheritance diagram for communication\+::Protocol\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classcommunication_1_1Protocol}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{classcommunication_1_1Protocol_a7542e4d14d3a95bd494da5577d041475}{Receive}} (\mbox{\hyperlink{structcommunication_1_1package__t}{package\+\_\+t}} package)
+\begin{DoxyCompactList}\small\item\em update the information from referee system \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcommunication_1_1package__t}{package\+\_\+t}} \mbox{\hyperlink{classcommunication_1_1Protocol_a710205e5bf23343bef085c07dd71bf84}{Transmit}} (int cmd\+\_\+id)
+\begin{DoxyCompactList}\small\item\em prepare the information to be sent and zip as a package \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcommunication_1_1Protocol_a7542e4d14d3a95bd494da5577d041475}\label{classcommunication_1_1Protocol_a7542e4d14d3a95bd494da5577d041475}} 
+\index{communication::Protocol@{communication::Protocol}!Receive@{Receive}}
+\index{Receive@{Receive}!communication::Protocol@{communication::Protocol}}
+\doxysubsubsection{\texorpdfstring{Receive()}{Receive()}}
+{\footnotesize\ttfamily bool communication\+::\+Protocol\+::\+Receive (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcommunication_1_1package__t}{package\+\_\+t}}}]{package }\end{DoxyParamCaption})}
+
+
+
+update the information from referee system 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & address for received data read from UART for referee \\
+\hline
+{\em length} & number of bytes in received data \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true for success; false for failure 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcommunication_1_1Protocol_a710205e5bf23343bef085c07dd71bf84}\label{classcommunication_1_1Protocol_a710205e5bf23343bef085c07dd71bf84}} 
+\index{communication::Protocol@{communication::Protocol}!Transmit@{Transmit}}
+\index{Transmit@{Transmit}!communication::Protocol@{communication::Protocol}}
+\doxysubsubsection{\texorpdfstring{Transmit()}{Transmit()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structcommunication_1_1package__t}{package\+\_\+t}} communication\+::\+Protocol\+::\+Transmit (\begin{DoxyParamCaption}\item[{int}]{cmd\+\_\+id }\end{DoxyParamCaption})}
+
+
+
+prepare the information to be sent and zip as a package 
+
+
+\begin{DoxyParams}{Parameters}
+{\em cmd\+\_\+id} & command id \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+package that includes data and length 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/protocol.\+h\item 
+shared/libraries/protocol.\+cc\end{DoxyCompactItemize}

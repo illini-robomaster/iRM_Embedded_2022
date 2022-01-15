@@ -142,8 +142,6 @@ cmake-build-debug/
 cmake-build-release/
 cmake-build-relwithdebinfo/
 cmake-build-minsizerel/
-doc/html/
-data_history/
 
 # CMake Compile Commands
 compile_commands.json

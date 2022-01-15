@@ -1,0 +1,119 @@
+\hypertarget{classbsp_1_1CAN}{}\doxysection{bsp\+::CAN Class Reference}
+\label{classbsp_1_1CAN}\index{bsp::CAN@{bsp::CAN}}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classbsp_1_1CAN_a5548afe06a08b1289aba19f56212d3df}{CAN}} (CAN\+\_\+\+Handle\+Type\+Def $\ast$hcan, uint32\+\_\+t start\+\_\+id, bool is\+\_\+master=true)
+\begin{DoxyCompactList}\small\item\em constructor for bsp \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} instance \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classbsp_1_1CAN_a6ff1a38e647daa22bf6d55307d957094}{Uses}} (CAN\+\_\+\+Handle\+Type\+Def $\ast$hcan)
+\begin{DoxyCompactList}\small\item\em check if it is associated with a given \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} handle \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{classbsp_1_1CAN_a3d011cd877092e0a7efff232c4b134a9}{Register\+Rx\+Callback}} (uint32\+\_\+t std\+\_\+id, can\+\_\+rx\+\_\+callback\+\_\+t callback, void $\ast$args=NULL)
+\begin{DoxyCompactList}\small\item\em register callback function for a specific ID on this \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} line \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{classbsp_1_1CAN_a0083adb6ff5ae8d63f6c01ee4ecc82ef}{Transmit}} (uint16\+\_\+t id, const uint8\+\_\+t data\mbox{[}$\,$\mbox{]}, uint32\+\_\+t length)
+\begin{DoxyCompactList}\small\item\em transmit can messages \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classbsp_1_1CAN_adfd11400c56d8cbda00fda25987a7abe}{Rx\+Callback}} ()
+\begin{DoxyCompactList}\small\item\em callback wrapper called from IRQ context \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classbsp_1_1CAN_a5548afe06a08b1289aba19f56212d3df}\label{classbsp_1_1CAN_a5548afe06a08b1289aba19f56212d3df}} 
+\index{bsp::CAN@{bsp::CAN}!CAN@{CAN}}
+\index{CAN@{CAN}!bsp::CAN@{bsp::CAN}}
+\doxysubsubsection{\texorpdfstring{CAN()}{CAN()}}
+{\footnotesize\ttfamily bsp\+::\+CAN\+::\+CAN (\begin{DoxyParamCaption}\item[{CAN\+\_\+\+Handle\+Type\+Def $\ast$}]{hcan,  }\item[{uint32\+\_\+t}]{start\+\_\+id,  }\item[{bool}]{is\+\_\+master = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+constructor for bsp \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} instance 
+
+
+\begin{DoxyParams}{Parameters}
+{\em hcan} & HAL can handle \\
+\hline
+{\em start\+\_\+id} & lowest possible stdid for rx \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classbsp_1_1CAN_a3d011cd877092e0a7efff232c4b134a9}\label{classbsp_1_1CAN_a3d011cd877092e0a7efff232c4b134a9}} 
+\index{bsp::CAN@{bsp::CAN}!RegisterRxCallback@{RegisterRxCallback}}
+\index{RegisterRxCallback@{RegisterRxCallback}!bsp::CAN@{bsp::CAN}}
+\doxysubsubsection{\texorpdfstring{RegisterRxCallback()}{RegisterRxCallback()}}
+{\footnotesize\ttfamily int bsp\+::\+CAN\+::\+Register\+Rx\+Callback (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{std\+\_\+id,  }\item[{can\+\_\+rx\+\_\+callback\+\_\+t}]{callback,  }\item[{void $\ast$}]{args = {\ttfamily NULL} }\end{DoxyParamCaption})}
+
+
+
+register callback function for a specific ID on this \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} line 
+
+
+\begin{DoxyParams}{Parameters}
+{\em std\+\_\+id} & rx id \\
+\hline
+{\em callback} & callback function \\
+\hline
+{\em args} & argument passed into the callback function\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+return 0 if success, -\/1 if invalid std\+\_\+id 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classbsp_1_1CAN_adfd11400c56d8cbda00fda25987a7abe}\label{classbsp_1_1CAN_adfd11400c56d8cbda00fda25987a7abe}} 
+\index{bsp::CAN@{bsp::CAN}!RxCallback@{RxCallback}}
+\index{RxCallback@{RxCallback}!bsp::CAN@{bsp::CAN}}
+\doxysubsubsection{\texorpdfstring{RxCallback()}{RxCallback()}}
+{\footnotesize\ttfamily void bsp\+::\+CAN\+::\+Rx\+Callback (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+callback wrapper called from IRQ context 
+
+\begin{DoxyNote}{Note}
+should not be called explicitly form the application side 
+\end{DoxyNote}
+\mbox{\Hypertarget{classbsp_1_1CAN_a0083adb6ff5ae8d63f6c01ee4ecc82ef}\label{classbsp_1_1CAN_a0083adb6ff5ae8d63f6c01ee4ecc82ef}} 
+\index{bsp::CAN@{bsp::CAN}!Transmit@{Transmit}}
+\index{Transmit@{Transmit}!bsp::CAN@{bsp::CAN}}
+\doxysubsubsection{\texorpdfstring{Transmit()}{Transmit()}}
+{\footnotesize\ttfamily int bsp\+::\+CAN\+::\+Transmit (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{id,  }\item[{const uint8\+\_\+t}]{data\mbox{[}$\,$\mbox{]},  }\item[{uint32\+\_\+t}]{length }\end{DoxyParamCaption})}
+
+
+
+transmit can messages 
+
+
+\begin{DoxyParams}{Parameters}
+{\em id} & tx id \\
+\hline
+{\em data\mbox{[}$\,$\mbox{]}} & data bytes \\
+\hline
+{\em length} & length of data, must be in (0, 8\mbox{]}\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+number of bytes transmitted, -\/1 if failed 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classbsp_1_1CAN_a6ff1a38e647daa22bf6d55307d957094}\label{classbsp_1_1CAN_a6ff1a38e647daa22bf6d55307d957094}} 
+\index{bsp::CAN@{bsp::CAN}!Uses@{Uses}}
+\index{Uses@{Uses}!bsp::CAN@{bsp::CAN}}
+\doxysubsubsection{\texorpdfstring{Uses()}{Uses()}}
+{\footnotesize\ttfamily bool bsp\+::\+CAN\+::\+Uses (\begin{DoxyParamCaption}\item[{CAN\+\_\+\+Handle\+Type\+Def $\ast$}]{hcan }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+check if it is associated with a given \mbox{\hyperlink{classbsp_1_1CAN}{CAN}} handle 
+
+
+\begin{DoxyParams}{Parameters}
+{\em hcan} & HAL can handle to be checked\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if associated, otherwise false 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/bsp/bsp\+\_\+can.\+h\item 
+shared/bsp/bsp\+\_\+can.\+cc\end{DoxyCompactItemize}

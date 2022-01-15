@@ -1,0 +1,96 @@
+\hypertarget{classcontrol_1_1Shooter}{}\doxysection{control\+::Shooter Class Reference}
+\label{classcontrol_1_1Shooter}\index{control::Shooter@{control::Shooter}}
+
+
+wrapper class for shooter  
+
+
+
+
+{\ttfamily \#include $<$shooter.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1Shooter_a6ea7ea83af788414012b3e35c144d193}{Shooter}} (\mbox{\hyperlink{structcontrol_1_1shooter__t}{shooter\+\_\+t}} shooter)
+\begin{DoxyCompactList}\small\item\em constructor for \mbox{\hyperlink{classcontrol_1_1Shooter}{Shooter}} instance \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classcontrol_1_1Shooter_af12804256cf669b76ce39c4ef758b1d6}\label{classcontrol_1_1Shooter_af12804256cf669b76ce39c4ef758b1d6}} 
+{\bfseries $\sim$\+Shooter} ()
+\begin{DoxyCompactList}\small\item\em destructor for shooter \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Shooter_ab0bd129f53ac6b2f2fc99cf4c06d5bd6}{Set\+Flywheel\+Speed}} (float speed)
+\begin{DoxyCompactList}\small\item\em set the speed of accelerating motors \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{classcontrol_1_1Shooter_adf93e93e16dbed5eb2278606e5d828e4}{Load\+Next}} ()
+\begin{DoxyCompactList}\small\item\em load the next bullet \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Shooter_a115dc9a73f891d04d045f54a57d5df1b}{Update}} ()
+\begin{DoxyCompactList}\small\item\em update the output of the motors under current configuration \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+wrapper class for shooter 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Shooter_a6ea7ea83af788414012b3e35c144d193}\label{classcontrol_1_1Shooter_a6ea7ea83af788414012b3e35c144d193}} 
+\index{control::Shooter@{control::Shooter}!Shooter@{Shooter}}
+\index{Shooter@{Shooter}!control::Shooter@{control::Shooter}}
+\doxysubsubsection{\texorpdfstring{Shooter()}{Shooter()}}
+{\footnotesize\ttfamily control\+::\+Shooter\+::\+Shooter (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcontrol_1_1shooter__t}{shooter\+\_\+t}}}]{shooter }\end{DoxyParamCaption})}
+
+
+
+constructor for \mbox{\hyperlink{classcontrol_1_1Shooter}{Shooter}} instance 
+
+
+\begin{DoxyParams}{Parameters}
+{\em shooter} & structure that used to initialize gimbal, refer to type \mbox{\hyperlink{structcontrol_1_1shooter__t}{shooter\+\_\+t}} \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Shooter_adf93e93e16dbed5eb2278606e5d828e4}\label{classcontrol_1_1Shooter_adf93e93e16dbed5eb2278606e5d828e4}} 
+\index{control::Shooter@{control::Shooter}!LoadNext@{LoadNext}}
+\index{LoadNext@{LoadNext}!control::Shooter@{control::Shooter}}
+\doxysubsubsection{\texorpdfstring{LoadNext()}{LoadNext()}}
+{\footnotesize\ttfamily int control\+::\+Shooter\+::\+Load\+Next (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+load the next bullet 
+
+\begin{DoxyReturn}{Returns}
+int servomotor status, refer to type servo\+\_\+status\+\_\+t 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1Shooter_ab0bd129f53ac6b2f2fc99cf4c06d5bd6}\label{classcontrol_1_1Shooter_ab0bd129f53ac6b2f2fc99cf4c06d5bd6}} 
+\index{control::Shooter@{control::Shooter}!SetFlywheelSpeed@{SetFlywheelSpeed}}
+\index{SetFlywheelSpeed@{SetFlywheelSpeed}!control::Shooter@{control::Shooter}}
+\doxysubsubsection{\texorpdfstring{SetFlywheelSpeed()}{SetFlywheelSpeed()}}
+{\footnotesize\ttfamily void control\+::\+Shooter\+::\+Set\+Flywheel\+Speed (\begin{DoxyParamCaption}\item[{float}]{speed }\end{DoxyParamCaption})}
+
+
+
+set the speed of accelerating motors 
+
+
+\begin{DoxyParams}{Parameters}
+{\em speed} & \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1Shooter_a115dc9a73f891d04d045f54a57d5df1b}\label{classcontrol_1_1Shooter_a115dc9a73f891d04d045f54a57d5df1b}} 
+\index{control::Shooter@{control::Shooter}!Update@{Update}}
+\index{Update@{Update}!control::Shooter@{control::Shooter}}
+\doxysubsubsection{\texorpdfstring{Update()}{Update()}}
+{\footnotesize\ttfamily void control\+::\+Shooter\+::\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+update the output of the motors under current configuration 
+
+\begin{DoxyNote}{Note}
+does not command the motor immediately 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/shooter.\+h\item 
+shared/libraries/shooter.\+cc\end{DoxyCompactItemize}
