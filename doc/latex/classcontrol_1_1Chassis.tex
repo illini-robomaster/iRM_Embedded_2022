@@ -1,0 +1,85 @@
+\hypertarget{classcontrol_1_1Chassis}{}\doxysection{control\+::Chassis Class Reference}
+\label{classcontrol_1_1Chassis}\index{control::Chassis@{control::Chassis}}
+
+
+wrapper class for chassis  
+
+
+
+
+{\ttfamily \#include $<$chassis.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1Chassis_a4b05551886f1205e39066cc496ab2a50}{Chassis}} (const \mbox{\hyperlink{structcontrol_1_1chassis__t}{chassis\+\_\+t}} chassis)
+\begin{DoxyCompactList}\small\item\em constructor for chassis \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classcontrol_1_1Chassis_a7ca704b5cc9d0d791d414606498344e9}\label{classcontrol_1_1Chassis_a7ca704b5cc9d0d791d414606498344e9}} 
+{\bfseries $\sim$\+Chassis} ()
+\begin{DoxyCompactList}\small\item\em destructor for chassis \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Chassis_aa89a891728e463fd1f61a1cbee9a0e6d}{Set\+Speed}} (const float x\+\_\+speed, const float y\+\_\+speed, const float turn\+\_\+speed)
+\begin{DoxyCompactList}\small\item\em set the speed for chassis motors \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1Chassis_a4e38bd3aa53ee136f53eb155b20dbae9}{Update}} ()
+\begin{DoxyCompactList}\small\item\em calculate the output of the motors under current configuration \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+wrapper class for chassis 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Chassis_a4b05551886f1205e39066cc496ab2a50}\label{classcontrol_1_1Chassis_a4b05551886f1205e39066cc496ab2a50}} 
+\index{control::Chassis@{control::Chassis}!Chassis@{Chassis}}
+\index{Chassis@{Chassis}!control::Chassis@{control::Chassis}}
+\doxysubsubsection{\texorpdfstring{Chassis()}{Chassis()}}
+{\footnotesize\ttfamily control\+::\+Chassis\+::\+Chassis (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structcontrol_1_1chassis__t}{chassis\+\_\+t}}}]{chassis }\end{DoxyParamCaption})}
+
+
+
+constructor for chassis 
+
+
+\begin{DoxyParams}{Parameters}
+{\em chassis} & structure that used to initialize chassis, refer to type \mbox{\hyperlink{structcontrol_1_1chassis__t}{chassis\+\_\+t}} \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Chassis_aa89a891728e463fd1f61a1cbee9a0e6d}\label{classcontrol_1_1Chassis_aa89a891728e463fd1f61a1cbee9a0e6d}} 
+\index{control::Chassis@{control::Chassis}!SetSpeed@{SetSpeed}}
+\index{SetSpeed@{SetSpeed}!control::Chassis@{control::Chassis}}
+\doxysubsubsection{\texorpdfstring{SetSpeed()}{SetSpeed()}}
+{\footnotesize\ttfamily void control\+::\+Chassis\+::\+Set\+Speed (\begin{DoxyParamCaption}\item[{const float}]{x\+\_\+speed,  }\item[{const float}]{y\+\_\+speed,  }\item[{const float}]{turn\+\_\+speed }\end{DoxyParamCaption})}
+
+
+
+set the speed for chassis motors 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x\+\_\+speed} & chassis speed on x-\/direction \\
+\hline
+{\em y\+\_\+speed} & chassis speed on y-\/direction \\
+\hline
+{\em turn\+\_\+speed} & chassis clockwise turning speed \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1Chassis_a4e38bd3aa53ee136f53eb155b20dbae9}\label{classcontrol_1_1Chassis_a4e38bd3aa53ee136f53eb155b20dbae9}} 
+\index{control::Chassis@{control::Chassis}!Update@{Update}}
+\index{Update@{Update}!control::Chassis@{control::Chassis}}
+\doxysubsubsection{\texorpdfstring{Update()}{Update()}}
+{\footnotesize\ttfamily void control\+::\+Chassis\+::\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+calculate the output of the motors under current configuration 
+
+\begin{DoxyNote}{Note}
+does not command the motor immediately 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/chassis.\+h\item 
+shared/libraries/chassis.\+cc\end{DoxyCompactItemize}

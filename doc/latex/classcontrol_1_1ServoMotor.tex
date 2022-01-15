@@ -1,0 +1,286 @@
+\hypertarget{classcontrol_1_1ServoMotor}{}\doxysection{control\+::Servo\+Motor Class Reference}
+\label{classcontrol_1_1ServoMotor}\index{control::ServoMotor@{control::ServoMotor}}
+
+
+wrapper class for motor to enable the motor shaft angle to be precisely controlled with possible external gearbox present  
+
+
+
+
+{\ttfamily \#include $<$motor.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1ServoMotor_a736a9ee40a378c0f0b714ab1544a1de0}{Servo\+Motor}} (\mbox{\hyperlink{structcontrol_1_1servo__t}{servo\+\_\+t}} servo, float proximity=0.\+05)
+\begin{DoxyCompactList}\small\item\em base constructor \end{DoxyCompactList}\item 
+servo\+\_\+status\+\_\+t \mbox{\hyperlink{classcontrol_1_1ServoMotor_a8816253f442fabd9ec2af3873e8f0372}{Set\+Target}} (const float target, bool override=false)
+\begin{DoxyCompactList}\small\item\em set next target for servomotor, will have no effect if last set target has not been achieved \end{DoxyCompactList}\item 
+servo\+\_\+status\+\_\+t \mbox{\hyperlink{classcontrol_1_1ServoMotor_ad603befb84abb76461c6d0a75a64321c}{Set\+Target}} (const float target, const servo\+\_\+mode\+\_\+t mode, bool override=false)
+\begin{DoxyCompactList}\small\item\em set next target for servomotor, will have no effect if last set target has not been achieved \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1ServoMotor_aef3f0f32dfc4fca3d1c8c68ba2706f84}{Set\+Speed}} (const float speed)
+\begin{DoxyCompactList}\small\item\em set turning speed of motor when moving, should always be positive, negative inputs will be ignored \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1ServoMotor_a50cef52187514938743ec0ce0331bbcb}{Calc\+Output}} ()
+\begin{DoxyCompactList}\small\item\em calculate the output of the motors under current configuration \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classcontrol_1_1ServoMotor_ae2e2246e02510eab6d567e1891866791}{Holding}} () const
+\begin{DoxyCompactList}\small\item\em if the motor is holding \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classcontrol_1_1ServoMotor_a2fb7226011f25b56752d16a352ab7122}{Get\+Target}} () const
+\begin{DoxyCompactList}\small\item\em get current servomotor target, in \mbox{[}rad\mbox{]} \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1ServoMotor_aa23d0cec8d18633aa2d5f09ab0e66d97}{Register\+Jam\+Callback}} (jam\+\_\+callback\+\_\+t callback, float effort\+\_\+threshold, uint8\+\_\+t detect\+\_\+period=50)
+\begin{DoxyCompactList}\small\item\em register a callback function that would be called if motor is jammed \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a6a7ed43abf57b635007052c407ed8675}\label{classcontrol_1_1ServoMotor_a6a7ed43abf57b635007052c407ed8675}} 
+void {\bfseries Print\+Data} () const
+\begin{DoxyCompactList}\small\item\em print out motor data \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classcontrol_1_1ServoMotor_a9cf673e64e68a6a6ba5961bed76da345}{Get\+Theta}} () const
+\begin{DoxyCompactList}\small\item\em get motor angle, in \mbox{[}rad\mbox{]} \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classcontrol_1_1ServoMotor_afc2db2da18b05b4aa1ade9de551522a8}{Get\+Theta\+Delta}} (const float target) const
+\begin{DoxyCompactList}\small\item\em get angle difference (target -\/ actual), in \mbox{[}rad\mbox{]} \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classcontrol_1_1ServoMotor_a7540691d653b6f56bb0fd75d8af1cdfc}{Get\+Omega}} () const
+\begin{DoxyCompactList}\small\item\em get angular velocity, in \mbox{[}rad / s\mbox{]} \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{classcontrol_1_1ServoMotor_a9e68a9777cb9686eb8c7d1c2f9980c9b}{Get\+Omega\+Delta}} (const float target) const
+\begin{DoxyCompactList}\small\item\em get angular velocity difference (target -\/ actual), in \mbox{[}rad / s\mbox{]} \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classcontrol_1_1ServoMotor_a28ad384bb271e5043fa922eb8df36779}{Update\+Data}} (const uint8\+\_\+t data\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em update the current theta for the servomotor \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+wrapper class for motor to enable the motor shaft angle to be precisely controlled with possible external gearbox present 
+
+\begin{DoxyNote}{Note}
+this is a calculation class that calculate the motor output for desired output, but it does not directly command a motor to turn. 
+\end{DoxyNote}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a736a9ee40a378c0f0b714ab1544a1de0}\label{classcontrol_1_1ServoMotor_a736a9ee40a378c0f0b714ab1544a1de0}} 
+\index{control::ServoMotor@{control::ServoMotor}!ServoMotor@{ServoMotor}}
+\index{ServoMotor@{ServoMotor}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{ServoMotor()}{ServoMotor()}}
+{\footnotesize\ttfamily control\+::\+Servo\+Motor\+::\+Servo\+Motor (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcontrol_1_1servo__t}{servo\+\_\+t}}}]{servo,  }\item[{float}]{proximity = {\ttfamily 0.05} }\end{DoxyParamCaption})}
+
+
+
+base constructor 
+
+
+\begin{DoxyParams}{Parameters}
+{\em servo} & initialization struct, refer to type \mbox{\hyperlink{structcontrol_1_1servo__t}{servo\+\_\+t}} \\
+\hline
+{\em proximity} & critical difference angle for the motor to stop turining when approaching target \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a50cef52187514938743ec0ce0331bbcb}\label{classcontrol_1_1ServoMotor_a50cef52187514938743ec0ce0331bbcb}} 
+\index{control::ServoMotor@{control::ServoMotor}!CalcOutput@{CalcOutput}}
+\index{CalcOutput@{CalcOutput}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{CalcOutput()}{CalcOutput()}}
+{\footnotesize\ttfamily void control\+::\+Servo\+Motor\+::\+Calc\+Output (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+calculate the output of the motors under current configuration 
+
+\begin{DoxyNote}{Note}
+this function will not command the motor, it only calculate the desired input 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a7540691d653b6f56bb0fd75d8af1cdfc}\label{classcontrol_1_1ServoMotor_a7540691d653b6f56bb0fd75d8af1cdfc}} 
+\index{control::ServoMotor@{control::ServoMotor}!GetOmega@{GetOmega}}
+\index{GetOmega@{GetOmega}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{GetOmega()}{GetOmega()}}
+{\footnotesize\ttfamily float control\+::\+Servo\+Motor\+::\+Get\+Omega (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+get angular velocity, in \mbox{[}rad / s\mbox{]} 
+
+\begin{DoxyReturn}{Returns}
+angular velocity 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a9e68a9777cb9686eb8c7d1c2f9980c9b}\label{classcontrol_1_1ServoMotor_a9e68a9777cb9686eb8c7d1c2f9980c9b}} 
+\index{control::ServoMotor@{control::ServoMotor}!GetOmegaDelta@{GetOmegaDelta}}
+\index{GetOmegaDelta@{GetOmegaDelta}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{GetOmegaDelta()}{GetOmegaDelta()}}
+{\footnotesize\ttfamily float control\+::\+Servo\+Motor\+::\+Get\+Omega\+Delta (\begin{DoxyParamCaption}\item[{const float}]{target }\end{DoxyParamCaption}) const}
+
+
+
+get angular velocity difference (target -\/ actual), in \mbox{[}rad / s\mbox{]} 
+
+
+\begin{DoxyParams}{Parameters}
+{\em target} & target angular velocity, in \mbox{[}rad / s\mbox{]}\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+difference angular velocity 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a2fb7226011f25b56752d16a352ab7122}\label{classcontrol_1_1ServoMotor_a2fb7226011f25b56752d16a352ab7122}} 
+\index{control::ServoMotor@{control::ServoMotor}!GetTarget@{GetTarget}}
+\index{GetTarget@{GetTarget}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{GetTarget()}{GetTarget()}}
+{\footnotesize\ttfamily float control\+::\+Servo\+Motor\+::\+Get\+Target (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+get current servomotor target, in \mbox{[}rad\mbox{]} 
+
+\begin{DoxyReturn}{Returns}
+current target angle, range between \mbox{[}0, 2PI\mbox{]} 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a9cf673e64e68a6a6ba5961bed76da345}\label{classcontrol_1_1ServoMotor_a9cf673e64e68a6a6ba5961bed76da345}} 
+\index{control::ServoMotor@{control::ServoMotor}!GetTheta@{GetTheta}}
+\index{GetTheta@{GetTheta}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{GetTheta()}{GetTheta()}}
+{\footnotesize\ttfamily float control\+::\+Servo\+Motor\+::\+Get\+Theta (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+get motor angle, in \mbox{[}rad\mbox{]} 
+
+\begin{DoxyReturn}{Returns}
+radian angle, range between \mbox{[}0, 2PI\mbox{]} 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_afc2db2da18b05b4aa1ade9de551522a8}\label{classcontrol_1_1ServoMotor_afc2db2da18b05b4aa1ade9de551522a8}} 
+\index{control::ServoMotor@{control::ServoMotor}!GetThetaDelta@{GetThetaDelta}}
+\index{GetThetaDelta@{GetThetaDelta}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{GetThetaDelta()}{GetThetaDelta()}}
+{\footnotesize\ttfamily float control\+::\+Servo\+Motor\+::\+Get\+Theta\+Delta (\begin{DoxyParamCaption}\item[{const float}]{target }\end{DoxyParamCaption}) const}
+
+
+
+get angle difference (target -\/ actual), in \mbox{[}rad\mbox{]} 
+
+
+\begin{DoxyParams}{Parameters}
+{\em target} & target angle, in \mbox{[}rad\mbox{]}\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+angle difference, range between \mbox{[}-\/PI, PI\mbox{]} 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_ae2e2246e02510eab6d567e1891866791}\label{classcontrol_1_1ServoMotor_ae2e2246e02510eab6d567e1891866791}} 
+\index{control::ServoMotor@{control::ServoMotor}!Holding@{Holding}}
+\index{Holding@{Holding}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{Holding()}{Holding()}}
+{\footnotesize\ttfamily bool control\+::\+Servo\+Motor\+::\+Holding (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+if the motor is holding 
+
+\begin{DoxyReturn}{Returns}
+true the motor is holding (i.\+e. not turning) 
+
+false the motor is not holding (i.\+e. turning) 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_aa23d0cec8d18633aa2d5f09ab0e66d97}\label{classcontrol_1_1ServoMotor_aa23d0cec8d18633aa2d5f09ab0e66d97}} 
+\index{control::ServoMotor@{control::ServoMotor}!RegisterJamCallback@{RegisterJamCallback}}
+\index{RegisterJamCallback@{RegisterJamCallback}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{RegisterJamCallback()}{RegisterJamCallback()}}
+{\footnotesize\ttfamily void control\+::\+Servo\+Motor\+::\+Register\+Jam\+Callback (\begin{DoxyParamCaption}\item[{jam\+\_\+callback\+\_\+t}]{callback,  }\item[{float}]{effort\+\_\+threshold,  }\item[{uint8\+\_\+t}]{detect\+\_\+period = {\ttfamily 50} }\end{DoxyParamCaption})}
+
+
+
+register a callback function that would be called if motor is jammed 
+
+\begin{DoxyNote}{Note}
+Jam detection uses a moving window across inputs to the motor. It uses a circular buffer of size detect\+\_\+period to store history inputs and calculates a rolling average of the inputs. Everytime the average of inputs is greater than effect\+\_\+threshold $\ast$ 32768(maximum command a motor can accept), the jam callback function will be triggered once. The callback will only be triggered once each time the rolling average cross the threshold from lower to higher. For a standard jam callback function, refer to example motor\+\_\+m3508\+\_\+antijam
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em callback} & callback function to be registered \\
+\hline
+{\em effort\+\_\+threshold} & threshold for motor to be determined as jammed, ranged between (0, 1) \\
+\hline
+{\em detect\+\_\+period} & detection window length \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_aef3f0f32dfc4fca3d1c8c68ba2706f84}\label{classcontrol_1_1ServoMotor_aef3f0f32dfc4fca3d1c8c68ba2706f84}} 
+\index{control::ServoMotor@{control::ServoMotor}!SetSpeed@{SetSpeed}}
+\index{SetSpeed@{SetSpeed}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{SetSpeed()}{SetSpeed()}}
+{\footnotesize\ttfamily void control\+::\+Servo\+Motor\+::\+Set\+Speed (\begin{DoxyParamCaption}\item[{const float}]{speed }\end{DoxyParamCaption})}
+
+
+
+set turning speed of motor when moving, should always be positive, negative inputs will be ignored 
+
+
+\begin{DoxyParams}{Parameters}
+{\em speed} & speed of desired motor shaft turning speed, in \mbox{[}rad/s\mbox{]} \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a8816253f442fabd9ec2af3873e8f0372}\label{classcontrol_1_1ServoMotor_a8816253f442fabd9ec2af3873e8f0372}} 
+\index{control::ServoMotor@{control::ServoMotor}!SetTarget@{SetTarget}}
+\index{SetTarget@{SetTarget}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{SetTarget()}{SetTarget()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily servo\+\_\+status\+\_\+t control\+::\+Servo\+Motor\+::\+Set\+Target (\begin{DoxyParamCaption}\item[{const float}]{target,  }\item[{bool}]{override = {\ttfamily false} }\end{DoxyParamCaption})}
+
+
+
+set next target for servomotor, will have no effect if last set target has not been achieved 
+
+\begin{DoxyNote}{Note}
+if motor is not holding, call to this function will have no effect unless override is true
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em target} & next target for the motor in \mbox{[}rad\mbox{]} \\
+\hline
+{\em override} & if true, override current target even if motor is not holding right now \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+current turning mode of motor 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_ad603befb84abb76461c6d0a75a64321c}\label{classcontrol_1_1ServoMotor_ad603befb84abb76461c6d0a75a64321c}} 
+\index{control::ServoMotor@{control::ServoMotor}!SetTarget@{SetTarget}}
+\index{SetTarget@{SetTarget}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{SetTarget()}{SetTarget()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily servo\+\_\+status\+\_\+t control\+::\+Servo\+Motor\+::\+Set\+Target (\begin{DoxyParamCaption}\item[{const float}]{target,  }\item[{const servo\+\_\+mode\+\_\+t}]{mode,  }\item[{bool}]{override = {\ttfamily false} }\end{DoxyParamCaption})}
+
+
+
+set next target for servomotor, will have no effect if last set target has not been achieved 
+
+\begin{DoxyNote}{Note}
+if motor is not holding, call to this function will have no effect unless override is true
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em target} & next target for the motor in \mbox{[}rad\mbox{]} \\
+\hline
+{\em mode} & servomotor turning mode override, will only have one-\/time effect \\
+\hline
+{\em override} & if true, override current target even if motor is not holding right now \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+current turning mode of motor 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classcontrol_1_1ServoMotor_a28ad384bb271e5043fa922eb8df36779}\label{classcontrol_1_1ServoMotor_a28ad384bb271e5043fa922eb8df36779}} 
+\index{control::ServoMotor@{control::ServoMotor}!UpdateData@{UpdateData}}
+\index{UpdateData@{UpdateData}!control::ServoMotor@{control::ServoMotor}}
+\doxysubsubsection{\texorpdfstring{UpdateData()}{UpdateData()}}
+{\footnotesize\ttfamily void control\+::\+Servo\+Motor\+::\+Update\+Data (\begin{DoxyParamCaption}\item[{const uint8\+\_\+t}]{data\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
+
+
+
+update the current theta for the servomotor 
+
+\begin{DoxyNote}{Note}
+only used in CAN callback, do not call elsewhere
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em data\mbox{[}$\,$\mbox{]}} & raw data bytes \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/motor.\+h\item 
+shared/libraries/motor.\+cc\end{DoxyCompactItemize}

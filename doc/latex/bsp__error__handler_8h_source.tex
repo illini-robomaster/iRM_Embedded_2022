@@ -1,0 +1,63 @@
+\hypertarget{bsp__error__handler_8h_source}{}\doxysection{bsp\+\_\+error\+\_\+handler.\+h}
+\label{bsp__error__handler_8h_source}\index{shared/bsp/bsp\_error\_handler.h@{shared/bsp/bsp\_error\_handler.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}bsp\_print.h"{}}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#define BSP\_DEBUG print("{}[DEBUG] \%s:\%d "{}}, \_\_FUNCTION\_\_, \_\_LINE\_\_)}
+\DoxyCodeLine{26 \textcolor{comment}{// non-\/fatal assertions (does not hang)}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#define RM\_EXPECT\_TRUE(cond, msg)                                \(\backslash\)}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{  do \{                                                           \(\backslash\)}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{    if (!(cond)) bsp\_error\_handler(\_\_FUNCTION\_\_, \_\_LINE\_\_, msg); \(\backslash\)}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{  \} while (0)}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#define RM\_EXPECT\_FALSE(cond, msg) RM\_EXPECT\_TRUE(!(cond), msg)}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#define RM\_EXPECT\_EQ(expr, ref, msg) RM\_EXPECT\_TRUE((expr) == (ref), msg)}}
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#define RM\_EXPECT\_NE(expr, ref, msg) RM\_EXPECT\_TRUE((expr) != (ref), msg)}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#define RM\_EXPECT\_GT(expr, ref, msg) RM\_EXPECT\_TRUE((expr) > (ref), msg)}}
+\DoxyCodeLine{35 \textcolor{preprocessor}{\#define RM\_EXPECT\_GE(expr, ref, msg) RM\_EXPECT\_TRUE((expr) >= (ref), msg)}}
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#define RM\_EXPECT\_LT(expr, ref, msg) RM\_EXPECT\_TRUE((expr) < (ref), msg)}}
+\DoxyCodeLine{37 \textcolor{preprocessor}{\#define RM\_EXPECT\_LE(expr, ref, msg) RM\_EXPECT\_TRUE((expr) <= (ref), msg)}}
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#define RM\_EXPECT\_HAL\_OK(expr, msg) RM\_EXPECT\_TRUE((expr) == HAL\_OK, msg)}}
+\DoxyCodeLine{39 \textcolor{comment}{// fatal assertions (hangs program)}}
+\DoxyCodeLine{40 \textcolor{preprocessor}{\#define RM\_ASSERT\_TRUE(cond, msg)                     \(\backslash\)}}
+\DoxyCodeLine{41 \textcolor{preprocessor}{  do \{                                                \(\backslash\)}}
+\DoxyCodeLine{42 \textcolor{preprocessor}{    if (!(cond)) \{                                    \(\backslash\)}}
+\DoxyCodeLine{43 \textcolor{preprocessor}{      bsp\_error\_handler(\_\_FUNCTION\_\_, \_\_LINE\_\_, msg); \(\backslash\)}}
+\DoxyCodeLine{44 \textcolor{preprocessor}{      while (1)                                       \(\backslash\)}}
+\DoxyCodeLine{45 \textcolor{preprocessor}{        ;                                             \(\backslash\)}}
+\DoxyCodeLine{46 \textcolor{preprocessor}{    \}                                                 \(\backslash\)}}
+\DoxyCodeLine{47 \textcolor{preprocessor}{  \} while (0)}}
+\DoxyCodeLine{48 \textcolor{preprocessor}{\#define RM\_ASSERT\_FALSE(cond, msg) RM\_ASSERT\_TRUE(!(cond), msg)}}
+\DoxyCodeLine{49 \textcolor{preprocessor}{\#define RM\_ASSERT\_EQ(expr, ref, msg) RM\_ASSERT\_TRUE((expr) == (ref), msg)}}
+\DoxyCodeLine{50 \textcolor{preprocessor}{\#define RM\_ASSERT\_NE(expr, ref, msg) RM\_ASSERT\_TRUE((expr) != (ref), msg)}}
+\DoxyCodeLine{51 \textcolor{preprocessor}{\#define RM\_ASSERT\_GT(expr, ref, msg) RM\_ASSERT\_TRUE((expr) > (ref), msg)}}
+\DoxyCodeLine{52 \textcolor{preprocessor}{\#define RM\_ASSERT\_GE(expr, ref, msg) RM\_ASSERT\_TRUE((expr) >= (ref), msg)}}
+\DoxyCodeLine{53 \textcolor{preprocessor}{\#define RM\_ASSERT\_LT(expr, ref, msg) RM\_ASSERT\_TRUE((expr) < (ref), msg)}}
+\DoxyCodeLine{54 \textcolor{preprocessor}{\#define RM\_ASSERT\_LE(expr, ref, msg) RM\_ASSERT\_TRUE((expr) <= (ref), msg)}}
+\DoxyCodeLine{55 \textcolor{preprocessor}{\#define RM\_ASSERT\_HAL\_OK(expr, msg) RM\_ASSERT\_TRUE((expr) == HAL\_OK, msg)}}
+\DoxyCodeLine{56 }
+\DoxyCodeLine{66 \textcolor{keywordtype}{void} bsp\_error\_handler(\textcolor{keyword}{const} \textcolor{keywordtype}{char}* func, \textcolor{keywordtype}{int} line, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* msg);}
+
+\end{DoxyCode}

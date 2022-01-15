@@ -1,0 +1,195 @@
+\hypertarget{classbsp_1_1UART}{}\doxysection{bsp\+::UART Class Reference}
+\label{classbsp_1_1UART}\index{bsp::UART@{bsp::UART}}
+Inheritance diagram for bsp\+::UART\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classbsp_1_1UART}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classbsp_1_1UART_a0c202ba6e7ba9f1453f10044201cfdc2}{UART}} (UART\+\_\+\+Handle\+Type\+Def $\ast$huart)
+\begin{DoxyCompactList}\small\item\em constructor for uart instance \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classbsp_1_1UART_a59463bcd941532b983d54df1f823637a}\label{classbsp_1_1UART_a59463bcd941532b983d54df1f823637a}} 
+virtual {\bfseries $\sim$\+UART} ()
+\begin{DoxyCompactList}\small\item\em destructor (potentially deallocate buffer memories associated with tx / rx) \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classbsp_1_1UART_a6f789d89310a8c23dd85b297625099f4}{Setup\+Rx}} (uint32\+\_\+t rx\+\_\+buffer\+\_\+size)
+\begin{DoxyCompactList}\small\item\em set up uart receiver in the background optionally registering a callback \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classbsp_1_1UART_a5823a04d8896ba972f93e83f9a6a8eef}{Setup\+Tx}} (uint32\+\_\+t tx\+\_\+buffer\+\_\+size)
+\begin{DoxyCompactList}\small\item\em set up non blocking transmission functionality \end{DoxyCompactList}\item 
+{\footnotesize template$<$bool From\+ISR = false$>$ }\\int32\+\_\+t \mbox{\hyperlink{classbsp_1_1UART_a610521ea671cb9984b990c26bc59c75d}{Read}} (uint8\+\_\+t $\ast$$\ast$data)
+\begin{DoxyCompactList}\small\item\em read out the pending received data \end{DoxyCompactList}\item 
+{\footnotesize template$<$bool From\+ISR = false$>$ }\\int32\+\_\+t \mbox{\hyperlink{classbsp_1_1UART_acec513015b2d19960503952ccf1b7348}{Write}} (const uint8\+\_\+t $\ast$data, uint32\+\_\+t length)
+\begin{DoxyCompactList}\small\item\em write data to uart without blocking \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_ad567cefc6c9b208af52280e19822d4ed}\label{classbsp_1_1UART_ad567cefc6c9b208af52280e19822d4ed}} 
+void {\bfseries Tx\+Complete\+Callback} ()
+\begin{DoxyCompactList}\small\item\em Transmission complete call back. \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classbsp_1_1UART_a16c44650edc76251d0ec35e1d1e33e0e}{Rx\+Complete\+Callback}} ()
+\begin{DoxyCompactList}\small\item\em Reception complete call back. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_a86c9f8cd1427ee880d38d2e890871dd4}\label{classbsp_1_1UART_a86c9f8cd1427ee880d38d2e890871dd4}} 
+UART\+\_\+\+Handle\+Type\+Def $\ast$ {\bfseries huart\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_a71450491a3cef3b08c042b51c501ea8d}\label{classbsp_1_1UART_a71450491a3cef3b08c042b51c501ea8d}} 
+uint32\+\_\+t {\bfseries rx\+\_\+size\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_affbae74024854ac2613cb469ee01ade2}\label{classbsp_1_1UART_affbae74024854ac2613cb469ee01ade2}} 
+uint8\+\_\+t $\ast$ {\bfseries rx\+\_\+data\+\_\+} \mbox{[}2\mbox{]}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_abf928cf2e41bd90fb7bed37aed972fa6}\label{classbsp_1_1UART_abf928cf2e41bd90fb7bed37aed972fa6}} 
+uint8\+\_\+t {\bfseries rx\+\_\+index\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_a9ba35e9c753fb30b5c2970252ad5f3aa}\label{classbsp_1_1UART_a9ba35e9c753fb30b5c2970252ad5f3aa}} 
+uint32\+\_\+t {\bfseries tx\+\_\+size\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_ae9b46bb7d22a7ce3b17f3807d11483ec}\label{classbsp_1_1UART_ae9b46bb7d22a7ce3b17f3807d11483ec}} 
+uint32\+\_\+t {\bfseries tx\+\_\+pending\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_ada21e4d31789e837ee9eca292068502a}\label{classbsp_1_1UART_ada21e4d31789e837ee9eca292068502a}} 
+uint8\+\_\+t $\ast$ {\bfseries tx\+\_\+write\+\_\+}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_afeb7df6e24a22a7e7b228fda699d0f69}\label{classbsp_1_1UART_afeb7df6e24a22a7e7b228fda699d0f69}} 
+uint8\+\_\+t $\ast$ {\bfseries tx\+\_\+read\+\_\+}
+\end{DoxyCompactItemize}
+\doxysubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_abe9340be17da0c7b2222829fa8812cdd}\label{classbsp_1_1UART_abe9340be17da0c7b2222829fa8812cdd}} 
+void {\bfseries Rx\+Complete\+Callback\+Wrapper} (UART\+\_\+\+Handle\+Type\+Def $\ast$huart)
+\item 
+\mbox{\Hypertarget{classbsp_1_1UART_aa967d26cb6f6df520aaa5d5ebc605a0a}\label{classbsp_1_1UART_aa967d26cb6f6df520aaa5d5ebc605a0a}} 
+void {\bfseries Tx\+Complete\+Callback\+Wrapper} (UART\+\_\+\+Handle\+Type\+Def $\ast$huart)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classbsp_1_1UART_a0c202ba6e7ba9f1453f10044201cfdc2}\label{classbsp_1_1UART_a0c202ba6e7ba9f1453f10044201cfdc2}} 
+\index{bsp::UART@{bsp::UART}!UART@{UART}}
+\index{UART@{UART}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{UART()}{UART()}}
+{\footnotesize\ttfamily bsp\+::\+UART\+::\+UART (\begin{DoxyParamCaption}\item[{UART\+\_\+\+Handle\+Type\+Def $\ast$}]{huart }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+constructor for uart instance 
+
+
+\begin{DoxyParams}{Parameters}
+{\em huart} & pointer to a HAL uart handle \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classbsp_1_1UART_a610521ea671cb9984b990c26bc59c75d}\label{classbsp_1_1UART_a610521ea671cb9984b990c26bc59c75d}} 
+\index{bsp::UART@{bsp::UART}!Read@{Read}}
+\index{Read@{Read}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{Read()}{Read()}}
+{\footnotesize\ttfamily template$<$bool From\+ISR$>$ \\
+template int32\+\_\+t bsp\+::\+UART\+::\+Read$<$ false $>$ (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$$\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+read out the pending received data 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em From\+ISR} & set to true to call inside an interrupt handler \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em data} & pointer to an array address that gets set to the receive buffer address\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+number of bytes read, -\/1 if failure
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+memory is not copied for optimal performance, so second call to this method will invalidate the buffer produced by the previous call 
+\end{DoxyNote}
+\mbox{\Hypertarget{classbsp_1_1UART_a16c44650edc76251d0ec35e1d1e33e0e}\label{classbsp_1_1UART_a16c44650edc76251d0ec35e1d1e33e0e}} 
+\index{bsp::UART@{bsp::UART}!RxCompleteCallback@{RxCompleteCallback}}
+\index{RxCompleteCallback@{RxCompleteCallback}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{RxCompleteCallback()}{RxCompleteCallback()}}
+{\footnotesize\ttfamily void bsp\+::\+UART\+::\+Rx\+Complete\+Callback (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Reception complete call back. 
+
+
+
+Reimplemented in \mbox{\hyperlink{classremote_1_1DBUS_a094b499f49d3dd5162ce2408e41e93c6}{remote\+::\+DBUS}}.
+
+\mbox{\Hypertarget{classbsp_1_1UART_a6f789d89310a8c23dd85b297625099f4}\label{classbsp_1_1UART_a6f789d89310a8c23dd85b297625099f4}} 
+\index{bsp::UART@{bsp::UART}!SetupRx@{SetupRx}}
+\index{SetupRx@{SetupRx}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{SetupRx()}{SetupRx()}}
+{\footnotesize\ttfamily void bsp\+::\+UART\+::\+Setup\+Rx (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{rx\+\_\+buffer\+\_\+size }\end{DoxyParamCaption})}
+
+
+
+set up uart receiver in the background optionally registering a callback 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rx\+\_\+buffer\+\_\+size} & receive buffer size (all data that has not been read out is queued into this buffer) \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classbsp_1_1UART_a5823a04d8896ba972f93e83f9a6a8eef}\label{classbsp_1_1UART_a5823a04d8896ba972f93e83f9a6a8eef}} 
+\index{bsp::UART@{bsp::UART}!SetupTx@{SetupTx}}
+\index{SetupTx@{SetupTx}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{SetupTx()}{SetupTx()}}
+{\footnotesize\ttfamily void bsp\+::\+UART\+::\+Setup\+Tx (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{tx\+\_\+buffer\+\_\+size }\end{DoxyParamCaption})}
+
+
+
+set up non blocking transmission functionality 
+
+
+\begin{DoxyParams}{Parameters}
+{\em tx\+\_\+buffer\+\_\+size} & transmission buffer size (burst transmission calls will be queued into this buffer) \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classbsp_1_1UART_acec513015b2d19960503952ccf1b7348}\label{classbsp_1_1UART_acec513015b2d19960503952ccf1b7348}} 
+\index{bsp::UART@{bsp::UART}!Write@{Write}}
+\index{Write@{Write}!bsp::UART@{bsp::UART}}
+\doxysubsubsection{\texorpdfstring{Write()}{Write()}}
+{\footnotesize\ttfamily template$<$bool From\+ISR$>$ \\
+template int32\+\_\+t bsp\+::\+UART\+::\+Write$<$ false $>$ (\begin{DoxyParamCaption}\item[{const uint8\+\_\+t $\ast$}]{data,  }\item[{uint32\+\_\+t}]{length }\end{DoxyParamCaption})}
+
+
+
+write data to uart without blocking 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em From\+ISR} & set to true to call inside an interrupt handler \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em data} & pointer to the data buffer to be transmitted \\
+\hline
+{\em length} & length of the data to be transmitted\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+number of bytes written
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+multiple burst calls to this function can potentially cause tx buffer to fill up, so remember to check return value for the actual number of bytes successfully transmitted 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/bsp/bsp\+\_\+uart.\+h\item 
+shared/bsp/bsp\+\_\+uart.\+cc\end{DoxyCompactItemize}

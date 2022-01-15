@@ -1,0 +1,152 @@
+\hypertarget{classcontrol_1_1Pose}{}\doxysection{control\+::Pose Class Reference}
+\label{classcontrol_1_1Pose}\index{control::Pose@{control::Pose}}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1Pose_ac6bdc5bc03b28e8c68240cd0fb963d4a}{Pose}} (\mbox{\hyperlink{classbsp_1_1MPU6500}{bsp\+::\+MPU6500}} $\ast$\+\_\+imu)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_a9bde155b3e0313f53820b839d26593d6}{Pose\+Init}} (void)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_a964d7592d9a8a3d61e7a591b936c7af7}{Calibrate}} (void)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_adf37f367649d33d01f7992809c13b676}{Calibrate}} (int16\+\_\+t \+\_\+num)
+\item 
+float \mbox{\hyperlink{classcontrol_1_1Pose_a3876a1f1a8256a11b118b624bea9eae6}{Get\+Gravity}} (void)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_a113de1a99c605dbab546e0055faba692}{Set\+Offset}} (float acc\+\_\+x\+\_\+off, float acc\+\_\+y\+\_\+off, float acc\+\_\+z\+\_\+off, float gyro\+\_\+x\+\_\+off, float gyro\+\_\+y\+\_\+off, float gyro\+\_\+z\+\_\+off)
+\item 
+float \mbox{\hyperlink{classcontrol_1_1Pose_a095cb864881c809359eae53653b477e3}{Get\+Pitch}} (void)
+\item 
+float \mbox{\hyperlink{classcontrol_1_1Pose_a5ce52dcb41b73d53c812cc8c75306e95}{Get\+Roll}} (void)
+\item 
+float \mbox{\hyperlink{classcontrol_1_1Pose_aff97f4bcaa1984ed331da6fbe79df41e}{Get\+Yaw}} (void)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_ae5d26cbc642fc1f2592654badd227b1a}{Set\+Alpha}} (float \+\_\+alpha)
+\item 
+void \mbox{\hyperlink{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}{Complementary\+Filter\+Update}} (void)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Pose_ac6bdc5bc03b28e8c68240cd0fb963d4a}\label{classcontrol_1_1Pose_ac6bdc5bc03b28e8c68240cd0fb963d4a}} 
+\index{control::Pose@{control::Pose}!Pose@{Pose}}
+\index{Pose@{Pose}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{Pose()}{Pose()}}
+{\footnotesize\ttfamily control\+::\+Pose\+::\+Pose (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classbsp_1_1MPU6500}{bsp\+::\+MPU6500}} $\ast$}]{\+\_\+imu }\end{DoxyParamCaption})}
+
+@description\+: constructor for \mbox{\hyperlink{classcontrol_1_1Pose}{Pose}} 
+\begin{DoxyParams}{Parameters}
+{\em } & \+\_\+imu\+: imu pointer \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1Pose_adf37f367649d33d01f7992809c13b676}\label{classcontrol_1_1Pose_adf37f367649d33d01f7992809c13b676}} 
+\index{control::Pose@{control::Pose}!Calibrate@{Calibrate}}
+\index{Calibrate@{Calibrate}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{Calibrate()}{Calibrate()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Calibrate (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{\+\_\+num }\end{DoxyParamCaption})}
+
+@description\+: naive calibration for all offsets read from IMU and compute the average for given times 
+\begin{DoxyParams}{Parameters}
+{\em } & num, IMU reads to compute the average offset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+\+: it takes \+\_\+num $\ast$ 10ms to calibrate 
+\end{DoxyNote}
+Explanation\+: For calibration, we want the mean of noise distribution (bias) to be zeroed when IMU is placed on a flat plane. Note that acc\+\_\+z\+\_\+off should have a constant gravity offset on a flat plane, which also has a noise in measuring. Since the value of the gravity doesn\textquotesingle{}t matter (only ratio matters), we can assign the noise bias to the gravity noise bias. So acc\+\_\+z\+\_\+off is always zero.\mbox{\Hypertarget{classcontrol_1_1Pose_a964d7592d9a8a3d61e7a591b936c7af7}\label{classcontrol_1_1Pose_a964d7592d9a8a3d61e7a591b936c7af7}} 
+\index{control::Pose@{control::Pose}!Calibrate@{Calibrate}}
+\index{Calibrate@{Calibrate}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{Calibrate()}{Calibrate()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Calibrate (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: naive calibration for all offsets read from IMU and compute the average for 100 times 
+\begin{DoxyParams}{Parameters}
+{\em } & num, IMU reads to compute the average offset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+\+: by default takes 1s to calibrate 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}\label{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}} 
+\index{control::Pose@{control::Pose}!ComplementaryFilterUpdate@{ComplementaryFilterUpdate}}
+\index{ComplementaryFilterUpdate@{ComplementaryFilterUpdate}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{ComplementaryFilterUpdate()}{ComplementaryFilterUpdate()}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Complementary\+Filter\+Update (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: update pose with complementary filter from IMU\textquotesingle{}s gyro and acce \begin{DoxyNote}{Note}
+\+: delay between 2 \mbox{\hyperlink{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}{Complementary\+Filter\+Update()}} calls should be as small as possible ideally $\sim$10ms @reference\+: \href{https://www.pieter-jan.com/node/11}{\texttt{ https\+://www.\+pieter-\/jan.\+com/node/11}} 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a3876a1f1a8256a11b118b624bea9eae6}\label{classcontrol_1_1Pose_a3876a1f1a8256a11b118b624bea9eae6}} 
+\index{control::Pose@{control::Pose}!GetGravity@{GetGravity}}
+\index{GetGravity@{GetGravity}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{GetGravity()}{GetGravity()}}
+{\footnotesize\ttfamily float control\+::\+Pose\+::\+Get\+Gravity (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: naive estimation for gravity \begin{DoxyNote}{Note}
+\+: average 100 measure of z acceleration. Takes 1s. 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a095cb864881c809359eae53653b477e3}\label{classcontrol_1_1Pose_a095cb864881c809359eae53653b477e3}} 
+\index{control::Pose@{control::Pose}!GetPitch@{GetPitch}}
+\index{GetPitch@{GetPitch}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{GetPitch()}{GetPitch()}}
+{\footnotesize\ttfamily float control\+::\+Pose\+::\+Get\+Pitch (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: read estimated pitch in RAD \begin{DoxyNote}{Note}
+\+: this error gets larger as ROLL gets larger. When ROLL get close to +/-\/90 deg, this value is not usable. 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a5ce52dcb41b73d53c812cc8c75306e95}\label{classcontrol_1_1Pose_a5ce52dcb41b73d53c812cc8c75306e95}} 
+\index{control::Pose@{control::Pose}!GetRoll@{GetRoll}}
+\index{GetRoll@{GetRoll}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{GetRoll()}{GetRoll()}}
+{\footnotesize\ttfamily float control\+::\+Pose\+::\+Get\+Roll (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: read estimated roll in RAD \begin{DoxyNote}{Note}
+\+: this error gets larger as PITCH gets larger. When PITCH get close to +/-\/90 deg, this value is not usable. 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_aff97f4bcaa1984ed331da6fbe79df41e}\label{classcontrol_1_1Pose_aff97f4bcaa1984ed331da6fbe79df41e}} 
+\index{control::Pose@{control::Pose}!GetYaw@{GetYaw}}
+\index{GetYaw@{GetYaw}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{GetYaw()}{GetYaw()}}
+{\footnotesize\ttfamily float control\+::\+Pose\+::\+Get\+Yaw (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: read estimated yaw in RAD \begin{DoxyNote}{Note}
+\+: this function is only based on gyro and it will drift. 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a9bde155b3e0313f53820b839d26593d6}\label{classcontrol_1_1Pose_a9bde155b3e0313f53820b839d26593d6}} 
+\index{control::Pose@{control::Pose}!PoseInit@{PoseInit}}
+\index{PoseInit@{PoseInit}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{PoseInit()}{PoseInit()}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Pose\+Init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@description\+: reset all estimated pose to 0 and refresh timestamp \mbox{\Hypertarget{classcontrol_1_1Pose_ae5d26cbc642fc1f2592654badd227b1a}\label{classcontrol_1_1Pose_ae5d26cbc642fc1f2592654badd227b1a}} 
+\index{control::Pose@{control::Pose}!SetAlpha@{SetAlpha}}
+\index{SetAlpha@{SetAlpha}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{SetAlpha()}{SetAlpha()}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Set\+Alpha (\begin{DoxyParamCaption}\item[{float}]{\+\_\+alpha }\end{DoxyParamCaption})}
+
+@description\+: set complementary filter weight \begin{DoxyNote}{Note}
+\+: should be close to 1.\+0 
+\end{DoxyNote}
+\mbox{\Hypertarget{classcontrol_1_1Pose_a113de1a99c605dbab546e0055faba692}\label{classcontrol_1_1Pose_a113de1a99c605dbab546e0055faba692}} 
+\index{control::Pose@{control::Pose}!SetOffset@{SetOffset}}
+\index{SetOffset@{SetOffset}!control::Pose@{control::Pose}}
+\doxysubsubsection{\texorpdfstring{SetOffset()}{SetOffset()}}
+{\footnotesize\ttfamily void control\+::\+Pose\+::\+Set\+Offset (\begin{DoxyParamCaption}\item[{float}]{acc\+\_\+x\+\_\+off,  }\item[{float}]{acc\+\_\+y\+\_\+off,  }\item[{float}]{acc\+\_\+z\+\_\+off,  }\item[{float}]{gyro\+\_\+x\+\_\+off,  }\item[{float}]{gyro\+\_\+y\+\_\+off,  }\item[{float}]{gyro\+\_\+z\+\_\+off }\end{DoxyParamCaption})}
+
+@description\+: set offset (bias correction) for the 6 inputs 
+\begin{DoxyParams}{Parameters}
+{\em } & Offset (Bias) for the 3 axis of acce and gyro \\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+\+: The mean of all 6 axis except acc\+\_\+z\+\_\+off should be 0 after setting this. NOTE\+: acc\+\_\+z\+\_\+off is suggested to be set to 0, see pose.\+cc \mbox{\hyperlink{classcontrol_1_1Pose_a964d7592d9a8a3d61e7a591b936c7af7}{Calibrate()}} for detail. 
+\end{DoxyNote}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/pose.\+h\item 
+shared/libraries/pose.\+cc\end{DoxyCompactItemize}

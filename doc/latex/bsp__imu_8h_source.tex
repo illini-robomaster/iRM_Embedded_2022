@@ -1,0 +1,83 @@
+\hypertarget{bsp__imu_8h_source}{}\doxysection{bsp\+\_\+imu.\+h}
+\label{bsp__imu_8h_source}\index{shared/bsp/bsp\_imu.h@{shared/bsp/bsp\_imu.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}bsp\_gpio.h"{}}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}spi.h"{}}}
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26 \textcolor{comment}{// acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#define MPU6500\_SIZEOF\_DATA 20}}
+\DoxyCodeLine{28 }
+\DoxyCodeLine{29 \textcolor{keyword}{namespace }bsp \{}
+\DoxyCodeLine{30 }
+\DoxyCodeLine{31 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{32   \textcolor{keywordtype}{float} x;}
+\DoxyCodeLine{33   \textcolor{keywordtype}{float} y;}
+\DoxyCodeLine{34   \textcolor{keywordtype}{float} z;}
+\DoxyCodeLine{35 \} \mbox{\hyperlink{structbsp_1_1vec3f__t}{vec3f\_t}};}
+\DoxyCodeLine{36 }
+\DoxyCodeLine{37 \textcolor{keyword}{class }\mbox{\hyperlink{classbsp_1_1MPU6500}{MPU6500}} : \textcolor{keyword}{public} \mbox{\hyperlink{classbsp_1_1GPIT}{GPIT}} \{}
+\DoxyCodeLine{38  \textcolor{keyword}{public}:}
+\DoxyCodeLine{46   \mbox{\hyperlink{classbsp_1_1MPU6500_a351298d778e523fc934f744667188e37}{MPU6500}}(SPI\_HandleTypeDef* hspi, \textcolor{keyword}{const} \mbox{\hyperlink{classbsp_1_1GPIO}{GPIO}}\& chip\_select, uint16\_t int\_pin);}
+\DoxyCodeLine{47 }
+\DoxyCodeLine{51   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1MPU6500_a783355fa1c63af8d26ee4b67cb50dbb7}{Reset}}();}
+\DoxyCodeLine{52 }
+\DoxyCodeLine{53   \textcolor{comment}{// 3-\/axis accelerometer}}
+\DoxyCodeLine{54   \mbox{\hyperlink{structbsp_1_1vec3f__t}{vec3f\_t}} acce;}
+\DoxyCodeLine{55   \textcolor{comment}{// 3-\/axis gyroscope}}
+\DoxyCodeLine{56   \mbox{\hyperlink{structbsp_1_1vec3f__t}{vec3f\_t}} gyro;}
+\DoxyCodeLine{57   \textcolor{comment}{// 3-\/axis magnetometer}}
+\DoxyCodeLine{58   \mbox{\hyperlink{structbsp_1_1vec3f__t}{vec3f\_t}} mag;}
+\DoxyCodeLine{59   \textcolor{comment}{// sensor temperature}}
+\DoxyCodeLine{60   \textcolor{keywordtype}{float} temp;}
+\DoxyCodeLine{61   \textcolor{comment}{// sensor timestamp}}
+\DoxyCodeLine{62   uint32\_t timestamp = 0;}
+\DoxyCodeLine{63 }
+\DoxyCodeLine{64  \textcolor{keyword}{private}:}
+\DoxyCodeLine{68   \textcolor{keywordtype}{void} UpdateData();}
+\DoxyCodeLine{69 }
+\DoxyCodeLine{70   \textcolor{keywordtype}{void} IST8310Init();}
+\DoxyCodeLine{71   \textcolor{keywordtype}{void} WriteReg(uint8\_t reg, uint8\_t data);}
+\DoxyCodeLine{72   \textcolor{keywordtype}{void} WriteRegs(uint8\_t reg\_start, uint8\_t* data, uint8\_t len);}
+\DoxyCodeLine{73   \textcolor{keywordtype}{void} ReadReg(uint8\_t reg, uint8\_t* data);}
+\DoxyCodeLine{74   \textcolor{keywordtype}{void} ReadRegs(uint8\_t reg\_start, uint8\_t* data, uint8\_t len);}
+\DoxyCodeLine{75 }
+\DoxyCodeLine{76   \textcolor{keywordtype}{void} SPITxRxCpltCallback();}
+\DoxyCodeLine{77   \textcolor{keywordtype}{void} IntCallback() \textcolor{keyword}{override} \textcolor{keyword}{final};}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79   SPI\_HandleTypeDef* hspi\_;}
+\DoxyCodeLine{80   \mbox{\hyperlink{classbsp_1_1GPIO}{GPIO}} chip\_select\_;}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{82   uint8\_t io\_buff\_[MPU6500\_SIZEOF\_DATA + 1];  \textcolor{comment}{// spi tx+rx buffer}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84   \textcolor{comment}{// global interrupt wrapper}}
+\DoxyCodeLine{85   \textcolor{comment}{// TODO(alvin): try to support multiple instances in the future}}
+\DoxyCodeLine{86   \textcolor{keyword}{static} \textcolor{keywordtype}{void} SPITxRxCpltCallback(SPI\_HandleTypeDef* hspi);}
+\DoxyCodeLine{87   \textcolor{keyword}{static} \mbox{\hyperlink{classbsp_1_1MPU6500}{MPU6500}}* mpu6500;}
+\DoxyCodeLine{88 \};}
+\DoxyCodeLine{89 }
+\DoxyCodeLine{90 \} \textcolor{comment}{/* namespace bsp */}}
+
+\end{DoxyCode}

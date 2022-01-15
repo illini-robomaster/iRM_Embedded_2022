@@ -1,0 +1,54 @@
+\hypertarget{bsp__pwm_8h_source}{}\doxysection{bsp\+\_\+pwm.\+h}
+\label{bsp__pwm_8h_source}\index{shared/bsp/bsp\_pwm.h@{shared/bsp/bsp\_pwm.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}tim.h"{}}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{keyword}{namespace }bsp \{}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{keyword}{class }\mbox{\hyperlink{classbsp_1_1PWM}{PWM}} \{}
+\DoxyCodeLine{28  \textcolor{keyword}{public}:}
+\DoxyCodeLine{38   \mbox{\hyperlink{classbsp_1_1PWM_a72df371b12def939259cb12a0acdc11f}{PWM}}(TIM\_HandleTypeDef* htim, uint8\_t channel, uint32\_t clock\_freq, uint32\_t output\_freq,}
+\DoxyCodeLine{39       uint32\_t pulse\_width);}
+\DoxyCodeLine{40 }
+\DoxyCodeLine{44   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1PWM_a36d2c1902511a186103b35d6bb23d624}{Start}}();}
+\DoxyCodeLine{45 }
+\DoxyCodeLine{49   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1PWM_a74c103f16708dcd9e2a428cae524747c}{Stop}}();}
+\DoxyCodeLine{50 }
+\DoxyCodeLine{56   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1PWM_a6dafd6e14b893498ab418e7c12004e83}{SetFrequency}}(uint32\_t output\_freq);}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{63   \textcolor{keywordtype}{void} \mbox{\hyperlink{classbsp_1_1PWM_ae9d55ca383aaf2ac1fc538fa81c80ab2}{SetPulseWidth}}(uint32\_t pulse\_width);}
+\DoxyCodeLine{64 }
+\DoxyCodeLine{65  \textcolor{keyword}{private}:}
+\DoxyCodeLine{66   TIM\_HandleTypeDef* htim\_;}
+\DoxyCodeLine{67   uint32\_t channel\_;}
+\DoxyCodeLine{68   uint32\_t clock\_freq\_;}
+\DoxyCodeLine{69   uint32\_t output\_freq\_;}
+\DoxyCodeLine{70   uint32\_t pulse\_width\_;}
+\DoxyCodeLine{71 \};}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{73 \} \textcolor{comment}{/* namespace bsp */}}
+
+\end{DoxyCode}
