@@ -23,12 +23,22 @@
 
 namespace control {
 
+typedef struct {
+  float kp;
+  float ki;
+  float kd;
+} pid_t;
+
+
 PIDController::PIDController(float kp, float ki, float kd) {
   pid_f32_.Kp = kp;
   pid_f32_.Ki = ki;
   pid_f32_.Kd = kd;
   arm_pid_init_f32(&pid_f32_, 1);
 }
+
+PIDController::PIDController(float* param) : 
+    PIDController(param[0], param[1], param[2]) {}
 
 float PIDController::ComputeOutput(float error) { 
   return arm_pid_f32(&pid_f32_, error); 
@@ -50,6 +60,10 @@ void PIDController::Reinit(float kp, float ki, float kd) {
   pid_f32_.Ki = ki;
   pid_f32_.Kd = kd;
   arm_pid_init_f32(&pid_f32_, 0);
+}
+
+void PIDController::Reinit(float* param) { 
+  Reinit(param[0], param[1], param[2]); 
 }
 
 void PIDController::Reset() { 

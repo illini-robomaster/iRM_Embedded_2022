@@ -30,40 +30,86 @@ void jam_callback(ServoMotor* servo, const servo_jam_t data) {
   servo->SetTarget(prev_target, static_cast<servo_mode_t>(-data.dir), true);
 }
 
-Shooter::Shooter(shooter_t shooter):
-		left_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
-		right_pid_(PIDController(shooter.fly_Kp, shooter.fly_Ki, shooter.fly_Kd)),
-		fly_turning_detector_(BoolEdgeDetector(false)) {
-	// Because legacy gimbal uses snail M2305 motors that can only be driven using PWM,
-	// interfaces are reserved since the old gimbal could be used for demonstratio 
-	// purposes in the future.
-	fly_using_can_motor_ = shooter.fly_using_can_motor;
-	if (shooter.fly_using_can_motor) {
-		left_fly_can_motor_ = shooter.left_fly_can_motor;
-		right_fly_can_motor_ = shooter.right_fly_can_motor;
-		left_fly_motor_invert_ = shooter.left_fly_motor_invert ? -1 : 1;
-		right_fly_motor_invert_ = shooter.right_fly_motor_invert ? -1 : 1;
-	} else {
-		left_fly_pwm_motor_ = shooter.left_fly_pwm_motor;
-		right_fly_pwm_motor_ = shooter.right_fly_pwm_motor;
+Shooter::Shooter(shooter_t shooter) {
+	left_flywheel_motor_ = shooter.left_flywheel_motor;
+	right_flywheel_motor_ = shooter.right_flywheel_motor;
+	model_ = shooter.model;
+
+	servo_t servo_data;
+  servo_data.motor = shooter.load_motor;
+
+	switch (shooter.model) {
+		case SHOOTER_STANDARD_ZERO:
+			servo_data.mode = control::SERVO_ANTICLOCKWISE;
+			servo_data.speed = 2 * PI;
+			servo_data.transmission_ratio = M2006P36_RATIO;
+			servo_data.move_Kp = 20;
+			servo_data.move_Ki = 15;
+			servo_data.move_Kd = 30;
+			servo_data.hold_Kp = 40;
+			servo_data.hold_Ki = 15;
+			servo_data.hold_Kd = 5;
+
+			load_step_angle_ = 2 * PI / 8;
+			break;
+
+		case SHOOTER_STANDARD_2022:
+			servo_data.mode = control::SERVO_ANTICLOCKWISE;
+			servo_data.speed = 2 * PI;
+			servo_data.transmission_ratio = M2006P36_RATIO;
+			servo_data.move_Kp = 20;
+			servo_data.move_Ki = 15;
+			servo_data.move_Kd = 30;
+			servo_data.hold_Kp = 40;
+			servo_data.hold_Ki = 15;
+			servo_data.hold_Kd = 5;
+
+			left_pid_ = new PIDController(80, 3, 0.1);
+			right_pid_ = new PIDController(80, 3, 0.1);
+			flywheel_turning_detector_ = new BoolEdgeDetector(false);
+			load_step_angle_ = 2 * PI / 8;
+			speed_ = 0;
+			break;
+
+		default:
+			RM_ASSERT_TRUE(false, "No shooter type specified");
 	}
-	load_servo_ = shooter.load_servo;
-	load_step_angle_ = shooter.load_step_angle;
+	// Initialize servomotor instance using data provided and register default jam callback
+	load_servo_ = new control::ServoMotor(servo_data);
+	load_servo_->RegisterJamCallback(jam_callback, 0.6);
+	
 	// Register in step_angles_ so callback function can find step angle corresponding to
 	// specific servomotor instance.  
-	step_angles_[shooter.load_servo] = shooter.load_step_angle;
+	step_angles_[load_servo_] = load_step_angle_;
+}
 
-	speed_ = 0;
+Shooter::~Shooter() {
+	delete load_servo_;
+	load_servo_ = nullptr;
 
-	load_servo_->RegisterJamCallback(jam_callback, 0.6);
+	switch (model_) {
+		case SHOOTER_STANDARD_ZERO:
+		break;
+		case SHOOTER_STANDARD_2022:
+		delete left_pid_;
+		left_pid_ = nullptr;
+		delete right_pid_;
+		right_pid_ = nullptr;
+		delete flywheel_turning_detector_;
+		flywheel_turning_detector_ = nullptr;
+	}
 }
 
 void Shooter::SetFlywheelSpeed(float speed) {
-	speed_ = speed;
-	if (!fly_using_can_motor_) {
-		// PWM motor cannot be inverted
-		left_fly_pwm_motor_->SetOutput(speed);
-		right_fly_pwm_motor_->SetOutput(speed);
+	switch (model_) {
+		case SHOOTER_STANDARD_ZERO:
+			left_flywheel_motor_->SetOutput(speed);
+			right_flywheel_motor_->SetOutput(speed);
+			break;
+
+		case SHOOTER_STANDARD_2022:
+			speed_ = speed;
+			break;
 	}
 }
 
@@ -71,15 +117,21 @@ int Shooter::LoadNext() {
 	return load_servo_->SetTarget(load_servo_->GetTarget() + load_step_angle_);
 }
 
-void Shooter::CalcOutput() {
-	if (fly_using_can_motor_) {
-		fly_turning_detector_.input(left_fly_can_motor_ == 0);
-		float left_diff = left_fly_can_motor_->GetOmegaDelta(left_fly_motor_invert_ * speed_);
-		float right_diff = right_fly_can_motor_->GetOmegaDelta(right_fly_motor_invert_ * speed_);
-		left_fly_can_motor_->SetOutput(left_pid_.ComputeOutput(left_diff));
-		right_fly_can_motor_->SetOutput(right_pid_.ComputeOutput(right_diff));	
+void Shooter::Update() {
+	switch (model_) {
+		case SHOOTER_STANDARD_ZERO:
+			load_servo_->CalcOutput();
+			break;
+
+		case SHOOTER_STANDARD_2022:
+			flywheel_turning_detector_->input(speed_ == 0);
+			float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
+			float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
+			left_flywheel_motor_->SetOutput(left_pid_->ComputeConstraintedOutput(left_diff));
+			right_flywheel_motor_->SetOutput(right_pid_->ComputeConstraintedOutput(right_diff));
+			load_servo_->CalcOutput();
+			break;
 	}
-	load_servo_->CalcOutput();
 }
 
 } // namespace control

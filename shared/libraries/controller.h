@@ -45,6 +45,13 @@ class PIDController {
   PIDController(float kp, float ki, float kd);
 
   /**
+   * @brief PID controller constructor
+   *
+   * @param param gains of PID controller, formated as [kp, ki, kd]
+   */
+  PIDController(float* param);
+
+  /**
    * @brief compute output base on current error
    *
    * @param error error of the system, i.e. (target - actual)
@@ -72,6 +79,14 @@ class PIDController {
    * @param kd new derivative gain
    */
   void Reinit(float kp, float ki, float kd);
+
+  /**
+   * @brief reinitialize the pid instance using another set of gains, but does not clear 
+   *        current status
+   *
+   * @param param gains of PID controller, formated as [kp, ki, kd]
+   */
+  void Reinit(float* param);
 
   /**
    * @brief clear the remembered states of the controller

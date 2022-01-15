@@ -26,21 +26,24 @@
 namespace control {
 
 /**
+ * @brief gimbal models 
+ */
+typedef enum {
+  SHOOTER_STANDARD_ZERO,
+  SHOOTER_STANDARD_2022,
+} shooter_model_t;
+
+/**
  * @brief structure used when shooter instance is initialized
+ * @note Because shooter ZERO uses snail M2305 motors that can only be driven using PWM,
+ *       interfaces are reserved since the old shooter could be used for demonstratio 
+ *       purposes in the future.
  */
 typedef struct {
-  bool fly_using_can_motor;					 /* if flywheel motors are using CAN protocal   */
-  MotorCANBase* left_fly_can_motor;	 /* CAN motor instance of left flywheel motor   */
-  MotorCANBase* right_fly_can_motor; /* CAN motor instance of right flywheel motor  */
-  MotorPWMBase* left_fly_pwm_motor;	 /* PWM motor instance of left flywheel motor   */
-  MotorPWMBase* right_fly_pwm_motor; /* PWM motor instance of right flywheel motor  */
-  bool left_fly_motor_invert;				 /* if left flywheel motor is inverted          */
-  bool right_fly_motor_invert;			 /* if right flywheel motor is inverted         */
-  ServoMotor* load_servo;            /* servomotor instance of load motor           */
-  float fly_Kp;                      /* Kp of pid controlling flywheel motor speed  */
-  float fly_Ki;                      /* Ki of pid controlling flywheel motor speed  */
-  float fly_Kd;                      /* Kd of pid controlling flywheel motor speed  */
-  float load_step_angle;             /* step size of loading motor, in [rad]        */
+  MotorBase* left_flywheel_motor;  /* motor instance of left flywheel motor  */
+  MotorBase* right_flywheel_motor; /* motor instance of right flywheel motor */
+  MotorCANBase* load_motor;        /* CAN motor instance of load motor       */
+  shooter_model_t model;
 } shooter_t;
 
 /**
@@ -54,6 +57,12 @@ public:
    * @param shooter structure that used to initialize gimbal, refer to type shooter_t
    */
   Shooter(shooter_t shooter);
+
+  /**
+   * @brief destructor for shooter
+   * 
+   */
+  ~Shooter();
 
   /**
    * @brief set the speed of accelerating motors
@@ -70,29 +79,25 @@ public:
   int LoadNext();
 
   /**
-   * @brief calculate the output of the motors under current configuration
-   * 
+   * @brief update the output of the motors under current configuration
+   * @note does not command the motor immediately
    */
-  void CalcOutput();
+  void Update();
 
 private:
-  // refer to shooter_t for details
-  bool fly_using_can_motor_;
-  MotorCANBase* left_fly_can_motor_;
-  MotorCANBase* right_fly_can_motor_;
-  MotorPWMBase* left_fly_pwm_motor_;
-  MotorPWMBase* right_fly_pwm_motor_;
-  int left_fly_motor_invert_;
-  int right_fly_motor_invert_;
+  // acquired from user
+  MotorBase* left_flywheel_motor_;
+  MotorBase* right_flywheel_motor_;
   ServoMotor* load_servo_;
-  float load_step_angle_;
+  shooter_model_t model_;
+  
+  PIDController* left_pid_;  /* pid for left flywheel  */
+  PIDController* right_pid_; /* pid for right flywheel */
 
-  PIDController left_pid_;  /* pid for left flywheel  */
-  PIDController right_pid_; /* pid for right flywheel */
-
-  float speed_;           /* raw speed before inverting */
-
-  BoolEdgeDetector fly_turning_detector_;
+  BoolEdgeDetector* flywheel_turning_detector_; /* flywheel turning state detector */
+  float load_step_angle_; /* angle rotated for every bullet loaded */
+  float speed_; /* current turning speed of flywheels */
+  
 };
 
 }
