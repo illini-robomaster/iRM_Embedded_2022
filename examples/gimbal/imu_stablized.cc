@@ -53,6 +53,7 @@ static control::Pose *poseEstimator;
 
 /*
 static osMutexId_t rpyLockHandle;
+
 const osMutexAttr_t rpyLock = {
   .name = "rpyLock",
   .attr_bits = osMutexRecursive,
