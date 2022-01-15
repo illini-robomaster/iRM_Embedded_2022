@@ -21,10 +21,10 @@ Gimbal::Gimbal(gimbal_t gimbal) :
       data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
       data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
 
-      pitch_move_pid_param_ = new float[3] {1000, 0, 100};
-      pitch_hold_pid_param_ = new float[3] {2000, 130, 200};
-      yaw_move_pid_param_ = new float[3] {1000, 0, 100};
-      yaw_hold_pid_param_ = new float[3] {1500, 35, 300};
+      pitch_move_pid_param_ = new float[3] {1400, 0, 2200};
+      pitch_hold_pid_param_ = new float[3] {3200, 100, 3100};
+      yaw_move_pid_param_ = new float[3] {1000, 0, 2000};
+      yaw_hold_pid_param_ = new float[3] {3000, 60, 2500};
       pitch_pid_ = new PIDController(pitch_move_pid_param_);
       yaw_pid_ = new PIDController(yaw_move_pid_param_);
       break;

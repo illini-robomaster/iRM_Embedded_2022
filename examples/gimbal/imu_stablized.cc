@@ -93,7 +93,7 @@ void IMU_Task(void *argument) {
   poseEstimator = new control::Pose(imu);
   
   // Set alpha for the complementary filter in the pose estimator
-  poseEstimator->SetAlpha(0.95);
+  poseEstimator->SetAlpha(0.99);
   
   // calibrate the Offset for IMU acce meter and gyro
   // Need the gimbal to be stable for 1sec
@@ -154,7 +154,7 @@ void RM_RTOS_Default_Task(const void* args) {
     yaw = poseEstimator->GetYaw();
     pitch = poseEstimator->GetPitch();
     // roll = poseEstimator->GetRoll();
-    gimbal->TargetRel(pitch / 13, -yaw / 8);
+    gimbal->TargetRel(pitch / 8, -yaw / 3);
     
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors, 2);
