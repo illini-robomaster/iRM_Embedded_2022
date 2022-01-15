@@ -20,18 +20,17 @@
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
+#include "bsp_os.h"
+#include "bsp_laser.h"
 #include "cmsis_os.h"
 #include "main.h"
 #include "gimbal.h"
-#include "dbus.h"
-
 #include "pose.h"
+#include "dbus.h"
 
 // init gimbal
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
-#define NOTCH         (2 * PI / 8)
-#define SERVO_SPEED   (PI)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
@@ -48,18 +47,12 @@ bool status = false;
 #define PRING_UART huart8
 
 static bsp::MPU6500* imu;
-
-static float roll = 0;
-static float pitch = 0;
-static float yaw = 0;
-
 static control::Pose *poseEstimator;
 
 /* init IMU task START */
 
 /*
 static osMutexId_t rpyLockHandle;
-
 const osMutexAttr_t rpyLock = {
   .name = "rpyLock",
   .attr_bits = osMutexRecursive,
@@ -85,12 +78,35 @@ const osThreadAttr_t IMUTaskAttributes = {
 // pose estimation task
 void IMU_Task(void *argument) {
   UNUSED(argument);
+  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+  laser.High();
 
+  // IMU init
+  bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
+  imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
+  osDelay(4000);
+  laser.Low();
+  print("IMU Initialized!\r\n");
+  
+  // init pose estimator instance
+  poseEstimator = new control::Pose(imu);
+  
+  // Set alpha for the complementary filter in the pose estimator
+  poseEstimator->SetAlpha(0.95);
+  
+  // calibrate the Offset for IMU acce meter and gyro
+  // Need the gimbal to be stable for 1sec
+  poseEstimator->Calibrate();
+  
+  // reset timer and pose for IMU
+  poseEstimator->PoseInit();
+
+  laser.High();
 
   while (true) {
     // update estimated pose with complementary filter
     poseEstimator->ComplementaryFilterUpdate();
-    osDelay(10);
+    osDelay(5);
   }
 } /* IMU task ends */
 
@@ -108,81 +124,38 @@ void RM_RTOS_Threads_Init(void) {
 }
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-  
-  // init gimbal
+  print_use_uart(&PRING_UART);
+  bsp::SetHighresClockTimer(&htim2);
   can = new bsp::CAN(&hcan1, 0x205);
   pitch_motor = new control::Motor6020(can, 0x205);
   yaw_motor = new control::Motor6020(can, 0x206);
+
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.pitch_offset = LEGACY_GIMBAL_POFF;
-  gimbal_data.yaw_offset = LEGACY_GIMBAL_YOFF;
-  gimbal_data.pitch_max = LEGACY_GIMBAL_PMAX;
-  gimbal_data.yaw_max = LEGACY_GIMBAL_YMAX;
-  gimbal_data.pitch_proximity = LEGACY_GIMBAL_PMAX / 3;
-  gimbal_data.yaw_proximity = LEGACY_GIMBAL_YMAX / 6;
-  gimbal_data.pitch_move_Kp = 800;
-  gimbal_data.pitch_move_Ki = 0;
-  gimbal_data.pitch_move_Kd = 100;
-  gimbal_data.yaw_move_Kp = 300;
-  gimbal_data.yaw_move_Ki = 0;
-  gimbal_data.yaw_move_Kd = 100;
-  gimbal_data.pitch_hold_Kp = 2000;
-  gimbal_data.pitch_hold_Ki = 100;
-  gimbal_data.pitch_hold_Kd = 100;
-  gimbal_data.yaw_hold_Kp = 1500;
-  gimbal_data.yaw_hold_Ki = 15;
-  gimbal_data.yaw_hold_Kd = 200;
   gimbal = new control::Gimbal(gimbal_data);
 
-  dbus = new remote::DBUS(&huart1);
-  
-  // IMU init
-  bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
-  imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
-  osDelay(3000);
-  print("IMU Initialized!\r\n");
-  
-  // init pose estimator instance
-  poseEstimator = new control::Pose(imu);
-  
-  // Set alpha for the complementary filter in the pose estimator
-  poseEstimator->SetAlpha(0.95);
-  
-  roll = 0;
-  pitch = 0;
-  yaw = 0;
-  
-  // calibrate the Offset for IMU acce meter and gyro
-  // Need the gimbal to be stable for 1sec
-  poseEstimator->Calibrate();
-  
-  // reset timer and pose for IMU
-  poseEstimator->PoseInit();
-
-  
+  dbus = new remote::DBUS(&huart1); 
 }
 
 
 // Gimbal task
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-	
-	osDelay(500); // DBUS initialization needs time
+  
+  osDelay(500); // DBUS initialization needs time
   
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
 
+  float yaw, pitch; //, roll;
   while (true) {
-    gimbal->TargetRel(-pitch / 50, -yaw / 50);
-    
     // update rpy
     yaw = poseEstimator->GetYaw();
     pitch = poseEstimator->GetPitch();
-    roll = poseEstimator->GetRoll();
+    // roll = poseEstimator->GetRoll();
+    gimbal->TargetRel(pitch / 13, -yaw / 8);
     
-    gimbal->CalcOutput();
+    gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors, 2);
     osDelay(10);
   }
