@@ -28,6 +28,12 @@ using namespace bsp;
 
 namespace control {
 
+/**
+ * @brief standard can motor callback, used to update motor data
+ * 
+ * @param data data that come from motor 
+ * @param args pointer to a MotorCANBase instance
+ */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
   motor->UpdateData(data);
@@ -97,10 +103,10 @@ void Motor3508::UpdateData(const uint8_t data[]) {
 }
 
 void Motor3508::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw temperature: %d ", raw_temperature_);
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw temperature: %3d ", raw_temperature_);
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor3508::SetOutput(int16_t val) {
@@ -125,10 +131,10 @@ void Motor6020::UpdateData(const uint8_t data[]) {
 }
 
 void Motor6020::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw temperature: %d ", raw_temperature_);
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw temperature: %3d ", raw_temperature_);
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor6020::SetOutput(int16_t val) {
@@ -150,9 +156,9 @@ void Motor6623::UpdateData(const uint8_t data[]) {
 }
 
 void Motor6623::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("raw current get: %d ", raw_current_get_);
-  print("raw current set: %d \r\n", raw_current_set_);
+  print("theta: % .4f ", GetTheta());
+  print("raw current get: % d ", raw_current_get_);
+  print("raw current set: % d \r\n", raw_current_set_);
 }
 
 void Motor6623::SetOutput(int16_t val) {
@@ -187,9 +193,9 @@ void Motor2006::UpdateData(const uint8_t data[]) {
 }
 
 void Motor2006::PrintData() const {
-  print("theta: %.4f ", GetTheta());
-  print("omega: %.4f ", GetOmega());
-  print("raw current get: %d \r\n", raw_current_get_);
+  print("theta: % .4f ", GetTheta());
+  print("omega: % .4f ", GetOmega());
+  print("raw current get: % d \r\n", raw_current_get_);
 }
 
 void Motor2006::SetOutput(int16_t val) {
@@ -214,6 +220,17 @@ void Motor2305::SetOutput(int16_t val) {
   MotorPWMBase::SetOutput(clip<int16_t>(val, MIN_OUTPUT, MAX_OUTPUT));
 }
 
+/**
+ * @brief default servomotor callback that overrides the standard can motor callback
+ * 
+ * @param data data that come from motor 
+ * @param args pointer to a ServoMotor instance
+ */
+static void servomotor_callback(const uint8_t data[], void* args) {
+  ServoMotor* servo = reinterpret_cast<ServoMotor*>(args);
+  servo->UpdateData(data);
+}
+
 ServoMotor::ServoMotor(servo_t servo, float proximity) : 
       move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)), 
       hold_pid_(PIDController(servo.hold_Kp, servo.hold_Ki, servo.hold_Kd)) {
@@ -225,7 +242,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 
   hold_ = true;
   target_ = 0;
-  align_angle_ = motor_->GetTheta();
+  align_angle_ = motor_->theta_;
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
@@ -234,63 +251,109 @@ ServoMotor::ServoMotor(servo_t servo, float proximity) :
 
   // dir_ is initialized here
   SetDirUsingMode_(servo.mode);
+
+  // override origianal motor rx callback with servomotor callback
+  servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
+
+  // Initially jam detection is not enabled, it is enabled only if user calls
+  // RegisterJamCallback in the future.
+  jam_callback_ = nullptr;
+  detect_head_ = -1;
+  detect_period_ = -1;
+  detect_total_ = 0;
+  detect_buf_ = nullptr;
 }
 
-int ServoMotor::SetTarget(const float target, bool override) {
-  if (!hold_ && !override)
-    return INPUT_REJECT;
-  target_ = wrap<float>(target, -PI, PI);
-  if (mode_ == SERVO_NEAREST) {
-    NearestModeSetDir_();
-  }
-  hold_ = false;
-  return dir_;
+servo_status_t ServoMotor::SetTarget(const float target, bool override) {
+  return SetTarget(target, mode_, override);
 }
 
-int ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
+servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
   if (!hold_ && !override)
     return INPUT_REJECT;
-  target_ = wrap<float>(target, -PI, PI);
+  target_ = wrap<float>(target, 0, 2 * PI);
   SetDirUsingMode_(mode);
   hold_ = false;
   return dir_;
 }
 
 void ServoMotor::SetSpeed(const float speed) {
-  speed_ = speed > 0 ? speed : 0;
+  speed_ = speed > 0 ? transmission_ratio_ * speed : speed_;
 }
 
 void ServoMotor::CalcOutput() {
-  AngleUpdate_();
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  if (abs(diff_angle) < proximity_)
-    hold_ = true;
-
+  // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
   if (hold_detector_->edge())
     move_pid_.Reset();
   if (hold_detector_->posEdge())
     hold_pid_.Reset();
   
+  // calculate desired output with pid
   int16_t command;
   if (hold_) {
-    float out = hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
+    float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+    float out = 0;
+    out += hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
     out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
+    // CAN motor can only accept input in range [-32768, 32767]
     command = clip<float>((int) out, -32768, 32767);
   } else {
     command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
   }
   motor_->SetOutput(command);
+
+  // jam detection machenism
+  if (detect_buf_ != nullptr) {
+    // update rolling sum and circular buffer
+    detect_total_ += command - detect_buf_[detect_head_];
+    detect_buf_[detect_head_] = command;
+    detect_head_ = detect_head_ + 1 < detect_period_ ? detect_head_ + 1 : 0;
+
+    // detect if motor is jammed
+    jam_detector_->input(abs(detect_total_) >= jam_threshold_);
+    if (jam_detector_->posEdge()) {
+      servo_jam_t data;
+      data.mode = mode_;
+      data.dir = dir_;
+      data.speed = speed_ / transmission_ratio_;
+      jam_callback_(this, data);
+    }
+  }
 }
 
-bool ServoMotor::Holding() const {
-  return hold_;
+bool ServoMotor::Holding() const { return hold_; }
+
+float ServoMotor::GetTarget() const { return target_; }
+
+void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold, uint8_t detect_period) {
+  constexpr int maximum_command = 32768; // maximum command that a CAN motor can accept
+  RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1, "Effort threshold should between 0 and 1");
+  // storing funcion pointer for future invocation
+  jam_callback_ = callback;
+
+  // create and initialize circular buffer
+  detect_head_ = 0;
+  detect_period_ = detect_period;
+  detect_total_ = 0;
+  if (detect_buf_ != nullptr)
+    delete detect_buf_;
+  detect_buf_ = new int16_t[detect_period];
+  memset(detect_buf_, 0, detect_period);
+
+  // calculate callback trigger threshold and triggering facility 
+  jam_threshold_ = maximum_command * effort_threshold * detect_period;
+  jam_detector_ = new BoolEdgeDetector(false);
 }
 
 void ServoMotor::PrintData() const { 
-  print("servo theta: %.4f ", servo_angle_);
-  print("servo omega: %.4f\r\n", GetOmega());
-  // motor_->PrintData();
+  print("theta: % .4f ", servo_angle_);
+  print("omega: % .4f ", GetOmega());
+  print("target: % .4f ", target_);
+  if (hold_) 
+    print("status: holding\r\n");
+  else
+    print("status: moving\r\n");
 }
 
 float ServoMotor::GetTheta() const { return servo_angle_; }
@@ -299,35 +362,47 @@ float ServoMotor::GetThetaDelta(const float target) const {
   return wrap<float>(target - servo_angle_, -PI, PI); 
 }
 
-float ServoMotor::GetOmega() const { return motor_->GetOmega() / transmission_ratio_; }
+float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
+
 float ServoMotor::GetOmegaDelta(const float target) const { 
   return target - motor_->GetOmega() / transmission_ratio_;
 }
 
-void ServoMotor::AngleUpdate_() {
-  motor_angle_ = wrap<float>(motor_->GetTheta() - align_angle_, -PI, PI);
+void ServoMotor::UpdateData(const uint8_t data[]) {
+  motor_->UpdateData(data);
+  motor_angle_ = motor_->theta_ - align_angle_;
+  // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
+  // edge, which means that the motor is turning in positive direction when crossing encoder
+  // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
   wrap_detector_->input(motor_angle_);
   if (wrap_detector_->negEdge())
-    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, -PI, PI);
+    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
   else if (wrap_detector_->posEdge())
-    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, -PI, PI);
-  servo_angle_ = offset_angle_ + motor_angle_ / transmission_ratio_;
+    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
+  servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
+
+  // determine if the motor should be in hold state
+  if (!hold_ && abs(wrap<float>(target_ - servo_angle_, -PI, PI)) < proximity_)
+    hold_ = true;
 }
 
 void ServoMotor::NearestModeSetDir_() {
-  AngleUpdate_();
   float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  dir_ = diff_angle > 0 ? 1 : -1;
+  dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
 }
 
 void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
-  if (mode == SERVO_ANTICLOCKWISE) {
-    dir_ = 1;
-  } else if (mode == SERVO_NEAREST) {
+  switch (mode) {
+  case SERVO_ANTICLOCKWISE:
+    dir_ = TURNING_ANTICLOCKWISE;
+    return;
+  case SERVO_NEAREST:
     NearestModeSetDir_();
-  } else if (mode == SERVO_CLOCKWISE) {
-    dir_ = -1;
-  } else {
+    return;
+  case SERVO_CLOCKWISE:
+    dir_ = TURNING_CLOCKWISE;
+    return;
+  default:
     RM_ASSERT_TRUE(false, "Invalid servo turining mode");
   }
 }

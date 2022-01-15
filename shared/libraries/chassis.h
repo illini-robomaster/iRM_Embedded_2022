@@ -25,35 +25,75 @@
 
 namespace control {
 
-typedef enum{
-	MOTOR_FL = 0,
-	MOTOR_BL = 1,
-	MOTOR_FR = 2,
-	MOTOR_BR = 3
-} chassis_motor_t;
+/**
+ * @brief chassis models 
+ */
+typedef enum {
+  CHASSIS_STANDARD_ZERO
+} chassis_model_t;
 
-typedef enum{
-	HERO = 0,
-	STANDARD = 1,
-	ENGINEER = 2,
-	AERIAL = 3,
-	SENTRY = 4,
-	DART = 5,
-	RADAR = 6
-} robot_type_t;
+/**
+ * @brief structure used when chassis instance is initialized
+ */
+typedef struct {
+  MotorCANBase** motors; /* motor instances of all chassis motors */
+  chassis_model_t model; /* chassis model                         */
+} chassis_t;
 
+/**
+ * @brief motor configs for four wheel vehicles
+ */
+struct FourWheel {
+  enum {
+    front_left,
+    front_right,
+    back_left,
+    back_right,
+    motor_num
+  };
+};
+
+/**
+ * @brief wrapper class for chassis
+ */
 class Chassis {
-public:
-    Chassis(robot_type_t robot_type, const int* motor_id, const float* pid);
-    void Move(float x, float y, float z);
+ public:
+  /**
+   * @brief constructor for chassis
+   * 
+   * @param chassis structure that used to initialize chassis, refer to type chassis_t
+   */
+  Chassis(const chassis_t chassis);
 
-private:
-    PIDController pid_FL;
-    PIDController pid_BL;
-    PIDController pid_FR;
-    PIDController pid_BR;
-    MotorCANBase** motors;
-    robot_type_t type;
+  /**
+   * @brief destructor for chassis
+   */
+  ~Chassis();
+
+  /**
+   * @brief set the speed for chassis motors
+   * 
+   * @param x_speed chassis speed on x-direction
+   * @param y_speed chassis speed on y-direction
+   * @param turn_speed chassis clockwise turning speed
+   */
+  void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
+
+
+  /**
+   * @brief calculate the output of the motors under current configuration
+   * @note does not command the motor immediately
+   */
+  void Update();
+
+ private:
+  // acquired from user
+  MotorCANBase** motors_;
+  chassis_model_t model_;
+
+  // pids and current speeds for each motor on the chassis
+  PIDController** pids_;
+  float* speeds_;
 };
 
 }

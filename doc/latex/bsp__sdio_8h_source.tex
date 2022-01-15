@@ -1,0 +1,51 @@
+\hypertarget{bsp__sdio_8h_source}{}\doxysection{bsp\+\_\+sdio.\+h}
+\label{bsp__sdio_8h_source}\index{shared/bsp/bsp\_sdio.h@{shared/bsp/bsp\_sdio.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include <string>}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#ifdef BOARD\_HAS\_SD\_FATFS}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#include "{}fatfs.h"{}}}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28 \textcolor{keyword}{namespace }bsp \{}
+\DoxyCodeLine{29 }
+\DoxyCodeLine{30 \textcolor{keyword}{class }SDFileLogger \{}
+\DoxyCodeLine{31  \textcolor{keyword}{public}:}
+\DoxyCodeLine{37   \textcolor{keyword}{explicit} SDFileLogger(\textcolor{keyword}{const} std::string\& filename);}
+\DoxyCodeLine{38 }
+\DoxyCodeLine{47   int32\_t Log(\textcolor{keyword}{const} uint8\_t* data, uint32\_t length);}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{49  \textcolor{keyword}{private}:}
+\DoxyCodeLine{50   \textcolor{keyword}{static} \textcolor{keywordtype}{bool} mounted\_;}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52   \textcolor{keyword}{const} std::string filename\_;}
+\DoxyCodeLine{53   FIL fobj\_;}
+\DoxyCodeLine{54 \};}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56 \} \textcolor{comment}{/* namespace bsp */}}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{58 \textcolor{preprocessor}{\#endif  }\textcolor{comment}{// BOARD\_HAS\_SD\_FATFS}}
+
+\end{DoxyCode}

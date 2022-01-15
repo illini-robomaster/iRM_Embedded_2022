@@ -1,0 +1,99 @@
+\hypertarget{classremote_1_1DBUS}{}\doxysection{remote\+::DBUS Class Reference}
+\label{classremote_1_1DBUS}\index{remote::DBUS@{remote::DBUS}}
+Inheritance diagram for remote\+::DBUS\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classremote_1_1DBUS}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classremote_1_1DBUS_a6292e1712091b1518334e94700a4ae85}{DBUS}} (UART\+\_\+\+Handle\+Type\+Def $\ast$huart)
+\begin{DoxyCompactList}\small\item\em intialize \mbox{\hyperlink{classremote_1_1DBUS}{DBUS}} the same way as a generic UART peripheral \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classremote_1_1DBUS_a094b499f49d3dd5162ce2408e41e93c6}{Rx\+Complete\+Callback}} () override final
+\begin{DoxyCompactList}\small\item\em Reception complete call back. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_ad9e3bc687b7a63461160dca4e74d17b4}\label{classremote_1_1DBUS_ad9e3bc687b7a63461160dca4e74d17b4}} 
+int16\+\_\+t {\bfseries ch0}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_a7c23f7930af597867b08eec5138979fa}\label{classremote_1_1DBUS_a7c23f7930af597867b08eec5138979fa}} 
+int16\+\_\+t {\bfseries ch1}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_a58531f901e5db47aa1ad710158901e7f}\label{classremote_1_1DBUS_a58531f901e5db47aa1ad710158901e7f}} 
+int16\+\_\+t {\bfseries ch2}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_ad0d573cffda770fdacab264c3178f101}\label{classremote_1_1DBUS_ad0d573cffda770fdacab264c3178f101}} 
+int16\+\_\+t {\bfseries ch3}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_a3e430e598e4372ff3ae31b296b125968}\label{classremote_1_1DBUS_a3e430e598e4372ff3ae31b296b125968}} 
+switch\+\_\+t {\bfseries swl}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_ae7b056a32c17840f8c89b66fc5b36f51}\label{classremote_1_1DBUS_ae7b056a32c17840f8c89b66fc5b36f51}} 
+switch\+\_\+t {\bfseries swr}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_af5c72c97b880fea1f160ef6176ed4e82}\label{classremote_1_1DBUS_af5c72c97b880fea1f160ef6176ed4e82}} 
+mouse\+\_\+t {\bfseries mouse}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_af8712ec208da34cc38c4246f2241ce39}\label{classremote_1_1DBUS_af8712ec208da34cc38c4246f2241ce39}} 
+keyboard\+\_\+t {\bfseries keyboard}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_af2aa1dac376795abde6f5680a85b09e5}\label{classremote_1_1DBUS_af2aa1dac376795abde6f5680a85b09e5}} 
+uint32\+\_\+t {\bfseries timestamp}
+\end{DoxyCompactItemize}
+\doxysubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_adfd729ed0c6951e124d6919a0ede53bd}\label{classremote_1_1DBUS_adfd729ed0c6951e124d6919a0ede53bd}} 
+static const int16\+\_\+t {\bfseries ROCKER\+\_\+\+MIN} = -\/660
+\item 
+\mbox{\Hypertarget{classremote_1_1DBUS_a0ba3c732b8491ac59e48047a6a54ab28}\label{classremote_1_1DBUS_a0ba3c732b8491ac59e48047a6a54ab28}} 
+static const int16\+\_\+t {\bfseries ROCKER\+\_\+\+MAX} = 660
+\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classremote_1_1DBUS_a6292e1712091b1518334e94700a4ae85}\label{classremote_1_1DBUS_a6292e1712091b1518334e94700a4ae85}} 
+\index{remote::DBUS@{remote::DBUS}!DBUS@{DBUS}}
+\index{DBUS@{DBUS}!remote::DBUS@{remote::DBUS}}
+\doxysubsubsection{\texorpdfstring{DBUS()}{DBUS()}}
+{\footnotesize\ttfamily remote\+::\+DBUS\+::\+DBUS (\begin{DoxyParamCaption}\item[{UART\+\_\+\+Handle\+Type\+Def $\ast$}]{huart }\end{DoxyParamCaption})}
+
+
+
+intialize \mbox{\hyperlink{classremote_1_1DBUS}{DBUS}} the same way as a generic UART peripheral 
+
+\begin{DoxyNote}{Note}
+like uart, dbus needs time to initialize
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em huart} & uart instance \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classremote_1_1DBUS_a094b499f49d3dd5162ce2408e41e93c6}\label{classremote_1_1DBUS_a094b499f49d3dd5162ce2408e41e93c6}} 
+\index{remote::DBUS@{remote::DBUS}!RxCompleteCallback@{RxCompleteCallback}}
+\index{RxCompleteCallback@{RxCompleteCallback}!remote::DBUS@{remote::DBUS}}
+\doxysubsubsection{\texorpdfstring{RxCompleteCallback()}{RxCompleteCallback()}}
+{\footnotesize\ttfamily void remote\+::\+DBUS\+::\+Rx\+Complete\+Callback (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [final]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Reception complete call back. 
+
+
+
+Reimplemented from \mbox{\hyperlink{classbsp_1_1UART_a16c44650edc76251d0ec35e1d1e33e0e}{bsp\+::\+UART}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/dbus.\+h\item 
+shared/libraries/dbus.\+cc\end{DoxyCompactItemize}

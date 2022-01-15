@@ -1,0 +1,89 @@
+\hypertarget{classcontrol_1_1MotorPWMBase}{}\doxysection{control\+::Motor\+PWMBase Class Reference}
+\label{classcontrol_1_1MotorPWMBase}\index{control::MotorPWMBase@{control::MotorPWMBase}}
+
+
+PWM motor base class.  
+
+
+
+
+{\ttfamily \#include $<$motor.\+h$>$}
+
+Inheritance diagram for control\+::Motor\+PWMBase\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classcontrol_1_1MotorPWMBase}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcontrol_1_1MotorPWMBase_a2a0a5c549536ca58cbb29e8c2e5ee648}{Motor\+PWMBase}} (TIM\+\_\+\+Handle\+Type\+Def $\ast$htim, uint8\+\_\+t channel, uint32\+\_\+t clock\+\_\+freq, uint32\+\_\+t output\+\_\+freq, uint32\+\_\+t idle\+\_\+throttle)
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+virtual void \mbox{\hyperlink{classcontrol_1_1MotorPWMBase_a1cc3990a829a41ebd8241679e3baf56b}{Set\+Output}} (int16\+\_\+t val) override
+\begin{DoxyCompactList}\small\item\em set and transmit output \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+PWM motor base class. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcontrol_1_1MotorPWMBase_a2a0a5c549536ca58cbb29e8c2e5ee648}\label{classcontrol_1_1MotorPWMBase_a2a0a5c549536ca58cbb29e8c2e5ee648}} 
+\index{control::MotorPWMBase@{control::MotorPWMBase}!MotorPWMBase@{MotorPWMBase}}
+\index{MotorPWMBase@{MotorPWMBase}!control::MotorPWMBase@{control::MotorPWMBase}}
+\doxysubsubsection{\texorpdfstring{MotorPWMBase()}{MotorPWMBase()}}
+{\footnotesize\ttfamily control\+::\+Motor\+PWMBase\+::\+Motor\+PWMBase (\begin{DoxyParamCaption}\item[{TIM\+\_\+\+Handle\+Type\+Def $\ast$}]{htim,  }\item[{uint8\+\_\+t}]{channel,  }\item[{uint32\+\_\+t}]{clock\+\_\+freq,  }\item[{uint32\+\_\+t}]{output\+\_\+freq,  }\item[{uint32\+\_\+t}]{idle\+\_\+throttle }\end{DoxyParamCaption})}
+
+
+
+constructor 
+
+
+\begin{DoxyParams}{Parameters}
+{\em htim} & HAL timer handle \\
+\hline
+{\em channel} & HAL timer channel, from \mbox{[}0, 4) \\
+\hline
+{\em clock\+\_\+freq} & clock frequency associated with the timer, in \mbox{[}Hz\mbox{]} \\
+\hline
+{\em output\+\_\+freq} & desired output frequency, in \mbox{[}Hz\mbox{]} \\
+\hline
+{\em idle\+\_\+throttle} & idling pulse width, in \mbox{[}us\mbox{]}\\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+M3508 have idle\+\_\+throttle about 1500, snail have idle\+\_\+throttle about 1100 
+\end{DoxyNote}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcontrol_1_1MotorPWMBase_a1cc3990a829a41ebd8241679e3baf56b}\label{classcontrol_1_1MotorPWMBase_a1cc3990a829a41ebd8241679e3baf56b}} 
+\index{control::MotorPWMBase@{control::MotorPWMBase}!SetOutput@{SetOutput}}
+\index{SetOutput@{SetOutput}!control::MotorPWMBase@{control::MotorPWMBase}}
+\doxysubsubsection{\texorpdfstring{SetOutput()}{SetOutput()}}
+{\footnotesize\ttfamily void control\+::\+Motor\+PWMBase\+::\+Set\+Output (\begin{DoxyParamCaption}\item[{int16\+\_\+t}]{val }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+set and transmit output 
+
+
+\begin{DoxyParams}{Parameters}
+{\em val} & offset value with respect to the idle throttle pulse width, in \mbox{[}us\mbox{]} \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \mbox{\hyperlink{classcontrol_1_1MotorBase}{control\+::\+Motor\+Base}}.
+
+
+
+Reimplemented in \mbox{\hyperlink{classcontrol_1_1Motor2305_a344f1dffe10ce0b2fe77e3c58d539366}{control\+::\+Motor2305}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/libraries/motor.\+h\item 
+shared/libraries/motor.\+cc\end{DoxyCompactItemize}

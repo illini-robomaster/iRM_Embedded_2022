@@ -1,0 +1,44 @@
+\hypertarget{bsp__ultrasonic_8h_source}{}\doxysection{bsp\+\_\+ultrasonic.\+h}
+\label{bsp__ultrasonic_8h_source}\index{shared/bsp/bsp\_ultrasonic.h@{shared/bsp/bsp\_ultrasonic.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{ *  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{ *  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{ *  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{ *  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{ *  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{ *  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{ *  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{ *  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{ *  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}bsp\_gpio.h"{}}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}main.h"{}}}
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26 \textcolor{keyword}{namespace }bsp \{}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28     \textcolor{keyword}{class }\mbox{\hyperlink{classbsp_1_1Ultrasonic}{Ultrasonic}} \{}
+\DoxyCodeLine{29     \textcolor{keyword}{public}:}
+\DoxyCodeLine{39         \mbox{\hyperlink{classbsp_1_1Ultrasonic_aee29ae02717a81215e4fff17be59dd32}{Ultrasonic}}(GPIO\_TypeDef* trig\_group, uint16\_t trig\_pin, GPIO\_TypeDef* echo\_group, uint16\_t echo\_pin, TIM\_TypeDef* timer);}
+\DoxyCodeLine{45         \textcolor{keywordtype}{float} \mbox{\hyperlink{classbsp_1_1Ultrasonic_a1da8b92d3715825f069af1d7ddeca8a0}{GetDistance}}();}
+\DoxyCodeLine{46     \textcolor{keyword}{private}:}
+\DoxyCodeLine{47         \mbox{\hyperlink{classbsp_1_1GPIO}{GPIO}} trig\_;}
+\DoxyCodeLine{48         \mbox{\hyperlink{classbsp_1_1GPIO}{GPIO}} echo\_;}
+\DoxyCodeLine{49         TIM\_TypeDef* timer\_;}
+\DoxyCodeLine{50     \};}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52 \} \textcolor{comment}{/* namespace bsp */}}
+
+\end{DoxyCode}

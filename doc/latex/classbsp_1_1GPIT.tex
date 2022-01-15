@@ -1,0 +1,63 @@
+\hypertarget{classbsp_1_1GPIT}{}\doxysection{bsp\+::GPIT Class Reference}
+\label{classbsp_1_1GPIT}\index{bsp::GPIT@{bsp::GPIT}}
+Inheritance diagram for bsp\+::GPIT\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classbsp_1_1GPIT}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classbsp_1_1GPIT_a270a6ad853a2aa6b3f03bfefab92b870}{GPIT}} (uint16\+\_\+t pin)
+\begin{DoxyCompactList}\small\item\em Contructor for general purpose interrupt pins. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classbsp_1_1GPIT_a4c1dfc6f8a6e023e9b8aa7b7adc75b15}\label{classbsp_1_1GPIT_a4c1dfc6f8a6e023e9b8aa7b7adc75b15}} 
+virtual void {\bfseries Int\+Callback} ()=0
+\begin{DoxyCompactList}\small\item\em Callback back when interrupt happens. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{classbsp_1_1GPIT_a15dcb18f30fede512416cffa0f0d9d21}{Int\+Callback}} (uint16\+\_\+t pin)
+\begin{DoxyCompactList}\small\item\em wrapper for global interrupt handler \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classbsp_1_1GPIT_a270a6ad853a2aa6b3f03bfefab92b870}\label{classbsp_1_1GPIT_a270a6ad853a2aa6b3f03bfefab92b870}} 
+\index{bsp::GPIT@{bsp::GPIT}!GPIT@{GPIT}}
+\index{GPIT@{GPIT}!bsp::GPIT@{bsp::GPIT}}
+\doxysubsubsection{\texorpdfstring{GPIT()}{GPIT()}}
+{\footnotesize\ttfamily bsp\+::\+GPIT\+::\+GPIT (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{pin }\end{DoxyParamCaption})}
+
+
+
+Contructor for general purpose interrupt pins. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em pin} & interrupt pin number (x in EXTIx) \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classbsp_1_1GPIT_a15dcb18f30fede512416cffa0f0d9d21}\label{classbsp_1_1GPIT_a15dcb18f30fede512416cffa0f0d9d21}} 
+\index{bsp::GPIT@{bsp::GPIT}!IntCallback@{IntCallback}}
+\index{IntCallback@{IntCallback}!bsp::GPIT@{bsp::GPIT}}
+\doxysubsubsection{\texorpdfstring{IntCallback()}{IntCallback()}}
+{\footnotesize\ttfamily void bsp\+::\+GPIT\+::\+Int\+Callback (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{pin }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+wrapper for global interrupt handler 
+
+
+\begin{DoxyParams}{Parameters}
+{\em pin} & interrupt pin number \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+shared/bsp/bsp\+\_\+gpio.\+h\item 
+shared/bsp/bsp\+\_\+gpio.\+cc\end{DoxyCompactItemize}

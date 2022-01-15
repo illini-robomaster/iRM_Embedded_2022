@@ -27,106 +27,106 @@
 
 namespace control {
 
+/**
+ * @brief gimbal models 
+ */
+typedef enum {
+  GIMBAL_STANDARD_ZERO
+} gimbal_model_t;
   
 /**
- * @brief offset and max angles of different gimbals
- * @note these should be obtained by reading encoder values through uart/gdb
+ * @brief offset, max, and proximity angles of different gimbals
+ * @note except for proximity is determined by user, these should be obtained by reading 
+ *       encoder values through uart/gdb
  */
-#define LEGACY_GIMBAL_POFF 4.725f   /* legacy gimbal pitch offset */
-#define LEGACY_GIMBAL_YOFF 3.406f   /* legacy gimbal yaw offset   */
-#define LEGACY_GIMBAL_PMAX 0.408f   /* legacy gimbal pitch max    */
-#define LEGACY_GIMBAL_YMAX 1.511f   /* legacy gimbal yaw max      */
+typedef struct {
+  float pitch_offset_;    /* pitch offset angle (angle when muzzle is at vertical center) */
+  float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */
+  float pitch_max_;       /* maximum pitch angle the gimbal can turn from center          */
+  float yaw_max_;         /* maximum yaw angle the gimbal can turn from center            */
+  float pitch_proximity_; /* pitch angle diff from center to toggle pid modes             */
+  float yaw_proximity_;   /* yaw angle diff from center to toggle pid modes               */
+} gimbal_data_t;
 
 /**
  * @brief structure used when gimbal instance is initialized
  */
 typedef struct {
-  MotorCANBase* pitch_motor; /* pitch motor instance                                    */
-  MotorCANBase* yaw_motor;   /* yaw motor instance                                      */
-  float pitch_offset;        /* pitch motor offset                                      */
-  float yaw_offset;          /* yaw motor offset                                        */
-  float pitch_max;           /* pitch motor max turning angle                           */ 
-  float yaw_max;             /* yaw motor max turning angle                             */
-  float pitch_proximity;     /* critical pitch diff angle for pid control to toggle     */
-  float yaw_proximity;       /* critical yaw diff angle for pid control to toggle       */
-  float pitch_move_Kp;       /* Kp of pid that used to control pitch motor when moving  */
-  float pitch_move_Ki;       /* Ki of pid that used to control pitch motor when moving  */
-  float pitch_move_Kd;       /* Kd of pid that used to control pitch motor when moving  */
-  float yaw_move_Kp;         /* Kp of pid that used to control yaw motor when moving    */
-  float yaw_move_Ki;         /* Ki of pid that used to control yaw motor when moving    */
-  float yaw_move_Kd;         /* Kd of pid that used to control yaw motor when moving    */
-  float pitch_hold_Kp;       /* Kp of pid that used to control pitch motor when holding */
-  float pitch_hold_Ki;       /* Kd of pid that used to control pitch motor when holding */
-  float pitch_hold_Kd;       /* Ki of pid that used to control pitch motor when holding */
-  float yaw_hold_Kp;         /* Kp of pid that used to control yaw motor when holding   */
-  float yaw_hold_Ki;         /* Ki of pid that used to control yaw motor when holding   */
-  float yaw_hold_Kd;         /* Kd of pid that used to control yaw motor when holding   */
+  MotorCANBase* pitch_motor; /* pitch motor instance */
+  MotorCANBase* yaw_motor;   /* yaw motor instance   */
+  gimbal_model_t model;      /* gimbal model         */
 } gimbal_t;
 
 /**
  * @brief wrapper class for gimbal
  */
 class Gimbal {
-  public:
-    /**
-     * @brief constructor for Gimbal instance
-     * 
-     * @param gimbal structure that used to initialize gimbal, refer to type gimbal_t
-     */
-    Gimbal(gimbal_t gimbal);
+ public:
+  /**
+   * @brief constructor for gimbal
+   * 
+   * @param gimbal structure that used to initialize gimbal, refer to type gimbal_t
+   */
+  Gimbal(gimbal_t gimbal);
 
-    /**
-     * @brief calculate the output of the motors under current configuration
-     */
-    void CalcOutput();
+  /**
+   * @brief destructor for gimbal
+   */
+  ~Gimbal();
 
-    /**
-     * @brief set motors to point to a new orientation
-     *
-     * @param new_pitch new pitch angled
-     * @param new_yaw   new yaw angled
-     */
-    void TargetAbs(float new_pitch, float new_yaw);
+  /**
+   * @brief get gimbal related constants
+   * 
+   * @return refer to gimbal_data_t 
+   */
+  gimbal_data_t GetData() const;
 
-    /**
-     * @brief set motors to point to a new orientation
-     *
-     * @param new_pitch new pitch angled
-     * @param new_yaw   new yaw angled
-     */
-    void TargetRel(float new_pitch, float new_yaw);
+  /**
+   * @brief calculate the output of the motors under current configuration
+   * @note does not command the motor immediately
+   */
+  void Update();
 
-  private:
-    MotorCANBase* pitch_motor_;
-    MotorCANBase* yaw_motor_;
-    
-    float pitch_offset_;
-    float yaw_offset_;
-    float pitch_max_;
-    float yaw_max_;
-    float pitch_proximity_;
-    float yaw_proximity_;
+  /**
+   * @brief set motors to point to a new orientation
+   *
+   * @param new_pitch new pitch angled
+   * @param new_yaw   new yaw angled
+   */
+  void TargetAbs(float new_pitch, float new_yaw);
 
-    float pitch_move_Kp_;
-    float pitch_move_Ki_;
-    float pitch_move_Kd_;
-    float yaw_move_Kp_;
-    float yaw_move_Ki_;
-    float yaw_move_Kd_;
-    float pitch_hold_Kp_;
-    float pitch_hold_Ki_;
-    float pitch_hold_Kd_;
-    float yaw_hold_Kp_;
-    float yaw_hold_Ki_;
-    float yaw_hold_Kd_;
+  /**
+   * @brief set motors to point to a new orientation
+   *
+   * @param new_pitch new pitch angled
+   * @param new_yaw   new yaw angled
+   */
+  void TargetRel(float new_pitch, float new_yaw);
 
-    float pitch_angle_;
-    float yaw_angle_;
+ private:
+  // acquired from user
+  MotorCANBase* pitch_motor_;
+  MotorCANBase* yaw_motor_;
+  gimbal_model_t model_;
+  
+  // pitch and yaw constants
+  gimbal_data_t data_;
 
-    PIDController pitch_pid_;
-    PIDController yaw_pid_;
-    BoolEdgeDetector pitch_detector_;
-    BoolEdgeDetector yaw_detector_;
+  // pitch and yaw pid
+  float* pitch_move_pid_param_; /* pid param that used to control pitch motor when moving  */
+  float* pitch_hold_pid_param_; /* pid param that used to control pitch motor when holding */
+  float* yaw_move_pid_param_;   /* pid param that used to control yaw motor when moving    */
+  float* yaw_hold_pid_param_;   /* pid param that used to control yaw motor when holding   */
+  PIDController* pitch_pid_;    /* pitch pid                                               */
+  PIDController* yaw_pid_;      /* yaw pid                                                 */
+
+  // pitch and yaw angle 
+  float pitch_angle_; /* current gimbal pitch angle */
+  float yaw_angle_;   /* current gimbal yaw angle   */
+
+  // state detectors
+  BoolEdgeDetector pitch_detector_; /* pitch pid mode toggle detector */
+  BoolEdgeDetector yaw_detector_;   /* yaw pid mode toggle detector   */
 };
 
 } // namespace control

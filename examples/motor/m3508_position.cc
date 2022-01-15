@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-#define WITH_CONTROLLER
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -64,9 +64,9 @@ void RM_RTOS_Init() {
   servo_data.move_Kp = 30;
   servo_data.move_Ki = 10;
   servo_data.move_Kd = 40;
-  servo_data.hold_Kp = 30;
-  servo_data.hold_Ki = 25;
-  servo_data.hold_Kd = 20;
+  servo_data.hold_Kp = 1500;
+  servo_data.hold_Ki = 15;
+  servo_data.hold_Kd = 100;
   servo = new control::ServoMotor(servo_data);
 
 #ifdef WITH_CONTROLLER
@@ -86,7 +86,6 @@ void RM_RTOS_Default_Task(const void* args) {
   float target = NOTCH;
 
   while (true) {
-    print("%d %d", dbus->ch3, dbus->ch2);
 #ifdef WITH_CONTROLLER
     // joystick input range from -660 to 660
     joystick_detector_abv.input(dbus->ch3 > 500);
@@ -109,7 +108,7 @@ void RM_RTOS_Default_Task(const void* args) {
 #else
     key_detector.input(key.Read());
     if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, -PI, PI);
+      target = wrap<float>(target + NOTCH, 0, 2 * PI);
     }
 #endif
     servo->CalcOutput();

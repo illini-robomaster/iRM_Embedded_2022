@@ -1,0 +1,315 @@
+\hypertarget{protocol_8h_source}{}\doxysection{protocol.\+h}
+\label{protocol_8h_source}\index{shared/libraries/protocol.h@{shared/libraries/protocol.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/****************************************************************************}}
+\DoxyCodeLine{2 \textcolor{comment}{*                                                                          *}}
+\DoxyCodeLine{3 \textcolor{comment}{*  Copyright (C) 2022 RoboMaster.                                          *}}
+\DoxyCodeLine{4 \textcolor{comment}{*  Illini RoboMaster @ University of Illinois at Urbana-\/Champaign          *}}
+\DoxyCodeLine{5 \textcolor{comment}{*                                                                          *}}
+\DoxyCodeLine{6 \textcolor{comment}{*  This program is free software: you can redistribute it and/or modify    *}}
+\DoxyCodeLine{7 \textcolor{comment}{*  it under the terms of the GNU General Public License as published by    *}}
+\DoxyCodeLine{8 \textcolor{comment}{*  the Free Software Foundation, either version 3 of the License, or       *}}
+\DoxyCodeLine{9 \textcolor{comment}{*  (at your option) any later version.                                     *}}
+\DoxyCodeLine{10 \textcolor{comment}{*                                                                          *}}
+\DoxyCodeLine{11 \textcolor{comment}{*  This program is distributed in the hope that it will be useful,         *}}
+\DoxyCodeLine{12 \textcolor{comment}{*  but WITHOUT ANY WARRANTY; without even the implied warranty of          *}}
+\DoxyCodeLine{13 \textcolor{comment}{*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *}}
+\DoxyCodeLine{14 \textcolor{comment}{*  GNU General Public License for more details.                            *}}
+\DoxyCodeLine{15 \textcolor{comment}{*                                                                          *}}
+\DoxyCodeLine{16 \textcolor{comment}{*  You should have received a copy of the GNU General Public License       *}}
+\DoxyCodeLine{17 \textcolor{comment}{*  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
+\DoxyCodeLine{18 \textcolor{comment}{*                                                                          *}}
+\DoxyCodeLine{19 \textcolor{comment}{****************************************************************************/}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}bsp\_error\_handler.h"{}}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{keyword}{namespace }communication \{}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{keyword}{constexpr} \textcolor{keywordtype}{int} MAX\_FRAME\_LEN = 300;}
+\DoxyCodeLine{28 }
+\DoxyCodeLine{29 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{30     uint8\_t* data;}
+\DoxyCodeLine{31     \textcolor{keywordtype}{int} length;}
+\DoxyCodeLine{32 \} \mbox{\hyperlink{structcommunication_1_1package__t}{package\_t}};}
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{keyword}{class }\mbox{\hyperlink{classcommunication_1_1Protocol}{Protocol}} \{}
+\DoxyCodeLine{35 \textcolor{keyword}{public}:}
+\DoxyCodeLine{43     \textcolor{keywordtype}{bool} \mbox{\hyperlink{classcommunication_1_1Protocol_a7542e4d14d3a95bd494da5577d041475}{Receive}}(\mbox{\hyperlink{structcommunication_1_1package__t}{package\_t}} package);}
+\DoxyCodeLine{44 }
+\DoxyCodeLine{51     \mbox{\hyperlink{structcommunication_1_1package__t}{package\_t}} \mbox{\hyperlink{classcommunication_1_1Protocol_a710205e5bf23343bef085c07dd71bf84}{Transmit}}(\textcolor{keywordtype}{int} cmd\_id);}
+\DoxyCodeLine{52 }
+\DoxyCodeLine{53 \textcolor{keyword}{private}:}
+\DoxyCodeLine{54     uint8\_t bufferRx[MAX\_FRAME\_LEN] = \{0\};}
+\DoxyCodeLine{55     uint8\_t bufferTx[MAX\_FRAME\_LEN] = \{0\};}
+\DoxyCodeLine{56 }
+\DoxyCodeLine{64     \textcolor{keywordtype}{bool} VerifyHeader(\textcolor{keyword}{const} uint8\_t* data, \textcolor{keywordtype}{int} length);}
+\DoxyCodeLine{65 }
+\DoxyCodeLine{73     \textcolor{keywordtype}{bool} VerifyFrame(\textcolor{keyword}{const} uint8\_t* data, \textcolor{keywordtype}{int} length);}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{83     \textcolor{keyword}{virtual} \textcolor{keywordtype}{bool} ProcessDataRx(\textcolor{keywordtype}{int} cmd\_id, \textcolor{keyword}{const} uint8\_t* data, \textcolor{keywordtype}{int} length) = 0;}
+\DoxyCodeLine{84 }
+\DoxyCodeLine{91     \textcolor{keywordtype}{void} AppendHeader(uint8\_t* data, \textcolor{keywordtype}{int} length);}
+\DoxyCodeLine{92 }
+\DoxyCodeLine{99     \textcolor{keywordtype}{void} AppendFrame(uint8\_t* data, \textcolor{keywordtype}{int} length);}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{108     \textcolor{keyword}{virtual} \textcolor{keywordtype}{int} ProcessDataTx(\textcolor{keywordtype}{int} cmd\_id, uint8\_t* data) = 0;}
+\DoxyCodeLine{109 \};}
+\DoxyCodeLine{110 }
+\DoxyCodeLine{111 \textcolor{comment}{/* Command for Referee */}}
+\DoxyCodeLine{112 }
+\DoxyCodeLine{113 \textcolor{comment}{/*}}
+\DoxyCodeLine{114 \textcolor{comment}{ * 0x0001 GAME\_STATUS}}
+\DoxyCodeLine{115 \textcolor{comment}{ * 0x0002 GAME\_RESULT}}
+\DoxyCodeLine{116 \textcolor{comment}{ * 0x0003 GAME\_ROBOT\_HP}}
+\DoxyCodeLine{117 \textcolor{comment}{ * 0x0005 ICRA\_BUFF\_DEBUFF\_ZONE\_STATUS [X]}}
+\DoxyCodeLine{118 \textcolor{comment}{ * 0x0101 EVENT\_DATA}}
+\DoxyCodeLine{119 \textcolor{comment}{ * 0x0102 SUPPLY\_PROJECTILE\_ACTION}}
+\DoxyCodeLine{120 \textcolor{comment}{ * 0x0104 REFEREE\_WARNING}}
+\DoxyCodeLine{121 \textcolor{comment}{ * 0x0105 DART\_REMAINING\_TIME}}
+\DoxyCodeLine{122 \textcolor{comment}{ * 0x0201 GAME\_ROBOT\_STATUS}}
+\DoxyCodeLine{123 \textcolor{comment}{ * 0x0202 POWER\_HEAT\_DATA}}
+\DoxyCodeLine{124 \textcolor{comment}{ * 0x0203 GAME\_ROBOT\_POS}}
+\DoxyCodeLine{125 \textcolor{comment}{ * 0x0204 BUFF}}
+\DoxyCodeLine{126 \textcolor{comment}{ * 0x0205 AERIAL\_ROBOT\_ENERGY}}
+\DoxyCodeLine{127 \textcolor{comment}{ * 0x0206 ROBOT\_HURT}}
+\DoxyCodeLine{128 \textcolor{comment}{ * 0x0207 SHOOT\_DATA}}
+\DoxyCodeLine{129 \textcolor{comment}{ * 0x0208 BULLET\_REMAINING}}
+\DoxyCodeLine{130 \textcolor{comment}{ * 0x0209 RFID\_STATUS}}
+\DoxyCodeLine{131 \textcolor{comment}{ * 0x020A DART\_CLIENT\_CMD}}
+\DoxyCodeLine{132 \textcolor{comment}{ * 0x0301 STUDENT\_INTERACTIVE [X]}}
+\DoxyCodeLine{133 \textcolor{comment}{ * 0x0302 ROBOT\_INTERACTIVE [x]}}
+\DoxyCodeLine{134 \textcolor{comment}{ * 0x0303 ROBOT\_COMMAND [x]}}
+\DoxyCodeLine{135 \textcolor{comment}{ * 0x0304 ROBOT\_COMMAND [x]}}
+\DoxyCodeLine{136 \textcolor{comment}{ * 0x0305 CLIENT\_MAP\_COMMAND [x]}}
+\DoxyCodeLine{137 \textcolor{comment}{ */}}
+\DoxyCodeLine{138 }
+\DoxyCodeLine{139 \textcolor{comment}{/* TODO(neo): above information with [x] should be implemented when needed in the future*/}}
+\DoxyCodeLine{140 }
+\DoxyCodeLine{141 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
+\DoxyCodeLine{142     GAME\_STATUS = 0x0001,}
+\DoxyCodeLine{143     GAME\_RESULT = 0x0002,}
+\DoxyCodeLine{144     GAME\_ROBOT\_HP = 0x003,}
+\DoxyCodeLine{145     EVENT\_DATA = 0x0101,}
+\DoxyCodeLine{146     SUPPLY\_PROJECTILE\_ACTION = 0x0102,}
+\DoxyCodeLine{147     REFEREE\_WARNING = 0x0104,}
+\DoxyCodeLine{148     DART\_REMAINING\_TIME = 0x0105,}
+\DoxyCodeLine{149     GAME\_ROBOT\_STATUS = 0x0201,}
+\DoxyCodeLine{150     POWER\_HEAT\_DATA = 0x0202,}
+\DoxyCodeLine{151     GAME\_ROBOT\_POS = 0x0203,}
+\DoxyCodeLine{152     BUFF = 0x0204,}
+\DoxyCodeLine{153     AERIAL\_ROBOT\_ENERGY = 0x0205,}
+\DoxyCodeLine{154     ROBOT\_HURT = 0x0206,}
+\DoxyCodeLine{155     SHOOT\_DATA = 0x0207,}
+\DoxyCodeLine{156     BULLET\_REMAINING = 0x0208,}
+\DoxyCodeLine{157     RFID\_STATUS = 0x0209,}
+\DoxyCodeLine{158     DART\_CLIENT\_CMD = 0x020A,}
+\DoxyCodeLine{159 \} referee\_cmd;}
+\DoxyCodeLine{160 }
+\DoxyCodeLine{161 \textcolor{comment}{/* ===== GAME\_STATUS 0x0001 1Hz ===== */}}
+\DoxyCodeLine{162 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{163     uint8\_t game\_type:4;}
+\DoxyCodeLine{164     uint8\_t game\_progress:4;}
+\DoxyCodeLine{165     uint16\_t stage\_remain\_time;}
+\DoxyCodeLine{166 }
+\DoxyCodeLine{167     uint64\_t SyncTimeStamp;}
+\DoxyCodeLine{168 \} \mbox{\hyperlink{structcommunication_1_1____packed}{\_\_packed}} game\_status\_t;}
+\DoxyCodeLine{169 }
+\DoxyCodeLine{170 \textcolor{comment}{/* ===== GAME\_RESULT 0x0002 ===== */}}
+\DoxyCodeLine{171 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{172     uint8\_t winner;}
+\DoxyCodeLine{173 \} \_\_packed game\_result\_t;}
+\DoxyCodeLine{174 }
+\DoxyCodeLine{175 \textcolor{comment}{/* ===== GAME\_ROBOT\_HP 0x0003 1Hz ===== */}}
+\DoxyCodeLine{176 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{177     uint16\_t red\_1\_robot\_HP;}
+\DoxyCodeLine{178     uint16\_t red\_2\_robot\_HP;}
+\DoxyCodeLine{179     uint16\_t red\_3\_robot\_HP;}
+\DoxyCodeLine{180     uint16\_t red\_4\_robot\_HP;}
+\DoxyCodeLine{181     uint16\_t red\_5\_robot\_HP;}
+\DoxyCodeLine{182     uint16\_t red\_6\_robot\_HP;}
+\DoxyCodeLine{183     uint16\_t red\_7\_robot\_HP;}
+\DoxyCodeLine{184 }
+\DoxyCodeLine{185     uint16\_t red\_outpost\_HP;}
+\DoxyCodeLine{186     uint16\_t red\_base\_HP;}
+\DoxyCodeLine{187 }
+\DoxyCodeLine{188     uint16\_t blue\_1\_robot\_HP;}
+\DoxyCodeLine{189     uint16\_t blue\_2\_robot\_HP;}
+\DoxyCodeLine{190     uint16\_t blue\_3\_robot\_HP;}
+\DoxyCodeLine{191     uint16\_t blue\_4\_robot\_HP;}
+\DoxyCodeLine{192     uint16\_t blue\_5\_robot\_HP;}
+\DoxyCodeLine{193     uint16\_t blue\_7\_robot\_HP;}
+\DoxyCodeLine{194 }
+\DoxyCodeLine{195     uint16\_t blue\_outpost\_HP;}
+\DoxyCodeLine{196     uint16\_t blue\_base\_HP;}
+\DoxyCodeLine{197 \} \_\_packed game\_robot\_HP\_t;}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199 \textcolor{comment}{/* ===== EVENT\_DATA 0x0101 1Hz ===== */}}
+\DoxyCodeLine{200 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{201     uint32\_t event\_type;}
+\DoxyCodeLine{202 \} \_\_packed event\_data\_t;}
+\DoxyCodeLine{203 }
+\DoxyCodeLine{204 \textcolor{comment}{/* ===== SUPPLY\_PROJECTILE\_ACTION 0x0102 ===== */}}
+\DoxyCodeLine{205 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{206     uint8\_t supply\_projectile\_id;}
+\DoxyCodeLine{207     uint8\_t supply\_robot\_id;}
+\DoxyCodeLine{208     uint8\_t supply\_projectile\_step;}
+\DoxyCodeLine{209     uint8\_t supply\_projectile\_num;}
+\DoxyCodeLine{210 \} \_\_packed supply\_projectile\_action\_t;}
+\DoxyCodeLine{211 }
+\DoxyCodeLine{212 \textcolor{comment}{/* ===== REFEREE\_WARNING 0x0104 ===== */}}
+\DoxyCodeLine{213 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{214     uint8\_t level;}
+\DoxyCodeLine{215     uint8\_t foul\_robot\_id;}
+\DoxyCodeLine{216 \} \_\_packed referee\_warning\_t;}
+\DoxyCodeLine{217 }
+\DoxyCodeLine{218 \textcolor{comment}{/* ===== DART\_REMAINING\_TIME 0x0105 1Hz ===== */}}
+\DoxyCodeLine{219 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{220     uint8\_t dart\_remaining\_time;}
+\DoxyCodeLine{221 \} \_\_packed dart\_remaining\_time\_t;}
+\DoxyCodeLine{222 }
+\DoxyCodeLine{223 \textcolor{comment}{/* ===== GAME\_ROBOT\_STATUS 0x0201 10Hz ===== */}}
+\DoxyCodeLine{224 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{225     uint8\_t robot\_id;}
+\DoxyCodeLine{226     uint8\_t robot\_level;}
+\DoxyCodeLine{227     uint16\_t remain\_HP;}
+\DoxyCodeLine{228     uint16\_t max\_HP;}
+\DoxyCodeLine{229 }
+\DoxyCodeLine{230     uint16\_t shooter\_id1\_17mm\_cooling\_rate;}
+\DoxyCodeLine{231     uint16\_t shooter\_id1\_17mm\_cooling\_limit;}
+\DoxyCodeLine{232     uint16\_t shooter\_id1\_17mm\_speed\_limit;}
+\DoxyCodeLine{233 }
+\DoxyCodeLine{234     uint16\_t shooter\_id2\_17mm\_cooling\_rate;}
+\DoxyCodeLine{235     uint16\_t shooter\_id2\_17mm\_cooling\_limit;}
+\DoxyCodeLine{236     uint16\_t shooter\_id2\_17mm\_speed\_limit;}
+\DoxyCodeLine{237 }
+\DoxyCodeLine{238     uint16\_t shooter\_id1\_42mm\_cooling\_rate;}
+\DoxyCodeLine{239     uint16\_t shooter\_id1\_42mm\_cooling\_limit;}
+\DoxyCodeLine{240     uint16\_t shooter\_id1\_42mm\_speed\_limit;}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242     uint16\_t chassis\_power\_limit;}
+\DoxyCodeLine{243     uint8\_t mains\_power\_gimbal\_output:1;}
+\DoxyCodeLine{244     uint8\_t mains\_power\_chassis\_output:1;}
+\DoxyCodeLine{245     uint8\_t mains\_power\_shooter\_output:1;}
+\DoxyCodeLine{246 \} \_\_packed game\_robot\_status\_t;}
+\DoxyCodeLine{247 }
+\DoxyCodeLine{248 \textcolor{comment}{/* ===== POWER\_HEAT\_DATA 0x0202 50Hz ===== */}}
+\DoxyCodeLine{249 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{250     uint16\_t chassis\_volt;}
+\DoxyCodeLine{251     uint16\_t chassis\_current;}
+\DoxyCodeLine{252     \textcolor{keywordtype}{float} chassis\_power;}
+\DoxyCodeLine{253     uint16\_t chassis\_power\_buffer;}
+\DoxyCodeLine{254     uint16\_t shooter\_id1\_17mm\_cooling\_heat;}
+\DoxyCodeLine{255     uint16\_t shooter\_id2\_17mm\_cooling\_heat;}
+\DoxyCodeLine{256     uint16\_t shooter\_id1\_42mm\_cooling\_heat;}
+\DoxyCodeLine{257 \} \_\_packed power\_heat\_data\_t;}
+\DoxyCodeLine{258 }
+\DoxyCodeLine{259 \textcolor{comment}{/* ===== GAME\_ROBOT\_POS 0x0203 10Hz ===== */}}
+\DoxyCodeLine{260 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{261     \textcolor{keywordtype}{float} x;}
+\DoxyCodeLine{262     \textcolor{keywordtype}{float} y;}
+\DoxyCodeLine{263     \textcolor{keywordtype}{float} z;}
+\DoxyCodeLine{264     \textcolor{keywordtype}{float} yaw;}
+\DoxyCodeLine{265 \} \_\_packed game\_robot\_pos\_t;}
+\DoxyCodeLine{266 }
+\DoxyCodeLine{267 \textcolor{comment}{/* ===== BUFF 0x0204 1Hz ===== */}}
+\DoxyCodeLine{268 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{269     uint8\_t power\_rune\_buff;}
+\DoxyCodeLine{270 \} \_\_packed buff\_t;}
+\DoxyCodeLine{271 }
+\DoxyCodeLine{272 \textcolor{comment}{/* ===== AERIAL\_ROBOT\_ENERGY 0x0205 10Hz ===== */}}
+\DoxyCodeLine{273 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{274     uint8\_t attack\_time;}
+\DoxyCodeLine{275 \} \_\_packed aerial\_robot\_energy\_t;}
+\DoxyCodeLine{276 }
+\DoxyCodeLine{277 \textcolor{comment}{/* ===== ROBOT\_HURT 0x0206 ===== */}}
+\DoxyCodeLine{278 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{279     uint8\_t armor\_id:4;}
+\DoxyCodeLine{280     uint8\_t hurt\_type:4;}
+\DoxyCodeLine{281 \} \_\_packed robot\_hurt\_t;}
+\DoxyCodeLine{282 }
+\DoxyCodeLine{283 \textcolor{comment}{/* ===== SHOOT\_DATA 0x0207 ===== */}}
+\DoxyCodeLine{284 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{285     uint8\_t bullet\_type;}
+\DoxyCodeLine{286     uint8\_t shooter\_id;}
+\DoxyCodeLine{287     uint8\_t bullet\_freq;}
+\DoxyCodeLine{288     \textcolor{keywordtype}{float} bullet\_speed;}
+\DoxyCodeLine{289 \} \_\_packed shoot\_data\_t;}
+\DoxyCodeLine{290 }
+\DoxyCodeLine{291 \textcolor{comment}{/* ===== BULLET\_REMAINING 0x0208 10Hz ===== */}}
+\DoxyCodeLine{292 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{293     uint16\_t bullet\_remaining\_num\_17mm;}
+\DoxyCodeLine{294     uint16\_t bullet\_remaining\_num\_42mm;}
+\DoxyCodeLine{295     uint16\_t coin\_remaining\_num;}
+\DoxyCodeLine{296 \} \_\_packed bullet\_remaining\_t;}
+\DoxyCodeLine{297 }
+\DoxyCodeLine{298 \textcolor{comment}{/* ===== RFID\_STATUS 0x0209 1Hz ===== */}}
+\DoxyCodeLine{299 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{300     uint32\_t rfid\_status;}
+\DoxyCodeLine{301 \} \_\_packed rfid\_status\_t;}
+\DoxyCodeLine{302 }
+\DoxyCodeLine{303 \textcolor{comment}{/* ===== DART\_CLIENT\_CMD 0x020A 10Hz ===== */}}
+\DoxyCodeLine{304 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{305     uint8\_t dart\_launch\_opening\_status;}
+\DoxyCodeLine{306     uint8\_t dart\_attack\_target;}
+\DoxyCodeLine{307     uint16\_t target\_change\_time;}
+\DoxyCodeLine{308     uint16\_t operate\_launch\_cmd\_time;}
+\DoxyCodeLine{309 \} \_\_packed dart\_client\_cmd\_t;}
+\DoxyCodeLine{310 }
+\DoxyCodeLine{311 \textcolor{keyword}{class }\mbox{\hyperlink{classcommunication_1_1Referee}{Referee}}: \textcolor{keyword}{public} \mbox{\hyperlink{classcommunication_1_1Protocol}{Protocol}} \{}
+\DoxyCodeLine{312 \textcolor{keyword}{public}:}
+\DoxyCodeLine{313     game\_status\_t game\_status\{\};}
+\DoxyCodeLine{314     game\_result\_t game\_result\{\};}
+\DoxyCodeLine{315     game\_robot\_HP\_t game\_robot\_HP\{\};}
+\DoxyCodeLine{316     event\_data\_t event\_data\{\};}
+\DoxyCodeLine{317     supply\_projectile\_action\_t supply\_projectile\_action\{\};}
+\DoxyCodeLine{318     referee\_warning\_t referee\_warning\{\};}
+\DoxyCodeLine{319     dart\_remaining\_time\_t dart\_remaining\_time\{\};}
+\DoxyCodeLine{320     game\_robot\_status\_t game\_robot\_status\{\};}
+\DoxyCodeLine{321     power\_heat\_data\_t power\_heat\_data\{\};}
+\DoxyCodeLine{322     game\_robot\_pos\_t game\_robot\_pos\{\};}
+\DoxyCodeLine{323     buff\_t buff\{\};}
+\DoxyCodeLine{324     aerial\_robot\_energy\_t aerial\_robot\_energy\{\};}
+\DoxyCodeLine{325     robot\_hurt\_t robot\_hurt\{\};}
+\DoxyCodeLine{326     shoot\_data\_t shoot\_data\{\};}
+\DoxyCodeLine{327     bullet\_remaining\_t bullet\_remaining\{\};}
+\DoxyCodeLine{328     rfid\_status\_t rfid\_status\{\};}
+\DoxyCodeLine{329     dart\_client\_cmd\_t dart\_client\_cmd\{\};}
+\DoxyCodeLine{330 }
+\DoxyCodeLine{331 \textcolor{keyword}{private}:}
+\DoxyCodeLine{340     \textcolor{keywordtype}{bool} ProcessDataRx(\textcolor{keywordtype}{int} cmd\_id, \textcolor{keyword}{const} uint8\_t *data, \textcolor{keywordtype}{int} length) \textcolor{keyword}{final};}
+\DoxyCodeLine{341 }
+\DoxyCodeLine{349     \textcolor{keywordtype}{int} ProcessDataTx(\textcolor{keywordtype}{int} cmd\_id, uint8\_t *data) \textcolor{keyword}{final};}
+\DoxyCodeLine{350 \};}
+\DoxyCodeLine{351 }
+\DoxyCodeLine{352 \textcolor{comment}{/* Command for Host */}}
+\DoxyCodeLine{353 }
+\DoxyCodeLine{354 \textcolor{comment}{/*}}
+\DoxyCodeLine{355 \textcolor{comment}{ * 0x0401 PACK}}
+\DoxyCodeLine{356 \textcolor{comment}{ */}}
+\DoxyCodeLine{357 }
+\DoxyCodeLine{358 \textcolor{comment}{/* TODO(neo): the PACK command is for test only, please add real command structures in the future for the communication between host and serve */}}
+\DoxyCodeLine{359 }
+\DoxyCodeLine{360 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
+\DoxyCodeLine{361     PACK = 0x0401,}
+\DoxyCodeLine{362 \} host\_cmd;}
+\DoxyCodeLine{363 }
+\DoxyCodeLine{364 \textcolor{comment}{/* ===== PACK 0x0401 ===== */}}
+\DoxyCodeLine{365 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{366     \textcolor{keywordtype}{char} chars[256];  \textcolor{comment}{// a string with maximum 256 chars}}
+\DoxyCodeLine{367 \} \_\_packed pack\_t;}
+\DoxyCodeLine{368 }
+\DoxyCodeLine{369 \textcolor{keyword}{class }\mbox{\hyperlink{classcommunication_1_1Host}{Host}}: \textcolor{keyword}{public} \mbox{\hyperlink{classcommunication_1_1Protocol}{Protocol}} \{}
+\DoxyCodeLine{370 \textcolor{keyword}{public}:}
+\DoxyCodeLine{371     pack\_t pack\{\};}
+\DoxyCodeLine{372 \textcolor{keyword}{private}:}
+\DoxyCodeLine{381     \textcolor{keywordtype}{bool} ProcessDataRx(\textcolor{keywordtype}{int} cmd\_id, \textcolor{keyword}{const} uint8\_t *data, \textcolor{keywordtype}{int} length) \textcolor{keyword}{final};}
+\DoxyCodeLine{382 }
+\DoxyCodeLine{390     \textcolor{keywordtype}{int} ProcessDataTx(\textcolor{keywordtype}{int} cmd\_id, uint8\_t *data) \textcolor{keyword}{final};}
+\DoxyCodeLine{391 \};}
+\DoxyCodeLine{392 }
+\DoxyCodeLine{393 \} \textcolor{comment}{/* namespace communication */}}
+
+\end{DoxyCode}
