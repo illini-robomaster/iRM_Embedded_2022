@@ -31,7 +31,6 @@ bsp::CAN* can1 = NULL;
 control::MotorCANBase* motor1 = NULL;
 control::MotorCANBase* motor2 = NULL;
 
-
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 

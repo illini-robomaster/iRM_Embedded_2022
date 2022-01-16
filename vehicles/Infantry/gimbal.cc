@@ -18,14 +18,16 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
 #include "gimbal.h"
+
+#include "main.h"
 
 /**
  *@description thread for gimbal
  *TODO implement this
-**/
-void gimbalTask (void* arg) {
+ **/
+void gimbalTask(void* arg) {
   UNUSED(arg);
-  while (true);
+  while (true)
+    ;
 }

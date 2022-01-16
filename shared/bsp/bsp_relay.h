@@ -26,7 +26,7 @@
 
 namespace bsp {
 
-class Relay{
+class Relay {
  public:
   /**
    * @brief Constructor for relay
@@ -45,6 +45,7 @@ class Relay{
    * @brief Turn off relay
    */
   void Off();
+
  private:
   GPIO relay_;
 };

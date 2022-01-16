@@ -20,17 +20,15 @@
 
 #pragma once
 
-#include "motor.h"
 #include "controller.h"
+#include "motor.h"
 
 namespace control {
 
 /**
- * @brief chassis models 
+ * @brief chassis models
  */
-typedef enum {
-  CHASSIS_STANDARD_ZERO
-} chassis_model_t;
+typedef enum { CHASSIS_STANDARD_ZERO } chassis_model_t;
 
 /**
  * @brief structure used when chassis instance is initialized
@@ -44,13 +42,7 @@ typedef struct {
  * @brief motor configs for four wheel vehicles
  */
 struct FourWheel {
-  enum {
-    front_left,
-    front_right,
-    back_left,
-    back_right,
-    motor_num
-  };
+  enum { front_left, front_right, back_left, back_right, motor_num };
 };
 
 /**
@@ -60,7 +52,7 @@ class Chassis {
  public:
   /**
    * @brief constructor for chassis
-   * 
+   *
    * @param chassis structure that used to initialize chassis, refer to type chassis_t
    */
   Chassis(const chassis_t chassis);
@@ -72,13 +64,12 @@ class Chassis {
 
   /**
    * @brief set the speed for chassis motors
-   * 
+   *
    * @param x_speed chassis speed on x-direction
    * @param y_speed chassis speed on y-direction
    * @param turn_speed chassis clockwise turning speed
    */
   void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
-
 
   /**
    * @brief calculate the output of the motors under current configuration
@@ -96,4 +87,4 @@ class Chassis {
   float* speeds_;
 };
 
-}
+}  // namespace control

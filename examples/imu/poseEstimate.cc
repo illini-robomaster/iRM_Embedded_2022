@@ -20,14 +20,12 @@
 
 #include <cmath>
 
-#include "main.h"
-
 #include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_os.h"
-#include "cmsis_os.h"
 #include "bsp_print.h"
-
+#include "cmsis_os.h"
+#include "main.h"
 #include "pose.h"
 
 #define ONBOARD_IMU_SPI hspi5
@@ -38,25 +36,25 @@
 static bsp::MPU6500* imu;
 
 void RM_RTOS_Init(void) {
-	bsp::SetHighresClockTimer(&htim2);
-	print_use_uart(&PRING_UART);
+  bsp::SetHighresClockTimer(&htim2);
+  print_use_uart(&PRING_UART);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  
+
   // init IMU instance
   bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
   imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
   osDelay(3000);
   print("IMU Initialized!\r\n");
-    
+
   // init pose estimator instance
   control::Pose poseEstimator(imu);
-  
+
   // Set alpha for the complementary filter in the pose estimator
   poseEstimator.SetAlpha(0.95);
-  
+
   // init params
   float roll = 0;
   float pitch = 0;
@@ -67,17 +65,17 @@ void RM_RTOS_Default_Task(const void* arguments) {
   float degYaw = 0;
   // calibrate the Offset for IMU acce meter and gyro
   poseEstimator.Calibrate();
-  
+
   // reset timer and pose for IMU
   poseEstimator.PoseInit();
-  
+
   /* NOTE: IMU SHOULD BE PLACED ON A FLAT PLANE WHILE RUNNING THE FUNCTIONS ABOVE */
-  
+
   while (true) {
     // update estimated pose with complementary filter
     poseEstimator.ComplementaryFilterUpdate();
     osDelay(10);
-    
+
     // print pose every 200ms
     i += 1;
     if (i >= 20) {
@@ -95,9 +93,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
       degYaw = yaw * 180 / 3.14;
       print("P_DEG: %6.4f R_DEG: %6.4f \r\n", degPitch, degRoll);
       print("Y_DEG: %6.4f \r\n", degYaw);
-      
+
       i = 0;
     }
-    
   }
 }

@@ -35,7 +35,8 @@ void sd_task(void* argu) {
   bsp::SDFileLogger logger("log.txt");
   logger.Log(tx1, strlen((char*)tx1));
   logger.Log(tx2, strlen((char*)tx2));
-  while (true);
+  while (true)
+    ;
 }
 
 void RM_RTOS_Threads_Init(void) {

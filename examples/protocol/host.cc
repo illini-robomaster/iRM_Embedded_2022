@@ -18,14 +18,13 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
-#include "bsp_uart.h"
-#include "bsp_gpio.h"
-#include "cmsis_os.h"
-#include "protocol.h"
-
 #include <cstring>
+
+#include "bsp_gpio.h"
+#include "bsp_uart.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "protocol.h"
 
 static communication::Host* host = nullptr;
 static bsp::UART* client = nullptr;
@@ -47,7 +46,8 @@ void RM_RTOS_Init(void) {
 void RM_RTOS_Default_Task(const void* argument) {
   UNUSED(argument);
   communication::package_t frame;
-  communication::pack_t message[3] = {{"Sazabi Gundam!"}, {"Sinanju Gundam!"}, {"Kshatriya Gundam!"}};
+  communication::pack_t message[3] = {
+      {"Sazabi Gundam!"}, {"Sinanju Gundam!"}, {"Kshatriya Gundam!"}};
 
   while (true) {
     for (int i = 0; i < 3; ++i) {

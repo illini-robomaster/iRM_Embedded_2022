@@ -22,17 +22,15 @@
 #include "cmsis_os.h"
 
 // task attribute for gimbalTask init in rm_rtos.cc
-const osThreadAttr_t gimbalTaskAttribute = {
-  .name = "gimbalTask",
-  .attr_bits = osThreadDetached,
-  .cb_mem = nullptr,
-  .cb_size = 0,
-  .stack_mem = nullptr,
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-  .tz_module = 0,
-  .reserved = 0
-};
+const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 128 * 4,
+                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
 
 // function declaration
-void gimbalTask (void* arg);
+void gimbalTask(void* arg);

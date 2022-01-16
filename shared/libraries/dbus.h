@@ -64,8 +64,8 @@ class DBUS : public bsp::UART {
  public:
   /**
    * @brief intialize DBUS the same way as a generic UART peripheral
-   * @note like uart, dbus needs time to initialize 
-   * 
+   * @note like uart, dbus needs time to initialize
+   *
    * @param huart uart instance
    */
   DBUS(UART_HandleTypeDef* huart);
