@@ -17,25 +17,25 @@ jobs:
       id: cache-arm
       uses: actions/cache@v2
       with:
-        path: ~/arm-toolchain
+        path: ~/arm-toolchain-2022
         key: ${{ runner.os }}-arm-toolchain
     # download ARM toolchain
     - name: download ARM toolchain
       if: steps.cache-arm.outputs.cache-hit != 'true'
       run: |
         wget -O ~/gcc-arm-none-eabi.tar.bz2 https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2
-        mkdir ~/arm-toolchain
-        tar -xjf ~/gcc-arm-none-eabi.tar.bz2 --directory ~/arm-toolchain --strip-components=1
+        mkdir ~/arm-toolchain-2022
+        tar -xjf ~/gcc-arm-none-eabi.tar.bz2 --directory ~/arm-toolchain-2022 --strip-components=1
     - name: add system path
-      run: echo "~/arm-toolchain/bin" >> $GITHUB_PATH  # set envrionment variable
+      run: echo "~/arm-toolchain-2022/bin" >> $GITHUB_PATH  # set envrionment variable
     - name: cmake
       run: |
         mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Debug ..
     # format check temporarily commented
-    #- name: format check
-    #  run: make check-format
-    #  working-directory: build
+    - name: format check
+      run: make check-format
+      working-directory: build
     - name: build
       run: make -j
       working-directory: build
