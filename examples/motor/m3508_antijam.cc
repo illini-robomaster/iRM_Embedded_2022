@@ -28,12 +28,11 @@
 #include "motor.h"
 #include "utils.h"
 
-
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define NOTCH               (2 * PI / 4)
-#define SPEED               (2 * PI)
+#define NOTCH (2 * PI / 4)
+#define SPEED (2 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;

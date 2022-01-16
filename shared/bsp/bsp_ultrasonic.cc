@@ -22,40 +22,34 @@
 
 namespace bsp {
 
-    Ultrasonic::Ultrasonic(GPIO_TypeDef* trig_group,
-                           uint16_t trig_pin,
-                           GPIO_TypeDef* echo_group,
-                           uint16_t echo_pin,
-                           TIM_TypeDef* timer):
-    trig_(trig_group, trig_pin),
-    echo_(echo_group, echo_pin),
-    timer_(timer) {}
+Ultrasonic::Ultrasonic(GPIO_TypeDef* trig_group, uint16_t trig_pin, GPIO_TypeDef* echo_group,
+                       uint16_t echo_pin, TIM_TypeDef* timer)
+    : trig_(trig_group, trig_pin), echo_(echo_group, echo_pin), timer_(timer) {}
 
-    float Ultrasonic::GetDistance() {
-      constexpr int TIME_OUT = 12000;
-      constexpr float SOUND_SPEED_CM_PER_US = 0.0343;
-      uint32_t base = timer_->CNT;
-      uint32_t curr = base;
-      trig_.High();
-      while (curr - base < 20)
-        curr = timer_->CNT;
-      trig_.Low();
-      base = timer_->CNT;
-      // when the echo is emitted, echo turned to 1. 
-      while (!echo_.Read()) {
-        if ((timer_->CNT - base) > TIME_OUT) {
-          return -1;
-        }
-      }
-      base = timer_->CNT;
-      // when the echo is received, echo turned to 0.
-      while(echo_.Read()) {
-        if ((timer_->CNT - base) > TIME_OUT) {
-          return -1;
-        }
-      }
-      curr = timer_->CNT;
-      return (curr - base) / 2.0 * SOUND_SPEED_CM_PER_US;
+float Ultrasonic::GetDistance() {
+  constexpr int TIME_OUT = 12000;
+  constexpr float SOUND_SPEED_CM_PER_US = 0.0343;
+  uint32_t base = timer_->CNT;
+  uint32_t curr = base;
+  trig_.High();
+  while (curr - base < 20) curr = timer_->CNT;
+  trig_.Low();
+  base = timer_->CNT;
+  // when the echo is emitted, echo turned to 1.
+  while (!echo_.Read()) {
+    if ((timer_->CNT - base) > TIME_OUT) {
+      return -1;
     }
-
+  }
+  base = timer_->CNT;
+  // when the echo is received, echo turned to 0.
+  while (echo_.Read()) {
+    if ((timer_->CNT - base) > TIME_OUT) {
+      return -1;
+    }
+  }
+  curr = timer_->CNT;
+  return (curr - base) / 2.0 * SOUND_SPEED_CM_PER_US;
 }
+
+}  // namespace bsp

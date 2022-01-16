@@ -1,11 +1,12 @@
 #include "gimbal.h"
+
 #include "motor.h"
 #include "utils.h"
 
 namespace control {
 
-Gimbal::Gimbal(gimbal_t gimbal) : 
-    pitch_detector_(BoolEdgeDetector(false)), yaw_detector_(BoolEdgeDetector(false)) {
+Gimbal::Gimbal(gimbal_t gimbal)
+    : pitch_detector_(BoolEdgeDetector(false)), yaw_detector_(BoolEdgeDetector(false)) {
   // acquired from user
   pitch_motor_ = gimbal.pitch_motor;
   yaw_motor_ = gimbal.yaw_motor;
@@ -21,10 +22,10 @@ Gimbal::Gimbal(gimbal_t gimbal) :
       data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
       data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
 
-      pitch_move_pid_param_ = new float[3] {1000, 0, 100};
-      pitch_hold_pid_param_ = new float[3] {2000, 130, 200};
-      yaw_move_pid_param_ = new float[3] {1000, 0, 100};
-      yaw_hold_pid_param_ = new float[3] {1500, 35, 300};
+      pitch_move_pid_param_ = new float[3]{1400, 0, 2200};
+      pitch_hold_pid_param_ = new float[3]{3200, 100, 3100};
+      yaw_move_pid_param_ = new float[3]{1000, 0, 2000};
+      yaw_hold_pid_param_ = new float[3]{3000, 60, 2500};
       pitch_pid_ = new PIDController(pitch_move_pid_param_);
       yaw_pid_ = new PIDController(yaw_move_pid_param_);
       break;
@@ -51,9 +52,7 @@ Gimbal::~Gimbal() {
   yaw_pid_ = nullptr;
 }
 
-gimbal_data_t Gimbal::GetData() const {
-  return data_;
-}
+gimbal_data_t Gimbal::GetData() const { return data_; }
 
 void Gimbal::Update() {
   float pitch_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
@@ -85,9 +84,9 @@ void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {
 }
 
 void Gimbal::TargetRel(float rel_pitch, float rel_yaw) {
-  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_- data_.pitch_offset_, -PI, PI);
-  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_- data_.yaw_offset_, -PI, PI);
+  float abs_pitch = wrap<float>(rel_pitch + pitch_angle_ - data_.pitch_offset_, -PI, PI);
+  float abs_yaw = wrap<float>(rel_yaw + yaw_angle_ - data_.yaw_offset_, -PI, PI);
   TargetAbs(abs_pitch, abs_yaw);
 }
-    
-} // namespace control
+
+}  // namespace control

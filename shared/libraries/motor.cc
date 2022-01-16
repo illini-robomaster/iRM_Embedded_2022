@@ -30,8 +30,8 @@ namespace control {
 
 /**
  * @brief standard can motor callback, used to update motor data
- * 
- * @param data data that come from motor 
+ *
+ * @param data data that come from motor
  * @param args pointer to a MotorCANBase instance
  */
 static void can_motor_callback(const uint8_t data[], void* args) {
@@ -222,8 +222,8 @@ void Motor2305::SetOutput(int16_t val) {
 
 /**
  * @brief default servomotor callback that overrides the standard can motor callback
- * 
- * @param data data that come from motor 
+ *
+ * @param data data that come from motor
  * @param args pointer to a ServoMotor instance
  */
 static void servomotor_callback(const uint8_t data[], void* args) {
@@ -231,8 +231,8 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t servo, float proximity) : 
-      move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)), 
+ServoMotor::ServoMotor(servo_t servo, float proximity)
+    : move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)),
       hold_pid_(PIDController(servo.hold_Kp, servo.hold_Ki, servo.hold_Kd)) {
   motor_ = servo.motor;
   mode_ = servo.mode;
@@ -269,8 +269,7 @@ servo_status_t ServoMotor::SetTarget(const float target, bool override) {
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
-  if (!hold_ && !override)
-    return INPUT_REJECT;
+  if (!hold_ && !override) return INPUT_REJECT;
   target_ = wrap<float>(target, 0, 2 * PI);
   SetDirUsingMode_(mode);
   hold_ = false;
@@ -284,11 +283,9 @@ void ServoMotor::SetSpeed(const float speed) {
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->edge())
-    move_pid_.Reset();
-  if (hold_detector_->posEdge())
-    hold_pid_.Reset();
-  
+  if (hold_detector_->edge()) move_pid_.Reset();
+  if (hold_detector_->posEdge()) hold_pid_.Reset();
+
   // calculate desired output with pid
   int16_t command;
   if (hold_) {
@@ -297,7 +294,7 @@ void ServoMotor::CalcOutput() {
     out += hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
     out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
     // CAN motor can only accept input in range [-32768, 32767]
-    command = clip<float>((int) out, -32768, 32767);
+    command = clip<float>((int)out, -32768, 32767);
   } else {
     command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
   }
@@ -326,9 +323,11 @@ bool ServoMotor::Holding() const { return hold_; }
 
 float ServoMotor::GetTarget() const { return target_; }
 
-void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold, uint8_t detect_period) {
-  constexpr int maximum_command = 32768; // maximum command that a CAN motor can accept
-  RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1, "Effort threshold should between 0 and 1");
+void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold,
+                                     uint8_t detect_period) {
+  constexpr int maximum_command = 32768;  // maximum command that a CAN motor can accept
+  RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1,
+                 "Effort threshold should between 0 and 1");
   // storing funcion pointer for future invocation
   jam_callback_ = callback;
 
@@ -336,21 +335,20 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
   detect_head_ = 0;
   detect_period_ = detect_period;
   detect_total_ = 0;
-  if (detect_buf_ != nullptr)
-    delete detect_buf_;
+  if (detect_buf_ != nullptr) delete detect_buf_;
   detect_buf_ = new int16_t[detect_period];
   memset(detect_buf_, 0, detect_period);
 
-  // calculate callback trigger threshold and triggering facility 
+  // calculate callback trigger threshold and triggering facility
   jam_threshold_ = maximum_command * effort_threshold * detect_period;
   jam_detector_ = new BoolEdgeDetector(false);
 }
 
-void ServoMotor::PrintData() const { 
+void ServoMotor::PrintData() const {
   print("theta: % .4f ", servo_angle_);
   print("omega: % .4f ", GetOmega());
   print("target: % .4f ", target_);
-  if (hold_) 
+  if (hold_)
     print("status: holding\r\n");
   else
     print("status: moving\r\n");
@@ -358,13 +356,13 @@ void ServoMotor::PrintData() const {
 
 float ServoMotor::GetTheta() const { return servo_angle_; }
 
-float ServoMotor::GetThetaDelta(const float target) const { 
-  return wrap<float>(target - servo_angle_, -PI, PI); 
+float ServoMotor::GetThetaDelta(const float target) const {
+  return wrap<float>(target - servo_angle_, -PI, PI);
 }
 
 float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
 
-float ServoMotor::GetOmegaDelta(const float target) const { 
+float ServoMotor::GetOmegaDelta(const float target) const {
   return target - motor_->GetOmega() / transmission_ratio_;
 }
 
@@ -382,8 +380,7 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
 
   // determine if the motor should be in hold state
-  if (!hold_ && abs(wrap<float>(target_ - servo_angle_, -PI, PI)) < proximity_)
-    hold_ = true;
+  if (!hold_ && abs(wrap<float>(target_ - servo_angle_, -PI, PI)) < proximity_) hold_ = true;
 }
 
 void ServoMotor::NearestModeSetDir_() {
@@ -393,17 +390,17 @@ void ServoMotor::NearestModeSetDir_() {
 
 void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
   switch (mode) {
-  case SERVO_ANTICLOCKWISE:
-    dir_ = TURNING_ANTICLOCKWISE;
-    return;
-  case SERVO_NEAREST:
-    NearestModeSetDir_();
-    return;
-  case SERVO_CLOCKWISE:
-    dir_ = TURNING_CLOCKWISE;
-    return;
-  default:
-    RM_ASSERT_TRUE(false, "Invalid servo turining mode");
+    case SERVO_ANTICLOCKWISE:
+      dir_ = TURNING_ANTICLOCKWISE;
+      return;
+    case SERVO_NEAREST:
+      NearestModeSetDir_();
+      return;
+    case SERVO_CLOCKWISE:
+      dir_ = TURNING_CLOCKWISE;
+      return;
+    default:
+      RM_ASSERT_TRUE(false, "Invalid servo turining mode");
   }
 }
 

@@ -35,19 +35,19 @@ namespace remote {
 
 // helper struct for decoding raw bytes
 typedef struct {
-    /* rocker channel information */
-    uint16_t ch0:11;  // S1*             *S2
-    uint16_t ch1:11;  //   C3-^       ^-C1
-    uint16_t ch2:11;  // C2-<   >+ -<   >+C0
-    uint16_t ch3:11;  //     +v       v+
-    /* left and right switch information */
-    uint8_t swr:2;
-    uint8_t swl:2;
-    /* mouse movement and button information */
-    remote::mouse_t mouse;
-    /* keyboard key information */
-    remote::keyboard_t keyboard;
-    uint16_t reserved;
+  /* rocker channel information */
+  uint16_t ch0 : 11;  // S1*             *S2
+  uint16_t ch1 : 11;  //   C3-^       ^-C1
+  uint16_t ch2 : 11;  // C2-<   >+ -<   >+C0
+  uint16_t ch3 : 11;  //     +v       v+
+  /* left and right switch information */
+  uint8_t swr : 2;
+  uint8_t swl : 2;
+  /* mouse movement and button information */
+  remote::mouse_t mouse;
+  /* keyboard key information */
+  remote::keyboard_t keyboard;
+  uint16_t reserved;
 } __packed dbus_t;
 
 DBUS::DBUS(UART_HandleTypeDef* huart) : bsp::UART(huart) { SetupRx(sizeof(dbus_t) + 1); }

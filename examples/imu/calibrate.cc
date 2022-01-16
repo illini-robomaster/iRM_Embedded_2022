@@ -43,9 +43,9 @@ static bsp::VirtualUSB* usb = nullptr;
 static imu_data_t imu_data;
 
 void RM_RTOS_Init(void) {
-	bsp::SetHighresClockTimer(&htim2);
-	imu_data.header = 's';
-	imu_data.terminator = '\0';
+  bsp::SetHighresClockTimer(&htim2);
+  imu_data.header = 's';
+  imu_data.terminator = '\0';
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {

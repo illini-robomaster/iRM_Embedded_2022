@@ -29,7 +29,6 @@
  *    Q1: Input,   Q2: Output
  */
 
-
 #include "bsp_error_handler.h"
 #include "main.h"
 

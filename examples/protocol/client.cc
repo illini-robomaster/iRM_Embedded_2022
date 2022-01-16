@@ -18,45 +18,42 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
+#include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
-#include "bsp_gpio.h"
 #include "cmsis_os.h"
+#include "main.h"
 #include "protocol.h"
 
 #define RX_SIGNAL (1 << 0)
 
 extern osThreadId_t defaultTaskHandle;
 
-const osThreadAttr_t clientTaskAttribute = {
-        .name = "clientTask",
-        .attr_bits = osThreadDetached,
-        .cb_mem = nullptr,
-        .cb_size = 0,
-        .stack_mem = nullptr,
-        .stack_size = 128 * 4,
-        .priority = (osPriority_t) osPriorityNormal,
-        .tz_module = 0,
-        .reserved = 0
-};
+const osThreadAttr_t clientTaskAttribute = {.name = "clientTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 128 * 4,
+                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
 osThreadId_t clientTaskHandle;
 
 class CustomUART : public bsp::UART {
-public:
-    using bsp::UART::UART;
+ public:
+  using bsp::UART::UART;
 
-protected:
-    /* notify application when rx data is pending read */
-    void RxCompleteCallback() final { osThreadFlagsSet(clientTaskHandle, RX_SIGNAL); }
+ protected:
+  /* notify application when rx data is pending read */
+  void RxCompleteCallback() final { osThreadFlagsSet(clientTaskHandle, RX_SIGNAL); }
 };
 
 static communication::Host* host = nullptr;
 static CustomUART* host_uart = nullptr;
 static bsp::GPIO *gpio_red, *gpio_green;
 
-void clientTask (void* arg) {
+void clientTask(void* arg) {
   UNUSED(arg);
   uint32_t length;
   uint8_t* data;

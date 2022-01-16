@@ -25,28 +25,30 @@
 
 namespace bsp {
 
-    class Ultrasonic {
-    public:
-        /**
-         * @brief constructor for ultrasonic sensor class
-         *
-         * @param trig_group trig GPIO group
-         * @param trig_pin   trig pin number
-         * @param echo_group echo GPIO group
-         * @param echo_pin   echo pin number
-         * @param timer      1MHz timer used to calculate distance
-         */
-        Ultrasonic(GPIO_TypeDef* trig_group, uint16_t trig_pin, GPIO_TypeDef* echo_group, uint16_t echo_pin, TIM_TypeDef* timer);
-        /**
-         * @brief Get the current distance from ultrasonic sensor (Neo Notice: May take a few ms)
-         *
-         * @return current distance in cm
-         */
-        float GetDistance();
-    private:
-        GPIO trig_;
-        GPIO echo_;
-        TIM_TypeDef* timer_;
-    };
+class Ultrasonic {
+ public:
+  /**
+   * @brief constructor for ultrasonic sensor class
+   *
+   * @param trig_group trig GPIO group
+   * @param trig_pin   trig pin number
+   * @param echo_group echo GPIO group
+   * @param echo_pin   echo pin number
+   * @param timer      1MHz timer used to calculate distance
+   */
+  Ultrasonic(GPIO_TypeDef* trig_group, uint16_t trig_pin, GPIO_TypeDef* echo_group,
+             uint16_t echo_pin, TIM_TypeDef* timer);
+  /**
+   * @brief Get the current distance from ultrasonic sensor (Neo Notice: May take a few ms)
+   *
+   * @return current distance in cm
+   */
+  float GetDistance();
+
+ private:
+  GPIO trig_;
+  GPIO echo_;
+  TIM_TypeDef* timer_;
+};
 
 } /* namespace bsp */

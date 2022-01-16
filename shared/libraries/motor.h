@@ -219,7 +219,7 @@ class MotorPWMBase : public MotorBase {
    * @param clock_freq     clock frequency associated with the timer, in [Hz]
    * @param output_freq    desired output frequency, in [Hz]
    * @param idle_throttle  idling pulse width, in [us]
-   * 
+   *
    * @note M3508 have idle_throttle about 1500, snail have idle_throttle about 1100
    */
   MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq,
@@ -248,24 +248,24 @@ class Motor2305 : public MotorPWMBase {
 
 /**
  * @brief servomotor turning mode
- * @note the turning direction is determined as if user is facing the motor, may subject to 
+ * @note the turning direction is determined as if user is facing the motor, may subject to
  *       change depending on motor type
  */
 typedef enum {
-  SERVO_CLOCKWISE       = -1,   /* Servomotor always turn clockwisely                      */
-  SERVO_NEAREST         =  0,   /* Servomotor turn in direction that make movement minimum */
-  SERVO_ANTICLOCKWISE   =  1    /* Servomotor always turn anticlockwisely                  */
+  SERVO_CLOCKWISE = -1,   /* Servomotor always turn clockwisely                      */
+  SERVO_NEAREST = 0,      /* Servomotor turn in direction that make movement minimum */
+  SERVO_ANTICLOCKWISE = 1 /* Servomotor always turn anticlockwisely                  */
 } servo_mode_t;
 
 /**
  * @brief servomotor status
- * @note the turning direction is determined as if user is facing the motor, may subject to 
+ * @note the turning direction is determined as if user is facing the motor, may subject to
  *       change depending on motor type
  */
 typedef enum {
-  TURNING_CLOCKWISE     = -1,   /* Servomotor is turning clockwisely         */
-  INPUT_REJECT          =  0,   /* Servomotor rejecting current target input */
-  TURNING_ANTICLOCKWISE =  1    /* Servomotor is turning anticlockwisely     */
+  TURNING_CLOCKWISE = -1,   /* Servomotor is turning clockwisely         */
+  INPUT_REJECT = 0,         /* Servomotor rejecting current target input */
+  TURNING_ANTICLOCKWISE = 1 /* Servomotor is turning anticlockwisely     */
 } servo_status_t;
 
 /**
@@ -274,14 +274,13 @@ typedef enum {
 #define M3508P19_RATIO (3591.0 / 187) /* Transmission ratio of M3508P19 */
 #define M2006P36_RATIO 36             /* Transmission ratio of M2006P36 */
 
-
 typedef struct {
   servo_mode_t mode;  /* turning mode of servomotor, refer to type servo_mode_t                */
   servo_status_t dir; /* current turning direction of servomotor, refer to type servo_status_t */
-  float speed;        /* motor shaft turning speed                                             */  
+  float speed;        /* motor shaft turning speed                                             */
 } servo_jam_t;
 
-class ServoMotor; // declare first for jam_callback_t to have correct param type
+class ServoMotor;  // declare first for jam_callback_t to have correct param type
 /**
  * @brief jam callback template
  */
@@ -304,10 +303,10 @@ typedef struct {
 } servo_t;
 
 /**
- * @brief wrapper class for motor to enable the motor shaft angle to be precisely controlled with 
+ * @brief wrapper class for motor to enable the motor shaft angle to be precisely controlled with
  *        possible external gearbox present
- * @note this is a calculation class that calculate the motor output for desired output, but it does not 
- *       directly command a motor to turn. 
+ * @note this is a calculation class that calculate the motor output for desired output, but it does
+ * not directly command a motor to turn.
  */
 class ServoMotor {
  public:
@@ -315,35 +314,40 @@ class ServoMotor {
    * @brief base constructor
    *
    * @param servo     initialization struct, refer to type servo_t
-   * @param proximity critical difference angle for the motor to stop turining when approaching target
+   * @param proximity critical difference angle for the motor to stop turining when approaching
+   * target
    */
   ServoMotor(servo_t servo, float proximity = 0.05);
 
   /**
-   * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-   * @note if motor is not holding, call to this function will have no effect unless override is true
-   * 
+   * @brief set next target for servomotor, will have no effect if last set target has not been
+   * achieved
+   * @note if motor is not holding, call to this function will have no effect unless override is
+   * true
+   *
    * @param target   next target for the motor in [rad]
-   * @param override if true, override current target even if motor is not holding right now 
+   * @param override if true, override current target even if motor is not holding right now
    * @return current turning mode of motor
    */
   servo_status_t SetTarget(const float target, bool override = false);
 
   /**
-   * @brief set next target for servomotor, will have no effect if last set target has not been achieved
-   * @note if motor is not holding, call to this function will have no effect unless override is true
-   * 
+   * @brief set next target for servomotor, will have no effect if last set target has not been
+   * achieved
+   * @note if motor is not holding, call to this function will have no effect unless override is
+   * true
+   *
    * @param target   next target for the motor in [rad]
    * @param mode     servomotor turning mode override, will only have one-time effect
-   * @param override if true, override current target even if motor is not holding right now 
+   * @param override if true, override current target even if motor is not holding right now
    * @return current turning mode of motor
    */
   servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
   /**
-   * @brief set turning speed of motor when moving, should always be positive, negative inputs will be 
-   *        ignored
-   * 
+   * @brief set turning speed of motor when moving, should always be positive, negative inputs will
+   * be ignored
+   *
    * @param speed speed of desired motor shaft turning speed, in [rad/s]
    */
   void SetSpeed(const float speed);
@@ -356,7 +360,7 @@ class ServoMotor {
 
   /**
    * @brief if the motor is holding
-   * 
+   *
    * @return true  the motor is holding (i.e. not turning)
    * @return false the motor is not holding (i.e. turning)
    */
@@ -364,26 +368,27 @@ class ServoMotor {
 
   /**
    * @brief get current servomotor target, in [rad]
-   * 
-   * @return current target angle, range between [0, 2PI] 
+   *
+   * @return current target angle, range between [0, 2PI]
    */
   float GetTarget() const;
 
   /**
    * @brief register a callback function that would be called if motor is jammed
-   * @note Jam detection uses a moving window across inputs to the motor. It uses a circular buffer of 
-   *       size detect_period to store history inputs and calculates a rolling average of the inputs. 
-   *       Everytime the average of inputs is greater than 
-   *       effect_threshold * 32768(maximum command a motor can accept), the jam callback function will 
-   *       be triggered once. The callback will only be triggered once each time the rolling average 
-   *       cross the threshold from lower to higher. For a standard jam callback function, refer to 
+   * @note Jam detection uses a moving window across inputs to the motor. It uses a circular buffer
+   * of size detect_period to store history inputs and calculates a rolling average of the inputs.
+   *       Everytime the average of inputs is greater than
+   *       effect_threshold * 32768(maximum command a motor can accept), the jam callback function
+   * will be triggered once. The callback will only be triggered once each time the rolling average
+   *       cross the threshold from lower to higher. For a standard jam callback function, refer to
    *       example motor_m3508_antijam
-   * 
+   *
    * @param callback         callback function to be registered
    * @param effort_threshold threshold for motor to be determined as jammed, ranged between (0, 1)
    * @param detect_period    detection window length
    */
-  void RegisterJamCallback(jam_callback_t callback, float effort_threshold, uint8_t detect_period = 50);
+  void RegisterJamCallback(jam_callback_t callback, float effort_threshold,
+                           uint8_t detect_period = 50);
 
   /**
    * @brief print out motor data
@@ -425,7 +430,7 @@ class ServoMotor {
   /**
    * @brief update the current theta for the servomotor
    * @note only used in CAN callback, do not call elsewhere
-   * 
+   *
    * @param data[]  raw data bytes
    */
   void UpdateData(const uint8_t data[]);
@@ -448,12 +453,12 @@ class ServoMotor {
   servo_status_t dir_; /* current moving direction of motor (and motor shaft)                     */
 
   // jam detection
-  jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed             */ 
-  int detect_head_;             /* circular buffer current head                                       */
-  int detect_period_;           /* circular buffer length                                             */
-  int detect_total_;            /* rolling sum of motor inputs                                        */
-  int jam_threshold_;           /* threshold for rolling sum for the motor to be considered as jammed */
-  int16_t* detect_buf_;         /* circular buffer                                                    */
+  jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed */
+  int detect_head_;     /* circular buffer current head                                       */
+  int detect_period_;   /* circular buffer length                                             */
+  int detect_total_;    /* rolling sum of motor inputs                                        */
+  int jam_threshold_;   /* threshold for rolling sum for the motor to be considered as jammed */
+  int16_t* detect_buf_; /* circular buffer                                                    */
 
   // pid controllers
   PIDController move_pid_; /* pid for motor when it is in moving state  */
@@ -466,17 +471,16 @@ class ServoMotor {
 
   /**
    * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
-   * 
+   *
    */
   void NearestModeSetDir_();
 
   /**
    * @brief set turning direction of the motor using specified turning mode
-   * 
+   *
    * @param mode mode of servomotor, refer to type servo_mode_t
    */
   void SetDirUsingMode_(servo_mode_t mode);
-  
 };
 
 } /* namespace control */

@@ -56,31 +56,30 @@ T wrap(T value, T min, T max) {
 }
 
 class BoolEdgeDetector {
-  public:
-    BoolEdgeDetector(bool initial);
-    void input(bool signal);
-    bool edge();
-    bool posEdge();
-    bool negEdge();
-  private:
+ public:
+  BoolEdgeDetector(bool initial);
+  void input(bool signal);
+  bool edge();
+  bool posEdge();
+  bool negEdge();
 
-    bool prev_;
-    bool posEdge_;
-    bool negEdge_;
+ private:
+  bool prev_;
+  bool posEdge_;
+  bool negEdge_;
 };
 
 class FloatEdgeDetector {
-  public:
-    FloatEdgeDetector(float initial, float threshold);
-    void input(float signal);
-    bool edge();
-    bool posEdge();
-    bool negEdge();
-  private:
+ public:
+  FloatEdgeDetector(float initial, float threshold);
+  void input(float signal);
+  bool edge();
+  bool posEdge();
+  bool negEdge();
 
-    float prev_;
-    float threshold_;
-    bool posEdge_;
-    bool negEdge_;
+ private:
+  float prev_;
+  float threshold_;
+  bool posEdge_;
+  bool negEdge_;
 };
-

@@ -33,8 +33,8 @@
 static bsp::MPU6500* imu;
 
 void RM_RTOS_Init(void) {
-	bsp::SetHighresClockTimer(&htim2);
-	print_use_uart(&PRING_UART);
+  bsp::SetHighresClockTimer(&htim2);
+  print_use_uart(&PRING_UART);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {

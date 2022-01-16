@@ -18,14 +18,15 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "main.h"
+
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "main.h"
-#include "gimbal.h"
 #include "dbus.h"
+#include "gimbal.h"
 
-#define NOTCH         (2 * PI / 8)
-#define SERVO_SPEED   (PI)
+#define NOTCH (2 * PI / 8)
+#define SERVO_SPEED (PI)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
@@ -52,8 +53,8 @@ void RM_RTOS_Init() {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
-	osDelay(500); // DBUS initialization needs time
-  
+  osDelay(500);  // DBUS initialization needs time
+
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
   control::gimbal_data_t gimbal_data = gimbal->GetData();
 
@@ -64,8 +65,8 @@ void RM_RTOS_Default_Task(const void* args) {
       gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else if (dbus->swr == remote::MID) {
       gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
-    } 
-    
+    }
+
     // Kill switch
     if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
       RM_ASSERT_TRUE(false, "Operation killed");

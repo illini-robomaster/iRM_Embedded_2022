@@ -20,23 +20,21 @@
 
 #pragma once
 
+#include "can.h"
 #include "controller.h"
 #include "motor.h"
-#include "can.h"
 #include "utils.h"
 
 namespace control {
 
 /**
- * @brief gimbal models 
+ * @brief gimbal models
  */
-typedef enum {
-  GIMBAL_STANDARD_ZERO
-} gimbal_model_t;
-  
+typedef enum { GIMBAL_STANDARD_ZERO } gimbal_model_t;
+
 /**
  * @brief offset, max, and proximity angles of different gimbals
- * @note except for proximity is determined by user, these should be obtained by reading 
+ * @note except for proximity is determined by user, these should be obtained by reading
  *       encoder values through uart/gdb
  */
 typedef struct {
@@ -64,7 +62,7 @@ class Gimbal {
  public:
   /**
    * @brief constructor for gimbal
-   * 
+   *
    * @param gimbal structure that used to initialize gimbal, refer to type gimbal_t
    */
   Gimbal(gimbal_t gimbal);
@@ -76,8 +74,8 @@ class Gimbal {
 
   /**
    * @brief get gimbal related constants
-   * 
-   * @return refer to gimbal_data_t 
+   *
+   * @return refer to gimbal_data_t
    */
   gimbal_data_t GetData() const;
 
@@ -108,7 +106,7 @@ class Gimbal {
   MotorCANBase* pitch_motor_;
   MotorCANBase* yaw_motor_;
   gimbal_model_t model_;
-  
+
   // pitch and yaw constants
   gimbal_data_t data_;
 
@@ -120,7 +118,7 @@ class Gimbal {
   PIDController* pitch_pid_;    /* pitch pid                                               */
   PIDController* yaw_pid_;      /* yaw pid                                                 */
 
-  // pitch and yaw angle 
+  // pitch and yaw angle
   float pitch_angle_; /* current gimbal pitch angle */
   float yaw_angle_;   /* current gimbal yaw angle   */
 
@@ -129,4 +127,4 @@ class Gimbal {
   BoolEdgeDetector yaw_detector_;   /* yaw pid mode toggle detector   */
 };
 
-} // namespace control
+}  // namespace control

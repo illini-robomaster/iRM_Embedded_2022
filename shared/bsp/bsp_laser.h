@@ -25,22 +25,22 @@
 namespace bsp {
 
 class Laser {
-public:
-	/**
-	 * @brief constructor for laser
-	 */
-	 Laser(GPIO_TypeDef* group, uint16_t pin);
-	/**
-	 * @brief Turn on the laser
-	 */
-	 void On();
-	/**
-	 * @brief Turn off the laser
-	 */
-	 void Off();
+ public:
+  /**
+   * @brief constructor for laser
+   */
+  Laser(GPIO_TypeDef* group, uint16_t pin);
+  /**
+   * @brief Turn on the laser
+   */
+  void On();
+  /**
+   * @brief Turn off the laser
+   */
+  void Off();
 
-private:
-		GPIO laser_;
+ private:
+  GPIO laser_;
 };
 
 } /* namespace bsp */

@@ -20,16 +20,14 @@
 
 #include "utils.h"
 
-BoolEdgeDetector::BoolEdgeDetector(bool initial) {
-  prev_ = initial;
-}
+BoolEdgeDetector::BoolEdgeDetector(bool initial) { prev_ = initial; }
 
 void BoolEdgeDetector::input(bool signal) {
   posEdge_ = false;
   negEdge_ = false;
-  if (!prev_ && signal) 
+  if (!prev_ && signal)
     posEdge_ = true;
-  else if (prev_ && !signal) 
+  else if (prev_ && !signal)
     negEdge_ = true;
   prev_ = signal;
 }

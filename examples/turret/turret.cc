@@ -19,41 +19,41 @@
  ****************************************************************************/
 
 /**
- * @brief This example is intended to run on official legacy gimbal. Please read the instructions below to 
- * avoid possible danger.
- * 
+ * @brief This example is intended to run on official legacy gimbal. Please read the instructions
+ * below to avoid possible danger.
+ *
  * Controller configuration
- * 
+ *
  *  shooting motor on UP                                                  UP auto-shooting mode
  * shooting motor off MID    Left Switch                 Right Switch    MID single shot mode
  *        kill switch DOWN                                              DOWN not implemented
  *                Left Joystick                                   Right Joystick
  *       increase pitch ^                                                 ^ shoot
- *      decrease yaw <     > increase yaw   change gimbal control mode <     > change gimbal control mode
- *       decrease pitch v                                                 v not implemented
- * 
- * <-------------------------------------------!!! WARNING !!!------------------------------------------->
- * DO <NOT> STAND BY THE GIMBAL WHEN IT IS POWERED, MAKE SURE KILL SWITCH IS ACTIVATED BEFORE APPROACHING
- * 
+ *      decrease yaw <     > increase yaw   change gimbal control mode <     > change gimbal control
+ * mode decrease pitch v                                                 v not implemented
+ *
+ * <-------------------------------------------!!! WARNING
+ * !!!-------------------------------------------> DO <NOT> STAND BY THE GIMBAL WHEN IT IS POWERED,
+ * MAKE SURE KILL SWITCH IS ACTIVATED BEFORE APPROACHING
+ *
  * @date 2022-01-05
  */
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "main.h"
-#include "gimbal.h"
-#include "shooter.h"
 #include "dbus.h"
-
+#include "gimbal.h"
+#include "main.h"
+#include "shooter.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define NOTCH               (2 * PI / 8)
-#define SERVO_SPEED         (2 * PI)
-#define GIMBAL_SPEED        PI
-#define JOYSTICK_THRESHOLD  (remote::DBUS::ROCKER_MAX * 4 / 5)
+#define NOTCH (2 * PI / 8)
+#define SERVO_SPEED (2 * PI)
+#define GIMBAL_SPEED PI
+#define JOYSTICK_THRESHOLD (remote::DBUS::ROCKER_MAX * 4 / 5)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
@@ -87,13 +87,13 @@ void RM_RTOS_Init() {
   gimbal_data.yaw_motor = yaw_motor;
   gimbal_data.model = control::GIMBAL_STANDARD_ZERO;
   gimbal = new control::Gimbal(gimbal_data);
-  
+
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_fly_motor;
   shooter_data.right_flywheel_motor = right_fly_motor;
   shooter_data.load_motor = load_motor;
   shooter_data.model = control::SHOOTER_STANDARD_ZERO;
-  shooter = new control::Shooter(shooter_data);  
+  shooter = new control::Shooter(shooter_data);
 
   dbus = new remote::DBUS(&huart1);
 }
@@ -102,13 +102,13 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
   control::gimbal_data_t gimbal_data = gimbal->GetData();
-	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
-	laser.High();
+  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+  laser.High();
 
   bool load = false;
   bool abs_mode = true;
 
-	osDelay(500); // DBUS initialization needs time
+  osDelay(500);  // DBUS initialization needs time
 
   while (true) {
     // Kill switch for safety measure
@@ -117,7 +117,7 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 
     // Toggle gimbal control absolute or relative mode
-    // 
+    //
     //    To toggle push right joystick left or right to the end
     abs_detector.input(dbus->ch0 <= -JOYSTICK_THRESHOLD || dbus->ch0 >= JOYSTICK_THRESHOLD);
     if (abs_detector.posEdge()) {
@@ -142,8 +142,7 @@ void RM_RTOS_Default_Task(const void* args) {
     } else if (dbus->swr == remote::MID) {
       load = load_detector.posEdge();
     }
-    if (load)
-      shooter->LoadNext();
+    if (load) shooter->LoadNext();
 
     // Toggle shoot status on or off on left switch
     //    Up for shoot motor start
@@ -153,7 +152,7 @@ void RM_RTOS_Default_Task(const void* args) {
       shooter->SetFlywheelSpeed(150);
     } else if (shoot_detector.negEdge()) {
       shooter->SetFlywheelSpeed(0);
-    } 
+    }
 
     // Update and send command
     gimbal->Update();

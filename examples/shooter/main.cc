@@ -18,11 +18,12 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
-#include "cmsis_os.h"
 #include "main.h"
-#include "dbus.h"
+
+#include "bsp_gpio.h"
 #include "bsp_laser.h"
+#include "cmsis_os.h"
+#include "dbus.h"
 #include "shooter.h"
 
 #define LASER_Pin GPIO_PIN_13
@@ -38,34 +39,33 @@ control::ServoMotor* load_servo = nullptr;
 control::Shooter* shooter = nullptr;
 
 void RM_RTOS_Init() {
-	dbus = new remote::DBUS(&huart1);
+  dbus = new remote::DBUS(&huart1);
 
-	can = new bsp::CAN(&hcan1, 0x201);
-	left_flywheel_motor = new control::Motor3508(can, 0x201);
-	right_flywheel_motor = new control::Motor3508(can, 0x202);
-	load_motor = new control::Motor3508(can, 0x203);
+  can = new bsp::CAN(&hcan1, 0x201);
+  left_flywheel_motor = new control::Motor3508(can, 0x201);
+  right_flywheel_motor = new control::Motor3508(can, 0x202);
+  load_motor = new control::Motor3508(can, 0x203);
 
-	control::shooter_t shooter_data;
-	shooter_data.left_flywheel_motor = left_flywheel_motor;
-	shooter_data.right_flywheel_motor = right_flywheel_motor;
-	shooter_data.load_motor = load_motor;
-	shooter = new control::Shooter(shooter_data);
+  control::shooter_t shooter_data;
+  shooter_data.left_flywheel_motor = left_flywheel_motor;
+  shooter_data.right_flywheel_motor = right_flywheel_motor;
+  shooter_data.load_motor = load_motor;
+  shooter = new control::Shooter(shooter_data);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
-	UNUSED(args);
-	osDelay(500); // DBUS initialization needs time
-	
-  control::MotorCANBase* motors[] = {left_flywheel_motor, right_flywheel_motor, load_motor};
-	bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
-	laser.High();
+  UNUSED(args);
+  osDelay(500);  // DBUS initialization needs time
 
-	while (true) {
-		shooter->SetFlywheelSpeed(dbus->ch1);
-		if (dbus->ch3 > 500)
-			shooter->LoadNext();
-		shooter->Update();
-		control::MotorCANBase::TransmitOutput(motors, 3);
-		osDelay(10);
-	}
+  control::MotorCANBase* motors[] = {left_flywheel_motor, right_flywheel_motor, load_motor};
+  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+  laser.High();
+
+  while (true) {
+    shooter->SetFlywheelSpeed(dbus->ch1);
+    if (dbus->ch3 > 500) shooter->LoadNext();
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors, 3);
+    osDelay(10);
+  }
 }

@@ -29,32 +29,30 @@
 
 extern osThreadId_t defaultTaskHandle;
 
-const osThreadAttr_t refereeTaskAttribute = {
-        .name = "refereeTask",
-        .attr_bits = osThreadDetached,
-        .cb_mem = nullptr,
-        .cb_size = 0,
-        .stack_mem = nullptr,
-        .stack_size = 128 * 4,
-        .priority = (osPriority_t) osPriorityNormal,
-        .tz_module = 0,
-        .reserved = 0
-};
+const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
 osThreadId_t refereeTaskHandle;
 
 class CustomUART : public bsp::UART {
-public:
-    using bsp::UART::UART;
+ public:
+  using bsp::UART::UART;
 
-protected:
-    /* notify application when rx data is pending read */
-    void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
+ protected:
+  /* notify application when rx data is pending read */
+  void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
 };
 
 communication::Referee* referee = nullptr;
 CustomUART* referee_uart = nullptr;
 
-void refereeTask (void* arg) {
+void refereeTask(void* arg) {
   UNUSED(arg);
   uint32_t length;
   uint8_t* data;

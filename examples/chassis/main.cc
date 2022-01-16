@@ -18,10 +18,11 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
 #include "main.h"
+
+#include "bsp_print.h"
 #include "chassis.h"
+#include "cmsis_os.h"
 #include "dbus.h"
 
 bsp::CAN* can = nullptr;
@@ -58,7 +59,7 @@ void RM_RTOS_Init() {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
-  osDelay(500); // DBUS initialization needs time
+  osDelay(500);  // DBUS initialization needs time
 
   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
 

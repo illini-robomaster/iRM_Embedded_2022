@@ -20,16 +20,12 @@
 
 #include "bsp_laser.h"
 
-namespace bsp{
+namespace bsp {
 
-Laser::Laser(GPIO_TypeDef* group, uint16_t pin): laser_(group, pin) {}
+Laser::Laser(GPIO_TypeDef* group, uint16_t pin) : laser_(group, pin) {}
 
-void Laser::On() {
-	laser_.High();
-}
+void Laser::On() { laser_.High(); }
 
-void Laser::Off() {
-	laser_.Low();
-}
+void Laser::Off() { laser_.Low(); }
 
 } /* namespace bsp */
