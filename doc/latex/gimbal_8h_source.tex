@@ -24,72 +24,70 @@
 \DoxyCodeLine{20 }
 \DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
 \DoxyCodeLine{22 }
-\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}controller.h"{}}}
-\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}motor.h"{}}}
-\DoxyCodeLine{25 \textcolor{preprocessor}{\#include "{}can.h"{}}}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}can.h"{}}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}controller.h"{}}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#include "{}motor.h"{}}}
 \DoxyCodeLine{26 \textcolor{preprocessor}{\#include "{}utils.h"{}}}
 \DoxyCodeLine{27 }
 \DoxyCodeLine{28 \textcolor{keyword}{namespace }control \{}
 \DoxyCodeLine{29 }
-\DoxyCodeLine{33 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
-\DoxyCodeLine{34   GIMBAL\_STANDARD\_ZERO}
-\DoxyCodeLine{35 \} gimbal\_model\_t;}
-\DoxyCodeLine{36   }
-\DoxyCodeLine{42 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
-\DoxyCodeLine{43   \textcolor{keywordtype}{float} pitch\_offset\_;    \textcolor{comment}{/* pitch offset angle (angle when muzzle is at vertical center) */}}
-\DoxyCodeLine{44   \textcolor{keywordtype}{float} yaw\_offset\_;      \textcolor{comment}{/* yaw offset angle (angle when muzzle is at horizontal center) */}}
-\DoxyCodeLine{45   \textcolor{keywordtype}{float} pitch\_max\_;       \textcolor{comment}{/* maximum pitch angle the gimbal can turn from center          */}}
-\DoxyCodeLine{46   \textcolor{keywordtype}{float} yaw\_max\_;         \textcolor{comment}{/* maximum yaw angle the gimbal can turn from center            */}}
-\DoxyCodeLine{47   \textcolor{keywordtype}{float} pitch\_proximity\_; \textcolor{comment}{/* pitch angle diff from center to toggle pid modes             */}}
-\DoxyCodeLine{48   \textcolor{keywordtype}{float} yaw\_proximity\_;   \textcolor{comment}{/* yaw angle diff from center to toggle pid modes               */}}
-\DoxyCodeLine{49 \} \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}};}
-\DoxyCodeLine{50 }
-\DoxyCodeLine{54 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
-\DoxyCodeLine{55   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* pitch\_motor; \textcolor{comment}{/* pitch motor instance */}}
-\DoxyCodeLine{56   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* yaw\_motor;   \textcolor{comment}{/* yaw motor instance   */}}
-\DoxyCodeLine{57   gimbal\_model\_t model;      \textcolor{comment}{/* gimbal model         */}}
-\DoxyCodeLine{58 \} \mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\_t}};}
-\DoxyCodeLine{59 }
-\DoxyCodeLine{63 \textcolor{keyword}{class }\mbox{\hyperlink{classcontrol_1_1Gimbal}{Gimbal}} \{}
-\DoxyCodeLine{64  \textcolor{keyword}{public}:}
-\DoxyCodeLine{70   \mbox{\hyperlink{classcontrol_1_1Gimbal_a7213f1b408fbdcf31f53f41bdb664b10}{Gimbal}}(\mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\_t}} gimbal);}
-\DoxyCodeLine{71 }
-\DoxyCodeLine{75   \mbox{\hyperlink{classcontrol_1_1Gimbal_ae3a23400c9306085a02956c4f7f72857}{\string~Gimbal}}();}
-\DoxyCodeLine{76 }
-\DoxyCodeLine{82   \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}} \mbox{\hyperlink{classcontrol_1_1Gimbal_af3edfd9714b959bf07f11934aea0a8f9}{GetData}}() \textcolor{keyword}{const};}
-\DoxyCodeLine{83 }
-\DoxyCodeLine{88   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_a5afc5351b6e061b74eb44e26650252b3}{Update}}();}
-\DoxyCodeLine{89 }
-\DoxyCodeLine{96   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_ab330d7d2e5fdb71bbc57b96379a3df01}{TargetAbs}}(\textcolor{keywordtype}{float} new\_pitch, \textcolor{keywordtype}{float} new\_yaw);}
-\DoxyCodeLine{97 }
-\DoxyCodeLine{104   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_a8e86f77674776444168c7e611be06c0b}{TargetRel}}(\textcolor{keywordtype}{float} new\_pitch, \textcolor{keywordtype}{float} new\_yaw);}
-\DoxyCodeLine{105 }
-\DoxyCodeLine{106  \textcolor{keyword}{private}:}
-\DoxyCodeLine{107   \textcolor{comment}{// acquired from user}}
-\DoxyCodeLine{108   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* pitch\_motor\_;}
-\DoxyCodeLine{109   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* yaw\_motor\_;}
-\DoxyCodeLine{110   gimbal\_model\_t model\_;}
-\DoxyCodeLine{111   }
-\DoxyCodeLine{112   \textcolor{comment}{// pitch and yaw constants}}
-\DoxyCodeLine{113   \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}} data\_;}
-\DoxyCodeLine{114 }
-\DoxyCodeLine{115   \textcolor{comment}{// pitch and yaw pid}}
-\DoxyCodeLine{116   \textcolor{keywordtype}{float}* pitch\_move\_pid\_param\_; \textcolor{comment}{/* pid param that used to control pitch motor when moving  */}}
-\DoxyCodeLine{117   \textcolor{keywordtype}{float}* pitch\_hold\_pid\_param\_; \textcolor{comment}{/* pid param that used to control pitch motor when holding */}}
-\DoxyCodeLine{118   \textcolor{keywordtype}{float}* yaw\_move\_pid\_param\_;   \textcolor{comment}{/* pid param that used to control yaw motor when moving    */}}
-\DoxyCodeLine{119   \textcolor{keywordtype}{float}* yaw\_hold\_pid\_param\_;   \textcolor{comment}{/* pid param that used to control yaw motor when holding   */}}
-\DoxyCodeLine{120   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* pitch\_pid\_;    \textcolor{comment}{/* pitch pid                                               */}}
-\DoxyCodeLine{121   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* yaw\_pid\_;      \textcolor{comment}{/* yaw pid                                                 */}}
-\DoxyCodeLine{122 }
-\DoxyCodeLine{123   \textcolor{comment}{// pitch and yaw angle }}
-\DoxyCodeLine{124   \textcolor{keywordtype}{float} pitch\_angle\_; \textcolor{comment}{/* current gimbal pitch angle */}}
-\DoxyCodeLine{125   \textcolor{keywordtype}{float} yaw\_angle\_;   \textcolor{comment}{/* current gimbal yaw angle   */}}
-\DoxyCodeLine{126 }
-\DoxyCodeLine{127   \textcolor{comment}{// state detectors}}
-\DoxyCodeLine{128   \mbox{\hyperlink{classBoolEdgeDetector}{BoolEdgeDetector}} pitch\_detector\_; \textcolor{comment}{/* pitch pid mode toggle detector */}}
-\DoxyCodeLine{129   \mbox{\hyperlink{classBoolEdgeDetector}{BoolEdgeDetector}} yaw\_detector\_;   \textcolor{comment}{/* yaw pid mode toggle detector   */}}
-\DoxyCodeLine{130 \};}
-\DoxyCodeLine{131 }
-\DoxyCodeLine{132 \} \textcolor{comment}{// namespace control}}
+\DoxyCodeLine{33 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{ GIMBAL\_STANDARD\_ZERO \} gimbal\_model\_t;}
+\DoxyCodeLine{34 }
+\DoxyCodeLine{40 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{41   \textcolor{keywordtype}{float} pitch\_offset\_;    \textcolor{comment}{/* pitch offset angle (angle when muzzle is at vertical center) */}}
+\DoxyCodeLine{42   \textcolor{keywordtype}{float} yaw\_offset\_;      \textcolor{comment}{/* yaw offset angle (angle when muzzle is at horizontal center) */}}
+\DoxyCodeLine{43   \textcolor{keywordtype}{float} pitch\_max\_;       \textcolor{comment}{/* maximum pitch angle the gimbal can turn from center          */}}
+\DoxyCodeLine{44   \textcolor{keywordtype}{float} yaw\_max\_;         \textcolor{comment}{/* maximum yaw angle the gimbal can turn from center            */}}
+\DoxyCodeLine{45   \textcolor{keywordtype}{float} pitch\_proximity\_; \textcolor{comment}{/* pitch angle diff from center to toggle pid modes             */}}
+\DoxyCodeLine{46   \textcolor{keywordtype}{float} yaw\_proximity\_;   \textcolor{comment}{/* yaw angle diff from center to toggle pid modes               */}}
+\DoxyCodeLine{47 \} \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}};}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{52 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{53   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* pitch\_motor; \textcolor{comment}{/* pitch motor instance */}}
+\DoxyCodeLine{54   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* yaw\_motor;   \textcolor{comment}{/* yaw motor instance   */}}
+\DoxyCodeLine{55   gimbal\_model\_t model;      \textcolor{comment}{/* gimbal model         */}}
+\DoxyCodeLine{56 \} \mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\_t}};}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{61 \textcolor{keyword}{class }\mbox{\hyperlink{classcontrol_1_1Gimbal}{Gimbal}} \{}
+\DoxyCodeLine{62  \textcolor{keyword}{public}:}
+\DoxyCodeLine{68   \mbox{\hyperlink{classcontrol_1_1Gimbal_a7213f1b408fbdcf31f53f41bdb664b10}{Gimbal}}(\mbox{\hyperlink{structcontrol_1_1gimbal__t}{gimbal\_t}} gimbal);}
+\DoxyCodeLine{69 }
+\DoxyCodeLine{73   \mbox{\hyperlink{classcontrol_1_1Gimbal_ae3a23400c9306085a02956c4f7f72857}{\string~Gimbal}}();}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{80   \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}} \mbox{\hyperlink{classcontrol_1_1Gimbal_af3edfd9714b959bf07f11934aea0a8f9}{GetData}}() \textcolor{keyword}{const};}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{86   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_a5afc5351b6e061b74eb44e26650252b3}{Update}}();}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{94   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_ab330d7d2e5fdb71bbc57b96379a3df01}{TargetAbs}}(\textcolor{keywordtype}{float} new\_pitch, \textcolor{keywordtype}{float} new\_yaw);}
+\DoxyCodeLine{95 }
+\DoxyCodeLine{102   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Gimbal_a8e86f77674776444168c7e611be06c0b}{TargetRel}}(\textcolor{keywordtype}{float} new\_pitch, \textcolor{keywordtype}{float} new\_yaw);}
+\DoxyCodeLine{103 }
+\DoxyCodeLine{104  \textcolor{keyword}{private}:}
+\DoxyCodeLine{105   \textcolor{comment}{// acquired from user}}
+\DoxyCodeLine{106   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* pitch\_motor\_;}
+\DoxyCodeLine{107   \mbox{\hyperlink{classcontrol_1_1MotorCANBase}{MotorCANBase}}* yaw\_motor\_;}
+\DoxyCodeLine{108   gimbal\_model\_t model\_;}
+\DoxyCodeLine{109 }
+\DoxyCodeLine{110   \textcolor{comment}{// pitch and yaw constants}}
+\DoxyCodeLine{111   \mbox{\hyperlink{structcontrol_1_1gimbal__data__t}{gimbal\_data\_t}} data\_;}
+\DoxyCodeLine{112 }
+\DoxyCodeLine{113   \textcolor{comment}{// pitch and yaw pid}}
+\DoxyCodeLine{114   \textcolor{keywordtype}{float}* pitch\_move\_pid\_param\_; \textcolor{comment}{/* pid param that used to control pitch motor when moving  */}}
+\DoxyCodeLine{115   \textcolor{keywordtype}{float}* pitch\_hold\_pid\_param\_; \textcolor{comment}{/* pid param that used to control pitch motor when holding */}}
+\DoxyCodeLine{116   \textcolor{keywordtype}{float}* yaw\_move\_pid\_param\_;   \textcolor{comment}{/* pid param that used to control yaw motor when moving    */}}
+\DoxyCodeLine{117   \textcolor{keywordtype}{float}* yaw\_hold\_pid\_param\_;   \textcolor{comment}{/* pid param that used to control yaw motor when holding   */}}
+\DoxyCodeLine{118   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* pitch\_pid\_;    \textcolor{comment}{/* pitch pid                                               */}}
+\DoxyCodeLine{119   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* yaw\_pid\_;      \textcolor{comment}{/* yaw pid                                                 */}}
+\DoxyCodeLine{120 }
+\DoxyCodeLine{121   \textcolor{comment}{// pitch and yaw angle}}
+\DoxyCodeLine{122   \textcolor{keywordtype}{float} pitch\_angle\_; \textcolor{comment}{/* current gimbal pitch angle */}}
+\DoxyCodeLine{123   \textcolor{keywordtype}{float} yaw\_angle\_;   \textcolor{comment}{/* current gimbal yaw angle   */}}
+\DoxyCodeLine{124 }
+\DoxyCodeLine{125   \textcolor{comment}{// state detectors}}
+\DoxyCodeLine{126   \mbox{\hyperlink{classBoolEdgeDetector}{BoolEdgeDetector}} pitch\_detector\_; \textcolor{comment}{/* pitch pid mode toggle detector */}}
+\DoxyCodeLine{127   \mbox{\hyperlink{classBoolEdgeDetector}{BoolEdgeDetector}} yaw\_detector\_;   \textcolor{comment}{/* yaw pid mode toggle detector   */}}
+\DoxyCodeLine{128 \};}
+\DoxyCodeLine{129 }
+\DoxyCodeLine{130 \}  \textcolor{comment}{// namespace control}}
 
 \end{DoxyCode}
