@@ -21,7 +21,7 @@
 \DoxyCodeLine{17 \textcolor{comment}{ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *}}
 \DoxyCodeLine{18 \textcolor{comment}{ *                                                                          *}}
 \DoxyCodeLine{19 \textcolor{comment}{ ****************************************************************************/}}
-\DoxyCodeLine{20  }
+\DoxyCodeLine{20 }
 \DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
 \DoxyCodeLine{22 }
 \DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}bsp\_imu.h"{}}}
@@ -29,7 +29,7 @@
 \DoxyCodeLine{25 \textcolor{keyword}{namespace }control \{}
 \DoxyCodeLine{26 }
 \DoxyCodeLine{27 \textcolor{keyword}{class }\mbox{\hyperlink{classcontrol_1_1Pose}{Pose}} \{}
-\DoxyCodeLine{28 \textcolor{keyword}{public}:}
+\DoxyCodeLine{28  \textcolor{keyword}{public}:}
 \DoxyCodeLine{32   \mbox{\hyperlink{classcontrol_1_1Pose_ac6bdc5bc03b28e8c68240cd0fb963d4a}{Pose}}(\mbox{\hyperlink{classbsp_1_1MPU6500}{bsp::MPU6500}}* \_imu);}
 \DoxyCodeLine{33 }
 \DoxyCodeLine{37   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_a9bde155b3e0313f53820b839d26593d6}{PoseInit}}(\textcolor{keywordtype}{void});}
@@ -40,47 +40,46 @@
 \DoxyCodeLine{52 }
 \DoxyCodeLine{56   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_a3876a1f1a8256a11b118b624bea9eae6}{GetGravity}}(\textcolor{keywordtype}{void});}
 \DoxyCodeLine{57 }
-\DoxyCodeLine{64   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_a113de1a99c605dbab546e0055faba692}{SetOffset}}(\textcolor{keywordtype}{float} acc\_x\_off, \textcolor{keywordtype}{float} acc\_y\_off, \textcolor{keywordtype}{float} acc\_z\_off, }
-\DoxyCodeLine{65                  \textcolor{keywordtype}{float} gyro\_x\_off, \textcolor{keywordtype}{float} gyro\_y\_off, \textcolor{keywordtype}{float} gyro\_z\_off);}
+\DoxyCodeLine{64   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_a113de1a99c605dbab546e0055faba692}{SetOffset}}(\textcolor{keywordtype}{float} acc\_x\_off, \textcolor{keywordtype}{float} acc\_y\_off, \textcolor{keywordtype}{float} acc\_z\_off, \textcolor{keywordtype}{float} gyro\_x\_off,}
+\DoxyCodeLine{65                  \textcolor{keywordtype}{float} gyro\_y\_off, \textcolor{keywordtype}{float} gyro\_z\_off);}
 \DoxyCodeLine{66 }
-\DoxyCodeLine{70   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_a095cb864881c809359eae53653b477e3}{GetPitch}}(\textcolor{keywordtype}{void});}
-\DoxyCodeLine{71 }
-\DoxyCodeLine{75   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_a5ce52dcb41b73d53c812cc8c75306e95}{GetRoll}}(\textcolor{keywordtype}{void});}
-\DoxyCodeLine{76   }
-\DoxyCodeLine{80   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_aff97f4bcaa1984ed331da6fbe79df41e}{GetYaw}}(\textcolor{keywordtype}{void});}
-\DoxyCodeLine{81   }
-\DoxyCodeLine{85   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_ae5d26cbc642fc1f2592654badd227b1a}{SetAlpha}}(\textcolor{keywordtype}{float} \_alpha);}
-\DoxyCodeLine{86   }
-\DoxyCodeLine{92   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}{ComplementaryFilterUpdate}}(\textcolor{keywordtype}{void});}
-\DoxyCodeLine{93 }
-\DoxyCodeLine{94 \textcolor{keyword}{private}:}
-\DoxyCodeLine{95   \mbox{\hyperlink{classbsp_1_1MPU6500}{bsp::MPU6500}}* imu;}
-\DoxyCodeLine{96   \textcolor{comment}{// last pose}}
-\DoxyCodeLine{97   \textcolor{keywordtype}{float} pitch;}
-\DoxyCodeLine{98   \textcolor{keywordtype}{float} roll;}
-\DoxyCodeLine{99   \textcolor{keywordtype}{float} yaw;}
-\DoxyCodeLine{100   }
-\DoxyCodeLine{101   \textcolor{comment}{// noise bias correction offset for 3 axis of acce and gyro}}
-\DoxyCodeLine{102   \textcolor{keywordtype}{float} acc\_x\_off;}
-\DoxyCodeLine{103   \textcolor{keywordtype}{float} acc\_y\_off;}
-\DoxyCodeLine{104   \textcolor{keywordtype}{float} acc\_z\_off;}
-\DoxyCodeLine{105   \textcolor{keywordtype}{float} gyro\_x\_off;}
-\DoxyCodeLine{106   \textcolor{keywordtype}{float} gyro\_y\_off;}
-\DoxyCodeLine{107   \textcolor{keywordtype}{float} gyro\_z\_off;}
-\DoxyCodeLine{108   }
-\DoxyCodeLine{109   \textcolor{comment}{// last timestamp}}
-\DoxyCodeLine{110   uint32\_t timestamp;}
-\DoxyCodeLine{111   }
-\DoxyCodeLine{112   \textcolor{comment}{// alpha used in complementary filter}}
-\DoxyCodeLine{113   \textcolor{keywordtype}{float} alpha;}
-\DoxyCodeLine{114   }
-\DoxyCodeLine{115   \textcolor{comment}{// pose estimated by acce alone}}
-\DoxyCodeLine{116   \textcolor{keywordtype}{float} pitchAcc;}
-\DoxyCodeLine{117   \textcolor{keywordtype}{float} rollAcc;}
-\DoxyCodeLine{118    }
-\DoxyCodeLine{119 \}; \textcolor{comment}{// class Pose end}}
+\DoxyCodeLine{71   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_a095cb864881c809359eae53653b477e3}{GetPitch}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{77   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_a5ce52dcb41b73d53c812cc8c75306e95}{GetRoll}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{82   \textcolor{keywordtype}{float} \mbox{\hyperlink{classcontrol_1_1Pose_aff97f4bcaa1984ed331da6fbe79df41e}{GetYaw}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{87   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_ae5d26cbc642fc1f2592654badd227b1a}{SetAlpha}}(\textcolor{keywordtype}{float} \_alpha);}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{94   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Pose_a01506e64ac50b444e84b274ad7e185c5}{ComplementaryFilterUpdate}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{95 }
+\DoxyCodeLine{96  \textcolor{keyword}{private}:}
+\DoxyCodeLine{97   \mbox{\hyperlink{classbsp_1_1MPU6500}{bsp::MPU6500}}* imu;}
+\DoxyCodeLine{98   \textcolor{comment}{// last pose}}
+\DoxyCodeLine{99   \textcolor{keywordtype}{float} pitch;}
+\DoxyCodeLine{100   \textcolor{keywordtype}{float} roll;}
+\DoxyCodeLine{101   \textcolor{keywordtype}{float} yaw;}
+\DoxyCodeLine{102 }
+\DoxyCodeLine{103   \textcolor{comment}{// noise bias correction offset for 3 axis of acce and gyro}}
+\DoxyCodeLine{104   \textcolor{keywordtype}{float} acc\_x\_off;}
+\DoxyCodeLine{105   \textcolor{keywordtype}{float} acc\_y\_off;}
+\DoxyCodeLine{106   \textcolor{keywordtype}{float} acc\_z\_off;}
+\DoxyCodeLine{107   \textcolor{keywordtype}{float} gyro\_x\_off;}
+\DoxyCodeLine{108   \textcolor{keywordtype}{float} gyro\_y\_off;}
+\DoxyCodeLine{109   \textcolor{keywordtype}{float} gyro\_z\_off;}
+\DoxyCodeLine{110 }
+\DoxyCodeLine{111   \textcolor{comment}{// last timestamp}}
+\DoxyCodeLine{112   uint32\_t timestamp;}
+\DoxyCodeLine{113 }
+\DoxyCodeLine{114   \textcolor{comment}{// alpha used in complementary filter}}
+\DoxyCodeLine{115   \textcolor{keywordtype}{float} alpha;}
+\DoxyCodeLine{116 }
+\DoxyCodeLine{117   \textcolor{comment}{// pose estimated by acce alone}}
+\DoxyCodeLine{118   \textcolor{keywordtype}{float} pitchAcc;}
+\DoxyCodeLine{119   \textcolor{keywordtype}{float} rollAcc;}
 \DoxyCodeLine{120 }
-\DoxyCodeLine{121 }
-\DoxyCodeLine{122 \} \textcolor{comment}{/* namespace control */}}
+\DoxyCodeLine{121 \};  \textcolor{comment}{// class Pose end}}
+\DoxyCodeLine{122 }
+\DoxyCodeLine{123 \} \textcolor{comment}{/* namespace control */}}
 
 \end{DoxyCode}

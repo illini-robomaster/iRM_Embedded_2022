@@ -24,8 +24,8 @@
 \DoxyCodeLine{20 }
 \DoxyCodeLine{21 \textcolor{preprocessor}{\#pragma once}}
 \DoxyCodeLine{22 }
-\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}motor.h"{}}}
-\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}controller.h"{}}}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}controller.h"{}}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}motor.h"{}}}
 \DoxyCodeLine{25 }
 \DoxyCodeLine{26 \textcolor{keyword}{namespace }control \{}
 \DoxyCodeLine{27 }
@@ -42,7 +42,7 @@
 \DoxyCodeLine{47 \} \mbox{\hyperlink{structcontrol_1_1shooter__t}{shooter\_t}};}
 \DoxyCodeLine{48 }
 \DoxyCodeLine{52 \textcolor{keyword}{class }\mbox{\hyperlink{classcontrol_1_1Shooter}{Shooter}} \{}
-\DoxyCodeLine{53 \textcolor{keyword}{public}:}
+\DoxyCodeLine{53  \textcolor{keyword}{public}:}
 \DoxyCodeLine{59   \mbox{\hyperlink{classcontrol_1_1Shooter_a6ea7ea83af788414012b3e35c144d193}{Shooter}}(\mbox{\hyperlink{structcontrol_1_1shooter__t}{shooter\_t}} shooter);}
 \DoxyCodeLine{60 }
 \DoxyCodeLine{65   \mbox{\hyperlink{classcontrol_1_1Shooter_af12804256cf669b76ce39c4ef758b1d6}{\string~Shooter}}();}
@@ -53,22 +53,21 @@
 \DoxyCodeLine{80 }
 \DoxyCodeLine{85   \textcolor{keywordtype}{void} \mbox{\hyperlink{classcontrol_1_1Shooter_a115dc9a73f891d04d045f54a57d5df1b}{Update}}();}
 \DoxyCodeLine{86 }
-\DoxyCodeLine{87 \textcolor{keyword}{private}:}
+\DoxyCodeLine{87  \textcolor{keyword}{private}:}
 \DoxyCodeLine{88   \textcolor{comment}{// acquired from user}}
 \DoxyCodeLine{89   \mbox{\hyperlink{classcontrol_1_1MotorBase}{MotorBase}}* left\_flywheel\_motor\_;}
 \DoxyCodeLine{90   \mbox{\hyperlink{classcontrol_1_1MotorBase}{MotorBase}}* right\_flywheel\_motor\_;}
 \DoxyCodeLine{91   \mbox{\hyperlink{classcontrol_1_1ServoMotor}{ServoMotor}}* load\_servo\_;}
 \DoxyCodeLine{92   shooter\_model\_t model\_;}
-\DoxyCodeLine{93   }
+\DoxyCodeLine{93 }
 \DoxyCodeLine{94   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* left\_pid\_;  \textcolor{comment}{/* pid for left flywheel  */}}
 \DoxyCodeLine{95   \mbox{\hyperlink{classcontrol_1_1PIDController}{PIDController}}* right\_pid\_; \textcolor{comment}{/* pid for right flywheel */}}
 \DoxyCodeLine{96 }
 \DoxyCodeLine{97   \mbox{\hyperlink{classBoolEdgeDetector}{BoolEdgeDetector}}* flywheel\_turning\_detector\_; \textcolor{comment}{/* flywheel turning state detector */}}
-\DoxyCodeLine{98   \textcolor{keywordtype}{float} load\_step\_angle\_; \textcolor{comment}{/* angle rotated for every bullet loaded */}}
-\DoxyCodeLine{99   \textcolor{keywordtype}{float} speed\_; \textcolor{comment}{/* current turning speed of flywheels */}}
-\DoxyCodeLine{100   }
-\DoxyCodeLine{101 \};}
-\DoxyCodeLine{102 }
-\DoxyCodeLine{103 \}}
+\DoxyCodeLine{98   \textcolor{keywordtype}{float} load\_step\_angle\_;                       \textcolor{comment}{/* angle rotated for every bullet loaded */}}
+\DoxyCodeLine{99   \textcolor{keywordtype}{float} speed\_;                                 \textcolor{comment}{/* current turning speed of flywheels */}}
+\DoxyCodeLine{100 \};}
+\DoxyCodeLine{101 }
+\DoxyCodeLine{102 \}  \textcolor{comment}{// namespace control}}
 
 \end{DoxyCode}

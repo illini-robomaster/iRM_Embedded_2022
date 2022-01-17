@@ -96,19 +96,19 @@ $(function() {
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">namespace </span>bsp {</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classbsp_1_1Laser.html">   27</a></span><span class="keyword">class </span><a class="code hl_class" href="classbsp_1_1Laser.html">Laser</a> {</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>     <a class="code hl_function" href="classbsp_1_1Laser.html#ad75d9bdc48dbedece7ada1793562da70">Laser</a>(GPIO_TypeDef* group, uint16_t pin);</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>     <span class="keywordtype">void</span> <a class="code hl_function" href="classbsp_1_1Laser.html#a7ee60f1e713559f6363683da8eab03c3">On</a>();</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>     <span class="keywordtype">void</span> <a class="code hl_function" href="classbsp_1_1Laser.html#a75e12ef4abe81e86fc584b5692058703">Off</a>();</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>  <a class="code hl_function" href="classbsp_1_1Laser.html#ad75d9bdc48dbedece7ada1793562da70">Laser</a>(GPIO_TypeDef* group, uint16_t pin);</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classbsp_1_1Laser.html#a7ee60f1e713559f6363683da8eab03c3">On</a>();</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classbsp_1_1Laser.html#a75e12ef4abe81e86fc584b5692058703">Off</a>();</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <a class="code hl_class" href="classbsp_1_1GPIO.html">GPIO</a> laser_;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  <a class="code hl_class" href="classbsp_1_1GPIO.html">GPIO</a> laser_;</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>};</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>} <span class="comment">/* namespace bsp */</span></div>
-<div class="ttc" id="aclassbsp_1_1GPIO_html"><div class="ttname"><a href="classbsp_1_1GPIO.html">bsp::GPIO</a></div><div class="ttdef"><b>Definition:</b> bsp_gpio.h:40</div></div>
+<div class="ttc" id="aclassbsp_1_1GPIO_html"><div class="ttname"><a href="classbsp_1_1GPIO.html">bsp::GPIO</a></div><div class="ttdef"><b>Definition:</b> bsp_gpio.h:39</div></div>
 <div class="ttc" id="aclassbsp_1_1Laser_html"><div class="ttname"><a href="classbsp_1_1Laser.html">bsp::Laser</a></div><div class="ttdef"><b>Definition:</b> bsp_laser.h:27</div></div>
-<div class="ttc" id="aclassbsp_1_1Laser_html_a75e12ef4abe81e86fc584b5692058703"><div class="ttname"><a href="classbsp_1_1Laser.html#a75e12ef4abe81e86fc584b5692058703">bsp::Laser::Off</a></div><div class="ttdeci">void Off()</div><div class="ttdoc">Turn off the laser.</div><div class="ttdef"><b>Definition:</b> bsp_laser.cc:31</div></div>
+<div class="ttc" id="aclassbsp_1_1Laser_html_a75e12ef4abe81e86fc584b5692058703"><div class="ttname"><a href="classbsp_1_1Laser.html#a75e12ef4abe81e86fc584b5692058703">bsp::Laser::Off</a></div><div class="ttdeci">void Off()</div><div class="ttdoc">Turn off the laser.</div><div class="ttdef"><b>Definition:</b> bsp_laser.cc:29</div></div>
 <div class="ttc" id="aclassbsp_1_1Laser_html_a7ee60f1e713559f6363683da8eab03c3"><div class="ttname"><a href="classbsp_1_1Laser.html#a7ee60f1e713559f6363683da8eab03c3">bsp::Laser::On</a></div><div class="ttdeci">void On()</div><div class="ttdoc">Turn on the laser.</div><div class="ttdef"><b>Definition:</b> bsp_laser.cc:27</div></div>
 <div class="ttc" id="aclassbsp_1_1Laser_html_ad75d9bdc48dbedece7ada1793562da70"><div class="ttname"><a href="classbsp_1_1Laser.html#ad75d9bdc48dbedece7ada1793562da70">bsp::Laser::Laser</a></div><div class="ttdeci">Laser(GPIO_TypeDef *group, uint16_t pin)</div><div class="ttdoc">constructor for laser</div><div class="ttdef"><b>Definition:</b> bsp_laser.cc:25</div></div>
 </div><!-- fragment --></div><!-- contents -->
