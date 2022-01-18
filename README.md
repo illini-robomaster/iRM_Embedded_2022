@@ -6,7 +6,7 @@ Embedded system development @ Illini RoboMaster
 
 ## User Guide (Linux / Mac)
 
-You can follow the instructions below to setup the necessary environments for 
+You can follow the instructions below to setup the necessary environments for
 building the source code and flashing the embedded chips.
 
 ### Install ARM Toolchain
@@ -18,8 +18,8 @@ building the source code and flashing the embedded chips.
 
    In my case: `/Users/alvin/gcc-arm-none-eabi-10.3-2021.10/bin`.
 
-4. For Linux / Mac users, add the following line (replace `<path>` 
-   with the actual binary path found in step 3) to `~/.bashrc` for bash users 
+4. For Linux / Mac users, add the following line (replace `<path>`
+   with the actual binary path found in step 3) to `~/.bashrc` for bash users
    or `~/.zshrc` for zsh users.
 
    ```sh
@@ -51,7 +51,7 @@ building the source code and flashing the embedded chips.
    4. For Linux users, either use prebuilt binaries, or build from source
       following their compile manual.
 
-2. Flash one of the example programs by running `make flash-<xxx>` in the 
+2. Flash one of the example programs by running `make flash-<xxx>` in the
    `build/` directory created at compilation.
 
    e.g. `make flash-example_buzzer` -> and you shall hear some music (or noise)
@@ -90,7 +90,7 @@ integrated build commands that can help you automatically format your changes.
 **Prerequisite**: install `clang-format` (version 10 recommended)
 
 * Linux users can simply install it using `sudo apt install clang-format-10`.
-* Mac users need to download prebuilt binraies from
+* Mac users need to download prebuilt binaries from
   [here](https://releases.llvm.org/download.html). For now, we **CANNOT**
   use version 11 or above.
 
@@ -119,7 +119,8 @@ There are 2 choices for such server, with tradeoffs of their own.
   This tool is much more stable but is slightly less intelligent in detecting
   ST-LINK version and it has not been updated since 2017. To install it,
     * `brew install openocd` for Mac users
-    * `sudo apt install openocd` for Linux (Ubuntu) users
+    * `sudo apt install openocd` for Ubuntu users
+    * `sudo pacman -S openocd` for Arch users
 
 Follow the steps below to debug an executable
 
