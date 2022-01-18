@@ -127,14 +127,14 @@ Follow the steps below to debug an executable
 1. Launch a `gdb` server by either choice
     * `st-util`
     * `openocd -f <project root>/debug/OpenOCD/st-link-v2-1.cfg`
-2. In a seperate terminal, `cd` into the `build` directory and run `make debug-xxx`
+2. In a separate terminal, `cd` into the `build` directory and run `make debug-xxx`
    (e.g. `make debug-example_buzzer`). This will open up a `gdb` session.
 3. Run `target extended-remote :<port>` (or `tar ext :<port>` in short )
-   to connect to the `gdb` server. 
+   to connect to the `gdb` server.
     * For `st-util`, replace `<port>` with `4242`.
     * For `openocd`, replace `<port>` with `3333`.
-4. Run `load` to flash the executable (Note that you can also run `make` here 
-   without exiting `gdb` to re-build the executable if you modified some 
+4. Run `load` to flash the executable (Note that you can also run `make` here
+   without exiting `gdb` to re-build the executable if you modified some
    source code).
 5. Debug just like any regular `gdb` debugger: use commands like `continue`,
    `run`, `break`, `watch`, `next`, `step` the same way you will expect.
