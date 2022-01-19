@@ -29,13 +29,13 @@ if (DOXYGEN_EXE)
     set(HOMEPAGE ${CMAKE_SOURCE_DIR}/doc/html/index.html)
 
     # generate documents
-    add_custom_target(document
+    add_custom_target(doc
         COMMAND ${DOXYGEN_EXE}
         DEPENDS ${DOXYFILE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     # view documents
-    add_custom_target(view-document
+    add_custom_target(view-doc
         COMMAND ${XDG_OPEN_EXE} ${HOMEPAGE}
         DEPENDS ${HOMEPAGE} ${XDG_OPEN_EXE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
