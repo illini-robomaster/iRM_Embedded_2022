@@ -18,18 +18,25 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+# using doxygen to generate documents and using xdg-open to open index.html
+find_program(DOXYGEN_EXE NAMES doxygen)
+find_program(XDG_OPEN_EXE NAMES xdg-open)
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
-include(cmake/doxygen.cmake)
+# create document generating and viewing targets
+if (DOXYGEN_EXE)
+    # location of doxyfile and generated index.html
+    set(DOXYFILE ${CMAKE_SOURCE_DIR}/Doxyfile)
+    set(HOMEPAGE ${CMAKE_SOURCE_DIR}/doc/html/index.html)
 
-project(iRM_Embedded_2022)
+    # generate documents
+    add_custom_target(doc
+        COMMAND ${DOXYGEN_EXE}
+        DEPENDS ${DOXYFILE}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
+    # view documents
+    add_custom_target(view-doc
+        COMMAND ${XDG_OPEN_EXE} ${HOMEPAGE}
+        DEPENDS ${HOMEPAGE} ${XDG_OPEN_EXE}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
