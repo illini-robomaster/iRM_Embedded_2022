@@ -69,12 +69,12 @@ You will need [Doxygen](https://www.doxygen.nl/index.html).
 To generate documentations after compiling the project.
 
    1. Run `doxygen` in the project root directory, or
-   2. Run `make document` in the `build/` directory
+   2. Run `make doc` in the `build/` directory
 
 To view the generated document:
 
-   1. Directly open `doc/html/index.html` in web browser
-   2. With `xdg-utils` installed, run `make view-document` in `build/` directory
+   1. Directly open `doc/html/index.html` in web browser, or
+   2. Run `make view-doc` in `build/` directory
 
 ## Developer Guide
 
