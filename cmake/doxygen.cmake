@@ -26,7 +26,6 @@ find_program(XDG_OPEN_EXE NAMES xdg-open)
 if (DOXYGEN_EXE)
     # location of doxyfile and generated index.html
     set(DOXYFILE ${CMAKE_SOURCE_DIR}/Doxyfile)
-    set(HOMEPAGE ${CMAKE_SOURCE_DIR}/doc/html/index.html)
 
     # generate documents
     add_custom_target(doc
@@ -34,9 +33,4 @@ if (DOXYGEN_EXE)
         DEPENDS ${DOXYFILE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-    # view documents
-    add_custom_target(view-doc
-        COMMAND ${XDG_OPEN_EXE} ${HOMEPAGE}
-        DEPENDS ${HOMEPAGE} ${XDG_OPEN_EXE}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
