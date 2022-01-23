@@ -18,5 +18,21 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(Infantry)
-add_subdirectory(config)
+# include all yaml files as dependence
+file(GLOB_RECURSE YAML_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.yaml)
+
+# real all yaml files from yaml_list
+file(READ "yaml_list" yaml_list)
+
+# use regular expression to split lines
+string(REGEX MATCHALL "[A-Za-z0-9/_]*.yaml" yaml_file_list ${yaml_list})
+
+# for debug
+#message("${yaml_file_list}")
+
+add_custom_target(yaml_headers
+    COMMAND python generate_all.py yaml_list
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS ${YAML_FILES}
+    )
+
