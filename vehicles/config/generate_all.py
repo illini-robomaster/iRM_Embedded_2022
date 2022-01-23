@@ -48,6 +48,5 @@ args = parser.parse_args()
 with open(args.yaml_list, 'r') as yaml_list:
     lines = yaml_list.read().splitlines()
     for yaml_file in lines:
-        print("Generating " + yaml_file + "...")
         yaml_to_header(yaml_file, output_dir, dict_dir)
-    print("Complete")
+
