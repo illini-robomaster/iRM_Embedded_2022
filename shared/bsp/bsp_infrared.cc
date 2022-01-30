@@ -18,32 +18,14 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#include "bsp_infrared.h"
 
-#include "bsp_laser.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
+namespace bsp {
 
-static bsp::Laser* laser = nullptr;
+		Infrared::Infrared(GPIO_TypeDef* group, uint16_t pin) : infrared_(group, pin) {}
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart8);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
-}
+		bool Infrared::Read() {
+			return !infrared_.Read();
+		}
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
-  }
-}
+}; /* namespace bsp */

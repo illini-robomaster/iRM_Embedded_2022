@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 #include "tim.h"
 
-bsp::Ultrasonic* ultrasonic;
+bsp::Ultrasonic* ultrasonic = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);

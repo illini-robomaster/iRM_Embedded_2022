@@ -18,24 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(buzzer)
-add_subdirectory(chassis)
-add_subdirectory(dbus)
-add_subdirectory(eigen)
-add_subdirectory(gimbal)
-add_subdirectory(imu)
-add_subdirectory(led)
-add_subdirectory(motor)
-add_subdirectory(sdio)
-add_subdirectory(turret)
-add_subdirectory(uart)
-add_subdirectory(usb)
-add_subdirectory(shooter)
-add_subdirectory(rtos)
-add_subdirectory(laser)
-add_subdirectory(ultrasonic)
-add_subdirectory(referee)
-add_subdirectory(protocol)
-add_subdirectory(relay)
-add_subdirectory(test)
-add_subdirectory(infrared)
+project(example_infrared ASM C CXX)
+
+irm_add_arm_executable(${PROJECT_NAME}
+    TARGET DJI_Board_TypeA
+    SOURCES main.cc)
