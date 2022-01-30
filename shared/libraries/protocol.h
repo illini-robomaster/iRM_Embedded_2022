@@ -355,7 +355,6 @@ class Referee : public Protocol {
  * 0x0401 PACK
  */
 
-
 typedef enum {
   PACK = 0x0401,
   TARGET_ANGLE = 0x0402,
@@ -370,7 +369,7 @@ typedef struct {
 
 /* ===== TARGET_ANGLE 0x0402 ===== */
 typedef struct {
-  float pitch; // TODO: decide RAD / degree with CV group
+  float pitch;  // TODO: decide RAD / degree with CV group
   float yaw;
 } __packed target_angle_t;
 
@@ -381,10 +380,8 @@ typedef struct {
 
 /* ===== SHOOT_CMD 0x0404 ===== */
 typedef struct {
-  char dummy; // no actual meaning
+  char dummy;  // no actual meaning
 } __packed shoot_cmd_t;
-
-
 
 class Host : public Protocol {
  public:
@@ -392,7 +389,7 @@ class Host : public Protocol {
   target_angle_t target_angle{};
   no_target_flag_t no_target_flag{};
   shoot_cmd_t shoot_cmd{};
-  
+
  private:
   /**
    * @brief process the data for certain command and update corresponding status variables
