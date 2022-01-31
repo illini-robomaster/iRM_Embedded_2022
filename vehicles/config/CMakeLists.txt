@@ -21,7 +21,7 @@
 # include all yaml files as dependence
 file(GLOB_RECURSE YAML_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.yaml)
 
-# real all yaml files from yaml_list
+# read all yaml files from yaml_list
 file(READ "yaml_list" yaml_list)
 
 # use regular expression to split lines
