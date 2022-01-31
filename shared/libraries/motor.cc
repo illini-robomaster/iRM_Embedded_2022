@@ -231,18 +231,19 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t servo, float proximity)
-    : move_pid_(PIDController(servo.move_Kp, servo.move_Ki, servo.move_Kd)),
-      hold_pid_(PIDController(servo.hold_Kp, servo.hold_Ki, servo.hold_Kd)) {
+ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
+    : omega_pid_(PIDController(servo.omega_pid_param)) {
   motor_ = servo.motor;
   mode_ = servo.mode;
-  speed_ = servo.transmission_ratio * servo.speed;
+  max_speed_ = servo.transmission_ratio * servo.max_speed;
+  max_acceleration_ = servo.transmission_ratio * servo.max_acceleration;
   transmission_ratio_ = servo.transmission_ratio;
-  proximity_ = proximity;
+  proximity_in_ = proximity_in;
+  proximity_out_ = proximity_out;
 
   hold_ = true;
   target_ = 0;
-  align_angle_ = motor_->theta_;
+  align_angle_ = -1;  // Wait for Update to initialize
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
@@ -272,31 +273,40 @@ servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode
   if (!hold_ && !override) return INPUT_REJECT;
   target_ = wrap<float>(target, 0, 2 * PI);
   SetDirUsingMode_(mode);
-  hold_ = false;
   return dir_;
 }
 
-void ServoMotor::SetSpeed(const float speed) {
-  speed_ = speed > 0 ? transmission_ratio_ * speed : speed_;
+void ServoMotor::SetMaxSpeed(const float max_speed) {
+  if (max_speed > 0)
+    max_speed_ = transmission_ratio_ * max_speed;
+  else
+    RM_EXPECT_TRUE(false, "Max speed should be positive");
+}
+
+void ServoMotor::SetMaxAcceleration(const float max_acceleration) {
+  if (max_acceleration > 0)
+    max_acceleration_ = transmission_ratio_ * max_acceleration;
+  else
+    RM_EXPECT_TRUE(false, "Max acceleration should be positive");
 }
 
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->edge()) move_pid_.Reset();
-  if (hold_detector_->posEdge()) hold_pid_.Reset();
+  if (hold_detector_->edge()) omega_pid_.Reset();
 
   // calculate desired output with pid
   int16_t command;
+  // v = sqrt(2 * a * d)
+  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI) * transmission_ratio_;
+  float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
   if (hold_) {
-    float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-    float out = 0;
-    out += hold_pid_.ComputeOutput(diff_angle * transmission_ratio_);
-    out += move_pid_.ComputeOutput(motor_->GetOmegaDelta(0));
-    // CAN motor can only accept input in range [-32768, 32767]
-    command = clip<float>((int)out, -32768, 32767);
+    // holding, allow turning in both directions
+    command = omega_pid_.ComputeConstraintedOutput(
+        motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
   } else {
-    command = move_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * speed_));
+    // moving, only allow turn in specified direction(s)
+    command = omega_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
   }
   motor_->SetOutput(command);
 
@@ -313,7 +323,7 @@ void ServoMotor::CalcOutput() {
       servo_jam_t data;
       data.mode = mode_;
       data.dir = dir_;
-      data.speed = speed_ / transmission_ratio_;
+      data.speed = max_speed_ / transmission_ratio_;
       jam_callback_(this, data);
     }
   }
@@ -368,6 +378,11 @@ float ServoMotor::GetOmegaDelta(const float target) const {
 
 void ServoMotor::UpdateData(const uint8_t data[]) {
   motor_->UpdateData(data);
+
+  // TODO: change the align angle calibration method
+  // This is a dumb method to get the align angle
+  if (align_angle_ == -1) align_angle_ = motor_->theta_;
+
   motor_angle_ = motor_->theta_ - align_angle_;
   // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
   // edge, which means that the motor is turning in positive direction when crossing encoder
@@ -380,7 +395,9 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
 
   // determine if the motor should be in hold state
-  if (!hold_ && abs(wrap<float>(target_ - servo_angle_, -PI, PI)) < proximity_) hold_ = true;
+  float diff = abs(GetThetaDelta(target_));
+  if (!hold_ && diff < proximity_in_) hold_ = true;
+  if (hold_ && diff > proximity_out_) hold_ = false;
 }
 
 void ServoMotor::NearestModeSetDir_() {

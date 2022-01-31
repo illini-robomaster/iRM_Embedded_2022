@@ -290,16 +290,12 @@ typedef void (*jam_callback_t)(ServoMotor* servo, const servo_jam_t data);
  * @brief structure used when servomotor instance is initialized
  */
 typedef struct {
-  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor     */
-  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t      */
-  float speed;              /* desired turning speed of motor shaft, in [rad/s] */
-  float transmission_ratio; /* transmission ratio of motor                      */
-  float move_Kp;            /* Kp of pid that used to control omega             */
-  float move_Ki;            /* Ki of pid that used to control omega             */
-  float move_Kd;            /* Kd of pid that used to control omega             */
-  float hold_Kp;            /* Kp of pid that used to control theta             */
-  float hold_Ki;            /* Ki of pid that used to control theta             */
-  float hold_Kd;            /* Kd of pid that used to control theta             */
+  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor      */
+  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t       */
+  float max_speed;          /* desired turning speed of motor shaft, in [rad/s]  */
+  float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
+  float transmission_ratio; /* transmission ratio of motor                       */
+  float* omega_pid_param;   /* pid parameter used to control speed of motor      */
 } servo_t;
 
 /**
@@ -313,11 +309,13 @@ class ServoMotor {
   /**
    * @brief base constructor
    *
-   * @param servo     initialization struct, refer to type servo_t
-   * @param proximity critical difference angle for the motor to stop turining when approaching
-   * target
+   * @param servo         initialization struct, refer to type servo_t
+   * @param proximity_in  critical difference angle for the motor to enter hold state
+   * @param proximity_out critical difference angle for the motor to exit hold state
+   *
+   * @note proximity_out should be greater than proximity_in
    */
-  ServoMotor(servo_t servo, float proximity = 0.05);
+  ServoMotor(servo_t servo, float proximity_in = 0.05, float proximity_out = 0.15);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been
@@ -345,12 +343,22 @@ class ServoMotor {
   servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
   /**
-   * @brief set turning speed of motor when moving, should always be positive, negative inputs will
-   * be ignored
+   * @brief set turning speed of motor when moving
    *
-   * @param speed speed of desired motor shaft turning speed, in [rad/s]
+   * @note should always be positive, negative inputs will be ignored
+   *
+   * @param max_speed speed of desired motor shaft turning speed, in [rad/s]
    */
-  void SetSpeed(const float speed);
+  void SetMaxSpeed(const float max_speed);
+
+  /**
+   * @brief set acceleration of motor when moving
+   *
+   * @note should always be positive, negative inputs will be ignored
+   *
+   * @param max_acceleration speed of desired motor shaft turning speed, in [rad/s]
+   */
+  void SetMaxAcceleration(const float max_acceleration);
 
   /**
    * @brief calculate the output of the motors under current configuration
@@ -439,9 +447,11 @@ class ServoMotor {
   // refer to servo_t for details
   MotorCANBase* motor_;
   servo_mode_t mode_;
-  float speed_;
+  float max_speed_;
+  float max_acceleration_;
   float transmission_ratio_;
-  float proximity_;
+  float proximity_in_;
+  float proximity_out_;
 
   // angle control
   bool hold_;          /* true if motor is holding now, otherwise moving now                      */
@@ -461,8 +471,7 @@ class ServoMotor {
   int16_t* detect_buf_; /* circular buffer                                                    */
 
   // pid controllers
-  PIDController move_pid_; /* pid for motor when it is in moving state  */
-  PIDController hold_pid_; /* pid for motor when it is in holding state */
+  PIDController omega_pid_; /* pid for controlling speed of motor */
 
   // edge detectors
   FloatEdgeDetector* wrap_detector_; /* detect motor motion across encoder boarder               */

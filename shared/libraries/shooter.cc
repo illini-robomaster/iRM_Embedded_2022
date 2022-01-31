@@ -42,28 +42,20 @@ Shooter::Shooter(shooter_t shooter) {
   switch (shooter.model) {
     case SHOOTER_STANDARD_ZERO:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
-      servo_data.speed = 2 * PI;
+      servo_data.max_speed = 2 * PI;
+      servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
-      servo_data.move_Kp = 20;
-      servo_data.move_Ki = 15;
-      servo_data.move_Kd = 30;
-      servo_data.hold_Kp = 40;
-      servo_data.hold_Ki = 15;
-      servo_data.hold_Kd = 5;
+      servo_data.omega_pid_param = new float[3]{25, 5, 22};
 
       load_step_angle_ = 2 * PI / 8;
       break;
 
     case SHOOTER_STANDARD_2022:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
-      servo_data.speed = 2 * PI;
+      servo_data.max_speed = 2 * PI;
+      servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
-      servo_data.move_Kp = 20;
-      servo_data.move_Ki = 15;
-      servo_data.move_Kd = 30;
-      servo_data.hold_Kp = 40;
-      servo_data.hold_Ki = 15;
-      servo_data.hold_Kd = 5;
+      servo_data.omega_pid_param = new float[3]{25, 5, 22};
 
       left_pid_ = new PIDController(80, 3, 0.1);
       right_pid_ = new PIDController(80, 3, 0.1);
