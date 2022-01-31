@@ -144,6 +144,7 @@ cmake-build-relwithdebinfo/
 cmake-build-minsizerel/
 doc/html
 doc/latex
+__pycache__/
 
 # CMake Compile Commands
 compile_commands.json
