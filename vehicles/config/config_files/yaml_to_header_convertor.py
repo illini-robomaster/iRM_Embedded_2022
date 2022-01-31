@@ -53,6 +53,7 @@ def yaml_to_header(yaml_dir, output_dir, dict_dir = ""):
         output_dir = yaml_dir[:-len(yaml_dir.split("/")[-1])]
     
     print("Generating " + h_file_name + "...")
+
         
     # write the generated .h file. NOTE: this is not append
     f = open(output_dir + h_file_name, 'w')
