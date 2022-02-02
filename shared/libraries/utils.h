@@ -55,6 +55,20 @@ T wrap(T value, T min, T max) {
   return value < min ? value + range : (value > max ? value - range : value);
 }
 
+/**
+ * @brief get sign of a value
+ *
+ * @tparam T    type of the value
+ * @param value value to be tested
+ * @param zero  zero point of that value
+ *
+ * @return -1 for less than, 1 for greater than, and 0 for equal to
+ */
+template <typename T>
+int sign(T value, T zero) {
+  return value < zero ? -1 : (value > zero ? 1 : 0);
+}
+
 class BoolEdgeDetector {
  public:
   BoolEdgeDetector(bool initial);

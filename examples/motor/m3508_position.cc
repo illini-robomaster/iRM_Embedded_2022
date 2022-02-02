@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-// #define WITH_CONTROLLER
+#define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -35,17 +35,14 @@
 #define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH (2 * PI / 4)
-#define SPEED (2 * PI)
+#define SPEED (4 * PI)
+#define ACCELERATION (8 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
 #ifdef WITH_CONTROLLER
 remote::DBUS* dbus = nullptr;
-BoolEdgeDetector joystick_detector_abv(false);
-BoolEdgeDetector joystick_detector_rgt(false);
-BoolEdgeDetector joystick_detector_btm(false);
-BoolEdgeDetector joystick_detector_lft(false);
 #else
 BoolEdgeDetector key_detector(false);
 #endif
@@ -58,14 +55,10 @@ void RM_RTOS_Init() {
   control::servo_t servo_data;
   servo_data.motor = motor;
   servo_data.mode = control::SERVO_NEAREST;
-  servo_data.speed = SPEED;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.move_Kp = 30;
-  servo_data.move_Ki = 10;
-  servo_data.move_Kd = 40;
-  servo_data.hold_Kp = 1500;
-  servo_data.hold_Ki = 15;
-  servo_data.hold_Kd = 100;
+  servo_data.omega_pid_param = new float[3]{25, 5, 35};
   servo = new control::ServoMotor(servo_data);
 
 #ifdef WITH_CONTROLLER
@@ -86,24 +79,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   while (true) {
 #ifdef WITH_CONTROLLER
-    // joystick input range from -660 to 660
-    joystick_detector_abv.input(dbus->ch3 > 500);
-    joystick_detector_rgt.input(dbus->ch2 < -500);
-    joystick_detector_btm.input(dbus->ch3 < -500);
-    joystick_detector_lft.input(dbus->ch2 > 500);
-    if (joystick_detector_abv.posEdge()) {
-      target = 0;
-      servo->SetTarget(target);
-    } else if (joystick_detector_rgt.posEdge()) {
-      target = PI / 2;
-      servo->SetTarget(target);
-    } else if (joystick_detector_btm.posEdge()) {
-      target = PI;
-      servo->SetTarget(target);
-    } else if (joystick_detector_lft.posEdge()) {
-      target = -PI / 2;
-      servo->SetTarget(target);
-    }
+    target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * PI;
+    servo->SetTarget(target, true);
 #else
     key_detector.input(key.Read());
     if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
