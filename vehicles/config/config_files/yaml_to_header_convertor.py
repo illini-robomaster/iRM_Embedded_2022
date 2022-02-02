@@ -38,13 +38,18 @@ def yaml_to_header(yaml_dir, output_dir, dict_dir = ""):
         dict_dir = dict_dir
         dict_file = open(dict_dir, "r")
         dictionary = yaml.safe_load(dict_file)
-        
-    # discard the .yaml part from the YAML file to get the dir
-    h_file_name = yaml_dir.split("/")[-1].split(".")
-    if len(h_file_name) == 1:
-        h_file_name = h_file_name[0]
+    
+    # set generated header name
+    if yaml_file != None and "header_name" in yaml_file and yaml_file["header_name"] != None:
+        # if name defined in YAML file
+        h_file_name = yaml_file["header_name"]
     else:
-        h_file_name = "".join(h_file_name[:-1])
+        # else, use the YAML file name
+        h_file_name = yaml_dir.split("/")[-1].split(".")
+        if len(h_file_name) == 1:
+            h_file_name = h_file_name[0]
+        else:
+            h_file_name = "".join(h_file_name[:-1])
     
     # generate file name and dir for the .H file
     h_file_name = h_file_name.upper() + "_CONFIG.h"
@@ -100,7 +105,9 @@ def yaml_to_header(yaml_dir, output_dir, dict_dir = ""):
             return
         # Recursion
         for i in node:
-            dfs_yaml(node[i], name + "_" + i.upper())
+            # ignore "header_name"
+            if i != "header_name":
+                dfs_yaml(node[i], name + "_" + i.upper())
     
     # call DFS to generate all variables in YAML
     dfs_yaml(yaml_file, "")
