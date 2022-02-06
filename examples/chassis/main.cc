@@ -60,15 +60,9 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   osDelay(500);  // DBUS initialization needs time
-  
-  print("Start1\r\n");
-  int a = 1;
-  print("Start2\r\n");
-  UNUSED(a);
-  print("Start3\r\n");
+
   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
-  print("Start4\r\n");
   while (true) {
     chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
 
