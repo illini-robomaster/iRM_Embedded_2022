@@ -18,6 +18,9 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
+# find python3 executable
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
 # include all yaml files as dependence
 file(GLOB_RECURSE YAML_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.yaml)
 
@@ -31,7 +34,7 @@ string(REGEX MATCHALL "[A-Za-z0-9/_]*.yaml" yaml_file_list ${yaml_list})
 #message("${yaml_file_list}")
 
 add_custom_target(yaml_headers
-    COMMAND python generate_all.py yaml_list
+    COMMAND ${Python3_EXECUTABLE} generate_all.py yaml_list
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${YAML_FILES}
     )
