@@ -36,9 +36,9 @@ remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  can = new bsp::CAN(&hcan1, 0x200);
-  fl_motor = new control::Motor3508(can, 0x202);
-  fr_motor = new control::Motor3508(can, 0x201);
+  can = new bsp::CAN(&hcan1, 0x201);
+  fl_motor = new control::Motor3508(can, 0x201);
+  fr_motor = new control::Motor3508(can, 0x202);
   bl_motor = new control::Motor3508(can, 0x203);
   br_motor = new control::Motor3508(can, 0x204);
 
@@ -60,9 +60,15 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   osDelay(500);  // DBUS initialization needs time
-
+  
+  print("Start1\r\n");
+  int a = 1;
+  print("Start2\r\n");
+  UNUSED(a);
+  print("Start3\r\n");
   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
+  print("Start4\r\n");
   while (true) {
     chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
 
