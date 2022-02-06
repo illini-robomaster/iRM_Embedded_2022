@@ -30,6 +30,13 @@ typedef struct {
   float kd;
 } pid_t;
 
+PIDController::PIDController() {
+  pid_f32_.Kp = 0;
+  pid_f32_.Ki = 0;
+  pid_f32_.Kd = 0;
+  arm_pid_init_f32(&pid_f32_, 1);
+}
+
 PIDController::PIDController(float kp, float ki, float kd) {
   pid_f32_.Kp = kp;
   pid_f32_.Ki = ki;

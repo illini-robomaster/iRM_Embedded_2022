@@ -36,6 +36,11 @@ namespace control {
 class PIDController {
  public:
   /**
+   * @brief PID controller default constructor
+   */
+  PIDController();
+
+  /**
    * @brief PID controller constructor
    *
    * @param kp proportional gain
