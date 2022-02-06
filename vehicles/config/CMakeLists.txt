@@ -18,35 +18,21 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-'''
-Generate .h file from YAML files
-NOTE: for int, this convertor generate const float
-      for str, this convertor generate const int16_t based on dictionary.yaml
-Usage: ./generate_all.py index
-       where index is a yaml list
-'''
+# include all yaml files as dependence
+file(GLOB_RECURSE YAML_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.yaml)
 
-# USER PARAMETERS START //
+# read all yaml files from yaml_list
+file(READ "yaml_list" yaml_list)
 
-# output dir for the generated .h file
-# if empty, use the same dir as the given YAML file
-output_dir = "./"
+# use regular expression to split lines
+string(REGEX MATCHALL "[A-Za-z0-9/_]*.yaml" yaml_file_list ${yaml_list})
 
-# dictionary dir, convert str in YAML to int in .H
-dict_dir = "./dictionary.yaml"
+# for debug
+#message("${yaml_file_list}")
 
-# USER PARAMETERS END  //
-
-import argparse
-from config_files.yaml_to_header_convertor import yaml_to_header
-
-#parse args
-parser = argparse.ArgumentParser(description='load controller config yaml file list')
-parser.add_argument('yaml_list', type=str)
-args = parser.parse_args()
-
-with open(args.yaml_list, 'r') as yaml_list:
-    lines = yaml_list.read().splitlines()
-    for yaml_file in lines:
-        yaml_to_header(yaml_file, output_dir, dict_dir)
+add_custom_target(yaml_headers
+    COMMAND python generate_all.py yaml_list
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS ${YAML_FILES}
+    )
 

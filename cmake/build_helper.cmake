@@ -43,6 +43,10 @@ function(irm_add_arm_executable name)
     add_executable(${name}.elf ${ARG_SOURCES})
     target_link_libraries(${name}.elf
         PRIVATE ${ARG_DEPENDS} ${ARG_TARGET} ${ARG_TARGET}_irm)
+    
+    # add yaml header as dependency
+    add_dependencies(${name}.elf yaml_headers)
+
     target_include_directories(${name}.elf PRIVATE ${ARG_INCLUDES})
     target_link_options(${name}.elf PRIVATE -Wl,-Map=${MAP_FILE})
 

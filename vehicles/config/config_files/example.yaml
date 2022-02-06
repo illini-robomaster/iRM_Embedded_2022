@@ -1,5 +1,7 @@
 ---
-header_name: gimbal
+# header name = header_name.upper() + "_CONFIG.h", if "header_name" not defined or left blank, use yaml file name + "_CONFIG.h"
+header_name: 
+
 pitch:
   offset: 4.725
   max: 0.408
