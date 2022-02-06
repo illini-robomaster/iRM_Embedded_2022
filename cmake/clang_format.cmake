@@ -25,17 +25,18 @@ find_program(CLANG_FORMAT_EXE NAMES
     clang-format-8
     clang-format)
 
-# gather all source code
-file(GLOB_RECURSE ALL_SOURCE_FILES
-    ${CMAKE_SOURCE_DIR}/*.c
-    ${CMAKE_SOURCE_DIR}/*.cc
-    ${CMAKE_SOURCE_DIR}/*.cpp
-    ${CMAKE_SOURCE_DIR}/*.h
-    ${CMAKE_SOURCE_DIR}/*.hpp
-)
+# gather all source code tracked by git
+execute_process(COMMAND git ls-tree -r HEAD --name-only
+                OUTPUT_VARIABLE ALL_TRACKED_FILES
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+# filter out c-related files
+string(REGEX MATCHALL "[A-Za-z0-9/_.-]*\\.(c|cc|cpp|h|hpp)\n" ALL_SOURCE_FILES ${ALL_TRACKED_FILES})
+string(REGEX REPLACE "\n" ";" ALL_SOURCE_FILES ${ALL_SOURCE_FILES})
+
 # exclude build folder and board CubeMX generated code
-list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX .*/.*build.*/.*)
-list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX .*/boards/.*)
+list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX .*build.*/.*)
+list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX boards/.*)
 
 # create formatting helper targets
 if (CLANG_FORMAT_EXE)
