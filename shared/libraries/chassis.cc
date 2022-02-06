@@ -26,8 +26,7 @@
 
 namespace control {
 
-Chassis::Chassis(const chassis_t chassis) 
-  : pids_(){
+Chassis::Chassis(const chassis_t chassis) : pids_() {
   // acquired from user
   model_ = chassis.model;
 
