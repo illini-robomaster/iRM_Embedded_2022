@@ -23,28 +23,61 @@
 #include "controller.h"
 #include "motor.h"
 
-namespace control {
-  typedef struct {
-    MotorCANBase** motors; /* motor instances of all robot_arm motors */
-  } robot_arm_t;
 
-  struct Motors {
-    enum {left, right, gripper};
-  };
+namespace control {
+
+/**
+ * @brief structure used when robot arm is initialized
+ */
+typedef struct {
+  MotorCANBase** motors; /* motor instances of all Arm motors */
+} robot_arm_t;
+
+/**
+ * @brief Motors on the Arm
+ */
+struct Motors {
+  enum {left, right, gripper};
+};
 
 //  struct Servos {
 //    enum {left, right, gripper};
 //  };
 
+/**
+ * @brief wrapper class for RobotArm motors
+ */
 class RobotArm {
   public:
+   /**
+    * @brief constructor for RobotArm
+    *
+    * @param robot_arm structure that used to initialize robot arm, refer to type robot_arm_t
+    */
     RobotArm(const robot_arm_t robot_arm);
+
+    /**
+     * @brief destructor for robot arm
+     */
     ~RobotArm();
+
+    /**
+     * @brief set the speed of Left, Right and gripper motors
+     *
+     * @param LR_speed Left and Right motors speed
+     * @param G_speed Gripper motor speed
+     */
+    void SetSpeed(const float LR_speed, const float G_speed);
+
+    /**
+     * @brief calculate the output of the motors under current configuration
+     */
+    void Update();
 
  private:
     MotorCANBase** motors_;
-    robot_arm_model_t model_;
-    PIDController pids_[MAX_MOTOR_NUM];
+    // pids and current speeds for each motor on the robot arm
+    PIDController pids_[3];
     float* speeds_;
   };
 }
