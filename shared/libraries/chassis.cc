@@ -72,7 +72,6 @@ Chassis::~Chassis() {
 }
 
 void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
-  print("Setspeed Start\r\n");
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
       constexpr int MAX_ABS_CURRENT = 12288;  // refer to MotorM3508 for details
