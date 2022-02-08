@@ -26,7 +26,7 @@
 
 namespace control {
 
-Chassis::Chassis(const chassis_t chassis) {
+Chassis::Chassis(const chassis_t chassis) : pids_() {
   // acquired from user
   model_ = chassis.model;
 
@@ -41,10 +41,10 @@ Chassis::Chassis(const chassis_t chassis) {
 
       {
         float* pid_param = new float[3]{20, 8, 2};  // {5, 3, 0.1}
-        pids_[FourWheel::front_left] = new PIDController(pid_param);
-        pids_[FourWheel::front_right] = new PIDController(pid_param);
-        pids_[FourWheel::back_left] = new PIDController(pid_param);
-        pids_[FourWheel::back_right] = new PIDController(pid_param);
+        pids_[FourWheel::front_left].Reinit(pid_param);
+        pids_[FourWheel::front_right].Reinit(pid_param);
+        pids_[FourWheel::back_left].Reinit(pid_param);
+        pids_[FourWheel::back_right].Reinit(pid_param);
       }
 
       speeds_ = new float[FourWheel::motor_num];
@@ -64,13 +64,6 @@ Chassis::~Chassis() {
       motors_[FourWheel::back_right] = nullptr;
       delete[] motors_;
       motors_ = nullptr;
-
-      pids_[FourWheel::front_left] = nullptr;
-      pids_[FourWheel::front_right] = nullptr;
-      pids_[FourWheel::back_left] = nullptr;
-      pids_[FourWheel::back_right] = nullptr;
-      delete[] pids_;
-      pids_ = nullptr;
 
       delete[] speeds_;
       speeds_ = nullptr;
@@ -97,16 +90,16 @@ void Chassis::Update() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
       motors_[FourWheel::front_left]->SetOutput(
-          pids_[FourWheel::front_left]->ComputeConstraintedOutput(
+          pids_[FourWheel::front_left].ComputeConstraintedOutput(
               motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
       motors_[FourWheel::back_left]->SetOutput(
-          pids_[FourWheel::back_left]->ComputeConstraintedOutput(
+          pids_[FourWheel::back_left].ComputeConstraintedOutput(
               motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
       motors_[FourWheel::front_right]->SetOutput(
-          pids_[FourWheel::front_right]->ComputeConstraintedOutput(
-              motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_left])));
+          pids_[FourWheel::front_right].ComputeConstraintedOutput(
+              motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right])));
       motors_[FourWheel::back_right]->SetOutput(
-          pids_[FourWheel::back_right]->ComputeConstraintedOutput(
+          pids_[FourWheel::back_right].ComputeConstraintedOutput(
               motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
       break;
   }

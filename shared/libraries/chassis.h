@@ -23,6 +23,8 @@
 #include "controller.h"
 #include "motor.h"
 
+#define MAX_WHEEL_NUM 6
+
 namespace control {
 
 /**
@@ -83,7 +85,7 @@ class Chassis {
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
-  PIDController** pids_;
+  PIDController pids_[MAX_WHEEL_NUM];
   float* speeds_;
 };
 
