@@ -26,9 +26,6 @@
 #include "robotic_arm.h"
 #include "dbus.h"
 
-#define SPEED (0.5 * PI)
-#define ACCELERATION (0.5 * PI)
-
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motorL = nullptr;
 control::MotorCANBase* motorR = nullptr;
@@ -37,20 +34,10 @@ remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
  print_use_uart(&huart8);
- can1 = new bsp::CAN(&hcan1, 0x201);
- motorL = new control::Motor3508(can1, 0x201);
+ can1 = new bsp::CAN(&hcan1, 0x204);
+ motorL = new control::Motor3508(can1, 0x204);
  motorR = new control::Motor3508(can1, 0x202);
  motorG = new control::Motor3508(can1, 0x203);
-
-// control::servo_t servo_data;
-// servo_data.motor = motor;
-// servo_data.mode = control::SERVO_NEAREST;
-// servo_data.max_speed = SPEED;
-// servo_data.max_acceleration = ACCELERATION;
-// servo_data.transmission_ratio = M3508P19_RATIO;
-// servo_data.omega_pid_param = new float[3]{25, 5, 35};
-// servo = new control::ServoMotor(servo_data);
-
  dbus = new remote::DBUS(&huart1);
 }
 
@@ -70,7 +57,7 @@ void RM_RTOS_Default_Task(const void* args) {
    target_G = float(dbus->ch3) / remote::DBUS::ROCKER_MAX * PI;
    robotic_arm->SetPosition(target_LR, target_G);
    robotic_arm->Update();
-   control::MotorCANBase::TransmitOutput(motors, ARM_MOTOR_NUM);
+   control::MotorCANBase::TransmitOutput(motors, 1);
    osDelay(10);
  }
 }
