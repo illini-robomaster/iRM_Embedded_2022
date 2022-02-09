@@ -31,9 +31,7 @@ namespace control {
 * @brief structure used when chassis instance is initialized
 */
 typedef struct {
- MotorCANBase* motor_left; /* motor instances of all chassis motors */
- MotorCANBase* motor_right;
- MotorCANBase* motor_gripper;
+ MotorCANBase** motors;
 } robotic_arm_t;
 
 /**
