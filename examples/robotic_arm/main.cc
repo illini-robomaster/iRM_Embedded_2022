@@ -26,8 +26,8 @@
 #include "robotic_arm.h"
 #include "dbus.h"
 
-#define SPEED (4 * PI)
-#define ACCELERATION (8 * PI)
+#define SPEED (0.5 * PI)
+#define ACCELERATION (0.5 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motorL = nullptr;
@@ -61,19 +61,16 @@ void RM_RTOS_Default_Task(const void* args) {
  control::robotic_arm_t robotic_arm_data;
  control::MotorCANBase* motors[ARM_MOTOR_NUM] = {motorL, motorR, motorG};
  robotic_arm_data.motors = motors;
- control::RoboticArm* robotic_arm = new control::RoboticArm(robotic_arm_data);
+ auto* robotic_arm = new control::RoboticArm(robotic_arm_data);
  float target_LR;
  float target_G;
 
  while (true) {
-   target_LR = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * PI;
+   target_LR = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 2 * PI;
    target_G = float(dbus->ch3) / remote::DBUS::ROCKER_MAX * PI;
-
-   print("%f\n", target_LR);
-   print("%f\n", target_G);
    robotic_arm->SetPosition(target_LR, target_G);
    robotic_arm->Update();
-   control::MotorCANBase::TransmitOutput(motors, 0);
-   osDelay(100);
+   control::MotorCANBase::TransmitOutput(motors, ARM_MOTOR_NUM);
+   osDelay(10);
  }
 }
