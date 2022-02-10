@@ -28,6 +28,10 @@ irm_add_arm_executable(${PROJECT_NAME}_m3508_speed
     TARGET DJI_Board_TypeA
     SOURCES m3508_speed.cc)
 
+irm_add_arm_executable(${PROJECT_NAME}_m3508_output_constraint
+    TARGET DJI_Board_TypeA
+    SOURCES m3508_output_constraint.cc)
+
 irm_add_arm_executable(${PROJECT_NAME}_m3508_position
     TARGET DJI_Board_TypeA
     SOURCES m3508_position.cc)
