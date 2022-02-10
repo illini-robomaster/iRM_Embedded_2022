@@ -71,7 +71,7 @@ void PIDController::Reinit(float* param) { Reinit(param[0], param[1], param[2]);
 void PIDController::Reset() { arm_pid_reset_f32(&pid_f32_); }
 
 OutputConstraintedPIDController::OutputConstraintedPIDController() {
-  Reinit(0 ,0, 0);
+  Reinit(0, 0, 0);
   Reset();
 }
 

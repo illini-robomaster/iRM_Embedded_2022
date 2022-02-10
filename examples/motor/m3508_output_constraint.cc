@@ -22,8 +22,8 @@
 #include "cmsis_os.h"
 #include "controller.h"
 #include "main.h"
-#include "utils.h"
 #include "motor.h"
+#include "utils.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -64,10 +64,12 @@ void RM_RTOS_Default_Task(const void* args) {
       use_constrainted_pid = !use_constrainted_pid;
     }
 
-    if (use_constrainted_pid) motor->SetOutput(out2);
-    else motor->SetOutput(out1);
+    if (use_constrainted_pid)
+      motor->SetOutput(out2);
+    else
+      motor->SetOutput(out1);
     control::MotorCANBase::TransmitOutput(motors, 1);
-    
+
     print("% 10d % 10d % 10d\r\n", out1, out2, out1 - out2);
     osDelay(10);
   }
