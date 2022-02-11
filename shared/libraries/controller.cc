@@ -19,8 +19,8 @@
  ****************************************************************************/
 
 #include "controller.h"
-#include "bsp_error_handler.h"
 
+#include "bsp_error_handler.h"
 #include "utils.h"
 
 namespace control {

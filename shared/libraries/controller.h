@@ -137,7 +137,7 @@ class OutputConstraintedPIDController {
 
   /**
    * @brief try to compute the control command
-   * 
+   *
    * @param error error of the system, i.e. (target - actual)
    * @return output value that could potentially drive the error to 0, will not be clamped
    */

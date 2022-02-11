@@ -100,7 +100,8 @@ void Chassis::Update() {
       float k = requested_current > CURRENT_MAX ? CURRENT_MAX / requested_current : 1;
       print("% 7.5f % 7.5f \r\n", requested_current, k);
       for (int i = 0; i < FourWheel::motor_num; i++) {
-        motors_[i]->SetOutput(pids_[i].ComputeOutput(motors_[i]->GetOmegaDelta(speeds_[i]), k * abs(outputs[i])));
+        motors_[i]->SetOutput(
+            pids_[i].ComputeOutput(motors_[i]->GetOmegaDelta(speeds_[i]), k * abs(outputs[i])));
       }
       break;
   }
