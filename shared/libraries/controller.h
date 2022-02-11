@@ -128,11 +128,20 @@ class OutputConstraintedPIDController {
   /**
    * @brief compute output base on current error
    *
-   * @param error error of the system, i.e. (target - actual)
+   * @param error   error of the system, i.e. (target - actual)
+   * @param max_out maximum output possible for this pid
    *
    * @return output value that could potentially drive the error to 0
    */
   float ComputeOutput(float error, int max_out);
+
+  /**
+   * @brief try to compute the control command
+   * 
+   * @param error error of the system, i.e. (target - actual)
+   * @return output value that could potentially drive the error to 0, will not be clamped
+   */
+  float TryComputeOutput(float error);
 
   /**
    * @brief reinitialize the pid instance using another set of gains, but does not clear

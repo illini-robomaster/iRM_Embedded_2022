@@ -99,6 +99,10 @@ float OutputConstraintedPIDController::ComputeOutput(float error, int max_out) {
   return out;
 }
 
+float OutputConstraintedPIDController::TryComputeOutput(float error) {
+  return kp_ * error + ki_ * (cumulated_err_ + error) + kd_ * (error - last_err_);
+}
+
 void OutputConstraintedPIDController::Reinit(float kp, float ki, float kd) {
   kp_ = kp;
   ki_ = ki;
