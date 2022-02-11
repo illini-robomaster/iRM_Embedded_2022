@@ -85,7 +85,7 @@ class Chassis {
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
-  PIDController pids_[MAX_WHEEL_NUM];
+  OutputConstraintedPIDController pids_[MAX_WHEEL_NUM];
   float* speeds_;
 };
 

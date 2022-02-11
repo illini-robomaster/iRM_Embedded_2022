@@ -78,9 +78,9 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
       float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
       float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
 
-      speeds_[FourWheel::front_left] = scale * (y_speed + x_speed + turn_speed);
+      speeds_[FourWheel::front_left] = scale * (-y_speed + x_speed + turn_speed);
       speeds_[FourWheel::back_left] = scale * (y_speed - x_speed + turn_speed);
-      speeds_[FourWheel::front_right] = -scale * (y_speed - x_speed - turn_speed);
+      speeds_[FourWheel::front_right] = -scale * (-y_speed - x_speed - turn_speed);
       speeds_[FourWheel::back_right] = -scale * (y_speed + x_speed - turn_speed);
       break;
   }
@@ -89,18 +89,19 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
 void Chassis::Update() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
-      motors_[FourWheel::front_left]->SetOutput(
-          pids_[FourWheel::front_left].ComputeConstraintedOutput(
-              motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
-      motors_[FourWheel::back_left]->SetOutput(
-          pids_[FourWheel::back_left].ComputeConstraintedOutput(
-              motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
-      motors_[FourWheel::front_right]->SetOutput(
-          pids_[FourWheel::front_right].ComputeConstraintedOutput(
-              motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right])));
-      motors_[FourWheel::back_right]->SetOutput(
-          pids_[FourWheel::back_right].ComputeConstraintedOutput(
-              motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
+      constexpr float CURRENT_MAX = 100 / 6 * 7 / 24 * 1000;
+      float outputs[FourWheel::motor_num];
+      float requested_current = 0;
+      for (int i = 0; i < FourWheel::motor_num; i++) {
+        outputs[i] = pids_[i].TryComputeOutput(motors_[i]->GetOmegaDelta(speeds_[i]));
+        outputs[i] = clip<float>(outputs[i], -12288, 12288);
+        requested_current += abs(outputs[i]);
+      }
+      float k = requested_current > CURRENT_MAX ? CURRENT_MAX / requested_current : 1;
+      print("% 7.5f % 7.5f \r\n", requested_current, k);
+      for (int i = 0; i < FourWheel::motor_num; i++) {
+        motors_[i]->SetOutput(pids_[i].ComputeOutput(motors_[i]->GetOmegaDelta(speeds_[i]), k * abs(outputs[i])));
+      }
       break;
   }
 }

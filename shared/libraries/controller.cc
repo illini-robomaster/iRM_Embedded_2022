@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include "controller.h"
+#include "bsp_error_handler.h"
 
 #include "utils.h"
 
@@ -96,6 +97,7 @@ float OutputConstraintedPIDController::ComputeOutput(float error, int max_out) {
   cumulated_err_ += error;
   float out = kp_ * error + ki_ * cumulated_err_ + kd_ * (error - last_err_);
   last_err_ = error;
+  print(" % 10.4f ", out);
   return out;
 }
 
