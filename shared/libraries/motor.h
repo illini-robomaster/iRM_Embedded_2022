@@ -34,8 +34,12 @@ class MotorBase {
  public:
   MotorBase() : output_(0) {}
   virtual ~MotorBase() {}
-
   virtual void SetOutput(int16_t val) { output_ = val; }
+
+  virtual float GetTheta() const = 0;
+  virtual float GetThetaDelta(const float target) const = 0;
+  virtual float GetOmega() const = 0;
+  virtual float GetOmegaDelta(const float target) const = 0;
 
  protected:
   int16_t output_;
@@ -72,7 +76,7 @@ class MotorCANBase : public MotorBase {
    *
    * @return radian angle, range between [0, 2PI]
    */
-  virtual float GetTheta() const;
+  virtual float GetTheta() const override;
 
   /**
    * @brief get angle difference (target - actual), in [rad]
@@ -81,14 +85,14 @@ class MotorCANBase : public MotorBase {
    *
    * @return angle difference, range between [-PI, PI]
    */
-  virtual float GetThetaDelta(const float target) const;
+  virtual float GetThetaDelta(const float target) const override;
 
   /**
    * @brief get angular velocity, in [rad / s]
    *
    * @return angular velocity
    */
-  virtual float GetOmega() const;
+  virtual float GetOmega() const override;
 
   /**
    * @brief get angular velocity difference (target - actual), in [rad / s]
@@ -97,7 +101,7 @@ class MotorCANBase : public MotorBase {
    *
    * @return difference angular velocity
    */
-  virtual float GetOmegaDelta(const float target) const;
+  virtual float GetOmegaDelta(const float target) const override;
 
   /**
    * @brief transmit CAN message for setting motor outputs
@@ -148,6 +152,7 @@ class Motor3508 : public MotorCANBase {
  public:
   /* constructor wrapper over MotorCANBase */
   Motor3508(bsp::CAN* can, uint16_t rx_id);
+  ~Motor3508() {}
   /* implements data update callback */
   void UpdateData(const uint8_t data[]) override final;
   /* implements data printout */
@@ -231,6 +236,27 @@ class MotorPWMBase : public MotorBase {
    * @param val offset value with respect to the idle throttle pulse width, in [us]
    */
   virtual void SetOutput(int16_t val) override;
+
+ private:
+  /**
+   * @brief PWM cannot report theta, should NOT be called
+   */
+  float GetTheta() const override final;
+
+  /**
+   * @brief PWM cannot report theta, should NOT be called
+   */
+  float GetThetaDelta(const float target) const override final;
+
+  /**
+   * @brief PWM cannot report omega, should NOT be called
+   */
+  float GetOmega() const override final;
+
+  /**
+   * @brief PWM cannot report omega, should NOT be called
+   */
+  float GetOmegaDelta(const float target) const override final;
 
  private:
   bsp::PWM pwm_;

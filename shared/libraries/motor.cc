@@ -209,6 +209,20 @@ MotorPWMBase::MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t cl
   pwm_.Start();
 }
 
+float MotorPWMBase::GetTheta() const { RM_ASSERT_FALSE(true, "Unsupported PWM action"); }
+
+float MotorPWMBase::GetThetaDelta(const float target) const {
+  UNUSED(target);
+  RM_ASSERT_FALSE(true, "Unsupported PWM action");
+}
+
+float MotorPWMBase::GetOmega() const { RM_ASSERT_FALSE(true, "Unsupported PWM action"); }
+
+float MotorPWMBase::GetOmegaDelta(const float target) const {
+  UNUSED(target);
+  RM_ASSERT_FALSE(true, "Unsupported PWM action");
+}
+
 void MotorPWMBase::SetOutput(int16_t val) {
   output_ = val;
   pwm_.SetPulseWidth(val + idle_throttle_);
