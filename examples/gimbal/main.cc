@@ -45,6 +45,7 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
+  gimbal_data.model = GIMBAL_STANDARD_2022_ALPHA;
   gimbal = new control::Gimbal(gimbal_data);
 
   dbus = new remote::DBUS(&huart1);
@@ -59,12 +60,12 @@ void RM_RTOS_Default_Task(const void* args) {
   control::gimbal_data_t gimbal_data = gimbal->GetData();
 
   while (true) {
-    float pitch_ratio = -dbus->ch3 / 600.0;
+    float pitch_ratio = dbus->ch3 / 600.0;
     float yaw_ratio = -dbus->ch2 / 600.0;
     if (dbus->swr == remote::UP) {
       gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else if (dbus->swr == remote::MID) {
-      gimbal->TargetRel(pitch_ratio / 50, yaw_ratio / 50);
+      gimbal->TargetRel(pitch_ratio / 30, yaw_ratio / 30);
     }
 
     // Kill switch
