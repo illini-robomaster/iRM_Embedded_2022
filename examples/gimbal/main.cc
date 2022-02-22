@@ -45,7 +45,7 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = GIMBAL_STANDARD_2022_ALPHA;
+  gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
   gimbal = new control::Gimbal(gimbal_data);
 
   dbus = new remote::DBUS(&huart1);
