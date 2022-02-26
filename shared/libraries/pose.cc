@@ -40,7 +40,7 @@ Pose::Pose(bsp::MPU6500* _imu) : imu(_imu) {
     RM_ASSERT_TRUE(false, "invalid imu");
   }
   gravityDir = Z;
-  
+
   // Set weight for gyro data in complementary filter to 0.98. This is an arbitrary design.
   SetAlpha(0.98);
   // Set all IMU offsets to 0
@@ -92,17 +92,17 @@ void Pose::Calibrate(int16_t _num) {
    *  assign the noise bias to the gravity noise bias. So acc_z_off is always zero.
    **/
   switch (gravityDir) {
-  case X:
-    acc_x_off = 0;
-    break;
-  case Y:
-    acc_y_off = 0;
-    break;
-  case Z:
-    acc_z_off = 0; 
-    break;
+    case X:
+      acc_x_off = 0;
+      break;
+    case Y:
+      acc_y_off = 0;
+      break;
+    case Z:
+      acc_z_off = 0;
+      break;
   }
-  
+
   gyro_x_off = gyro_x / (float)_num;
   gyro_y_off = gyro_y / (float)_num;
   gyro_z_off = gyro_z / (float)_num;
@@ -113,15 +113,15 @@ float Pose::GetGravity(void) {
   const int32_t NUM = 100;
   for (int i = 0; i < NUM; i++) {
     switch (gravityDir) {
-    case X:
-      acce += imu->acce.x;
-      break;
-    case Y:
-      acce += imu->acce.y;
-      break;
-    case Z:
-      acce += imu->acce.z;
-      break;
+      case X:
+        acce += imu->acce.x;
+        break;
+      case Y:
+        acce += imu->acce.y;
+        break;
+      case Z:
+        acce += imu->acce.z;
+        break;
     }
     osDelay(10);
   }
@@ -144,17 +144,11 @@ void Pose::SetOffset(float _acc_x_off, float _acc_y_off, float _acc_z_off, float
   gyro_z_off = _gyro_z_off;
 }
 
-float Pose::GetPitch(void) {
-  return pitch; 
-}
+float Pose::GetPitch(void) { return pitch; }
 
-float Pose::GetRoll(void) {
-  return roll;
-}
+float Pose::GetRoll(void) { return roll; }
 
-float Pose::GetYaw(void) {
-  return yaw;
-}
+float Pose::GetYaw(void) { return yaw; }
 
 void Pose::SetAlpha(float _alpha) {
   if (_alpha > 1.0 || _alpha < 0.0) {
@@ -170,60 +164,58 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.y - acc_y_off, imu->acce.x - acc_x_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch +
-                     (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) +
+    pitch = alpha * (pitch + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) /
+                                 USEC_TO_SEC) +
             (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll +
-                    (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) -
+    roll = alpha * (roll + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) /
+                               USEC_TO_SEC) -
            (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
     // limit yaw to -Pi to Pi
     yaw = wrap<float>(yaw, -PI, PI);
-    
-    
+
   } else if (gravityDir == Y) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.x - acc_x_off, imu->acce.y - acc_y_off);
     rollAcc = atan2f(imu->acce.z - acc_z_off, imu->acce.y - acc_y_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch +
-                     (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) +
+    pitch = alpha * (pitch + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) /
+                                 USEC_TO_SEC) +
             (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll +
-                    (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) -
+    roll = alpha * (roll + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) /
+                               USEC_TO_SEC) -
            (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
     // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);    
-  
-  
+    yaw = wrap<float>(yaw, -PI, PI);
+
   } else if (gravityDir == Z) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.y - acc_y_off, imu->acce.z - acc_z_off);
     rollAcc = atan2f(imu->acce.x - acc_x_off, imu->acce.z - acc_z_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch +
-                     (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) +
+    pitch = alpha * (pitch + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) /
+                                 USEC_TO_SEC) +
             (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll +
-                    (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) -
+    roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) /
+                               USEC_TO_SEC) -
            (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
     // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);    
+    yaw = wrap<float>(yaw, -PI, PI);
   }
-  
+
   // update timestamp
   timestamp = imu->timestamp;
 }

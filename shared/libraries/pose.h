@@ -35,7 +35,7 @@ class Pose {
    *
    **/
   void PoseInit(void);
-  
+
   /** @description: naive calibration for all offsets
    *                read from IMU and compute the average for 100 times
    *  @param: num, IMU reads to compute the average offset
@@ -54,7 +54,7 @@ class Pose {
    *  @note : average 100 measure of z acceleration. Takes 1s.
    **/
   float GetGravity(void);
-  
+
   /** @description: set direction for gravity
    *  @param : 0 = x, 1 = y, 2 = z;
    **/
@@ -123,7 +123,7 @@ class Pose {
   float pitchAcc;
   float rollAcc;
   float yawAcc;
-  
+
   // direction of gravity
   // 0 = x
   // 1 = y
