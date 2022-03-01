@@ -28,7 +28,8 @@
 #define NOTCH (2 * PI / 8)
 #define SERVO_SPEED (PI)
 
-bsp::CAN* can = nullptr;
+bsp::CAN* can1 = nullptr;
+bsp::CAN* can2 = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
 
@@ -38,9 +39,10 @@ bool status = false;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  can = new bsp::CAN(&hcan1, 0x205);
-  pitch_motor = new control::Motor6020(can, 0x205);
-  yaw_motor = new control::Motor6020(can, 0x206);
+  can1 = new bsp::CAN(&hcan1, 0x205, true);
+  can2 = new bsp::CAN(&hcan2, 0x206, false);
+  pitch_motor = new control::Motor6020(can1, 0x205);
+  yaw_motor = new control::Motor6020(can2, 0x206);
 
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
@@ -56,7 +58,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);  // DBUS initialization needs time
 
-  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors_pitch[] = {pitch_motor};
+  control::MotorCANBase* motors_yaw[] = {yaw_motor};
   control::gimbal_data_t gimbal_data = gimbal->GetData();
 
   while (true) {
@@ -74,7 +77,8 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_pitch, 1);
+    control::MotorCANBase::TransmitOutput(motors_yaw, 1);
     osDelay(10);
   }
 }

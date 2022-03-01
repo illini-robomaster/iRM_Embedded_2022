@@ -42,9 +42,9 @@ void RM_RTOS_Init() {
   dbus = new remote::DBUS(&huart1);
 
   can = new bsp::CAN(&hcan1, 0x201);
-  left_flywheel_motor = new control::Motor3508(can, 0x201);
-  right_flywheel_motor = new control::Motor3508(can, 0x202);
-  load_motor = new control::Motor3508(can, 0x203);
+  left_flywheel_motor = new control::Motor3508(can, 0x202);
+  right_flywheel_motor = new control::Motor3508(can, 0x203);
+  load_motor = new control::Motor3508(can, 0x201);
 
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_flywheel_motor;

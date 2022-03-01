@@ -86,6 +86,7 @@ void RM_RTOS_Default_Task(const void* args) {
     } else {
       target = 0;
     }
+    print("target: %.3f\r\n", target);
 #else
     detector.input(key.Read());
     if (detector.posEdge()) {
@@ -100,7 +101,7 @@ void RM_RTOS_Default_Task(const void* args) {
     int16_t out = pid.ComputeConstraintedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
-    motor->PrintData();
+//    motor->PrintData();
     osDelay(10);
   }
 }

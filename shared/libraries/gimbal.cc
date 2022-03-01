@@ -30,16 +30,16 @@ Gimbal::Gimbal(gimbal_t gimbal)
       yaw_pid_ = new PIDController(yaw_move_pid_param_);
       break;
     case GIMBAL_STANDARD_2022_ALPHA:
-      data_.pitch_offset_ = 1.082f;
-      data_.yaw_offset_ = 2.594f;
+      data_.pitch_offset_ = 4.22f;
+      data_.yaw_offset_ = 1.03f;
       data_.pitch_max_ = 0.408f;
       data_.yaw_max_ = PI;
       data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
-      data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
+      data_.yaw_proximity_ = data_.yaw_max_ / 3.0;
       pitch_move_pid_param_ = new float[3]{1400, 0, 2200};
-      pitch_hold_pid_param_ = new float[3]{3200, 80, 2200};
-      yaw_move_pid_param_ = new float[3]{2000, 0, 2000};
-      yaw_hold_pid_param_ = new float[3]{5000, 320, 2500};
+      pitch_hold_pid_param_ = new float[3]{3200, 1200, 2200};
+      yaw_move_pid_param_ = new float[3]{4000, 0, 2000};
+      yaw_hold_pid_param_ = new float[3]{8000, 3500, 2500};
       pitch_pid_ = new PIDController(pitch_move_pid_param_);
       yaw_pid_ = new PIDController(yaw_move_pid_param_);
       break;
