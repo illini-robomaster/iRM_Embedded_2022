@@ -27,7 +27,7 @@ namespace control {
 static auto step_angles_ = std::unordered_map<ServoMotor*, float>();
 
 void jam_callback(ServoMotor* servo, const servo_jam_t data) {
-  float prev_target = wrap<float>(servo->GetTarget() - step_angles_[servo], 0, 2 * PI);
+  float prev_target = wrap<float>(servo->GetTarget() - data.dir * step_angles_[servo], 0, 2 * PI);
   servo->SetTarget(prev_target, static_cast<servo_mode_t>(-data.dir), true);
 }
 
@@ -64,12 +64,26 @@ Shooter::Shooter(shooter_t shooter) {
       speed_ = 0;
       break;
 
+    case SHOOTER_HERO_2022:
+      servo_data.mode = control::SERVO_CLOCKWISE;
+      servo_data.max_speed = 2 * PI;
+      servo_data.max_acceleration = 8 * PI;
+      servo_data.transmission_ratio = M3508P19_RATIO;
+      servo_data.omega_pid_param = new float[3]{25, 5, 22};
+
+      left_pid_ = new PIDController(80, 3, 0.1);
+      right_pid_ = new PIDController(80, 3, 0.1);
+      flywheel_turning_detector_ = new BoolEdgeDetector(false);
+      load_step_angle_ = 2 * PI / 6;
+      speed_ = 0;
+      break;
+
     default:
       RM_ASSERT_TRUE(false, "No shooter type specified");
   }
   // Initialize servomotor instance using data provided and register default jam callback
   load_servo_ = new control::ServoMotor(servo_data);
-  load_servo_->RegisterJamCallback(jam_callback, 0.6);
+  load_servo_->RegisterJamCallback(jam_callback, 0.8);
 
   // Register in step_angles_ so callback function can find step angle corresponding to
   // specific servomotor instance.
@@ -84,12 +98,14 @@ Shooter::~Shooter() {
     case SHOOTER_STANDARD_ZERO:
       break;
     case SHOOTER_STANDARD_2022:
+    case SHOOTER_HERO_2022:
       delete left_pid_;
       left_pid_ = nullptr;
       delete right_pid_;
       right_pid_ = nullptr;
       delete flywheel_turning_detector_;
       flywheel_turning_detector_ = nullptr;
+      break;
   }
 }
 
@@ -101,13 +117,21 @@ void Shooter::SetFlywheelSpeed(float speed) {
       break;
 
     case SHOOTER_STANDARD_2022:
+    case SHOOTER_HERO_2022:
       speed_ = speed;
       break;
   }
 }
 
 int Shooter::LoadNext() {
-  return load_servo_->SetTarget(load_servo_->GetTarget() + load_step_angle_);
+  switch (model_) {
+    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_STANDARD_2022:
+      return load_servo_->SetTarget(load_servo_->GetTarget() + load_step_angle_);
+    case SHOOTER_HERO_2022:
+      return load_servo_->SetTarget(load_servo_->GetTarget() - load_step_angle_);
+  }
+  return -1;
 }
 
 void Shooter::Update() {
@@ -116,7 +140,7 @@ void Shooter::Update() {
       load_servo_->CalcOutput();
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD_2022: {
       flywheel_turning_detector_->input(speed_ == 0);
       float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
       float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
@@ -124,6 +148,17 @@ void Shooter::Update() {
       right_flywheel_motor_->SetOutput(right_pid_->ComputeConstraintedOutput(right_diff));
       load_servo_->CalcOutput();
       break;
+    }
+
+    case SHOOTER_HERO_2022: {
+      flywheel_turning_detector_->input(speed_ == 0);
+      float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(-speed_);
+      float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(speed_);
+      left_flywheel_motor_->SetOutput(left_pid_->ComputeConstraintedOutput(left_diff));
+      right_flywheel_motor_->SetOutput(right_pid_->ComputeConstraintedOutput(right_diff));
+      load_servo_->CalcOutput();
+      break;
+    }
   }
 }
 

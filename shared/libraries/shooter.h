@@ -31,6 +31,7 @@ namespace control {
 typedef enum {
   SHOOTER_STANDARD_ZERO,
   SHOOTER_STANDARD_2022,
+  SHOOTER_HERO_2022,
 } shooter_model_t;
 
 /**

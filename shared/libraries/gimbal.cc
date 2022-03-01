@@ -25,7 +25,22 @@ Gimbal::Gimbal(gimbal_t gimbal)
       pitch_move_pid_param_ = new float[3]{1400, 0, 2200};
       pitch_hold_pid_param_ = new float[3]{3200, 100, 3100};
       yaw_move_pid_param_ = new float[3]{1000, 0, 2000};
-      yaw_hold_pid_param_ = new float[3]{3000, 60, 2500};
+      yaw_hold_pid_param_ = new float[3]{3000, 70, 2500};
+      pitch_pid_ = new PIDController(pitch_move_pid_param_);
+      yaw_pid_ = new PIDController(yaw_move_pid_param_);
+      break;
+    case GIMBAL_HERO_2022_ALPHA:
+      data_.pitch_offset_ = 3.617f;
+      data_.yaw_offset_ = 3.871f;
+      data_.pitch_max_ = 0.408f;
+      data_.yaw_max_ = 4.0f;
+      data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
+      data_.yaw_proximity_ = PI / 4;
+
+      pitch_move_pid_param_ = new float[3]{1000, 0, 1200};
+      pitch_hold_pid_param_ = new float[3]{2200, 80, 2100};
+      yaw_move_pid_param_ = new float[3]{900, 0, 1500};
+      yaw_hold_pid_param_ = new float[3]{1600, 100, 1900};
       pitch_pid_ = new PIDController(pitch_move_pid_param_);
       yaw_pid_ = new PIDController(yaw_move_pid_param_);
       break;

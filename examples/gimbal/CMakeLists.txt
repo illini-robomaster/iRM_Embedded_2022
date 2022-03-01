@@ -20,10 +20,18 @@
 
 project(example_gimbal ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
+irm_add_arm_executable(${PROJECT_NAME}_scout2022
     TARGET DJI_Board_TypeA
-    SOURCES main.cc)
+    SOURCES scout_2022.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_hero2022
+    TARGET DJI_Board_TypeA
+    SOURCES hero_2022.cc)
     
-irm_add_arm_executable(${PROJECT_NAME}_imu
+irm_add_arm_executable(${PROJECT_NAME}_imu_scout2022
     TARGET DJI_Board_TypeA
-    SOURCES imu_stablized.cc)
+    SOURCES imu_scout_2022.cc)
+    
+irm_add_arm_executable(${PROJECT_NAME}_imu_hero2022
+    TARGET DJI_Board_TypeA
+    SOURCES imu_hero_2022.cc)
