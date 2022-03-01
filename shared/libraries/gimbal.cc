@@ -14,9 +14,9 @@ Gimbal::Gimbal(gimbal_t gimbal)
 
   // data initialization using acquired model
   switch (gimbal.model) {
-    case GIMBAL_STANDARD_ZERO:
-      data_.pitch_offset_ = 4.725f;
-      data_.yaw_offset_ = 3.406f;
+    case GIMBAL_SCOUT_2022_ALPHA:
+      data_.pitch_offset_ = 1.585f;
+      data_.yaw_offset_ = 0.288f;
       data_.pitch_max_ = 0.408f;
       data_.yaw_max_ = 1.551f;
       data_.pitch_proximity_ = data_.pitch_max_ / 3.0;

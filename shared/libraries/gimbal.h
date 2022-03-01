@@ -30,7 +30,7 @@ namespace control {
 /**
  * @brief gimbal models
  */
-typedef enum { GIMBAL_STANDARD_ZERO, GIMBAL_STANDARD_2022_ALPHA } gimbal_model_t;
+typedef enum { GIMBAL_SCOUT_2022_ALPHA, GIMBAL_STANDARD_2022_ALPHA } gimbal_model_t;
 
 /**
  * @brief offset, max, and proximity angles of different gimbals
