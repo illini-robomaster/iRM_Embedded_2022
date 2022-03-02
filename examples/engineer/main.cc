@@ -18,35 +18,24 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "motor.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 #include "main.h"
 
-BoolEdgeDetector shoot_detector(false);
-control::MotorPWMBase* left_fly_motor = nullptr;
-control::MotorPWMBase* right_fly_motor = nullptr;
+#define gripper_port K2_GPIO_Port
+#define gripper_Pin K2_Pin
 
-bsp::CAN* can1 = nullptr;
-control::MotorCANBase* load_motor = nullptr;
-control::MotorCANBase* pitch_motor_1 = nullptr;
-control::MotorCANBase* pitch_motor_2 = nullptr;
-control::MotorCANBase* yaw_motor = nullptr;
+static bsp::GPIO* gripper;
 
 remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  // See pwm example
-  left_fly_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 50, 1000);
-  right_fly_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 50, 1000);
-  can1 = new bsp::CAN(&hcan1, 0x201);
 
-  load_motor = new control::Motor3508(can1, 0x201);
-  pitch_motor_1 = new control::Motor3508(can1, 0x202);
-  pitch_motor_2 = new control::Motor3508(can1, 0x203);
-  yaw_motor = new control::Motor3508(can1, 0x204);
+  gripper = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
 
   dbus = new remote::DBUS(&huart1);
 }
@@ -56,66 +45,12 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);
 
-  control::MotorCANBase* motors[] = {load_motor, pitch_motor_1, pitch_motor_2, yaw_motor};
-  control::PIDController pid_load(20, 15, 30);
-  control::PIDController pid_yaw(20, 15, 30);
-  control::PIDController pid_pitch_1(20, 15, 30);
-  control::PIDController pid_pitch_2(20, 15, 30);
-
-  float max_speed = 300;
-  float speed_load;
-  float speed_yaw;
-  float speed_pitch;
-
-  float diff_load;
-  int16_t out_load;
-
-  float diff_yaw;
-  int16_t out_yaw;
-
-  float diff_pitch_1;
-  int16_t out_pitch_1;
-
-  float diff_pitch_2;
-  int16_t out_pitch_2;
-
   while (true) {
-    // Kill switch for safety measure
-    if (dbus->swl != remote::MID) {
-      RM_ASSERT_TRUE(false, "Operation killed");
+    if (dbus->swr == remote::UP) {
+      gripper->High();
+    } else if (dbus->swr == remote::DOWN) {
+      gripper->Low();
     }
-
-    shoot_detector.input(dbus->swr == remote::UP);
-    if (shoot_detector.posEdge()) {
-      left_fly_motor->SetOutput(1320);
-      right_fly_motor->SetOutput(1320);
-    } else if (shoot_detector.negEdge()) {
-      left_fly_motor->SetOutput(0);
-      right_fly_motor->SetOutput(0);
-    }
-
-    speed_load = -3 * dbus->ch1 * max_speed / remote::DBUS::ROCKER_MAX;
-    speed_yaw = dbus->ch2 * max_speed / remote::DBUS::ROCKER_MAX;
-    speed_pitch= dbus->ch3 * max_speed / remote::DBUS::ROCKER_MAX;
-
-    diff_load = load_motor->GetOmegaDelta(speed_load);
-    out_load = pid_load.ComputeConstraintedOutput(diff_load);
-    load_motor->SetOutput(out_load);
-
-    diff_yaw = yaw_motor->GetOmegaDelta(speed_yaw);
-    out_yaw = pid_yaw.ComputeConstraintedOutput(diff_yaw);
-    yaw_motor->SetOutput(out_yaw);
-
-    diff_pitch_1 = pitch_motor_1->GetOmegaDelta(speed_pitch);
-    out_pitch_1 = pid_pitch_1.ComputeConstraintedOutput(diff_pitch_1);
-    pitch_motor_1->SetOutput(out_pitch_1);
-
-    diff_pitch_2 = pitch_motor_2->GetOmegaDelta(speed_pitch);
-    out_pitch_2 = pid_pitch_2.ComputeConstraintedOutput(diff_pitch_2);
-    pitch_motor_2->SetOutput(out_pitch_2);
-
-    control::MotorCANBase::TransmitOutput(motors, 4);
-
     osDelay(10);
   }
 }
