@@ -34,9 +34,7 @@ remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-
-  gripper = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
-
+  gripper = new bsp::GPIO(gripper_port, gripper_Pin);
   dbus = new remote::DBUS(&huart1);
 }
 
