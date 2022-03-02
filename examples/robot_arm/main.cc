@@ -34,8 +34,8 @@
 #define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH (2 * PI / 4)
-#define SPEED (4 * PI)
-#define ACCELERATION (2 * PI)
+#define SPEED (2 * PI)
+#define ACCELERATION (1 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motorL = nullptr;
@@ -53,9 +53,9 @@ BoolEdgeDetector key_detector(false);
 void RM_RTOS_Init() {
  print_use_uart(&huart8);
  can1 = new bsp::CAN(&hcan1, 0x201);
- motorL = new control::Motor3508(can1, 0x201);
- motorR = new control::Motor3508(can1, 0x202);
- motorG = new control::Motor3508(can1, 0x203);
+ motorL = new control::Motor3508(can1, 0x205);
+ motorR = new control::Motor3508(can1, 0x206);
+ motorG = new control::Motor3508(can1, 0x207);
 
  control::servo_t servoL_data;
  servoL_data.motor = motorL;
@@ -89,6 +89,41 @@ void RM_RTOS_Init() {
 #endif
 }
 
+
+/* init new task START */
+static osThreadId_t servoPrintTaskHandle;
+
+const osThreadAttr_t servoPrintTask_attributes = {.name = "servoPrintTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 128 * 4,
+                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
+
+void servoPrint_Task(void* argument) {
+  UNUSED(argument);
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    print("servoL: ");
+    servoL->PrintData();
+    print("servoR: ");
+    servoR->PrintData();
+    print("servoG: ");
+    servoG->PrintData();
+    osDelay(500);
+  }
+}
+/* init new task END */
+
+void RM_RTOS_Threads_Init(void) {
+  servoPrintTaskHandle = osThreadNew(servoPrint_Task, nullptr, &servoPrintTask_attributes);
+}
+
+
 void RM_RTOS_Default_Task(const void* args) {
  UNUSED(args);
 #ifdef WITH_CONTROLLER
@@ -98,29 +133,33 @@ void RM_RTOS_Default_Task(const void* args) {
  control::MotorCANBase* motors[] = {motorL, motorR, motorG};
  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 
- float targetLR;
- float targetG;
+ float targetLR = 0.0;
+ float targetG = 0.0;
 
  while (true) {
 #ifdef WITH_CONTROLLER
-   targetG = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 2 * PI;
+   targetG += float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 2 * PI / 100;
    servoG->SetTarget(targetG, true);
-   targetLR = float(dbus->ch3) / remote::DBUS::ROCKER_MAX * PI;
-   servoL->SetTarget(targetLR, true);
-   servoR->SetTarget(-targetLR, true);
+   
+   targetLR += float(dbus->ch3) / remote::DBUS::ROCKER_MAX * PI / 100;
+   if (targetLR >= 0 && targetLR <= 2.3) {
+     servoL->SetTarget(targetLR, true);
+     servoR->SetTarget(-targetLR, true);
+   }
+   
+
 #else
    key_detector.input(key.Read());
    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
      target = wrap<float>(target + NOTCH, 0, 2 * PI);
    }
 #endif
-   servoL->CalcOutput();
-   servoL->PrintData();
-   servoR->CalcOutput();
-   servoR->PrintData();
-   servoG->CalcOutput();
-   servoG->PrintData();
    control::MotorCANBase::TransmitOutput(motors, 3);
+   
+   servoL->CalcOutput();
+   servoR->CalcOutput();
+   servoG->CalcOutput();   
+   
    osDelay(10);
  }
 }
