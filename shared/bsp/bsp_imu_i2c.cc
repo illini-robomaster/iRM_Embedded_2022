@@ -34,4 +34,52 @@ bool IMU::GetAngle(float *angle, bool is_degree) {
   }
 }
 
+bool IMU::GetQuaternion(float* Q) {
+  Quaternion Q_;
+  if (HAL_I2C_Mem_Read(i2c_, DevAddr_, Q0, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&Q_, 8, 100) == HAL_OK) {
+    for (int i = 0; i < 4; ++i) {
+      Q[i] = (float)Q_.Q[i] / 32768;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool IMU::GetAcc(float* acc) {
+  Acc acc_;
+  if (HAL_I2C_Mem_Read(i2c_, DevAddr_, AX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&acc_, 6, 100) == HAL_OK) {
+    for (int i = 0; i < 3; ++i) {
+      acc[i] = (float)acc_.a[i] / 32768 * 16;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool IMU::GetGyro(float* gyro) {
+  Gyro gyro_;
+  if (HAL_I2C_Mem_Read(i2c_, DevAddr_, GX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&gyro_, 6, 100) == HAL_OK) {
+    for (int i = 0; i < 3; ++i) {
+      gyro[i] = (float)gyro_.w[i] / 32768 * 2000;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool IMU::GetMag(int* mag) {
+  Mag mag_;
+  if (HAL_I2C_Mem_Read(i2c_, DevAddr_, HX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&mag_, 6, 100) == HAL_OK) {
+    for (int i = 0; i < 3; ++i) {
+      mag[i] = (int)mag_.h[i];
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 }

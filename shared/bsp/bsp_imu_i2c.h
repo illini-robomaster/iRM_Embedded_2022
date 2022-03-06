@@ -58,6 +58,10 @@ const uint16_t GPSHeight  = 0x4d;
 const uint16_t GPSYAW     = 0x4e;
 const uint16_t GPSVL      = 0x4f;
 const uint16_t GPSVH      = 0x50;
+const uint16_t Q0         = 0x51;
+const uint16_t Q1         = 0x52;
+const uint16_t Q2         = 0x53;
+const uint16_t Q3         = 0x54;
 
 typedef struct {
   unsigned char ucYear;
@@ -109,12 +113,20 @@ typedef struct {
   long lGPSVelocity;
 } GPSV;
 
+typedef struct {
+  short Q[4];
+} Quaternion;
+
 class IMU {
 public:
    IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
 
    bool IsRead();
    bool GetAngle(float *angle, bool is_degree = false);
+   bool GetQuaternion(float *Q);
+   bool GetAcc(float *acc);
+   bool GetGyro(float *gyro);
+   bool GetMag(int *mag);
 private:
    I2C_HandleTypeDef*   i2c_;
    uint16_t             DevAddr_;
