@@ -48,7 +48,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
     clear_screen();
     if (!(imu->GetAngle(angle, true)) || !(imu->GetQuaternion(Q)) || !(imu->GetAcc(acc)) || !(imu->GetGyro(gyro)) || !(imu->GetMag(mag)))
       print("I2C Error!\r\n");
-    print("Angle: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", angle[0], angle[1], angle[2]);
+    print("Angle: Roll = %.3f, Pitch = %.3f, Yaw = %.3f\r\n", angle[0], angle[1], angle[2]);
     print("Quaternion: %.3f, %.3f, %.3f, %.3f\r\n", Q[0], Q[1], Q[2], Q[3]);
     print("\r\n");
     print("Acc: %.3f, %.3f, %.3f\r\n", acc[0], acc[1], acc[2]);

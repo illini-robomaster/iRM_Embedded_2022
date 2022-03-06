@@ -71,51 +71,51 @@ typedef struct {
   unsigned char ucMinute;
   unsigned char ucSecond;
   unsigned short usMiliSecond;
-} Time;
+} __packed Time;
 
 typedef struct {
   short a[3];
   short T;
-} Acc;
+} __packed Acc;
 
 typedef struct {
   short w[3];
   short T;
-} Gyro;
+} __packed Gyro;
 
 typedef struct {
   short Angle[3];
   short T;
-} Angle;
+} __packed Angle;
 
 typedef struct {
   short h[3];
   short T;
-} Mag;
+} __packed Mag;
 
 typedef struct {
   short sDStatus[4];
-} DStatus;
+} __packed DStatus;
 
 typedef struct {
   long lPressure;
   long lAltitude;
-} Press;
+} __packed Press;
 
 typedef struct {
   long lLon;
   long lLat;
-} LonLat;
+} __packed LonLat;
 
 typedef struct {
   short sGPSHeight;
   short sGPSYaw;
   long lGPSVelocity;
-} GPSV;
+} __packed GPSV;
 
 typedef struct {
   short Q[4];
-} Quaternion;
+} __packed Quaternion;
 
 class IMU {
 public:
