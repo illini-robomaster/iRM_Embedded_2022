@@ -164,8 +164,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);  // DBUS initialization needs time
 
-//  control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
-//  control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
+  control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
+  control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
   float yaw, roll;  //, roll;
@@ -190,8 +190,8 @@ void RM_RTOS_Default_Task(const void* args) {
     chassis->Update();
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
-//    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-//    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     osDelay(10);
   }
 }
