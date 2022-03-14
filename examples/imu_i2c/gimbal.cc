@@ -90,29 +90,68 @@ void RM_RTOS_Default_Task(const void* args) {
    RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
 
  float angle[3];
+ float pitch_ = 0, yaw_ = 0;
+
  while (true) {
-   chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
-   if (!(imu->GetAngle(angle)))
-     print("I2C Error!\r\n");
-   //    float pitch_ratio = dbus->ch3 / 600.0;
-   //    float yaw_ratio = -dbus->ch2 / 600.0;
-   //    gimbal->TargetRel(pitch_ratio / 30 - roll / 8, yaw_ratio / 30 - yaw / 30);
-   gimbal->TargetRel(- angle[0] / 8, - angle[2] / 30);
    // Kill switch
    if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
      RM_ASSERT_TRUE(false, "Operation killed");
    }
-   // update rpy
 
-   //    print("\r\n");
-   //    print("yaw: %.3f\r\n", yaw);
-   //    print("roll: %.3f\r\n", roll);
-   //    gimbal->TargetRel(-roll / 8, -yaw / 30);
-   chassis->Update();
+//   if (!(imu->GetAngle(angle)))
+//     print("I2C Error!\r\n");
+//   gimbal->TargetRel(-angle[0] / 8, -angle[2] / 30);
+//   gimbal->Update();
+//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+//
+//   osDelay(10);
+//
+//   if (dbus->swr == remote::UP) {
+//     float pitch_ratio = dbus->ch3 / 600.0;
+//     float yaw_ratio = -dbus->ch2 / 600.0;
+//     gimbal->TargetRel(pitch_ratio / 30, yaw_ratio / 30);
+//     gimbal->Update();
+//   }
+//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+
+//   float pitch_, yaw_;
+//   if (!(imu->GetAngle(angle)))
+//     print("I2C Error!\r\n");
+//   pitch_ = -angle[0] / 8;
+//   yaw_ = -angle[2] / 30;
+//
+//   if (dbus->swr == remote::UP) {
+//     float pitch_ratio = dbus->ch3 / 600.0;
+//     float yaw_ratio = -dbus->ch2 / 600.0;
+//     pitch_ += pitch_ratio / 30;
+//     yaw_ += yaw_ratio / 30;
+//   }
+//   gimbal->TargetRel(pitch_, yaw_);
+//   gimbal->Update();
+//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+
+   if (!(imu->GetAngle(angle)))
+     print("I2C Error!\r\n");
+
+   if (dbus->swr == remote::UP) {
+     float pitch_ratio = dbus->ch3 / 600.0;
+     float yaw_ratio = -dbus->ch2 / 600.0;
+     pitch_ += pitch_ratio / 3000.0;
+     yaw_ += yaw_ratio / 3000.0;
+   }
+   gimbal->TargetRel(pitch_ - angle[0] / 8, yaw_ - angle[2] / 30);
    gimbal->Update();
-   control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+
+   if (dbus->swr == remote::MID)
+     chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
+   chassis->Update();
+   control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+
    osDelay(10);
  }
 }
