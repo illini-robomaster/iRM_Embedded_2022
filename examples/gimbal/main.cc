@@ -68,7 +68,7 @@ void RM_RTOS_Default_Task(const void* args) {
     if (dbus->swr == remote::UP) {
       gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
     } else if (dbus->swr == remote::MID) {
-      gimbal->TargetRel(pitch_ratio / 30, yaw_ratio / 30);
+      gimbal->TargetRel(pitch_ratio / 15, yaw_ratio / 15);
     }
 
     // Kill switch

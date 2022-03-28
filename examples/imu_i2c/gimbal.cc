@@ -90,7 +90,8 @@ void RM_RTOS_Default_Task(const void* args) {
    RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
 
  float angle[3];
- float pitch_ = 0, yaw_ = 0;
+ float pitch_target = 0, yaw_target = 0;
+ float pitch_curr, yaw_curr;
 
  while (true) {
    // Kill switch
@@ -98,51 +99,26 @@ void RM_RTOS_Default_Task(const void* args) {
      RM_ASSERT_TRUE(false, "Operation killed");
    }
 
-//   if (!(imu->GetAngle(angle)))
-//     print("I2C Error!\r\n");
-//   gimbal->TargetRel(-angle[0] / 8, -angle[2] / 30);
-//   gimbal->Update();
-//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-//
-//   osDelay(10);
-//
-//   if (dbus->swr == remote::UP) {
-//     float pitch_ratio = dbus->ch3 / 600.0;
-//     float yaw_ratio = -dbus->ch2 / 600.0;
-//     gimbal->TargetRel(pitch_ratio / 30, yaw_ratio / 30);
-//     gimbal->Update();
-//   }
-//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-
-//   float pitch_, yaw_;
-//   if (!(imu->GetAngle(angle)))
-//     print("I2C Error!\r\n");
-//   pitch_ = -angle[0] / 8;
-//   yaw_ = -angle[2] / 30;
-//
-//   if (dbus->swr == remote::UP) {
-//     float pitch_ratio = dbus->ch3 / 600.0;
-//     float yaw_ratio = -dbus->ch2 / 600.0;
-//     pitch_ += pitch_ratio / 30;
-//     yaw_ += yaw_ratio / 30;
-//   }
-//   gimbal->TargetRel(pitch_, yaw_);
-//   gimbal->Update();
-//   control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-//   control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-
    if (!(imu->GetAngle(angle)))
      print("I2C Error!\r\n");
 
    if (dbus->swr == remote::UP) {
      float pitch_ratio = dbus->ch3 / 600.0;
      float yaw_ratio = -dbus->ch2 / 600.0;
-     pitch_ += pitch_ratio / 3000.0;
-     yaw_ += yaw_ratio / 3000.0;
+     pitch_target = wrap<float>(pitch_target + pitch_ratio / 300.0, -PI, PI);
+     yaw_target = wrap<float>(yaw_target + yaw_ratio / 300.0, -PI, PI);
    }
-   gimbal->TargetRel(pitch_ - angle[0] / 8, yaw_ - angle[2] / 30);
+   pitch_curr = angle[0];
+   yaw_curr = angle[2];
+   float yaw_diff;
+   if (-PI < yaw_target && yaw_target < -PI / 2 && PI / 2 < yaw_curr && yaw_curr < PI) {
+     yaw_diff = yaw_target - yaw_curr + 2 * PI;
+   } else if (-PI < yaw_curr && yaw_curr < -PI / 2 && PI / 2 < yaw_target && yaw_target < PI) {
+     yaw_diff = yaw_target - yaw_curr - 2 * PI;
+   } else {
+     yaw_diff = yaw_target - yaw_curr;
+   }
+   gimbal->TargetRel((pitch_target - pitch_curr) / 8, yaw_diff / 300);
    gimbal->Update();
    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
