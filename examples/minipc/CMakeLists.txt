@@ -18,7 +18,7 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_jetson ASM C CXX)
+project(example_minipc ASM C CXX)
 
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
