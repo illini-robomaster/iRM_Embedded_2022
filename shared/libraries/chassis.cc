@@ -46,7 +46,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       }
 
 //      power_limit = new PowerLimit(FourWheel::motor_num, 20, 12.0, 0.0048);
-      power_limit = new PowerLimit(FourWheel::motor_num, 20, 12.0, 0);
+      power_limit = new PowerLimit(FourWheel::motor_num, 40, 160 / 1.88E10, 0);
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;

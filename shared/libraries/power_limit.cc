@@ -35,17 +35,17 @@ float square(float x) {
 }
 
 void PowerLimit::Output(float* vel_real, float* PID_output, float* output) {
-  float a = 0;
-  float b = 0;
-  float c = 0;
+  volatile double a = 0;
+  volatile double b = 0;
+  volatile double c = 0;
   for (int i = 0; i < motor_num_; ++i) {
-    a += square(PID_output[i]);
+    a += pow(PID_output[i], 2);
     b += abs(PID_output[i] * vel_real[i]);
-    c += square(vel_real[i]);
+    c += pow(vel_real[i], 2);
   }
   a *= effort_coeff_;
   c = c * velocity_coeff_ - max_power_;
-  float zoom_coeff = (square(b) - 4 * a * c) > 0 ? ((-b + sqrt(square(b) - 4 * a * c)) / (2 * a)) : 0;
+  double zoom_coeff = (pow(b, 2) - 4 * a * c) > 0 ? ((-b + sqrt(pow(b, 2) - 4 * a * c)) / (2 * a)) : 0;
   for (int i = 0; i < motor_num_; ++i) {
     output[i] = zoom_coeff > 1 ? PID_output[i] : PID_output[i] * zoom_coeff;
   }
