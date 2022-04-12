@@ -38,7 +38,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
       {
-        float* pid_param = new float[3]{20, 8, 2};  // {5, 3, 0.1}
+        float* pid_param = new float[3]{20, 8, 2};  // {5, 3, 0.1} {20, 8, 2}
         pids_[FourWheel::front_left].Reinit(pid_param);
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
@@ -46,7 +46,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       }
 
 //      power_limit = new PowerLimit(FourWheel::motor_num, 20, 12.0, 0.0048);
-      power_limit = new PowerLimit(FourWheel::motor_num, 40, 160 / 1.88E10, 0);
+      power_limit = new PowerLimit(FourWheel::motor_num, 40, 105, 0.00005);
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;
