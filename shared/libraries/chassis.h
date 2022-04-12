@@ -22,6 +22,7 @@
 
 #include "controller.h"
 #include "motor.h"
+#include "power_limit.h"
 
 #define MAX_WHEEL_NUM 6
 
@@ -86,6 +87,7 @@ class Chassis {
 
   // pids and current speeds for each motor on the chassis
   PIDController pids_[MAX_WHEEL_NUM];
+  PowerLimit* power_limit;
   float* speeds_;
 };
 
