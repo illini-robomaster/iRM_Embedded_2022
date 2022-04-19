@@ -41,7 +41,7 @@ bool status = false;
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
   
-  gimbal_init_data.model = control::GIMBAL_STANDARD_ZERO;
+  gimbal_init_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
   switch (gimbal_init_data.model) {
     case control::GIMBAL_STANDARD_ZERO:
       can1 = new bsp::CAN(&hcan1, 0x201);
@@ -104,7 +104,7 @@ void RM_RTOS_Default_Task(const void* args) {
         break;
       case control::GIMBAL_STANDARD_2022_ALPHA:
         control::MotorCANBase::TransmitOutput(motors_can1, 1);
-        // control::MotorCANBase::TransmitOutput(motors_can2, 1);
+         control::MotorCANBase::TransmitOutput(motors_can2, 1);
         break;
     }
     osDelay(10);

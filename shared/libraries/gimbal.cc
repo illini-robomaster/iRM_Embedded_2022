@@ -30,16 +30,16 @@ Gimbal::Gimbal(gimbal_t gimbal)
       yaw_omega_pid_ = new PIDController(yaw_omega_pid_param_);
       break;
     case GIMBAL_STANDARD_2022_ALPHA:
-      data_.pitch_offset_ = 4.1838f;
-      data_.yaw_offset_ = 1.0937f;
+      data_.pitch_offset_ = 5.2439f;
+      data_.yaw_offset_ = 0.5461f;
       data_.pitch_max_ = 0.408f;
       data_.yaw_max_ = PI;
-      pitch_theta_pid_param_ = new float[3]{1450, 3.5, 0.8};
-      pitch_omega_pid_param_ = new float[3]{230, 3, 0.6};
+      pitch_theta_pid_param_ = new float[3]{1400, 3.5, 0.6};
+      pitch_omega_pid_param_ = new float[3]{210, 3, 0.4};
       // pitch_theta_pid_param_ = new float[3]{0, 0, 0};
       // pitch_omega_pid_param_ = new float[3]{0, 0, 0};
-      yaw_theta_pid_param_ = new float[3]{3200, 0, 0};
-      yaw_omega_pid_param_ = new float[3]{100, 0, 0};
+      yaw_theta_pid_param_ = new float[3]{1500, 1, 100};
+      yaw_omega_pid_param_ = new float[3]{200, 0.8, 90};
       pitch_theta_pid_ = new PIDController(pitch_theta_pid_param_);
       pitch_omega_pid_ = new PIDController(pitch_omega_pid_param_);
       yaw_theta_pid_ = new PIDController(yaw_theta_pid_param_);
