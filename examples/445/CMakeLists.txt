@@ -23,3 +23,7 @@ project(example_445 ASM C CXX)
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES main.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_read
+        TARGET DJI_Board_TypeA
+        SOURCES read_imu.cc)

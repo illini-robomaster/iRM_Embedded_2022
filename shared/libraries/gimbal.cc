@@ -34,12 +34,14 @@ Gimbal::Gimbal(gimbal_t gimbal)
       data_.yaw_offset_ = 0.5461f;
       data_.pitch_max_ = 0.408f;
       data_.yaw_max_ = PI;
-      pitch_theta_pid_param_ = new float[3]{1400, 3.5, 0.6};
-      pitch_omega_pid_param_ = new float[3]{210, 3, 0.4};
-      // pitch_theta_pid_param_ = new float[3]{0, 0, 0};
-      // pitch_omega_pid_param_ = new float[3]{0, 0, 0};
-      yaw_theta_pid_param_ = new float[3]{1500, 1, 100};
-      yaw_omega_pid_param_ = new float[3]{200, 0.8, 90};
+//      pitch_theta_pid_param_ = new float[3]{1400, 2.5, 1.2};
+//      pitch_omega_pid_param_ = new float[3]{210, 2, 0.8};
+//      yaw_theta_pid_param_ = new float[3]{1500, 1, 100};
+//      yaw_omega_pid_param_ = new float[3]{200, 0.8, 90};
+      pitch_theta_pid_param_ = new float[3]{30, 0, 1};
+      pitch_omega_pid_param_ = new float[3]{2100, 35, 180};
+      yaw_theta_pid_param_ = new float[3]{26, 0, 0.3};
+      yaw_omega_pid_param_ = new float[3]{3600, 100, 0};
       pitch_theta_pid_ = new PIDController(pitch_theta_pid_param_);
       pitch_omega_pid_ = new PIDController(pitch_omega_pid_param_);
       yaw_theta_pid_ = new PIDController(yaw_theta_pid_param_);
@@ -87,8 +89,6 @@ void Gimbal::Update() {
 
   pitch_motor_->SetOutput(po_out);
   yaw_motor_->SetOutput(yo_out);
-  print("theta:% 7.4f, omega:% 7.4f\r\n", yaw_motor_->GetThetaDelta(0), yaw_motor_->GetOmegaDelta(0));
-  // print("pitch:% 7.4f, yaw:% 7.4f\r\n", po_out, yo_out);
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {
