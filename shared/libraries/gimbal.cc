@@ -41,7 +41,7 @@ Gimbal::Gimbal(gimbal_t gimbal)
       pitch_theta_pid_param_ = new float[3]{30, 0, 1};
       pitch_omega_pid_param_ = new float[3]{2100, 35, 180};
       yaw_theta_pid_param_ = new float[3]{26, 0, 0.3};
-      yaw_omega_pid_param_ = new float[3]{3600, 100, 0};
+      yaw_omega_pid_param_ = new float[3]{3600, 75, 0};
       pitch_theta_pid_ = new PIDController(pitch_theta_pid_param_);
       pitch_omega_pid_ = new PIDController(pitch_omega_pid_param_);
       yaw_theta_pid_ = new PIDController(yaw_theta_pid_param_);
