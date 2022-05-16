@@ -50,32 +50,6 @@ static const uint16_t IMUAddress = 0x50;
 static bsp::IMU *imu = nullptr;
 static bsp::GPIO *gpio_red, *gpio_green;
 
-#define RX_SIGNAL (1 << 0)
-
-extern osThreadId_t defaultTaskHandle;
-
-const osThreadAttr_t readTaskAttribute = {.name = "readTask",
-                                          .attr_bits = osThreadDetached,
-                                          .cb_mem = nullptr,
-                                          .cb_size = 0,
-                                          .stack_mem = nullptr,
-                                          .stack_size = 128 * 4,
-                                          .priority = (osPriority_t)osPriorityNormal,
-                                          .tz_module = 0,
-                                          .reserved = 0};
-osThreadId_t readTaskHandle;
-
-class CustomUART : public bsp::UART {
- public:
-  using bsp::UART::UART;
-
- protected:
-  /* notify application when rx data is pending read */
-  void RxCompleteCallback() final { osThreadFlagsSet(readTaskHandle, RX_SIGNAL); }
-};
-
-CustomUART* esp32_uart = nullptr;
-
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
@@ -121,72 +95,6 @@ void RM_RTOS_Init() {
   shooter = new control::Shooter(shooter_data);
 
   dbus = new remote::DBUS(&huart1);
-
-  esp32_uart = new CustomUART(&huart6);
-  esp32_uart->SetupRx(300);
-  esp32_uart->SetupTx(300);
-}
-
-const char cmd0[] = "hld";
-const char cmd1[] = "chs";
-const char cmd2[] = "gim";
-const char cmd3[] = "sho";
-
-bool run_gimbal = false;
-bool run_chassis = false;
-bool run_shooter = false;
-int16_t ch0 = 0;
-int16_t ch1 = 0;
-int16_t ch2 = 0;
-int16_t ch3 = 0;
-
-void readTask(void* arg) {
-  UNUSED(arg);
-//  uint32_t length;
-  uint8_t* data;
-
-  while (true) {
-    /* wait until rx data is available */
-    uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
-    if (flags & RX_SIGNAL) {  // unnecessary check
-      /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
-      gpio_red->Toggle();
-      gpio_green->Toggle();
-      int len = esp32_uart->Read(&data);
-      print("Len: <%d>, ", len);
-      if (len < 4) continue;
-      run_gimbal = false; run_chassis = false; run_shooter = false;
-      ch0 = 0; ch1 = 0; ch2 = 0; ch3 = 0;
-      if (strncmp((char*)data, cmd0, 3) == 0) {
-        print("hold:");
-        run_gimbal = true;
-        run_chassis = true;
-      } else if (strncmp((char*)data, cmd1, 3) == 0) {
-        ch0 = data[4] << 8 | data[5];
-        ch1 = data[6] << 8 | data[7];
-        ch2 = data[8] << 8 | data[9];
-        run_chassis = true;
-        print("chassis: %d, %d, %d", ch0, ch1, ch2);
-      } else if (strncmp((char*)data, cmd2, 3) == 0) {
-        ch3 = data[4] << 8 | data[5];
-        ch2 = data[6] << 8 | data[7];
-        run_gimbal = true;
-        print("gimbal: %d, %d", ch3, ch2);
-      } else if (strncmp((char*)data, cmd3, 3) == 0) {
-        run_shooter = true;
-        print("shooter:");
-      }
-      print("\r\n");
-      // ch0 = 0;
-      // ch1 = 0;
-      // ch2 = 0;
-      // ch3 = 0;
-    }
-  }
-}
-
-void RM_RTOS_Threads_Init(void) {
-  readTaskHandle = osThreadNew(readTask, nullptr, &readTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -209,6 +117,8 @@ void RM_RTOS_Default_Task(const void* args) {
  float pitch_curr, yaw_curr;
 
   print("Calirate\r\n");
+  gpio_red->Low();
+  gpio_green->Low();
   for (int i = 0; i < 1000; i++) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
@@ -216,11 +126,17 @@ void RM_RTOS_Default_Task(const void* args) {
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     osDelay(5);
   }
+  gpio_red->High();
+  gpio_green->High();
+
   if (!(imu->GetAngle(angle_offset)))
     RM_ASSERT_TRUE(false, "I2C Error!\r\n");
   print("Begin\r\n");
 
   while (true) {
+   if (dbus->swl == remote::UP || dbus->swl == remote::DOWN)
+     RM_ASSERT_TRUE(false, "Operation killed\r\n");
+     
     if (!(imu->GetAngle(angle)))
       RM_ASSERT_TRUE(false, "I2C Error!\r\n");
 
@@ -228,9 +144,9 @@ void RM_RTOS_Default_Task(const void* args) {
     angle[1] = wrap<float>(angle[1] - angle_offset[1], -PI, PI);
     angle[2] = wrap<float>(angle[2] - angle_offset[2], -PI, PI);
 
-    if (run_gimbal) {
-      float pitch_ratio = ch3 / 600.0;
-      float yaw_ratio = -ch2 / 600.0;
+    if (dbus->swr == remote::UP) {
+      float pitch_ratio = dbus->ch3 / 600.0;
+      float yaw_ratio = -dbus->ch2 / 600.0;
       pitch_target = wrap<float>(pitch_target + pitch_ratio / 40.0, -PI, PI);
       yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
     }
@@ -246,16 +162,9 @@ void RM_RTOS_Default_Task(const void* args) {
     }
     
     float yaw_offset = 0;
-    if (run_chassis) {
-      chassis->SetSpeed(ch0, ch1, ch2);
-      yaw_offset = ch2 / 660.0 * 2 * PI / 6;
-    }
-
-    if (run_shooter) {
-      shooter->SetFlywheelSpeed(600);
-      shooter->LoadNext();
-    } else {
-      shooter->SetFlywheelSpeed(0);
+    if (dbus->swr == remote::MID) {
+      chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
+      yaw_offset = dbus->ch2 / 660.0 * 2 * PI / 6;
     }
 
     gimbal->TargetRel((pitch_target - pitch_curr) / 18, (yaw_diff + yaw_offset) / 30);
