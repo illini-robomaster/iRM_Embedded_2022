@@ -24,6 +24,7 @@
 #include "bsp_imu.h"
 #include "bsp_os.h"
 #include "cmsis_os.h"
+#include "MahonyARHS.h"
 
 #define ONBOARD_IMU_SPI hspi5
 #define ONBOARD_IMU_CS_GROUP GPIOF
@@ -45,15 +46,33 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   print("IMU Initialized!\r\n");
   osDelay(3000);
+  control::MahonyARHS arhs(imu);
+
+  arhs.MPUMeasureOffset(0);
+  for (int i = 0; i < 500; i++) {
+    arhs.MPUMeasureOffset(1);
+    osDelay(5);
+  }
+  arhs.MPUMeasureOffset(2);
+  // arhs.InitQuaternion();
+  
+  int cnt = 0;
 
   while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("Temp: %10.4f\r\n", imu->temp);
-    print("ACC_X: %9.4f ACC_Y: %9.4f ACC_Z: %9.4f\r\n", imu->acce.x, imu->acce.y, imu->acce.z);
-    print("GYRO_X: %8.4f GYRO_Y: %8.4f GYRO_Z: %8.4f\r\n", imu->gyro.x, imu->gyro.y, imu->gyro.z);
-    print("MAG_X: %9.0f MAG_Y: %9.0f MAG_Z: %9.0f\r\n", imu->mag.x, imu->mag.y, imu->mag.z);
-    print("\r\nTime Stamp: %lu us\r\n", imu->timestamp);
-    osDelay(100);
+    // print("Temp: %10.4f\r\n", imu->temp);
+    // print("ACC_X: %9.4f ACC_Y: %9.4f ACC_Z: %9.4f\r\n", imu->acce.x, imu->acce.y, imu->acce.z);
+    // print("GYRO_X: %8.4f GYRO_Y: %8.4f GYRO_Z: %8.4f\r\n", imu->gyro.x, imu->gyro.y, imu->gyro.z);
+    // print("MAG_X: %9.0f MAG_Y: %9.0f MAG_Z: %9.0f\r\n", imu->mag.x, imu->mag.y, imu->mag.z);
+    // print("\r\nTime Stamp: %lu us\r\n", imu->timestamp);
+    arhs.Update();
+    if (cnt >= 100) {
+      set_cursor(0, 0);
+      clear_screen();
+      print("Pitch: %10.4f, Yaw: %10.4f, Roll: %10.4f\r\n", arhs.pitch, arhs.yaw, arhs.roll);
+      cnt = 0;
+    } else {
+      cnt += 1;
+    }
+    osDelay(1);
   }
 }

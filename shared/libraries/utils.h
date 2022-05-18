@@ -52,7 +52,7 @@ T clip(T value, T min, T max) {
 template <typename T>
 T wrap(T value, T min, T max) {
   const T range = max - min;
-  return value < min ? value + range : (value > max ? value - range : value);
+  return value <= min ? value + range : (value >= max ? value - range : value);
 }
 
 /**
