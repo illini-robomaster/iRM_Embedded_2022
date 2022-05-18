@@ -59,3 +59,14 @@ bool FloatEdgeDetector::edge() { return posEdge_ || negEdge_; }
 bool FloatEdgeDetector::posEdge() { return posEdge_; }
 
 bool FloatEdgeDetector::negEdge() { return negEdge_; }
+
+FirstOrderFilter::FirstOrderFilter(float alpha, float init) {
+  this->last_input = init;
+  this->alpha = alpha;
+}
+
+float FirstOrderFilter::CalculateOutput(float in) {
+  float out = last_input * alpha + in * (1 - alpha);
+  last_input = in;
+  return out;
+}

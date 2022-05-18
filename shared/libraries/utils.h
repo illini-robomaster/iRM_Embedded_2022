@@ -97,3 +97,12 @@ class FloatEdgeDetector {
   bool posEdge_;
   bool negEdge_;
 };
+
+class FirstOrderFilter {
+ public:
+  FirstOrderFilter(float alpha, float init = 0);
+  float CalculateOutput(float in); 
+ private:
+  float alpha;
+  float last_input;
+};

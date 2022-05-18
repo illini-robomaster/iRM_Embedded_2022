@@ -31,13 +31,21 @@ Gimbal::Gimbal(gimbal_t gimbal)
       break;
     case GIMBAL_STANDARD_2022_ALPHA:
       data_.pitch_offset_ = 1.0630f;
-      data_.yaw_offset_ = 0.5461f + PI / 2;
-      data_.pitch_max_ = 0.4080f;
-      data_.yaw_max_ = 4;
-      pitch_theta_pid_param_ = new float[3]{30, 0, 0.8};
-      pitch_omega_pid_param_ = new float[3]{2300, 1.5, 3};
-      yaw_theta_pid_param_ = new float[3]{40, 0, 0.1};
-      yaw_omega_pid_param_ = new float[3]{2800, 0.5, 8};
+      data_.yaw_offset_ = 5.2584f;
+      data_.pitch_max_ = 0.5080f;
+      data_.yaw_max_ = PI;
+      // pitch_theta_pid_param_ = new float[3]{25, 0, 0};
+      // pitch_omega_pid_param_ = new float[3]{1800, 0.5, 1};
+      // yaw_theta_pid_param_ = new float[3]{40, 0, 0.1};
+      // yaw_omega_pid_param_ = new float[3]{2800, 0.5, 8};
+      // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
+      // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
+      // yaw_theta_pid_param_ = new float[3]{38, 0, 0.1};
+      // yaw_omega_pid_param_ = new float[3]{2800, 1.5, 8};
+      pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
+      pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
+      yaw_theta_pid_param_ = new float[3]{38, 0, 0};
+      yaw_omega_pid_param_ = new float[3]{2600, 0, 30};
       pitch_theta_pid_ = new PIDController(pitch_theta_pid_param_);
       pitch_omega_pid_ = new PIDController(pitch_omega_pid_param_);
       yaw_theta_pid_ = new PIDController(yaw_theta_pid_param_);
@@ -73,6 +81,12 @@ Gimbal::~Gimbal() {
 gimbal_data_t Gimbal::GetData() const { return data_; }
 
 void Gimbal::Update() {
+  float omega = yaw_motor_->GetOmega();
+  int sign = omega < 0 ? -1 : 1;
+  float yaw_offset = 0;
+  if (omega < -0.01 && omega > 0.01)
+    yaw_offset = omega * 900 + sign * 730;
+
   float pt_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
   float pt_out = pitch_theta_pid_->ComputeOutput(pt_diff);
   float po_in = pitch_motor_->GetOmegaDelta(pt_out);
@@ -84,7 +98,7 @@ void Gimbal::Update() {
   float yo_out = yaw_omega_pid_->ComputeConstraintedOutput(yt_in);
 
   pitch_motor_->SetOutput(po_out);
-  yaw_motor_->SetOutput(yo_out);
+  yaw_motor_->SetOutput(yo_out + yaw_offset);
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {

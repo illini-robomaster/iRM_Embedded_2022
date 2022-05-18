@@ -112,31 +112,19 @@ control::gimbal_data_t gimbal_data = gimbal->GetData();
   if (!imu->IsRead())
     RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
 
- float angle[3], angle_read[3], angle_offset[3];
- float pitch_target = 0, yaw_target = 0;
- float pitch_curr, yaw_curr;
+  float angle[3], angle_offset[3];
+  float pitch_curr, yaw_curr;
+  float pitch_target = 0, yaw_target = 0;
 
   print("Calirate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 500; i++) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-    osDelay(5);
-  }
-  gpio_red->High();
-  gpio_green->High();
-
-  if (!(imu->GetAngle(angle_offset)))
-    RM_ASSERT_TRUE(false, "I2C Error!\r\n");
-  print("Begin\r\n");
-  imu->GetAngle(angle);
-
-  while (true) {
-   if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
-      RM_ASSERT_TRUE(false, "Operation killed\r\n");
+    if (dbus->swl == remote::DOWN) {
       fl_motor->SetOutput(0);
       bl_motor->SetOutput(0);
       fr_motor->SetOutput(0);
@@ -147,41 +135,98 @@ control::gimbal_data_t gimbal_data = gimbal->GetData();
       control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
       control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
       control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+      RM_ASSERT_TRUE(false, "Operation killed\r\n");
+    }
+    osDelay(5);
+  }
+  gpio_red->High();
+  gpio_green->High();
+
+  if (!(imu->GetAngle(angle_offset)))
+    RM_ASSERT_TRUE(false, "I2C Error!\r\n");
+  print("Begin\r\n");
+
+  float sin_yaw, cos_yaw;
+  float vx, vy, wz;
+  float vx_set, vy_set, wz_set;
+  float relative_angle;
+
+  FirstOrderFilter f0(0.3);
+  FirstOrderFilter f1(0.3);
+  FirstOrderFilter f2(0.3);
+  FirstOrderFilter f3(0.3);
+
+  while (true) {
+    float ch0 = f0.CalculateOutput(dbus->ch0);
+    float ch1 = f1.CalculateOutput(dbus->ch1);
+    float ch2 = f2.CalculateOutput(dbus->ch2);
+    float ch3 = f3.CalculateOutput(dbus->ch3);
+
+   if (dbus->swl == remote::DOWN) {
+      fl_motor->SetOutput(0);
+      bl_motor->SetOutput(0);
+      fr_motor->SetOutput(0);
+      br_motor->SetOutput(0);
+      pitch_motor->SetOutput(0);
+      yaw_motor->SetOutput(0);
+      control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+      control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+      control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+      control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+      RM_ASSERT_TRUE(false, "Operation killed\r\n");
    }
      
-    if (!(imu->GetAngle(angle_read)))
+    if (!(imu->GetAngle(angle)))
       RM_ASSERT_TRUE(false, "I2C Error!\r\n");
 
     // print("%8.6f, %8.6f, %8.6f |", angle[0] / PI * 180, angle[1] / PI * 180, angle[2] / PI * 180);
 
-    angle_read[0] = wrap<float>(angle_read[0] - angle_offset[0], -PI, PI);
-    angle_read[1] = wrap<float>(angle_read[1] - angle_offset[1], -PI, PI);
-    angle_read[2] = wrap<float>(angle_read[2] - angle_offset[2], -PI, PI);
+    angle[0] = wrap<float>(angle[0] - angle_offset[0], -PI, PI);
+    angle[1] = wrap<float>(angle[1] - angle_offset[1], -PI, PI);
+    angle[2] = wrap<float>(angle[2] - angle_offset[2], -PI, PI);
 
     float alpha = -0.15;
-    angle[0] = angle[0] * alpha + angle_read[0] * (1 - alpha);
-    angle[1] = angle[1] * alpha + angle_read[1] * (1 - alpha);
-    angle[2] = angle[2] * alpha + angle_read[2] * (1 - alpha);
+    angle[0] = angle[0] * alpha + angle[0] * (1 - alpha);
+    angle[1] = angle[1] * alpha + angle[1] * (1 - alpha);
+    angle[2] = angle[2] * alpha + angle[2] * (1 - alpha);
 
-    if (dbus->swr == remote::UP) {
-      float pitch_ratio = dbus->ch3 / 600.0;
-      float yaw_ratio = -dbus->ch2 / 600.0;
+    float yaw_offset = 0;
+
+    if (dbus->swr == remote::MID) {
+      float pitch_ratio = ch3 / 600.0;
+      float yaw_ratio = -ch2 / 600.0;
       pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, 
           -gimbal_data.pitch_max_, gimbal_data.pitch_max_);
-      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+
+      float current_diff = wrap<float>(yaw_target + yaw_motor->GetThetaDelta(gimbal_data.yaw_offset_), -PI, PI);
+      print("%10.6f\r\n", current_diff);
+      float added_diff = current_diff + yaw_ratio / 30.0;
+      if (added_diff < PI && added_diff > -PI)
+        yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+      
+      vx = ch0;
+      vy = ch1;
+      UNUSED(wz);
+      relative_angle = yaw_motor->GetThetaDelta(gimbal_data.yaw_offset_);
+      sin_yaw = arm_sin_f32(relative_angle);
+      cos_yaw = arm_cos_f32(relative_angle);
+      vx_set = cos_yaw * vx + sin_yaw * vy;
+      vy_set = -sin_yaw * vx + cos_yaw * vy;
+      if (dbus->swl == remote::UP) {
+        wz_set = 250;
+      } else {
+        wz_set = 150 * relative_angle;
+      }
+      wz_set = clip<float>(wz_set, -250, 250);
+      chassis->SetSpeed(vx_set, vy_set, wz_set);
     }
+
     pitch_curr = -angle[1];
     yaw_curr = angle[2];
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
-    
-    float yaw_offset = 0;
-    if (dbus->swr == remote::MID) {
-      chassis->SetSpeed(-dbus->ch0 / 2, -dbus->ch1 / 2, dbus->ch2 / 2);
-      yaw_offset = dbus->ch2 / 660.0 * 2 * PI / 6 / 3;
-    }
 
-    gimbal->TargetRel(pitch_diff / 18, (yaw_diff + yaw_offset) / 30);
+    gimbal->TargetRel(pitch_diff / 28, (yaw_diff + yaw_offset) / 33);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
@@ -191,16 +236,6 @@ control::gimbal_data_t gimbal_data = gimbal->GetData();
 
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-
-    // UNUSED(pitch_diff);
-    // UNUSED(yaw_diff);
-    // UNUSED(yaw_offset);
-    // UNUSED(motors_can2_chassis);
-    // UNUSED(motors_can1_shooter);
-
-    // yaw_motor->SetOutput(2000);
-    // control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-    // yaw_motor->PrintData();
 
     osDelay(5);
   }
