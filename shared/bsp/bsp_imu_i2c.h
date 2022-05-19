@@ -118,18 +118,22 @@ typedef struct {
 } __packed Quaternion;
 
 class IMU {
-public:
-   IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
+ public:
+  IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
 
-   bool IsRead();
-   bool GetAngle(float *angle, bool is_degree = false);
-   bool GetQuaternion(float *Q);
-   bool GetAcc(float *acc);
-   bool GetGyro(float *gyro);
-   bool GetMag(int *mag);
-private:
-   I2C_HandleTypeDef*   i2c_;
-   uint16_t             DevAddr_;
+  bool IsRead();
+  bool GetAngle(float *angle);
+  bool GetQuaternion(float *Q);
+  bool GetAcc(float *acc);
+  bool GetGyro(float *gyro);
+  bool GetMag(int *mag);
+  bool SetAngleOffset();
+ 
+ private:
+  bool GetRawAngle_(float *angle);
+  I2C_HandleTypeDef* i2c_;
+  uint16_t DevAddr_;
+  float angle_offset_[3];
 };
 
 }

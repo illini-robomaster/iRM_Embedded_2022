@@ -38,14 +38,14 @@ Gimbal::Gimbal(gimbal_t gimbal)
       // pitch_omega_pid_param_ = new float[3]{1800, 0.5, 1};
       // yaw_theta_pid_param_ = new float[3]{40, 0, 0.1};
       // yaw_omega_pid_param_ = new float[3]{2800, 0.5, 8};
-      // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
-      // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
-      // yaw_theta_pid_param_ = new float[3]{38, 0, 0.1};
-      // yaw_omega_pid_param_ = new float[3]{2800, 1.5, 8};
       pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
       pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
-      yaw_theta_pid_param_ = new float[3]{38, 0, 0};
-      yaw_omega_pid_param_ = new float[3]{2600, 0, 30};
+      yaw_theta_pid_param_ = new float[3]{26, 0, 0.5};
+      yaw_omega_pid_param_ = new float[3]{3600, 20, 0};
+      // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
+      // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
+      // yaw_theta_pid_param_ = new float[3]{38, 0, 0};
+      // yaw_omega_pid_param_ = new float[3]{2600, 0, 30};
       pitch_theta_pid_ = new PIDController(pitch_theta_pid_param_);
       pitch_omega_pid_ = new PIDController(pitch_omega_pid_param_);
       yaw_theta_pid_ = new PIDController(yaw_theta_pid_param_);
@@ -81,18 +81,21 @@ Gimbal::~Gimbal() {
 gimbal_data_t Gimbal::GetData() const { return data_; }
 
 void Gimbal::Update() {
+  // Friction Compensation
   float omega = yaw_motor_->GetOmega();
   int sign = omega < 0 ? -1 : 1;
   float yaw_offset = 0;
   if (omega < -0.01 && omega > 0.01)
     yaw_offset = omega * 900 + sign * 730;
+  // Disabled now
+  yaw_offset = 0;
 
   float pt_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
   float pt_out = pitch_theta_pid_->ComputeOutput(pt_diff);
   float po_in = pitch_motor_->GetOmegaDelta(pt_out);
   float po_out = pitch_omega_pid_->ComputeConstraintedOutput(po_in);
 
-  float yt_diff = yaw_motor_->GetThetaDelta(yaw_angle_);
+  float yt_diff = yaw_motor_->GetThetaDelta(yaw_angle_ * 0.8);
   float yt_out = yaw_theta_pid_->ComputeOutput(yt_diff);
   float yt_in = yaw_motor_->GetOmegaDelta(yt_out);
   float yo_out = yaw_omega_pid_->ComputeConstraintedOutput(yt_in);

@@ -20,6 +20,10 @@
 
 project(example_gimbal ASM C CXX)
 
+irm_add_arm_executable(${PROJECT_NAME}_friction_comp
+    TARGET DJI_Board_TypeA
+    SOURCES friction_comp.cc)
+
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES main.cc)

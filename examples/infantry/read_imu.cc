@@ -46,13 +46,13 @@ void RM_RTOS_Default_Task(const void* arguments) {
  while (true) {
    set_cursor(0, 0);
    clear_screen();
-   if (!(imu->GetAngle(angle, true)) || !(imu->GetQuaternion(Q)) || !(imu->GetAcc(acc)) || !(imu->GetGyro(gyro)) || !(imu->GetMag(mag)))
+   if (!(imu->GetAngle(angle)) || !(imu->GetQuaternion(Q)) || !(imu->GetAcc(acc)) || !(imu->GetGyro(gyro)) || !(imu->GetMag(mag)))
      print("I2C Error!\r\n");
-   print("Angle: Pitch = %.3f, Roll = %.3f, Yaw = %.3f\r\n", angle[0], angle[1], angle[2]);
-   print("Quaternion: %.3f, %.3f, %.3f, %.3f\r\n", Q[0], Q[1], Q[2], Q[3]);
+   print("Angle: Pitch = %6.3f, Roll = %6.3f, Yaw = %6.3f\r\n", angle[0], angle[1], angle[2]);
+   print("Quaternion: %6.3f, %6.3f, %6.3f, %6.3f\r\n", Q[0], Q[1], Q[2], Q[3]);
    print("\r\n");
-   print("Acc: %.3f, %.3f, %.3f\r\n", acc[0], acc[1], acc[2]);
-   print("Gyro: %.3f, %.3f, %.3f\r\n", gyro[0], gyro[1], gyro[2]);
+   print("Acc: %6.3f, %6.3f, %6.3f\r\n", acc[0], acc[1], acc[2]);
+   print("Gyro: %6.3f, %6.3f, %6.3f\r\n", gyro[0], gyro[1], gyro[2]);
    print("Mag: %d, %d, %d\r\n", mag[0], mag[1], mag[2]);
    osDelay(100);
  }
