@@ -24,7 +24,7 @@
 #include "bsp_imu.h"
 #include "bsp_os.h"
 #include "cmsis_os.h"
-#include "MahonyARHS.h"
+#include "MahonyAHRS.h"
 
 #define ONBOARD_IMU_SPI hspi5
 #define ONBOARD_IMU_CS_GROUP GPIOF
@@ -46,7 +46,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   print("IMU Initialized!\r\n");
   osDelay(3000);
-  control::MahonyARHS arhs(imu);
+  control::MahonyAHRS arhs(imu);
 
   arhs.MPUMeasureOffset(0);
   for (int i = 0; i < 500; i++) {
