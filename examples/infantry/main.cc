@@ -18,7 +18,6 @@
 *                                                                          *
 ****************************************************************************/
 
-#include <cstring>
 #include "main.h"
 
 #include "bsp_gpio.h"
@@ -52,6 +51,35 @@ static const uint16_t IMUAddress = 0x50;
 static bsp::IMU *imu = nullptr;
 static bsp::GPIO *gpio_red, *gpio_green;
 
+const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 128 * 4,
+                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
+osThreadId_t gimbalTaskHandle;
+
+const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+osThreadId_t chassisTaskHandle;
+
+volatile float ch0;
+volatile float ch1;
+volatile float ch2;
+volatile float ch3;
+
+control::gimbal_data_t* gimbal_param = nullptr;
+
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
@@ -71,6 +99,7 @@ void RM_RTOS_Init() {
   gimbal_data.yaw_motor = yaw_motor;
   gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
   gimbal = new control::Gimbal(gimbal_data);
+  gimbal_param = gimbal->GetData();
 
   fl_motor = new control::Motor3508(can2, 0x201);
   fr_motor = new control::Motor3508(can2, 0x202);
@@ -105,32 +134,30 @@ void kill_all() {
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
-  fl_motor->SetOutput(0);
-  bl_motor->SetOutput(0);
-  fr_motor->SetOutput(0);
-  br_motor->SetOutput(0);
-  pitch_motor->SetOutput(0);
-  yaw_motor->SetOutput(0);
-  sl_motor->SetOutput(0);
-  sr_motor->SetOutput(0);
-  ld_motor->SetOutput(0);
-  control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-  control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-  control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
-  control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-  RM_ASSERT_TRUE(false, "Operation killed\r\n");
+  RM_EXPECT_TRUE(false, "Operation killed\r\n");
+  while (true) {
+    fl_motor->SetOutput(0);
+    bl_motor->SetOutput(0);
+    fr_motor->SetOutput(0);
+    br_motor->SetOutput(0);
+    pitch_motor->SetOutput(0);
+    yaw_motor->SetOutput(0);
+    sl_motor->SetOutput(0);
+    sr_motor->SetOutput(0);
+    ld_motor->SetOutput(0);
+    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+  }
 }
 
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-
-  osDelay(500);  // DBUS initialization needs time
+void gimbalTask(void* arg) {
+  UNUSED(arg);
   control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
   control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
-  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
-  control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
-  control::gimbal_data_t gimbal_data = gimbal->GetData();
+  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
   if (!imu->IsRead())
     RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
@@ -147,7 +174,7 @@ void RM_RTOS_Default_Task(const void* args) {
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-    if (dbus->swl == remote::DOWN) 
+    if (dbus->swl == remote::DOWN)
       kill_all();
     osDelay(5);
   }
@@ -158,10 +185,79 @@ void RM_RTOS_Default_Task(const void* args) {
     RM_ASSERT_TRUE(false, "I2C Error!\r\n");
   print("Begin\r\n");
 
+  while (true) {
+    if (dbus->swl == remote::DOWN)
+      break;
+
+    if (!(imu->GetAngle(angle)))
+      RM_ASSERT_TRUE(false, "I2C Error!\r\n");
+
+    float pitch_ratio = ch3 / 600.0;
+    float yaw_ratio = -ch2 / 600.0;
+    pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
+    yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+
+    pitch_curr = -angle[1];
+    yaw_curr = angle[2];
+    float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
+    float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
+
+    gimbal->TargetRel(pitch_diff / 28, yaw_diff / 30);
+    gimbal->Update();
+    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
+
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+
+    osDelay(5);
+  }
+}
+
+void chassisTask(void* arg) {
+  UNUSED(arg);
+  control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
+
   float sin_yaw, cos_yaw;
   float vx, vy, wz;
   float vx_set, vy_set, wz_set;
   float relative_angle;
+
+  while (true) {
+    if (dbus->swl == remote::DOWN)
+      break;
+    vx = ch0;
+    vy = ch1;
+    UNUSED(wz);
+    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    sin_yaw = arm_sin_f32(relative_angle);
+    cos_yaw = arm_cos_f32(relative_angle);
+    vx_set = cos_yaw * vx + sin_yaw * vy;
+    vy_set = -sin_yaw * vx + cos_yaw * vy;
+    if (dbus->swl == remote::UP) {
+      wz_set = 250;
+    } else {
+      wz_set = 250 * relative_angle;
+    }
+    wz_set = clip<float>(wz_set, -290, 290);
+    chassis->SetSpeed(vx_set, vy_set, wz_set);
+
+    chassis->Update();
+    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+
+    osDelay(5);
+  }
+}
+
+void RM_RTOS_Threads_Init(void) {
+  osDelay(500);  // DBUS initialization needs time
+  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
+  osDelay(2500);
+  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+}
+
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
 
   FirstOrderFilter f0(0.3);
   FirstOrderFilter f1(0.3);
@@ -169,67 +265,14 @@ void RM_RTOS_Default_Task(const void* args) {
   FirstOrderFilter f3(0.3);
 
   while (true) {
-    float ch0 = f0.CalculateOutput(dbus->ch0);
-    float ch1 = f1.CalculateOutput(dbus->ch1);
-    float ch2 = f2.CalculateOutput(dbus->ch2);
-    float ch3 = f3.CalculateOutput(dbus->ch3);
-
-    if (dbus->swl == remote::DOWN) 
+    if (dbus->swl == remote::DOWN)
       kill_all();
-     
-    if (!(imu->GetAngle(angle)))
-      RM_ASSERT_TRUE(false, "I2C Error!\r\n");
 
-    // print("%8.5f, %8.5f, %8.5f |", angle[0] / PI * 180, angle[1] / PI * 180, angle[2] / PI * 180);
+    ch0 = f0.CalculateOutput(dbus->ch0);
+    ch1 = f1.CalculateOutput(dbus->ch1);
+    ch2 = f2.CalculateOutput(dbus->ch2);
+    ch3 = f3.CalculateOutput(dbus->ch3);
 
-    float yaw_offset = 0;
-
-    if (dbus->swr == remote::MID) {
-      float pitch_ratio = ch3 / 600.0;
-      float yaw_ratio = -ch2 / 600.0;
-      pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, 
-          -gimbal_data.pitch_max_, gimbal_data.pitch_max_);
-
-      // float current_diff = wrap<float>(yaw_target + yaw_motor->GetThetaDelta(gimbal_data.yaw_offset_), -PI, PI);
-      // print("%10.6f\r\n", current_diff);
-      // float added_diff = current_diff + yaw_ratio / 30.0;
-      // if (added_diff < PI && added_diff > -PI)
-      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
-      
-      vx = ch0;
-      vy = ch1;
-      UNUSED(wz);
-      relative_angle = yaw_motor->GetThetaDelta(gimbal_data.yaw_offset_);
-      sin_yaw = arm_sin_f32(relative_angle);
-      cos_yaw = arm_cos_f32(relative_angle);
-      vx_set = cos_yaw * vx + sin_yaw * vy;
-      vy_set = -sin_yaw * vx + cos_yaw * vy;
-      if (dbus->swl == remote::UP) {
-        wz_set = 250;
-      } else {
-        wz_set = 250 * relative_angle;
-      }
-      wz_set = clip<float>(wz_set, -290, 290);
-      chassis->SetSpeed(vx_set, vy_set, wz_set);
-    }
-
-    pitch_curr = -angle[1];
-    yaw_curr = angle[2];
-    float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
-    float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
-    // print("%8.5f, %8.5f\r\n", pitch_diff, yaw_diff);
-
-    gimbal->TargetRel(pitch_diff / 28, (yaw_diff + yaw_offset) / 30);
-    gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
-    control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
-
-    chassis->Update();
-    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
-
-    shooter->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-
-    osDelay(5);
+    osDelay(10);
   }
 }

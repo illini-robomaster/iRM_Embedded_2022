@@ -18,28 +18,28 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
-#include <string.h>
-
-#include "bsp_sdio.h"
-#include "cmsis_os.h"
-
-static uint8_t tx1[] = "first message\n";
-static uint8_t tx2[] = "second message\n";
-
-static osThreadId_t sd_task_thread;
-
-void sd_task(void* argu) {
-  UNUSED(argu);
-  bsp::SDFileLogger logger("log.txt");
-  logger.Log(tx1, strlen((char*)tx1));
-  logger.Log(tx2, strlen((char*)tx2));
-  while (true)
-    ;
-}
-
-void RM_RTOS_Threads_Init(void) {
-  osThreadAttr_t sd_task_thread_attr;
-  sd_task_thread = osThreadNew(sd_task, NULL, &sd_task_thread_attr);
-}
+//#include "main.h"
+//
+//#include <string.h>
+//
+//#include "bsp_sdio.h"
+//#include "cmsis_os.h"
+//
+//static uint8_t tx1[] = "first message\n";
+//static uint8_t tx2[] = "second message\n";
+//
+//static osThreadId_t sd_task_thread;
+//
+//void sd_task(void* argu) {
+//  UNUSED(argu);
+//  bsp::SDFileLogger logger("log.txt");
+//  logger.Log(tx1, strlen((char*)tx1));
+//  logger.Log(tx2, strlen((char*)tx2));
+//  while (true)
+//    ;
+//}
+//
+//void RM_RTOS_Threads_Init(void) {
+//  osThreadAttr_t sd_task_thread_attr;
+//  sd_task_thread = osThreadNew(sd_task, NULL, &sd_task_thread_attr);
+//}

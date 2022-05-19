@@ -78,7 +78,7 @@ Gimbal::~Gimbal() {
   yaw_omega_pid_ = nullptr;
 }
 
-gimbal_data_t Gimbal::GetData() const { return data_; }
+gimbal_data_t* Gimbal::GetData() { return &data_; }
 
 void Gimbal::Update() {
   // Friction Compensation
@@ -95,7 +95,7 @@ void Gimbal::Update() {
   float po_in = pitch_motor_->GetOmegaDelta(pt_out);
   float po_out = pitch_omega_pid_->ComputeConstraintedOutput(po_in);
 
-  float yt_diff = yaw_motor_->GetThetaDelta(yaw_angle_ * 0.8);
+  float yt_diff = yaw_motor_->GetThetaDelta(yaw_angle_);
   float yt_out = yaw_theta_pid_->ComputeOutput(yt_diff);
   float yt_in = yaw_motor_->GetOmegaDelta(yt_out);
   float yo_out = yaw_omega_pid_->ComputeConstraintedOutput(yt_in);

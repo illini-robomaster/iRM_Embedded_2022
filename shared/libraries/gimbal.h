@@ -75,7 +75,7 @@ class Gimbal {
    *
    * @return refer to gimbal_data_t
    */
-  gimbal_data_t GetData() const;
+  gimbal_data_t* GetData();
 
   /**
    * @brief calculate the output of the motors under current configuration
