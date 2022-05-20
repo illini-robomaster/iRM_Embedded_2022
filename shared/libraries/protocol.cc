@@ -152,6 +152,15 @@ bool Host::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
     case PACK:
       memcpy(&pack, data, length);
       break;
+    case TARGET_ANGLE:
+      memcpy(&target_angle, data, length);
+      break;
+    case NO_TARGET_FLAG:
+      memcpy(&no_target_flag, data, length);
+      break;
+    case SHOOT_CMD:
+      memcpy(&shoot_cmd, data, length);
+      break;
     default:
       return false;
   }
