@@ -32,7 +32,8 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-bsp::CAN* can = nullptr;
+bsp::CAN* can1 = nullptr;
+bsp::CAN* can2 = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
 control::Gimbal* gimbal = nullptr;
@@ -104,7 +105,7 @@ void IMU_Task(void* argument) {
   while (true) {
     // update estimated pose with complementary filter
     poseEstimator->ComplementaryFilterUpdate();
-    osDelay(5);
+    osDelay(2);
   }
 } /* IMU task ends */
 
@@ -122,9 +123,10 @@ void RM_RTOS_Threads_Init(void) {
 void RM_RTOS_Init() {
   print_use_uart(&PRING_UART);
   bsp::SetHighresClockTimer(&htim2);
-  can = new bsp::CAN(&hcan1, 0x205);
-  pitch_motor = new control::Motor6020(can, 0x205);
-  yaw_motor = new control::Motor6020(can, 0x206);
+  can1 = new bsp::CAN(&hcan1, 0x205, true);
+  can2 = new bsp::CAN(&hcan2, 0x205, false);
+  pitch_motor = new control::Motor6020(can1, 0x205);
+  yaw_motor = new control::Motor6020(can1, 0x206);
 
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
@@ -140,7 +142,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);  // DBUS initialization needs time
 
-  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
+  // control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors[] = {yaw_motor};
 
   float yaw, pitch;  //, roll;
   while (true) {
@@ -151,7 +154,7 @@ void RM_RTOS_Default_Task(const void* args) {
     gimbal->TargetRel(pitch / 8, -yaw / 3);
 
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors, 2);
-    osDelay(10);
+    control::MotorCANBase::TransmitOutput(motors, 1);
+    osDelay(2);
   }
 }

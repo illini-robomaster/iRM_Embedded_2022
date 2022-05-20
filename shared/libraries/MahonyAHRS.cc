@@ -237,7 +237,7 @@ void MahonyAHRS::Update()  {
 	az = az * norm;
 	
 	#ifdef IST8310
-		norm = inv_sqrt(mx*mx + my*my + mz*mz);          
+		norm = InvSqrt(mx*mx + my*my + mz*mz);          
 		mx = mx * norm;
 		my = my * norm;
 		mz = mz * norm; 

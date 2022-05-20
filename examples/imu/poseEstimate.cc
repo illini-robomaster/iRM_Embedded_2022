@@ -74,11 +74,11 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     // update estimated pose with complementary filter
     poseEstimator.ComplementaryFilterUpdate();
-    osDelay(10);
+    osDelay(2);
 
     // print pose every 200ms
     i += 1;
-    if (i >= 20) {
+    if (i >= 50) {
       set_cursor(0, 0);
       clear_screen();
       // get roll and pitch, in RAD
