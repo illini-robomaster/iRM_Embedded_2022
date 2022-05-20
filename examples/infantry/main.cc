@@ -24,35 +24,39 @@
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "bsp_imu_i2c.h"
+#include "bsp_laser.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 #include "gimbal.h"
 #include "shooter.h"
 #include "chassis.h"
 
-bsp::CAN* can1 = nullptr;
-bsp::CAN* can2 = nullptr;
+static bsp::CAN* can1 = nullptr;
+static bsp::CAN* can2 = nullptr;
 
-control::MotorCANBase* pitch_motor = nullptr;
-control::MotorCANBase* yaw_motor = nullptr;
-control::Gimbal* gimbal = nullptr;
-control::MotorCANBase* fl_motor = nullptr;
-control::MotorCANBase* fr_motor = nullptr;
-control::MotorCANBase* bl_motor = nullptr;
-control::MotorCANBase* br_motor = nullptr;
-control::Chassis* chassis = nullptr;
-control::MotorCANBase* sl_motor = nullptr;
-control::MotorCANBase* sr_motor = nullptr;
-control::MotorCANBase* ld_motor = nullptr;
-control::Shooter* shooter = nullptr;
-remote::DBUS* dbus = nullptr;
+static control::MotorCANBase* pitch_motor = nullptr;
+static control::MotorCANBase* yaw_motor = nullptr;
+static control::Gimbal* gimbal = nullptr;
+static control::MotorCANBase* fl_motor = nullptr;
+static control::MotorCANBase* fr_motor = nullptr;
+static control::MotorCANBase* bl_motor = nullptr;
+static control::MotorCANBase* br_motor = nullptr;
+static control::Chassis* chassis = nullptr;
+static control::MotorCANBase* sl_motor = nullptr;
+static control::MotorCANBase* sr_motor = nullptr;
+static control::MotorCANBase* ld_motor = nullptr;
+static control::Shooter* shooter = nullptr;
+static remote::DBUS* dbus = nullptr;
+static bsp::Laser* laser = nullptr;
 
 const uint16_t IMUAddress = 0x50;
-bsp::IMU *imu = nullptr;
-bsp::GPIO *gpio_red, *gpio_green;
+static bsp::IMU *imu = nullptr;
+static bsp::GPIO *gpio_red, *gpio_green;
 
-const int GIMBAL_TASK_DELAY = 2;
-const int CHASSIS_TASK_DELAY = 5;
+static volatile bool spin_mode = false;
+
+const int GIMBAL_TASK_DELAY = 3;
+const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.05;
 
 const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
@@ -130,6 +134,7 @@ void RM_RTOS_Init() {
   shooter = new control::Shooter(shooter_data);
 
   dbus = new remote::DBUS(&huart1);
+  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
 }
 
 void KillAll() {
@@ -153,7 +158,7 @@ void KillAll() {
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-    osDelay(2);
+    osDelay(10);
   }
 }
 
@@ -164,17 +169,23 @@ void gimbalTask(void* arg) {
 
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
-  if (!imu->IsRead())
-    RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
+  bool imu_init_flag = false;
+  while (!imu->IsReady()) {
+    if (!imu_init_flag) {
+      imu_init_flag = true;
+      RM_EXPECT_TRUE(false, "IMU Init Failed!\r\n");
+    }
+    osDelay(100);
+  }
 
   float angle[3];
   float pitch_curr, yaw_curr;
   float pitch_target = 0, yaw_target = 0;
 
-  print("Calirate\r\n");
+  print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 400; i++) {
+  for (int i = 0; i < 600; i++) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
@@ -200,21 +211,17 @@ void gimbalTask(void* arg) {
     float pitch_ratio = ch3 / 600.0;
     float yaw_ratio = -ch2 / 600.0;
     pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
-    yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -gimbal_param->yaw_max_, gimbal_param->yaw_max_);
-    
-    // static int i = 0;
-    // if (i >= 50) {
-    //   print("%8.5f, %8.5f\r\n", pitch_target, yaw_target);
-    //   i = 0;
-    // }
-    // i++;
+    if (spin_mode)
+      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+    else
+      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -gimbal_param->yaw_max_, gimbal_param->yaw_max_);
 
     pitch_curr = -angle[1];
     yaw_curr = angle[2];
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
 
-    gimbal->TargetRel(pitch_diff / 28, yaw_diff / 30);
+    gimbal->TargetRel(pitch_diff / 30, yaw_diff / 40);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
@@ -251,15 +258,18 @@ void chassisTask(void* arg) {
     vx_set = cos_yaw * vx + sin_yaw * vy;
     vy_set = -sin_yaw * vx + cos_yaw * vy;
     if (dbus->swl == remote::UP) {
+      spin_mode = true;
       wz_set = 250;
     } else {
+      spin_mode = false;
       wz_set = 250 * relative_angle;
     }
     wz_set = clip<float>(wz_set, -290, 290);
     chassis->SetSpeed(vx_set, vy_set, wz_set);
 
     chassis->Update();
-    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    UNUSED(motors_can2_chassis);
+//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -278,6 +288,8 @@ void RM_RTOS_Default_Task(const void* args) {
   FirstOrderFilter f1(0.3);
   FirstOrderFilter f2(0.3);
   FirstOrderFilter f3(0.3);
+
+  laser->On();
 
   while (true) {
     if (dbus->swl == remote::DOWN)

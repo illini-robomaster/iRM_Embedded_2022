@@ -121,7 +121,7 @@ class IMU {
  public:
   IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
 
-  bool IsRead();
+  bool IsReady();
   bool GetAngle(float *angle);
   bool GetQuaternion(float *Q);
   bool GetAcc(float *acc);
