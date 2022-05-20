@@ -12,7 +12,7 @@ IMU::IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr) {
     angle_offset_[i] = 0;
 }
 
-bool IMU::IsRead() {
+bool IMU::IsReady() {
   return HAL_I2C_IsDeviceReady(i2c_, DevAddr_, 1, 100) == HAL_OK;
 }
 
