@@ -55,7 +55,7 @@ static bsp::GPIO *gpio_red, *gpio_green;
 
 static volatile bool spin_mode = false;
 
-const int GIMBAL_TASK_DELAY = 3;
+const int GIMBAL_TASK_DELAY = 5;
 const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.05;
 
