@@ -78,7 +78,7 @@ Gimbal::~Gimbal() {
   yaw_omega_pid_ = nullptr;
 }
 
-gimbal_data_t Gimbal::GetData() const { return data_; }
+gimbal_data_t* Gimbal::GetData() { return &data_; }
 
 void Gimbal::Update() {
   // Friction Compensation
