@@ -61,7 +61,7 @@ class Pose {
    *         y z
    *         |/
    *         R -- x
-   *         Gravity direction is when the axis is pointing to the ground 
+   *         Gravity direction is when the axis is pointing to the ground
    *         at default postition.
    *         (Z is pointing inwards with respect to the screen.)
    **/

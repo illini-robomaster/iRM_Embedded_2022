@@ -113,7 +113,6 @@ void Pose::Calibrate(int16_t _num) {
     case Z_NEG:
       acc_z_off = 0;
       break;
-
   }
 
   gyro_x_off = gyro_x / (float)_num;
@@ -151,8 +150,7 @@ float Pose::GetGravity(void) {
 }
 
 void Pose::SetGravityDir(uint8_t _gd) {
-  if (_gd == X || _gd == Y || _gd == Z || 
-      _gd == X_NEG || _gd == Y_NEG || _gd == Z_NEG) {
+  if (_gd == X || _gd == Y || _gd == Z || _gd == X_NEG || _gd == Y_NEG || _gd == Z_NEG) {
     gravityDir = _gd;
   }
 }
