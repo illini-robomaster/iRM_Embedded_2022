@@ -102,4 +102,70 @@ class PIDController {
   arm_pid_instance_f32 pid_f32_;
 };
 
+class ConstraintedPID {
+ public:
+  /**
+   * @brief PID controller constructor
+   *
+   * @param kp proportional gain
+   * @param ki integral gain
+   * @param kd derivative gain
+   */
+  ConstraintedPID(float kp, float ki, float kd, float max_iout, float max_out);
+
+  /**
+   * @brief PID controller constructor
+   *
+   * @param param gains of PID controller, formated as [kp, ki, kd]
+   */
+  ConstraintedPID(float* param, float max_iout, float max_out);
+
+  /**
+   * @brief compute output base on current error
+   *
+   * @param error   error of the system, i.e. (target - actual)
+   * @param max_out maximum output possible for this pid
+   *
+   * @return output value that could potentially drive the error to 0
+   */
+  float ComputeOutput(float error);
+
+  int16_t ComputeConstraintedOutput(float error);
+
+  /**
+   * @brief reinitialize the pid instance using another set of gains, but does not clear
+   *        current status
+   *
+   * @param kp new proportional gain
+   * @param ki new integral gain
+   * @param kd new derivative gain
+   */
+  void Reinit(float kp, float ki, float kd);
+
+  /**
+   * @brief reinitialize the pid instance using another set of gains, but does not clear
+   *        current status
+   *
+   * @param param gains of PID controller, formated as [kp, ki, kd]
+   */
+  void Reinit(float* param);
+
+  /**
+   * @brief clear the remembered states of the controller
+   */
+  void Reset();
+
+ private:
+  float kp_;
+  float ki_;
+  float kd_;
+
+  float last_err_;
+  float cumulated_err_;
+
+  float max_iout_;
+  float max_out_;
+};
+
+
 } /* namespace control */
