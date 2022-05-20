@@ -56,7 +56,14 @@ class Pose {
   float GetGravity(void);
 
   /** @description: set direction for gravity
-   *  @param : 0 = x, 1 = y, 2 = z;
+   *  @param : 0 = x, 1 = y, 2 = z; 3 = x_neg; 4 = y_neg, 5 = z_neg
+   *  @note: Direction is based on the "R" marker on the A-type board.
+   *         y z
+   *         |/
+   *         R -- x
+   *         Gravity direction is when the axis is pointing to the ground
+   *         at default postition.
+   *         (Z is pointing inwards with respect to the screen.)
    **/
   void SetGravityDir(uint8_t);
 
