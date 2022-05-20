@@ -38,10 +38,10 @@ Gimbal::Gimbal(gimbal_t gimbal)
       // pitch_omega_pid_param_ = new float[3]{1800, 0.5, 1};
       // yaw_theta_pid_param_ = new float[3]{40, 0, 0.1};
       // yaw_omega_pid_param_ = new float[3]{2800, 0.5, 8};
-      pitch_theta_pid_param_ = new float[3]{15, 0, 180};
-      pitch_omega_pid_param_ = new float[3]{3000, 0.1, 400};
-      yaw_theta_pid_param_ = new float[3]{12, 0, 180};
-      yaw_omega_pid_param_ = new float[3]{3600, 20, 500};
+      pitch_theta_pid_param_ = new float[3]{15, 0, 0.05};
+      pitch_omega_pid_param_ = new float[3]{3500, 0.01, 0};
+      yaw_theta_pid_param_ = new float[3]{20, 0, 0.5};
+      yaw_omega_pid_param_ = new float[3]{3500, 10, 5};
       // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
       // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
       // yaw_theta_pid_param_ = new float[3]{38, 0, 0};

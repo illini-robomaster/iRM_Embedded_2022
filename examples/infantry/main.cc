@@ -55,7 +55,7 @@ static bsp::GPIO *gpio_red, *gpio_green;
 
 static volatile bool spin_mode = false;
 
-const int GIMBAL_TASK_DELAY = 1;
+const int GIMBAL_TASK_DELAY = 3;
 const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.05;
 
@@ -158,7 +158,7 @@ void KillAll() {
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-    osDelay(2);
+    osDelay(10);
   }
 }
 
@@ -221,7 +221,7 @@ void gimbalTask(void* arg) {
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
 
-    gimbal->TargetRel(pitch_diff / 40, yaw_diff / 40);
+    gimbal->TargetRel(pitch_diff / 30, yaw_diff / 40);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
@@ -269,7 +269,7 @@ void chassisTask(void* arg) {
 
     chassis->Update();
     UNUSED(motors_can2_chassis);
-    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
   }
