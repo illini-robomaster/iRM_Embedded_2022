@@ -33,6 +33,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
   // data initialization using acquired model
   switch (chassis.model) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_STANDARD_2022_ALPHA:
       motors_ = new MotorCANBase*[FourWheel::motor_num];
       motors_[FourWheel::front_left] = chassis.motors[FourWheel::front_left];
       motors_[FourWheel::front_right] = chassis.motors[FourWheel::front_right];
@@ -40,7 +41,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
       {
-        float* pid_param = new float[3]{20, 8, 2};  // {5, 3, 0.1}
+        float* pid_param = new float[3]{20, 4, 3};  // {5, 3, 0.1}
         pids_[FourWheel::front_left].Reinit(pid_param);
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
@@ -58,6 +59,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
 Chassis::~Chassis() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_STANDARD_2022_ALPHA:
       motors_[FourWheel::front_left] = nullptr;
       motors_[FourWheel::front_right] = nullptr;
       motors_[FourWheel::back_left] = nullptr;
@@ -74,6 +76,7 @@ Chassis::~Chassis() {
 void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_STANDARD_2022_ALPHA:
       constexpr int MAX_ABS_CURRENT = 12288;  // refer to MotorM3508 for details
       float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
       float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
@@ -89,6 +92,7 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
 void Chassis::Update() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_STANDARD_2022_ALPHA:
       motors_[FourWheel::front_left]->SetOutput(
           pids_[FourWheel::front_left].ComputeConstraintedOutput(
               motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));

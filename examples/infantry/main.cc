@@ -47,9 +47,13 @@ control::MotorCANBase* ld_motor = nullptr;
 control::Shooter* shooter = nullptr;
 remote::DBUS* dbus = nullptr;
 
-static const uint16_t IMUAddress = 0x50;
-static bsp::IMU *imu = nullptr;
-static bsp::GPIO *gpio_red, *gpio_green;
+const uint16_t IMUAddress = 0x50;
+bsp::IMU *imu = nullptr;
+bsp::GPIO *gpio_red, *gpio_green;
+
+const int GIMBAL_TASK_DELAY = 2;
+const int CHASSIS_TASK_DELAY = 5;
+const float CHASSIS_DEADZONE = 0.05;
 
 const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .attr_bits = osThreadDetached,
@@ -128,7 +132,7 @@ void RM_RTOS_Init() {
   dbus = new remote::DBUS(&huart1);
 }
 
-void kill_all() {
+void KillAll() {
   control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
   control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
@@ -149,6 +153,7 @@ void kill_all() {
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+    osDelay(2);
   }
 }
 
@@ -175,7 +180,7 @@ void gimbalTask(void* arg) {
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     if (dbus->swl == remote::DOWN)
-      kill_all();
+      KillAll();
     osDelay(5);
   }
   gpio_red->High();
@@ -195,7 +200,14 @@ void gimbalTask(void* arg) {
     float pitch_ratio = ch3 / 600.0;
     float yaw_ratio = -ch2 / 600.0;
     pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
-    yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+    yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -gimbal_param->yaw_max_, gimbal_param->yaw_max_);
+    
+    // static int i = 0;
+    // if (i >= 50) {
+    //   print("%8.5f, %8.5f\r\n", pitch_target, yaw_target);
+    //   i = 0;
+    // }
+    // i++;
 
     pitch_curr = -angle[1];
     yaw_curr = angle[2];
@@ -210,12 +222,13 @@ void gimbalTask(void* arg) {
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
 
-    osDelay(5);
+    osDelay(GIMBAL_TASK_DELAY);
   }
 }
 
 void chassisTask(void* arg) {
   UNUSED(arg);
+  osDelay(2500);
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
   float sin_yaw, cos_yaw;
@@ -226,10 +239,13 @@ void chassisTask(void* arg) {
   while (true) {
     if (dbus->swl == remote::DOWN)
       break;
+    
     vx = ch0;
     vy = ch1;
     UNUSED(wz);
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE)
+      relative_angle = 0;
     sin_yaw = arm_sin_f32(relative_angle);
     cos_yaw = arm_cos_f32(relative_angle);
     vx_set = cos_yaw * vx + sin_yaw * vy;
@@ -245,14 +261,13 @@ void chassisTask(void* arg) {
     chassis->Update();
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
-    osDelay(5);
+    osDelay(CHASSIS_TASK_DELAY);
   }
 }
 
 void RM_RTOS_Threads_Init(void) {
   osDelay(500);  // DBUS initialization needs time
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
-  osDelay(2500);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
 }
 
@@ -266,7 +281,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
   while (true) {
     if (dbus->swl == remote::DOWN)
-      kill_all();
+      KillAll();
 
     ch0 = f0.CalculateOutput(dbus->ch0);
     ch1 = f1.CalculateOutput(dbus->ch1);

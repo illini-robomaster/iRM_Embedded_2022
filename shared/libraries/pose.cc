@@ -118,6 +118,7 @@ float Pose::GetYaw(void) { return yaw; }
 void Pose::SetAlpha(float _alpha) {
   if (_alpha > 1.0 || _alpha < 0.0) {
     RM_EXPECT_TRUE(false, "Invalid complementary filter weight");
+    return;
   }
   alpha = _alpha;
 }

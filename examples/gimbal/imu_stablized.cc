@@ -38,7 +38,7 @@ control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
 control::Gimbal* gimbal = nullptr;
 remote::DBUS* dbus = nullptr;
-bool status = false;
+bsp::GPIO *gpio_red, *gpio_green;
 
 // init imu
 #define ONBOARD_IMU_SPI hspi5
@@ -77,14 +77,14 @@ const osThreadAttr_t IMUTaskAttributes = {.name = "AddTask",
 // pose estimation task
 void IMU_Task(void* argument) {
   UNUSED(argument);
-  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
-  laser.High();
 
   // IMU init
+  gpio_green->High();
+  gpio_red->High();
   bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
   imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
   osDelay(4000);
-  laser.Low();
+  gpio_green->Low();
   print("IMU Initialized!\r\n");
 
   // init pose estimator instance
@@ -99,8 +99,7 @@ void IMU_Task(void* argument) {
 
   // reset timer and pose for IMU
   poseEstimator->PoseInit();
-
-  laser.High();
+  gpio_red->Low();
 
   while (true) {
     // update estimated pose with complementary filter
@@ -122,6 +121,10 @@ void RM_RTOS_Threads_Init(void) {
 
 void RM_RTOS_Init() {
   print_use_uart(&PRING_UART);
+
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
+  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+
   bsp::SetHighresClockTimer(&htim2);
   can1 = new bsp::CAN(&hcan1, 0x205, true);
   can2 = new bsp::CAN(&hcan2, 0x205, false);
@@ -129,6 +132,7 @@ void RM_RTOS_Init() {
   yaw_motor = new control::Motor6020(can1, 0x206);
 
   control::gimbal_t gimbal_data;
+  gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
   gimbal = new control::Gimbal(gimbal_data);
@@ -146,15 +150,32 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {yaw_motor};
 
   float yaw, pitch;  //, roll;
+  int i = 0;
+
+  osDelay(5000);
+  gpio_green->High();
+  gpio_red->High();
+  float yaw_offset = yaw_motor->GetTheta();
+
   while (true) {
     // update rpy
     yaw = poseEstimator->GetYaw();
     pitch = poseEstimator->GetPitch();
     // roll = poseEstimator->GetRoll();
-    gimbal->TargetRel(pitch / 8, -yaw / 3);
+    gimbal->TargetRel(pitch / 8, -yaw / 33);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors, 1);
+
+    i += 1;
+    if (i >= 50) {
+      set_cursor(0, 0);
+      clear_screen();
+      yaw_motor->PrintData();
+      print("Y_DEG: %6.4f \r\n", yaw / PI * 180);
+      i = 0;
+    }
+
     osDelay(2);
   }
 }

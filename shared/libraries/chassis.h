@@ -30,7 +30,7 @@ namespace control {
 /**
  * @brief chassis models
  */
-typedef enum { CHASSIS_STANDARD_ZERO } chassis_model_t;
+typedef enum { CHASSIS_STANDARD_ZERO, CHASSIS_STANDARD_2022_ALPHA } chassis_model_t;
 
 /**
  * @brief structure used when chassis instance is initialized
