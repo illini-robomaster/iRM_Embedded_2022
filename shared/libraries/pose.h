@@ -26,6 +26,11 @@ namespace control {
 
 class Pose {
  public:
+  typedef enum {
+    X,     Y,     Z,
+    X_NEG, Y_NEG, Z_NEG
+  } imu_gravity_dir_t;
+  
   /** @description: constructor for Pose
    *  @param: _imu: imu pointer
    **/
@@ -65,7 +70,7 @@ class Pose {
    *         at default postition.
    *         (Z is pointing inwards with respect to the screen.)
    **/
-  void SetGravityDir(uint8_t);
+  void SetGravityDir(imu_gravity_dir_t _dir);
 
   /** @description: set offset (bias correction) for the 6 inputs
    *  @param: Offset (Bias) for the 3 axis of acce and gyro

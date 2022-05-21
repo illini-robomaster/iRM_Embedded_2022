@@ -23,13 +23,20 @@
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
-#include "bsp_imu_i2c.h"
 #include "bsp_laser.h"
+#include "bsp_imu.h"
+#include "bsp_imu_i2c.h"
+#include "bsp_os.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 #include "gimbal.h"
 #include "shooter.h"
 #include "chassis.h"
+#include "pose.h"
+
+#define ONBOARD_IMU_SPI hspi5
+#define ONBOARD_IMU_CS_GROUP GPIOF
+#define ONBOARD_IMU_CS_PIN GPIO_PIN_6
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -48,23 +55,37 @@ static control::MotorCANBase* ld_motor = nullptr;
 static control::Shooter* shooter = nullptr;
 static remote::DBUS* dbus = nullptr;
 static bsp::Laser* laser = nullptr;
+static bsp::WT901* imu_pitch;
+static bsp::MPU6500* imu_yaw;
+static control::Pose* poseEstimator;
 
 const uint16_t IMUAddress = 0x50;
-static bsp::IMU *imu = nullptr;
 static bsp::GPIO *gpio_red, *gpio_green;
 
 static volatile bool spin_mode = false;
 
+const int IMU_TASK_DELAY = 2;
 const int GIMBAL_TASK_DELAY = 5;
 const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.05;
+
+const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
+                                         .attr_bits = osThreadDetached,
+                                         .cb_mem = nullptr,
+                                         .cb_size = 0,
+                                         .stack_mem = nullptr,
+                                         .stack_size = 256 * 4,
+                                         .priority = (osPriority_t)osPriorityNormal,
+                                         .tz_module = 0,
+                                         .reserved = 0};
+osThreadId_t imuTaskHandle;
 
 const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .attr_bits = osThreadDetached,
                                             .cb_mem = nullptr,
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
-                                            .stack_size = 128 * 4,
+                                            .stack_size = 256 * 4,
                                             .priority = (osPriority_t)osPriorityNormal,
                                             .tz_module = 0,
                                             .reserved = 0};
@@ -90,11 +111,10 @@ control::gimbal_data_t* gimbal_param = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
+  bsp::SetHighresClockTimer(&htim2);
 
   gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
   gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-
-  imu = new bsp::IMU(&hi2c2, IMUAddress);
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
@@ -135,6 +155,11 @@ void RM_RTOS_Init() {
 
   dbus = new remote::DBUS(&huart1);
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+
+  bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
+  imu_yaw = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
+  poseEstimator = new control::Pose(imu_yaw);
+  imu_pitch = new bsp::WT901(&hi2c2, IMUAddress);
 }
 
 void KillAll() {
@@ -158,25 +183,44 @@ void KillAll() {
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+    laser->Off();
     osDelay(10);
+  }
+}
+
+volatile bool imu_inited = false;
+
+void imuTask(void* arg) {
+  UNUSED(arg);
+
+  osDelay(3000);
+  print("IMU Initialized!\r\n");
+
+  poseEstimator->SetAlpha(0.95);
+  poseEstimator->SetGravityDir(control::Pose::X);
+
+  // calibrate the Offset for IMU acce meter and gyro
+  poseEstimator->Calibrate();
+
+  // reset timer and pose for IMU
+  poseEstimator->PoseInit();
+
+  imu_inited = true;
+  print("Pose Initialized!\r\n");
+
+  while (true) {
+    poseEstimator->ComplementaryFilterUpdate();
+    osDelay(IMU_TASK_DELAY);
   }
 }
 
 void gimbalTask(void* arg) {
   UNUSED(arg);
+
   control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
   control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
 
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
-
-  bool imu_init_flag = false;
-  while (!imu->IsReady()) {
-    if (!imu_init_flag) {
-      imu_init_flag = true;
-      RM_EXPECT_TRUE(false, "IMU Init Failed!\r\n");
-    }
-    osDelay(100);
-  }
 
   float angle[3];
   float pitch_curr, yaw_curr;
@@ -197,31 +241,33 @@ void gimbalTask(void* arg) {
   gpio_red->High();
   gpio_green->High();
 
-  if (!(imu->SetAngleOffset()))
-    RM_ASSERT_TRUE(false, "I2C Error!\r\n");
-  print("Begin\r\n");
+  while (!imu_inited) { osDelay(100); }
+  laser->On();
+  print("Gimbal Begin\r\n");
 
   while (true) {
     if (dbus->swl == remote::DOWN)
       break;
-
-    if (!(imu->GetAngle(angle)))
+  
+    if (!(imu_pitch->GetAngle(angle)))
       RM_ASSERT_TRUE(false, "I2C Error!\r\n");
-
+    angle[2] = poseEstimator->GetYaw();
+ 
     float pitch_ratio = ch3 / 600.0;
     float yaw_ratio = -ch2 / 600.0;
-    pitch_target = clip<float>(pitch_target + pitch_ratio / 40.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
-    if (spin_mode)
-      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+    pitch_target = clip<float>(pitch_target + pitch_ratio / 30.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
+    if (!spin_mode)
+      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -2.8, 2.8);
     else
-      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -gimbal_param->yaw_max_, gimbal_param->yaw_max_);
+      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
 
-    pitch_curr = -angle[1];
+    pitch_curr = angle[1];
     yaw_curr = angle[2];
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
+    // print("Y_CURR: %6.3f, Y_DIFF: %6.3f\r\n", yaw_curr, yaw_diff);
 
-    gimbal->TargetRel(pitch_diff / 30, yaw_diff / 40);
+    gimbal->TargetRel(pitch_diff / 28, yaw_diff / 33);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
@@ -268,8 +314,8 @@ void chassisTask(void* arg) {
     chassis->SetSpeed(vx_set, vy_set, wz_set);
 
     chassis->Update();
-    UNUSED(motors_can2_chassis);
-//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    // UNUSED(motors_can2_chassis);
+   control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -277,6 +323,7 @@ void chassisTask(void* arg) {
 
 void RM_RTOS_Threads_Init(void) {
   osDelay(500);  // DBUS initialization needs time
+  imuTaskHandle = osThreadNew(imuTask, nullptr, &chassisTaskAttribute);
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
 }
@@ -284,12 +331,10 @@ void RM_RTOS_Threads_Init(void) {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
-  FirstOrderFilter f0(0.3);
-  FirstOrderFilter f1(0.3);
-  FirstOrderFilter f2(0.3);
-  FirstOrderFilter f3(0.3);
-
-  laser->On();
+  FirstOrderFilter f0(0.4);
+  FirstOrderFilter f1(0.4);
+  FirstOrderFilter f2(0.4);
+  FirstOrderFilter f3(0.4);
 
   while (true) {
     if (dbus->swl == remote::DOWN)
@@ -300,6 +345,6 @@ void RM_RTOS_Default_Task(const void* args) {
     ch2 = f2.CalculateOutput(dbus->ch2);
     ch3 = f3.CalculateOutput(dbus->ch3);
 
-    osDelay(10);
+    osDelay(2);
   }
 }

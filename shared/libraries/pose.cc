@@ -29,12 +29,6 @@
 
 // Factor from us to s
 static const float USEC_TO_SEC = 1000000.0;
-static const uint8_t X = 0;
-static const uint8_t Y = 1;
-static const uint8_t Z = 2;
-static const uint8_t X_NEG = 3;
-static const uint8_t Y_NEG = 4;
-static const uint8_t Z_NEG = 5;
 
 namespace control {
 
@@ -96,63 +90,49 @@ void Pose::Calibrate(int16_t _num) {
    **/
   switch (gravityDir) {
     case X:
-      acc_x_off = 0;
-      break;
-    case Y:
-      acc_y_off = 0;
-      break;
-    case Z:
-      acc_z_off = 0;
-      break;
     case X_NEG:
       acc_x_off = 0;
       break;
+    case Y:
     case Y_NEG:
       acc_y_off = 0;
       break;
+    case Z:
     case Z_NEG:
       acc_z_off = 0;
       break;
   }
 
-  gyro_x_off = gyro_x / (float)_num;
-  gyro_y_off = gyro_y / (float)_num;
-  gyro_z_off = gyro_z / (float)_num;
+  gyro_x_off = gyro_x / _num;
+  gyro_y_off = gyro_y / _num;
+  gyro_z_off = gyro_z / _num;
 }
 
 float Pose::GetGravity(void) {
   float acce = 0;
-  const int32_t NUM = 100;
+  const int NUM = 100;
   for (int i = 0; i < NUM; i++) {
     switch (gravityDir) {
       case X:
-        acce += imu->acce.x;
-        break;
-      case Y:
-        acce += imu->acce.y;
-        break;
-      case Z:
-        acce += imu->acce.z;
-        break;
       case X_NEG:
         acce += imu->acce.x;
         break;
+      case Y:
       case Y_NEG:
         acce += imu->acce.y;
         break;
+      case Z:
       case Z_NEG:
         acce += imu->acce.z;
         break;
     }
     osDelay(10);
   }
-  return acce / (float)NUM;
+  return acce / NUM;
 }
 
-void Pose::SetGravityDir(uint8_t _gd) {
-  if (_gd == X || _gd == Y || _gd == Z || _gd == X_NEG || _gd == Y_NEG || _gd == Z_NEG) {
-    gravityDir = _gd;
-  }
+void Pose::SetGravityDir(imu_gravity_dir_t _dir) {
+  gravityDir = _dir;
 }
 
 void Pose::SetOffset(float _acc_x_off, float _acc_y_off, float _acc_z_off, float _gyro_x_off,
@@ -180,62 +160,49 @@ void Pose::SetAlpha(float _alpha) {
 }
 
 void Pose::ComplementaryFilterUpdate(void) {
+  float time_diff_sec = (float) (imu->timestamp - timestamp) / USEC_TO_SEC;
   if (gravityDir == X) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.z - acc_z_off, imu->acce.x - acc_x_off);
     rollAcc = atan2f(imu->acce.y - acc_y_off, imu->acce.x - acc_x_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.y - gyro_y_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.z - gyro_z_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
-
+    yaw = yaw + (imu->gyro.x - gyro_x_off) * time_diff_sec;
   } else if (gravityDir == Y) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.x - acc_x_off, imu->acce.y - acc_y_off);
     rollAcc = atan2f(imu->acce.z - acc_z_off, imu->acce.y - acc_y_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.z - gyro_z_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.x - gyro_x_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
-
+    yaw = yaw + (imu->gyro.y - gyro_y_off) * time_diff_sec;
   } else if (gravityDir == Z) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.y - acc_y_off, imu->acce.z - acc_z_off);
     rollAcc = atan2f(imu->acce.x - acc_x_off, imu->acce.z - acc_z_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.x - gyro_x_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
+    yaw = yaw + (imu->gyro.z - gyro_z_off) * time_diff_sec;
   }
   if (gravityDir == X_NEG) {
     // compute pitch and roll based on acce meter
@@ -243,57 +210,45 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.y + acc_y_off, imu->acce.x + acc_x_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.y + gyro_y_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.y + gyro_y_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.z + gyro_z_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.z + gyro_z_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.x - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
-
+    yaw = yaw + (imu->gyro.x - gyro_x_off) * time_diff_sec;
   } else if (gravityDir == Y_NEG) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.x + acc_x_off, imu->acce.y + acc_y_off);
     rollAcc = atan2f(imu->acce.z + acc_z_off, imu->acce.y + acc_y_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.z + gyro_z_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.z + gyro_z_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.x + gyro_x_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.x + gyro_x_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.y - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
-
+    yaw = yaw + (imu->gyro.y - gyro_y_off) * time_diff_sec;
   } else if (gravityDir == Z_NEG) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.y + acc_y_off, imu->acce.z + acc_z_off);
     rollAcc = atan2f(imu->acce.x + acc_x_off, imu->acce.z + acc_z_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.x + gyro_x_off) * (float)(imu->timestamp - timestamp) /
-                                 USEC_TO_SEC) +
-            (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.x + gyro_x_off) * time_diff_sec) +
+        (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.y + gyro_y_off) * (float)(imu->timestamp - timestamp) /
-                               USEC_TO_SEC) -
-           (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.y + gyro_y_off) * time_diff_sec) -
+        (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
-    yaw = yaw + (imu->gyro.z - gyro_z_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
-    // limit yaw to -Pi to Pi
-    yaw = wrap<float>(yaw, -PI, PI);
+    yaw = yaw + (imu->gyro.z - gyro_z_off) * time_diff_sec;
   }
+  // limit yaw to -Pi to Pi
+  yaw = wrap<float>(yaw, -PI, PI);
 
   // update timestamp
   timestamp = imu->timestamp;

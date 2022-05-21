@@ -81,13 +81,13 @@ void RM_RTOS_Default_Task(const void* args) {
       motors_can2[0] = yaw_motor;
       break;
   }
-  control::gimbal_data_t gimbal_data = gimbal->GetData();
+  control::gimbal_data_t* gimbal_data = gimbal->GetData();
 
   while (true) {
     float pitch_ratio = dbus->ch3 / 600.0;
     float yaw_ratio = -dbus->ch2 / 600.0;
     if (dbus->swr == remote::UP) {
-      gimbal->TargetAbs(pitch_ratio * gimbal_data.pitch_max_, yaw_ratio * gimbal_data.yaw_max_);
+      gimbal->TargetAbs(pitch_ratio * gimbal_data->pitch_max_, yaw_ratio * gimbal_data->yaw_max_);
     } else if (dbus->swr == remote::MID) {
       gimbal->TargetRel(pitch_ratio / 30, yaw_ratio / 30);
     }

@@ -5,18 +5,18 @@
 
 namespace bsp {
 
-IMU::IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr) {
+WT901::WT901(I2C_HandleTypeDef* i2c, uint16_t DevAddr) {
   i2c_ = i2c;
   DevAddr_ = DevAddr << 1;
   for (int i = 0; i < 3; i++)
     angle_offset_[i] = 0;
 }
 
-bool IMU::IsReady() {
+bool WT901::IsReady() {
   return HAL_I2C_IsDeviceReady(i2c_, DevAddr_, 1, 100) == HAL_OK;
 }
 
-bool IMU::GetAngle(float *angle) {
+bool WT901::GetAngle(float *angle) {
   if (!GetRawAngle_(angle))
     return false;
   angle[0] = wrap<float>(angle[0] - angle_offset_[0], -PI, PI);
@@ -25,7 +25,7 @@ bool IMU::GetAngle(float *angle) {
   return true;
 }
 
-bool IMU::GetQuaternion(float* Q) {
+bool WT901::GetQuaternion(float* Q) {
   Quaternion Q_;
   if (HAL_I2C_Mem_Read(i2c_, DevAddr_, Q0, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&Q_, 8, 100) == HAL_OK) {
     for (int i = 0; i < 4; ++i)
@@ -35,7 +35,7 @@ bool IMU::GetQuaternion(float* Q) {
   return false;
 }
 
-bool IMU::GetAcc(float* acc) {
+bool WT901::GetAcc(float* acc) {
   Acc acc_;
   if (HAL_I2C_Mem_Read(i2c_, DevAddr_, AX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&acc_, 6, 100) == HAL_OK) {
     for (int i = 0; i < 3; ++i)
@@ -45,7 +45,7 @@ bool IMU::GetAcc(float* acc) {
   return false;
 }
 
-bool IMU::GetGyro(float* gyro) {
+bool WT901::GetGyro(float* gyro) {
   Gyro gyro_;
   if (HAL_I2C_Mem_Read(i2c_, DevAddr_, GX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&gyro_, 6, 100) == HAL_OK) {
     for (int i = 0; i < 3; ++i)
@@ -55,7 +55,7 @@ bool IMU::GetGyro(float* gyro) {
   return false;
 }
 
-bool IMU::GetMag(int* mag) {
+bool WT901::GetMag(int* mag) {
   Mag mag_;
   if (HAL_I2C_Mem_Read(i2c_, DevAddr_, HX, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&mag_, 6, 100) == HAL_OK) {
     for (int i = 0; i < 3; ++i)
@@ -65,9 +65,9 @@ bool IMU::GetMag(int* mag) {
   return false;
 }
 
-bool IMU::SetAngleOffset() { return GetRawAngle_(angle_offset_); }
+bool WT901::SetAngleOffset() { return GetRawAngle_(angle_offset_); }
 
-bool IMU::GetRawAngle_(float *angle) {
+bool WT901::GetRawAngle_(float *angle) {
   Angle angle_;
   if (HAL_I2C_Mem_Read(i2c_, DevAddr_, Roll, I2C_MEMADD_SIZE_8BIT, (uint8_t *)&angle_, 6, 100) == HAL_OK) {
     for (int i = 0; i < 3; ++i)

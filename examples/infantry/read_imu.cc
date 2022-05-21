@@ -24,11 +24,11 @@
 #include "main.h"
 
 static const uint16_t DevAddress = 0x50;
-static bsp::IMU *imu = nullptr;
+static bsp::WT901 *imu = nullptr;
 
 void RM_RTOS_Init(void) {
  print_use_uart(&huart8);
- imu = new bsp::IMU(&hi2c2, DevAddress);
+ imu = new bsp::WT901(&hi2c2, DevAddress);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -40,7 +40,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
  set_cursor(0, 0);
  clear_screen();
 
- if (!imu->IsRead())
+ if (!imu->IsReady())
    print("IMU Init Failed!\r\n");
 
  while (true) {

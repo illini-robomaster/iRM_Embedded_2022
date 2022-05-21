@@ -117,9 +117,9 @@ typedef struct {
   short Q[4];
 } __packed Quaternion;
 
-class IMU {
+class WT901 {
  public:
-  IMU(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
+  WT901(I2C_HandleTypeDef* i2c, uint16_t DevAddr);
 
   bool IsReady();
   bool GetAngle(float *angle);

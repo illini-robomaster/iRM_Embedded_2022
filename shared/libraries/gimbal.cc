@@ -45,21 +45,21 @@ Gimbal::Gimbal(gimbal_t gimbal)
       data_.yaw_max_ = PI;
       {
         float pitch_theta_max_iout = 0;
-        float pitch_theta_max_out = 10;
-        float pitch_omega_max_iout = 10000;
-        float pitch_omega_max_out = 30000;
+        float pitch_theta_max_out = 2;
+        float pitch_omega_max_iout = 1500;
+        float pitch_omega_max_out = 7000;
         float yaw_theta_max_iout = 0;
-        float yaw_theta_max_out = 10;
-        float yaw_omega_max_iout = 5000;
-        float yaw_omega_max_out = 30000;
-        // pitch_theta_pid_param_ = new float[3]{25, 0, 0};
-        // pitch_omega_pid_param_ = new float[3]{1800, 0.5, 1};
-        // yaw_theta_pid_param_ = new float[3]{40, 0, 0.1};
-        // yaw_omega_pid_param_ = new float[3]{2800, 0.5, 8};
-        pitch_theta_pid_param_ = new float[3]{15, 0, 0};
-        pitch_omega_pid_param_ = new float[3]{3500, 0.1, 10};
-        yaw_theta_pid_param_ = new float[3]{18, 0, 0.3};
-        yaw_omega_pid_param_ = new float[3]{3500, 0.1, 0};
+        float yaw_theta_max_out = 1;
+        float yaw_omega_max_iout = 500;
+        float yaw_omega_max_out = 7000;
+        pitch_theta_pid_param_ = new float[3]{35, 0, 12};
+        pitch_omega_pid_param_ = new float[3]{1500, 0.05, 45};
+        yaw_theta_pid_param_ = new float[3]{43, 0, 12};
+        yaw_omega_pid_param_ = new float[3]{2900, 0.02, 45};
+        // pitch_theta_pid_param_ = new float[3]{15, 0, 0};
+        // pitch_omega_pid_param_ = new float[3]{3500, 0.1, 10};
+        // yaw_theta_pid_param_ = new float[3]{18, 0, 0.3};
+        // yaw_omega_pid_param_ = new float[3]{3500, 0.1, 0};
         // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
         // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
         // yaw_theta_pid_param_ = new float[3]{38, 0, 0};
@@ -118,6 +118,7 @@ void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {
   float clipped_pitch = clip<float>(abs_pitch, -data_.pitch_max_, data_.pitch_max_);
   float clipped_yaw = clip<float>(abs_yaw, -data_.yaw_max_, data_.yaw_max_);
   pitch_angle_ = wrap<float>(clipped_pitch + data_.pitch_offset_, 0, 2 * PI);
+  // pitch_angle_ = data_.pitch_offset_;
   yaw_angle_ = wrap<float>(clipped_yaw + data_.yaw_offset_, 0, 2 * PI);
 }
 
