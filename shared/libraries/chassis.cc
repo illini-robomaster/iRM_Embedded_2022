@@ -46,7 +46,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         pids_[FourWheel::back_right].Reinit(pid_param);
       }
 
-      power_limit_ = new PowerLimit(FourWheel::motor_num, 40, 5, 0);
+      power_limit_ = new PowerLimit(FourWheel::motor_num, 40, 10, 0);
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;
@@ -89,12 +89,6 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
   }
 }
 
-int16_t clip_motor_range (float output) {
-  constexpr int MIN = -32768; /* Minimum that a 16-bit number can represent */
-  constexpr int MAX = 32767;  /* Maximum that a 16-bit number can represent */
-  return (int16_t)clip<int>((int)output, MIN, MAX);
-}
-
 void Chassis::Update() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
@@ -115,10 +109,10 @@ void Chassis::Update() {
 
       power_limit_->Output(vel_real, PID_output, output);
 
-      motors_[FourWheel::front_left]->SetOutput(clip_motor_range(output[FourWheel::front_left]));
-      motors_[FourWheel::back_left]->SetOutput(clip_motor_range(output[FourWheel::back_left]));
-      motors_[FourWheel::front_right]->SetOutput(clip_motor_range(output[FourWheel::front_right]));
-      motors_[FourWheel::back_right]->SetOutput(clip_motor_range(output[FourWheel::back_right]));
+      motors_[FourWheel::front_left]->SetOutput(control::ClipMotorRange(output[FourWheel::front_left]));
+      motors_[FourWheel::back_left]->SetOutput(control::ClipMotorRange(output[FourWheel::back_left]));
+      motors_[FourWheel::front_right]->SetOutput(control::ClipMotorRange(output[FourWheel::front_right]));
+      motors_[FourWheel::back_right]->SetOutput(control::ClipMotorRange(output[FourWheel::back_right]));
 
 //      motors_[FourWheel::front_left]->SetOutput(
 //          pids_[FourWheel::front_left].ComputeConstraintedOutput(

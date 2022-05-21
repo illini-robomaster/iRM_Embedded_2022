@@ -28,6 +28,12 @@ using namespace bsp;
 
 namespace control {
 
+int16_t ClipMotorRange (float output) {
+  constexpr int MIN = -32768; /* Minimum that a 16-bit number can represent */
+  constexpr int MAX = 32767;  /* Maximum that a 16-bit number can represent */
+  return (int16_t)clip<int>((int)output, MIN, MAX);
+}
+
 /**
  * @brief standard can motor callback, used to update motor data
  *

@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include "controller.h"
+#include "motor.h"
 
 #include "utils.h"
 
@@ -54,9 +55,7 @@ int16_t PIDController::ComputeConstraintedOutput(float error) {
    * of the output computation can make sure that no unexpected behavior (overflow)
    * can happen.
    */
-  constexpr int MIN = -32768; /* Minimum that a 16-bit number can represent */
-  constexpr int MAX = 32767;  /* Maximum that a 16-bit number can represent */
-  return clip<int>((int)arm_pid_f32(&pid_f32_, error), MIN, MAX);
+  return control::ClipMotorRange(arm_pid_f32(&pid_f32_, error));
 }
 
 void PIDController::Reinit(float kp, float ki, float kd) {
@@ -94,9 +93,7 @@ float ConstraintedPID::ComputeOutput(float error) {
 }
 
 int16_t ConstraintedPID::ComputeConstraintedOutput(float error) {
-  constexpr int MIN = -32768; /* Minimum that a 16-bit number can represent */
-  constexpr int MAX = 32767;  /* Maximum that a 16-bit number can represent */
-  return clip<int>((int)ComputeOutput(error), MIN, MAX);
+  return control::ClipMotorRange(ComputeOutput(error));
 }
 
 void ConstraintedPID::Reinit(float kp, float ki, float kd) {

@@ -183,17 +183,15 @@ void RM_RTOS_Init() {
 
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
 
-<<<<<<< HEAD
   referee_uart = new CustomUART(&huart7);
   referee_uart->SetupRx(300);
   referee_uart->SetupTx(300);
   referee = new communication::Referee;
-=======
+  
   bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
   imu_yaw = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
   poseEstimator = new control::Pose(imu_yaw);
   imu_pitch = new bsp::WT901(&hi2c2, IMUAddress);
->>>>>>> 483a5a826e13ad98827c427d84a21ab5b463c6a8
 }
 
 void KillAll() {
@@ -347,15 +345,8 @@ void chassisTask(void* arg) {
     }
     wz_set = clip<float>(wz_set, -290, 290);
     chassis->SetSpeed(vx_set, vy_set, wz_set);
-
     chassis->Update();
-<<<<<<< HEAD
-    UNUSED(motors_can2_chassis);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
-=======
-    // UNUSED(motors_can2_chassis);
-   control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
->>>>>>> 483a5a826e13ad98827c427d84a21ab5b463c6a8
 
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -402,6 +393,16 @@ void RM_RTOS_Default_Task(const void* args) {
     ch2 = f2.CalculateOutput(dbus->ch2);
     ch3 = f3.CalculateOutput(dbus->ch3);
 
-    osDelay(2);
+    set_cursor(0, 0);
+    clear_screen();
+    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
+    print("\r\n");
+    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
+    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
+    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+
+    osDelay(100);
   }
 }

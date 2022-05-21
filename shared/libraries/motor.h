@@ -27,6 +27,8 @@
 
 namespace control {
 
+int16_t ClipMotorRange (float output);
+
 /**
  * @brief base class for motor representation
  */
