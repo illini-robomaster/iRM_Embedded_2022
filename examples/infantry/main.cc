@@ -346,8 +346,9 @@ void chassisTask(void* arg) {
     }
     wz_set = clip<float>(wz_set, -290, 290);
     chassis->SetSpeed(vx_set, vy_set, wz_set);
-    chassis->Update();
-    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    chassis->Update(referee->power_heat_data.chassis_power, referee->power_heat_data.chassis_power_buffer);
+    UNUSED(motors_can2_chassis);
+//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -399,6 +400,7 @@ void RM_RTOS_Default_Task(const void* args) {
     print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
     print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
     print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
+    print("Chassis Power Buffer: %.3f\r\n", referee->power_heat_data.chassis_power_buffer);
     print("\r\n");
     print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
     print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);

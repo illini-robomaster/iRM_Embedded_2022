@@ -78,7 +78,7 @@ class Chassis {
    * @brief calculate the output of the motors under current configuration
    * @note does not command the motor immediately
    */
-  void Update();
+  void Update(float chassis_power, float chassis_power_buffer);
 
  private:
   // acquired from user
@@ -87,7 +87,7 @@ class Chassis {
 
   // pids and current speeds for each motor on the chassis
   PIDController pids_[MAX_WHEEL_NUM];
-  PowerLimit* power_limit_;
+  PowerLimitNaive* power_limit_;
   float* speeds_;
 };
 

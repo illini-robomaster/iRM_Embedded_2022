@@ -37,4 +37,25 @@ class PowerLimit {
   float velocity_coeff_;
 };
 
+typedef struct {
+  float power_limit;
+  float WARNING_power;
+  float WARNING_power_buff;
+  float buffer_total_current_limit;
+  float power_total_current_limit;
+} power_limit_t;
+
+class PowerLimitNaive {
+ public:
+  PowerLimitNaive(int motor_num, power_limit_t* param);
+  void Output(float chassis_power, float chassis_power_buffer, float* PID_output, float* output);
+ private:
+  int motor_num_;
+  float power_limit_;
+  float WARNING_power_;
+  float WARNING_power_buff_;
+  float buffer_total_current_limit_;
+  float power_total_current_limit_;
+};
+
 }
