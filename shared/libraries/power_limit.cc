@@ -35,9 +35,9 @@ float square(float x) {
 }
 
 void PowerLimit::Output(float* vel_real, float* PID_output, float* output) {
-  volatile double a = 0;
-  volatile double b = 0;
-  volatile double c = 0;
+  double a = 0;
+  double b = 0;
+  double c = 0;
   for (int i = 0; i < motor_num_; ++i) {
     a += pow(PID_output[i] / 16384, 2);
     b += abs(PID_output[i] / 16384 * vel_real[i]);

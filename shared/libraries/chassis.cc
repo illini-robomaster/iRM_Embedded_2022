@@ -46,7 +46,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         pids_[FourWheel::back_right].Reinit(pid_param);
       }
 
-      power_limit_ = new PowerLimit(FourWheel::motor_num, 40, 10, 0);
+      power_limit_ = new PowerLimit(FourWheel::motor_num, 40, 0.0000000000000000002, 0);
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;
@@ -107,7 +107,11 @@ void Chassis::Update() {
       PID_output[FourWheel::front_right] = pids_[FourWheel::front_right].ComputeOutput(motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right]));
       PID_output[FourWheel::back_right] = pids_[FourWheel::back_right].ComputeOutput(motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right]));
 
+//      print("After:  %.3f %.3f %.3f %.3f\r\n", output[FourWheel::front_left], output[FourWheel::back_left], output[FourWheel::front_right], output[FourWheel::back_right]);
+//      print("Before: %.3f %.3f %.3f %.3f\r\n", PID_output[FourWheel::front_left], PID_output[FourWheel::back_left], PID_output[FourWheel::front_right], PID_output[FourWheel::back_right]);
       power_limit_->Output(vel_real, PID_output, output);
+//      print("After:  %.3f %.3f %.3f %.3f\r\n", output[FourWheel::front_left], output[FourWheel::back_left], output[FourWheel::front_right], output[FourWheel::back_right]);
+
 
       motors_[FourWheel::front_left]->SetOutput(control::ClipMotorRange(output[FourWheel::front_left]));
       motors_[FourWheel::back_left]->SetOutput(control::ClipMotorRange(output[FourWheel::back_left]));

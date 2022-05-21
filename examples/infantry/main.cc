@@ -329,7 +329,8 @@ void chassisTask(void* arg) {
     vx = ch0;
     vy = ch1;
     UNUSED(wz);
-    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+//    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    relative_angle = 0;
     if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE)
       relative_angle = 0;
     sin_yaw = arm_sin_f32(relative_angle);

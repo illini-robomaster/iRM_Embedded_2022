@@ -69,6 +69,16 @@ int sign(T value, T zero) {
   return value < zero ? -1 : (value > zero ? 1 : 0);
 }
 
+template <typename T>
+T square(T value) {
+  return value * value;
+}
+
+template <typename T>
+T abs(T value) {
+  return value >= 0 ? value : -value;
+}
+
 class BoolEdgeDetector {
  public:
   BoolEdgeDetector(bool initial);
