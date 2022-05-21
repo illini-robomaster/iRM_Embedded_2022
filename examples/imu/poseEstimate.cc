@@ -55,6 +55,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   // Set alpha for the complementary filter in the pose estimator
   poseEstimator.SetAlpha(0.95);
 
+  poseEstimator.SetGravityDir(control::Pose::X);
+
   // init params
   float roll = 0;
   float pitch = 0;

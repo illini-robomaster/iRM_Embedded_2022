@@ -155,7 +155,6 @@ void RM_RTOS_Default_Task(const void* args) {
   osDelay(5000);
   gpio_green->High();
   gpio_red->High();
-  float yaw_offset = yaw_motor->GetTheta();
 
   while (true) {
     // update rpy
