@@ -30,6 +30,7 @@
 #include "gimbal.h"
 #include "shooter.h"
 #include "chassis.h"
+#include "protocol.h"
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -88,6 +89,31 @@ volatile float ch3;
 
 control::gimbal_data_t* gimbal_param = nullptr;
 
+#define RX_SIGNAL (1 << 0)
+
+const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+osThreadId_t refereeTaskHandle;
+
+class CustomUART : public bsp::UART {
+ public:
+  using bsp::UART::UART;
+
+ protected:
+  /* notify application when rx data is pending read */
+  void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
+};
+
+communication::Referee* referee = nullptr;
+CustomUART* referee_uart = nullptr;
+
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
@@ -134,7 +160,13 @@ void RM_RTOS_Init() {
   shooter = new control::Shooter(shooter_data);
 
   dbus = new remote::DBUS(&huart1);
+
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+
+  referee_uart = new CustomUART(&huart7);
+  referee_uart->SetupRx(300);
+  referee_uart->SetupTx(300);
+  referee = new communication::Referee;
 }
 
 void KillAll() {
@@ -185,7 +217,8 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 600; i++) {
+//  for (int i = 0; i < 600; i++) {
+  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
@@ -269,16 +302,33 @@ void chassisTask(void* arg) {
 
     chassis->Update();
     UNUSED(motors_can2_chassis);
-//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
+  }
+}
+
+void refereeTask(void* arg) {
+  UNUSED(arg);
+  uint32_t length;
+  uint8_t* data;
+
+  while (true) {
+    /* wait until rx data is available */
+    uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
+    if (flags & RX_SIGNAL) {  // unnecessary check
+      /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
+      length = referee_uart->Read(&data);
+      referee->Receive(communication::package_t{data, (int)length});
+    }
   }
 }
 
 void RM_RTOS_Threads_Init(void) {
   osDelay(500);  // DBUS initialization needs time
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
-  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);\
+  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
