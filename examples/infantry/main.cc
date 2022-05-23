@@ -69,6 +69,7 @@ const int IMU_TASK_DELAY = 2;
 const int GIMBAL_TASK_DELAY = 5;
 const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.05;
+const int SHOOTER_TASK_DELAY = 10;
 
 const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .attr_bits = osThreadDetached,
@@ -102,6 +103,17 @@ const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
                                              .tz_module = 0,
                                              .reserved = 0};
 osThreadId_t chassisTaskHandle;
+
+const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+osThreadId_t shooterTaskHandle;
 
 volatile float ch0;
 volatile float ch1;
@@ -225,6 +237,13 @@ volatile bool imu_inited = false;
 void imuTask(void* arg) {
   UNUSED(arg);
 
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
   osDelay(3000);
   print("IMU Initialized!\r\n");
 
@@ -252,7 +271,12 @@ void gimbalTask(void* arg) {
   control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
   control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
 
-  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
 
   float angle[3];
   float pitch_curr, yaw_curr;
@@ -261,8 +285,8 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-//  for (int i = 0; i < 600; i++) {
-  while (true) {
+  for (int i = 0; i < 600; i++) {
+//  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
@@ -305,15 +329,20 @@ void gimbalTask(void* arg) {
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
 
-    shooter->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-
     osDelay(GIMBAL_TASK_DELAY);
   }
 }
 
 void chassisTask(void* arg) {
   UNUSED(arg);
+
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
   osDelay(2500);
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
@@ -329,8 +358,8 @@ void chassisTask(void* arg) {
     vx = ch0;
     vy = ch1;
     UNUSED(wz);
-//    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-    relative_angle = 0;
+    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+//    relative_angle = 0;
     if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE)
       relative_angle = 0;
     sin_yaw = arm_sin_f32(relative_angle);
@@ -354,6 +383,38 @@ void chassisTask(void* arg) {
   }
 }
 
+void shooterTask(void* arg) {
+  UNUSED(arg);
+  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
+
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
+  int fire_wait = 0;
+
+  while (true) {
+    if (dbus->swl == remote::DOWN)
+      break;
+    if (dbus->swr == remote::UP) {
+      ++fire_wait;
+      shooter->SetFlywheelSpeed(400);
+      if (fire_wait > 50) {
+        shooter->LoadNext();
+      }
+    } else {
+      fire_wait = 0;
+      shooter->SetFlywheelSpeed(0);
+    }
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+    osDelay(SHOOTER_TASK_DELAY);
+  }
+}
+
 void refereeTask(void* arg) {
   UNUSED(arg);
   uint32_t length;
@@ -372,9 +433,17 @@ void refereeTask(void* arg) {
 
 void RM_RTOS_Threads_Init(void) {
   osDelay(500);  // DBUS initialization needs time
-  imuTaskHandle = osThreadNew(imuTask, nullptr, &chassisTaskAttribute);
+//  while (dbus->swr != remote::DOWN) {
+//    if (dbus->swr == remote::DOWN) {
+//      break;
+//    }
+//    osDelay(100);
+//  }
+//  print("test\r\n");
+  imuTaskHandle = osThreadNew(imuTask, nullptr, &imuTaskAttribute);
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
-  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);\
+  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+  shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
 }
 
@@ -386,6 +455,13 @@ void RM_RTOS_Default_Task(const void* args) {
   FirstOrderFilter f2(0.4);
   FirstOrderFilter f3(0.4);
 
+//  while (dbus->swr != remote::DOWN) {
+//    if (dbus->swr == remote::DOWN) {
+//      break;
+//    }
+//    osDelay(100);
+//  }
+
   while (true) {
     if (dbus->swl == remote::DOWN)
       KillAll();
@@ -395,17 +471,17 @@ void RM_RTOS_Default_Task(const void* args) {
     ch2 = f2.CalculateOutput(dbus->ch2);
     ch3 = f3.CalculateOutput(dbus->ch3);
 
-    set_cursor(0, 0);
-    clear_screen();
-    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
-    print("Chassis Power Buffer: %.3f\r\n", referee->power_heat_data.chassis_power_buffer);
-    print("\r\n");
-    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
-    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+//    set_cursor(0, 0);
+//    clear_screen();
+//    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+//    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+//    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
+//    print("Chassis Power Buffer: %.3f\r\n", referee->power_heat_data.chassis_power_buffer);
+//    print("\r\n");
+//    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
+//    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
+//    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
 
-    osDelay(100);
+    osDelay(20);
   }
 }

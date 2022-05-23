@@ -44,15 +44,20 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
         pids_[FourWheel::back_right].Reinit(pid_param);
+        float motor_I_limit = 2000;
+        pids_[FourWheel::front_left].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::front_right].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::back_left].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::back_right].ChangeMax(motor_I_limit, motor_range);
       }
 
       {
         power_limit_t power_limit_param;
-        power_limit_param.power_limit = 40;
-        power_limit_param.WARNING_power = 20;
+        power_limit_param.power_limit = 50;
+        power_limit_param.WARNING_power = 40;
         power_limit_param.WARNING_power_buff = 50;
-        power_limit_param.buffer_total_current_limit = 8000;
-        power_limit_param.power_total_current_limit = 10000;
+        power_limit_param.buffer_total_current_limit = 16000;
+        power_limit_param.power_total_current_limit = 12500;
 
         power_limit_ = new PowerLimitNaive(FourWheel::motor_num, &power_limit_param);
       }
@@ -135,6 +140,10 @@ void Chassis::Update(float chassis_power, float chassis_power_buffer) {
       motors_[FourWheel::front_right]->SetOutput(control::ClipMotorRange(output[FourWheel::front_right]));
       motors_[FourWheel::back_right]->SetOutput(control::ClipMotorRange(output[FourWheel::back_right]));
 
+//      UNUSED(PID_output);
+//      UNUSED(output);
+//      UNUSED(chassis_power);
+//      UNUSED(chassis_power_buffer);
 //      motors_[FourWheel::front_left]->SetOutput(
 //          pids_[FourWheel::front_left].ComputeConstraintedOutput(
 //              motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));

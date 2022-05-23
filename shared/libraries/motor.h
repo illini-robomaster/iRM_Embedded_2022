@@ -27,6 +27,8 @@
 
 namespace control {
 
+constexpr int motor_range = 32767;
+
 int16_t ClipMotorRange (float output);
 
 /**

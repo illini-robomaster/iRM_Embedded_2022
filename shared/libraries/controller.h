@@ -104,6 +104,7 @@ class PIDController {
 
 class ConstraintedPID {
  public:
+  ConstraintedPID();
   /**
    * @brief PID controller constructor
    *
@@ -154,6 +155,8 @@ class ConstraintedPID {
    * @brief clear the remembered states of the controller
    */
   void Reset();
+
+  void ChangeMax(float max_iout, float max_out);
 
  private:
   float kp_;

@@ -69,18 +69,22 @@ void PIDController::Reinit(float* param) { Reinit(param[0], param[1], param[2]);
 
 void PIDController::Reset() { arm_pid_init_f32(&pid_f32_, 1); }
 
+ConstraintedPID::ConstraintedPID() {
+    Reinit(0, 0, 0);
+    Reset();
+    ChangeMax(0, 0);
+}
+
 ConstraintedPID::ConstraintedPID(float kp, float ki, float kd, float max_iout, float max_out) {
   Reinit(kp, ki, kd);
   Reset();
-  max_iout_ = max_iout;
-  max_out_ = max_out;
+  ChangeMax(max_iout, max_out);
 }
 
 ConstraintedPID::ConstraintedPID(float* param, float max_iout, float max_out) {
   Reinit(param[0], param[1], param[2]);
   Reset();
-  max_iout_ = max_iout;
-  max_out_ = max_out;
+  ChangeMax(max_iout, max_out);
 }
 
 float ConstraintedPID::ComputeOutput(float error) {
@@ -107,6 +111,10 @@ void ConstraintedPID::Reinit(float* param) { Reinit(param[0], param[1], param[2]
 void ConstraintedPID::Reset() {
   cumulated_err_ = 0;
   last_err_ = 0;
+}
+void ConstraintedPID::ChangeMax(float max_iout, float max_out) {
+  max_iout_ = max_iout;
+  max_out_ = max_out;
 }
 
 } /* namespace control */

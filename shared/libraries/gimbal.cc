@@ -40,7 +40,7 @@ Gimbal::Gimbal(gimbal_t gimbal)
       break;
     case GIMBAL_STANDARD_2022_ALPHA:
       data_.pitch_offset_ = 1.0500f;
-      data_.yaw_offset_ = 5.2584f;
+      data_.yaw_offset_ = 0.5323f;
       data_.pitch_max_ = 0.5080f;
       data_.yaw_max_ = PI;
       {
