@@ -57,7 +57,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         power_limit_param.WARNING_power = 40;
         power_limit_param.WARNING_power_buff = 50;
         power_limit_param.buffer_total_current_limit = 16000;
-        power_limit_param.power_total_current_limit = 12500;
+        power_limit_param.power_total_current_limit = power_limit_param.power_limit * (20000 / 80.0);
 
         power_limit_ = new PowerLimitNaive(FourWheel::motor_num, &power_limit_param);
       }

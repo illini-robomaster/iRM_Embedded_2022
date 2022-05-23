@@ -68,7 +68,7 @@ static volatile bool spin_mode = false;
 const int IMU_TASK_DELAY = 2;
 const int GIMBAL_TASK_DELAY = 5;
 const int CHASSIS_TASK_DELAY = 10;
-const float CHASSIS_DEADZONE = 0.05;
+const float CHASSIS_DEADZONE = 0.08;
 const int SHOOTER_TASK_DELAY = 10;
 
 const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
@@ -285,7 +285,7 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 600; i++) {
 //  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
@@ -313,10 +313,10 @@ void gimbalTask(void* arg) {
     float pitch_ratio = ch3 / 600.0;
     float yaw_ratio = -ch2 / 600.0;
     pitch_target = clip<float>(pitch_target + pitch_ratio / 30.0, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
-    if (!spin_mode)
-      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -2.8, 2.8);
-    else
-      yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
+//    if (!spin_mode)
+//      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -2.8, 2.8);
+//    else
+    yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
 
     pitch_curr = -angle[1];
     yaw_curr = angle[2];
@@ -343,7 +343,7 @@ void chassisTask(void* arg) {
     osDelay(100);
   }
 
-  osDelay(2500);
+  osDelay(4000);
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
   float sin_yaw, cos_yaw;
@@ -351,9 +351,16 @@ void chassisTask(void* arg) {
   float vx_set, vy_set, wz_set;
   float relative_angle;
 
+  float spin_speed = 250;
+  float follow_speed = 250;
+
   while (true) {
-    if (dbus->swl == remote::DOWN)
+    if (dbus->swl == remote::DOWN) {
+      chassis->SetSpeed(0, 0, 0);
+      chassis->Update(referee->power_heat_data.chassis_power,
+                      referee->power_heat_data.chassis_power_buffer);
       break;
+    }
     
     vx = ch0;
     vy = ch1;
@@ -368,13 +375,21 @@ void chassisTask(void* arg) {
     vy_set = -sin_yaw * vx + cos_yaw * vy;
     if (dbus->swl == remote::UP) {
       spin_mode = true;
-      wz_set = 250;
+      wz_set = spin_speed;
     } else {
-      spin_mode = false;
-      wz_set = 250 * relative_angle;
+      if (spin_mode) {
+        float rotate = follow_speed * relative_angle;
+        wz_set = abs(rotate < spin_speed ? rotate : spin_speed);
+      } else {
+        wz_set = follow_speed * relative_angle;
+      }
+      if (relative_angle == 0) {
+        spin_mode = false;
+      }
     }
     wz_set = clip<float>(wz_set, -290, 290);
     chassis->SetSpeed(vx_set, vy_set, wz_set);
+//    print("chassis\r\n");
     chassis->Update(referee->power_heat_data.chassis_power, referee->power_heat_data.chassis_power_buffer);
     UNUSED(motors_can2_chassis);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
