@@ -285,7 +285,7 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 600; i++) {
+  for (int i = 0; i < 1000; i++) {
 //  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
@@ -318,7 +318,7 @@ void gimbalTask(void* arg) {
     else
       yaw_target = wrap<float>(yaw_target + yaw_ratio / 30.0, -PI, PI);
 
-    pitch_curr = angle[1];
+    pitch_curr = -angle[1];
     yaw_curr = angle[2];
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
@@ -377,7 +377,7 @@ void chassisTask(void* arg) {
     chassis->SetSpeed(vx_set, vy_set, wz_set);
     chassis->Update(referee->power_heat_data.chassis_power, referee->power_heat_data.chassis_power_buffer);
     UNUSED(motors_can2_chassis);
-//    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
 
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -395,6 +395,7 @@ void shooterTask(void* arg) {
   }
 
   int fire_wait = 0;
+  int wait_threshold = 20;
 
   while (true) {
     if (dbus->swl == remote::DOWN)
@@ -402,7 +403,7 @@ void shooterTask(void* arg) {
     if (dbus->swr == remote::UP) {
       ++fire_wait;
       shooter->SetFlywheelSpeed(400);
-      if (fire_wait > 50) {
+      if (fire_wait > wait_threshold) {
         shooter->LoadNext();
       }
     } else {
