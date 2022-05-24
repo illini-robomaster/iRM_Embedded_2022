@@ -38,12 +38,12 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
       {
-        float* pid_param = new float[3]{20, 1, 3};  // {5, 3, 0.1}
+        float* pid_param = new float[3]{20, 1, 0.1};  // {5, 3, 0.1}
         pids_[FourWheel::front_left].Reinit(pid_param);
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
         pids_[FourWheel::back_right].Reinit(pid_param);
-        float motor_I_limit = 500;
+        float motor_I_limit = 200;
         pids_[FourWheel::front_left].ChangeMax(motor_I_limit, motor_range);
         pids_[FourWheel::front_right].ChangeMax(motor_I_limit, motor_range);
         pids_[FourWheel::back_left].ChangeMax(motor_I_limit, motor_range);

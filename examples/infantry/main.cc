@@ -121,10 +121,10 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .reserved = 0};
 osThreadId_t shooterTaskHandle;
 
-//volatile float ch0;
-//volatile float ch1;
-//volatile float ch2;
-//volatile float ch3;
+volatile float ch0;
+volatile float ch1;
+volatile float ch2;
+volatile float ch3;
 
 control::gimbal_data_t* gimbal_param = nullptr;
 
@@ -310,8 +310,8 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-//  for (int i = 0; i < 700; i++) {
-  while (true) {
+  for (int i = 0; i < 700; i++) {
+//  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
@@ -328,7 +328,7 @@ void gimbalTask(void* arg) {
   print("Gimbal Begin\r\n");
 
   while (true) {
-    if (dbus->keyboard.bit.B)
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
       break;
   
     if (!(imu_pitch->GetAngle(angle)))
@@ -337,6 +337,8 @@ void gimbalTask(void* arg) {
  
     float pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5;
     float yaw_ratio = -dbus->mouse.x / 32767.0 * 7.5;
+    pitch_ratio += ch3 / 18000.0;
+    yaw_ratio += -ch2 / 18000.0;
     pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
 //    if (!spin_mode)
 //      yaw_target = clip<float>(yaw_target + yaw_ratio / 30.0, -2.8, 2.8);
@@ -373,49 +375,54 @@ void chassisTask(void* arg) {
 
   float sin_yaw, cos_yaw;
   float vx = 0, vy = 0, wz = 0;
+  float vx_remote = 0, vy_remote = 0;
   float vx_set, vy_set, wz_set;
   float relative_angle;
 
-  float spin_speed = 400;
-  float follow_speed = 300;
+  float spin_speed = 900;
+  float follow_speed = 400;
 
   bool follow_mode = true;
 
   while (true) {
-    if (dbus->keyboard.bit.B) {
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
       chassis->SetSpeed(0, 0, 0);
       chassis->Update(referee->power_heat_data.chassis_power,
                       referee->power_heat_data.chassis_power_buffer);
       break;
     }
+
+    vx_remote = ch0;
+    vy_remote = ch1;
+
     if (dbus->keyboard.bit.SHIFT)
         follow_mode = !follow_mode;
-    if (dbus->keyboard.bit.A) vx -= 40;
-    if (dbus->keyboard.bit.D) vx += 40;
-    if (dbus->keyboard.bit.W) vy += 40;
-    if (dbus->keyboard.bit.S) vy -= 40;
+    if (dbus->keyboard.bit.A) vx -= 60;
+    if (dbus->keyboard.bit.D) vx += 60;
+    if (dbus->keyboard.bit.W) vy += 60;
+    if (dbus->keyboard.bit.S) vy -= 60;
 
-    if (-20 <= vx && vx <= 20) {
+    if (-30 <= vx && vx <= 30) {
         vx = 0;
     }
-    if (-20 <= vy && vy <= 20) {
+    if (-30 <= vy && vy <= 30) {
         vy = 0;
     }
 
     if (vx > 0) {
-        vx -= 20;
+        vx -= 40;
     } else if (vx < 0) {
-        vx += 20;
+        vx += 40;
     }
 
     if (vy > 0) {
-        vy -= 20;
+        vy -= 40;
     } else if (vy < 0) {
-        vy += 20;
+        vy += 40;
     }
 
-    vx = clip<float>(vx, -660, 660);
-    vy = clip<float>(vy, -660, 660);
+    vx = clip<float>(vx, -1200, 1200);
+    vy = clip<float>(vy, -1200, 1200);
     UNUSED(wz);
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
 //    relative_angle = 0;
@@ -423,8 +430,8 @@ void chassisTask(void* arg) {
       relative_angle = 0;
     sin_yaw = arm_sin_f32(relative_angle);
     cos_yaw = arm_cos_f32(relative_angle);
-    vx_set = cos_yaw * vx + sin_yaw * vy;
-    vy_set = -sin_yaw * vx + cos_yaw * vy;
+    vx_set = cos_yaw * (vx + vx_remote) + sin_yaw * (vy + vy_remote);
+    vy_set = -sin_yaw * (vx + vx_remote) + cos_yaw * (vy + vy_remote);
     if (!follow_mode) {
       spin_mode = true;
       wz_set = spin_speed;
@@ -462,22 +469,39 @@ void shooterTask(void* arg) {
 //  }
 
   while (!dbus->keyboard.bit.CTRL) {
+      if (dbus->swr == remote::DOWN) {
+           for (int i = 0; i < 50; ++i) {
+               shooter->SetFlywheelSpeed(0);
+                shooter->Update();
+                control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+               osDelay(10);
+           }
+          break;
+      }
       osDelay(100);
   }
 
   for (int i = 0; i <=450; i = i + 2) {
       shooter->SetFlywheelSpeed(i);
+      shooter->Update();
       control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
       osDelay(10);
   }
 
   while (true) {
-    if (dbus->keyboard.bit.B)
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
       break;
     if (referee->game_robot_status.mains_power_shooter_output && dbus->mouse.l) {
         shooter->LoadNext();
     }
-    shooter->SetFlywheelSpeed(450);
+    if (dbus->swr == remote::UP) {
+        shooter->LoadNext();
+    }
+    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+        shooter->SetFlywheelSpeed(0);
+    } else {
+        shooter->SetFlywheelSpeed(500);
+    }
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);
@@ -556,21 +580,21 @@ void RM_RTOS_Threads_Init(void) {
 //    osDelay(100);
 //  }
 //  print("test\r\n");
-//  imuTaskHandle = osThreadNew(imuTask, nullptr, &imuTaskAttribute);
-//  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
-//  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+  imuTaskHandle = osThreadNew(imuTask, nullptr, &imuTaskAttribute);
+  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
+  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
-//  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
+  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
 //  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
-//  FirstOrderFilter f0(0.4);
-//  FirstOrderFilter f1(0.4);
-//  FirstOrderFilter f2(0.4);
-//  FirstOrderFilter f3(0.4);
+  FirstOrderFilter f0(0.4);
+  FirstOrderFilter f1(0.4);
+  FirstOrderFilter f2(0.4);
+  FirstOrderFilter f3(0.4);
 
 //  while (dbus->swr != remote::DOWN) {
 //    if (dbus->swr == remote::DOWN) {
@@ -580,13 +604,13 @@ void RM_RTOS_Default_Task(const void* args) {
 //  }
 
   while (true) {
-    if (dbus->keyboard.bit.B)
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
       KillAll();
 //    print("Hello\r\n");
-//    ch0 = f0.CalculateOutput(dbus->ch0);
-//    ch1 = f1.CalculateOutput(dbus->ch1);
-//    ch2 = f2.CalculateOutput(dbus->ch2);
-//    ch3 = f3.CalculateOutput(dbus->ch3);
+    ch0 = f0.CalculateOutput(dbus->ch0);
+    ch1 = f1.CalculateOutput(dbus->ch1);
+    ch2 = f2.CalculateOutput(dbus->ch2);
+    ch3 = f3.CalculateOutput(dbus->ch3);
 
 //    set_cursor(0, 0);
 //    clear_screen();
