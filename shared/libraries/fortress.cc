@@ -24,7 +24,7 @@ namespace control {
 
 Fortress::Fortress(MotorCANBase** motors, MotorCANBase* yaw_motor) {
   motors_ = new MotorCANBase*[FORTRESS_MOTOR_NUM];
-  float* pid_param = new float[3]{20, 1, 2};
+  float* pid_param = new float[3]{50, 0.2, 0.4};
   for (int i = 0; i < FORTRESS_MOTOR_NUM; ++i) {
     motors_[i] = motors[i];
     pids_[i].Reinit(pid_param);

@@ -56,7 +56,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   control::MotorCANBase* motors_fortress[] = {fortress_motor0, fortress_motor1, fortress_yaw_motor};
 
-  int transform_time = 1000;
+  int transform_time = 300;
 
   while (dbus->swr != remote::DOWN) {
     if (dbus->swr == remote::DOWN) {
@@ -67,6 +67,13 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   while (dbus->swr == remote::DOWN) {
     if (dbus->swr != remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
       break;
     }
     osDelay(100);
