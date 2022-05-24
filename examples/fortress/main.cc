@@ -39,13 +39,13 @@ static remote::DBUS* dbus = nullptr;
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);
   dbus = new remote::DBUS(&huart1);
-  can = new bsp::CAN(&hcan1, 0x206, true);
-  fortress_motor0 = new control::Motor3508(can, 0x207);
+  can = new bsp::CAN(&hcan2, 0x205, true);
+  fortress_motor0 = new control::Motor3508(can, 0x205);
   fortress_motor1 = new control::Motor3508(can, 0x208);
   control::MotorCANBase* fortress_motors[FORTRESS_MOTOR_NUM];
   fortress_motors[0] = fortress_motor0;
   fortress_motors[1] = fortress_motor1;
-  fortress_yaw_motor = new control::Motor6020(can, 0x206);
+  fortress_yaw_motor = new control::Motor6020(can, 0x207);
   fortress = new control::Fortress(fortress_motors, fortress_yaw_motor);
 }
 

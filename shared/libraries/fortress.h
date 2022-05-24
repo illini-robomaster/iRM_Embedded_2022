@@ -24,8 +24,8 @@
 #include "motor.h"
 
 #define FORTRESS_MOTOR_NUM 2
-#define FORTRESS_RISE_SPEED 150
-#define FORTRESS_ROTATE_SPEED 800
+#define FORTRESS_RISE_SPEED 50
+#define FORTRESS_ROTATE_SPEED 400
 
 namespace control {
 

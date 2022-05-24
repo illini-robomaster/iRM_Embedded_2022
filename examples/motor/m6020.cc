@@ -33,8 +33,8 @@ control::MotorCANBase* motor = nullptr;
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
 
-  can = new bsp::CAN(&hcan2, 0x206, false);
-  motor = new control::Motor6020(can, 0x206);
+  can = new bsp::CAN(&hcan2, 0x207, false);
+  motor = new control::Motor6020(can, 0x207);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -44,9 +44,9 @@ void RM_RTOS_Default_Task(const void* args) {
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
   while (true) {
     if (key.Read()) {
-      motor->SetOutput(800);
+      motor->SetOutput(15000);
     } else {
-      motor->SetOutput(0);
+      motor->SetOutput(15000);
     }
     motor->PrintData();
     control::MotorCANBase::TransmitOutput(motors, 1);

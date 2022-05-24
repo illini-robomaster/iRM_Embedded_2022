@@ -44,13 +44,13 @@ Fortress::~Fortress() {
 
 void Fortress::Up() {
   for (int i = 0; i < FORTRESS_MOTOR_NUM; ++i) {
-    motors_[i]->SetOutput(pids_[i].ComputeConstrainedOutput(motors_[i]->GetOmegaDelta(FORTRESS_RISE_SPEED)));
+    motors_[i]->SetOutput(pids_[i].ComputeConstrainedOutput(motors_[i]->GetOmegaDelta(-FORTRESS_RISE_SPEED)));
   }
 }
 
 void Fortress::Down() {
   for (int i = 0; i < FORTRESS_MOTOR_NUM; ++i) {
-    motors_[i]->SetOutput(pids_[i].ComputeConstrainedOutput(motors_[i]->GetOmegaDelta(-FORTRESS_RISE_SPEED)));
+    motors_[i]->SetOutput(pids_[i].ComputeConstrainedOutput(motors_[i]->GetOmegaDelta(FORTRESS_RISE_SPEED)));
   }
 }
 

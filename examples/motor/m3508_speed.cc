@@ -52,8 +52,8 @@ BoolEdgeDetector detector(false);
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  can1 = new bsp::CAN(&hcan1, 0x208);
-  motor = new control::Motor3508(can1, 0x208);
+  can1 = new bsp::CAN(&hcan2, 0x201, false);
+  motor = new control::Motor3508(can1, 0x201);
 
 #ifdef WITH_CONTROLLER
   dbus = new remote::DBUS(&huart1);

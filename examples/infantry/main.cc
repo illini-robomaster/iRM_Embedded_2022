@@ -227,7 +227,7 @@ void RM_RTOS_Init() {
   control::MotorCANBase* fortress_motors[FORTRESS_MOTOR_NUM];
   fortress_motors[0] = fortress_motor0;
   fortress_motors[1] = fortress_motor1;
-  fortress_yaw_motor = new control::Motor6020(can2, 0x206);
+  fortress_yaw_motor = new control::Motor6020(can2, 0x205);
   fortress = new control::Fortress(fortress_motors, fortress_yaw_motor);
 }
 
@@ -533,7 +533,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
-  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
+//  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
