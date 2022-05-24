@@ -52,8 +52,8 @@ BoolEdgeDetector detector(false);
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  can1 = new bsp::CAN(&hcan1, 0x208);
+  motor = new control::Motor3508(can1, 0x208);
 
 #ifdef WITH_CONTROLLER
   dbus = new remote::DBUS(&huart1);
@@ -97,7 +97,7 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 #endif
     float diff = motor->GetOmegaDelta(target);
-    int16_t out = pid.ComputeConstraintedOutput(diff);
+    int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
     motor->PrintData();

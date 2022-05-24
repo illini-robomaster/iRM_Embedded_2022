@@ -49,7 +49,7 @@ PIDController::PIDController(float* param) : PIDController(param[0], param[1], p
 
 float PIDController::ComputeOutput(float error) { return arm_pid_f32(&pid_f32_, error); }
 
-int16_t PIDController::ComputeConstraintedOutput(float error) {
+int16_t PIDController::ComputeConstrainedOutput(float error) {
   /*
    * CAN protocal uses a 16-bit signed number to drive the motors, so this version
    * of the output computation can make sure that no unexpected behavior (overflow)
@@ -69,25 +69,25 @@ void PIDController::Reinit(float* param) { Reinit(param[0], param[1], param[2]);
 
 void PIDController::Reset() { arm_pid_init_f32(&pid_f32_, 1); }
 
-ConstraintedPID::ConstraintedPID() {
+ConstrainedPID::ConstrainedPID() {
     Reinit(0, 0, 0);
     Reset();
     ChangeMax(0, 0);
 }
 
-ConstraintedPID::ConstraintedPID(float kp, float ki, float kd, float max_iout, float max_out) {
+ConstrainedPID::ConstrainedPID(float kp, float ki, float kd, float max_iout, float max_out) {
   Reinit(kp, ki, kd);
   Reset();
   ChangeMax(max_iout, max_out);
 }
 
-ConstraintedPID::ConstraintedPID(float* param, float max_iout, float max_out) {
+ConstrainedPID::ConstrainedPID(float* param, float max_iout, float max_out) {
   Reinit(param[0], param[1], param[2]);
   Reset();
   ChangeMax(max_iout, max_out);
 }
 
-float ConstraintedPID::ComputeOutput(float error) {
+float ConstrainedPID::ComputeOutput(float error) {
   cumulated_err_ += error;
   last_err_ = error;
   clip<float>(cumulated_err_, -max_iout_, max_iout_);
@@ -96,23 +96,23 @@ float ConstraintedPID::ComputeOutput(float error) {
   return out;
 }
 
-int16_t ConstraintedPID::ComputeConstraintedOutput(float error) {
+int16_t ConstrainedPID::ComputeConstrainedOutput(float error) {
   return control::ClipMotorRange(ComputeOutput(error));
 }
 
-void ConstraintedPID::Reinit(float kp, float ki, float kd) {
+void ConstrainedPID::Reinit(float kp, float ki, float kd) {
   kp_ = kp;
   ki_ = ki;
   kd_ = kd;
 }
 
-void ConstraintedPID::Reinit(float* param) { Reinit(param[0], param[1], param[2]); }
+void ConstrainedPID::Reinit(float* param) { Reinit(param[0], param[1], param[2]); }
 
-void ConstraintedPID::Reset() {
+void ConstrainedPID::Reset() {
   cumulated_err_ = 0;
   last_err_ = 0;
 }
-void ConstraintedPID::ChangeMax(float max_iout, float max_out) {
+void ConstrainedPID::ChangeMax(float max_iout, float max_out) {
   max_iout_ = max_iout;
   max_out_ = max_out;
 }

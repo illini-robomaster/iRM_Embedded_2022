@@ -308,11 +308,11 @@ void ServoMotor::CalcOutput() {
   float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
   if (hold_) {
     // holding, allow turning in both directions
-    command = omega_pid_.ComputeConstraintedOutput(
+    command = omega_pid_.ComputeConstrainedOutput(
         motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
   } else {
     // moving, only allow turn in specified direction(s)
-    command = omega_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
+    command = omega_pid_.ComputeConstrainedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
   }
   motor_->SetOutput(command);
 

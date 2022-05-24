@@ -73,7 +73,7 @@ class PIDController {
    * @return output value that could potentially drive the error to 0,
    *         floored at -32768, ceiled at 32767
    */
-  int16_t ComputeConstraintedOutput(float error);
+  int16_t ComputeConstrainedOutput(float error);
 
   /**
    * @brief reinitialize the pid instance using another set of gains, but does not clear
@@ -102,9 +102,9 @@ class PIDController {
   arm_pid_instance_f32 pid_f32_;
 };
 
-class ConstraintedPID {
+class ConstrainedPID {
  public:
-  ConstraintedPID();
+  ConstrainedPID();
   /**
    * @brief PID controller constructor
    *
@@ -112,14 +112,14 @@ class ConstraintedPID {
    * @param ki integral gain
    * @param kd derivative gain
    */
-  ConstraintedPID(float kp, float ki, float kd, float max_iout, float max_out);
+  ConstrainedPID(float kp, float ki, float kd, float max_iout, float max_out);
 
   /**
    * @brief PID controller constructor
    *
    * @param param gains of PID controller, formated as [kp, ki, kd]
    */
-  ConstraintedPID(float* param, float max_iout, float max_out);
+  ConstrainedPID(float* param, float max_iout, float max_out);
 
   /**
    * @brief compute output base on current error
@@ -131,7 +131,7 @@ class ConstraintedPID {
    */
   float ComputeOutput(float error);
 
-  int16_t ComputeConstraintedOutput(float error);
+  int16_t ComputeConstrainedOutput(float error);
 
   /**
    * @brief reinitialize the pid instance using another set of gains, but does not clear

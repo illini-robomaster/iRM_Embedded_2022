@@ -19,7 +19,6 @@
  ****************************************************************************/
 
 #include "chassis.h"
-
 #include "bsp_error_handler.h"
 
 namespace control {
@@ -53,8 +52,8 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
 
       {
         power_limit_t power_limit_param;
-        power_limit_param.power_limit = 50;
-        power_limit_param.WARNING_power = 40;
+        power_limit_param.power_limit = 120;
+        power_limit_param.WARNING_power = 96;
         power_limit_param.WARNING_power_buff = 50;
         power_limit_param.buffer_total_current_limit = 16000;
         power_limit_param.power_total_current_limit = power_limit_param.power_limit * (20000 / 80.0);

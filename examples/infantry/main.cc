@@ -34,6 +34,7 @@
 #include "chassis.h"
 #include "protocol.h"
 #include "pose.h"
+#include "fortress.h"
 
 #define ONBOARD_IMU_SPI hspi5
 #define ONBOARD_IMU_CS_GROUP GPIOF
@@ -56,9 +57,13 @@ static control::MotorCANBase* ld_motor = nullptr;
 static control::Shooter* shooter = nullptr;
 static remote::DBUS* dbus = nullptr;
 static bsp::Laser* laser = nullptr;
-static bsp::WT901* imu_pitch;
-static bsp::MPU6500* imu_yaw;
-static control::Pose* poseEstimator;
+static bsp::WT901* imu_pitch = nullptr;
+static bsp::MPU6500* imu_yaw = nullptr;
+static control::Pose* poseEstimator = nullptr;
+static control::MotorCANBase* fortress_motor0 = nullptr;
+static control::MotorCANBase* fortress_motor1 = nullptr;
+static control::MotorCANBase* fortress_yaw_motor = nullptr;
+static control::Fortress* fortress = nullptr;
 
 const uint16_t IMUAddress = 0x50;
 static bsp::GPIO *gpio_red, *gpio_green;
@@ -70,6 +75,7 @@ const int GIMBAL_TASK_DELAY = 5;
 const int CHASSIS_TASK_DELAY = 10;
 const float CHASSIS_DEADZONE = 0.08;
 const int SHOOTER_TASK_DELAY = 10;
+const int FORTRESS_TASK_DELAY = 10;
 
 const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .attr_bits = osThreadDetached,
@@ -134,6 +140,17 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .tz_module = 0,
                                              .reserved = 0};
 osThreadId_t refereeTaskHandle;
+
+const osThreadAttr_t fortressTaskAttribute = {.name = "fortressTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+osThreadId_t fortressTaskHandle;
 
 class CustomUART : public bsp::UART {
  public:
@@ -204,6 +221,14 @@ void RM_RTOS_Init() {
   imu_yaw = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
   poseEstimator = new control::Pose(imu_yaw);
   imu_pitch = new bsp::WT901(&hi2c2, IMUAddress);
+
+  fortress_motor0 = new control::Motor3508(can2, 0x207);
+  fortress_motor1 = new control::Motor3508(can2, 0x208);
+  control::MotorCANBase* fortress_motors[FORTRESS_MOTOR_NUM];
+  fortress_motors[0] = fortress_motor0;
+  fortress_motors[1] = fortress_motor1;
+  fortress_yaw_motor = new control::Motor6020(can2, 0x206);
+  fortress = new control::Fortress(fortress_motors, fortress_yaw_motor);
 }
 
 void KillAll() {
@@ -415,9 +440,9 @@ void shooterTask(void* arg) {
   while (true) {
     if (dbus->swl == remote::DOWN)
       break;
-    if (dbus->swr == remote::UP) {
+    if (referee->game_robot_status.mains_power_shooter_output && dbus->swr == remote::UP) {
       ++fire_wait;
-      shooter->SetFlywheelSpeed(400);
+      shooter->SetFlywheelSpeed(450);
       if (fire_wait > wait_threshold) {
         shooter->LoadNext();
       }
@@ -447,6 +472,53 @@ void refereeTask(void* arg) {
   }
 }
 
+void fortressTask(void* arg) {
+  UNUSED(arg);
+
+  control::MotorCANBase* motors_fortress_rise[] = {fortress_motor0, fortress_motor1};
+  control::MotorCANBase* motors_fortress_yaw[] = {fortress_yaw_motor};
+
+  bool rise_state = false;
+  int transform_time = 1000;
+
+  while (dbus->swr != remote::DOWN) {
+    if (dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
+  while (dbus->swr == remote::DOWN) {
+    if (dbus->swr != remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
+
+  while (true) {
+    if (dbus->swr == remote::DOWN) {
+      if (!rise_state) {
+        fortress->Up();
+        osDelay(transform_time);
+        fortress->StopRise();
+        fortress->Rotate();
+        rise_state = true;
+      }
+    } else {
+      if (rise_state) {
+        fortress->StopRotate();
+        fortress->Down();
+        osDelay(transform_time);
+        fortress->StopRise();
+        rise_state = false;
+      }
+    }
+    control::MotorCANBase::TransmitOutput(motors_fortress_rise, FORTRESS_MOTOR_NUM);
+    control::MotorCANBase::TransmitOutput(motors_fortress_yaw, 1);
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+}
+
 void RM_RTOS_Threads_Init(void) {
   osDelay(500);  // DBUS initialization needs time
 //  while (dbus->swr != remote::DOWN) {
@@ -461,6 +533,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
+  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -479,7 +552,7 @@ void RM_RTOS_Default_Task(const void* args) {
 //  }
 
   while (true) {
-    if (dbus->swl == remote::DOWN)
+    if (dbus->swl == remote::DOWN || referee->power_heat_data.chassis_power >= 120)
       KillAll();
 
     ch0 = f0.CalculateOutput(dbus->ch0);

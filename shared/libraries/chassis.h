@@ -24,7 +24,7 @@
 #include "motor.h"
 #include "power_limit.h"
 
-#define MAX_WHEEL_NUM 6
+#define MAX_WHEEL_NUM 4
 
 namespace control {
 
@@ -86,7 +86,7 @@ class Chassis {
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
-  ConstraintedPID pids_[MAX_WHEEL_NUM];
+  ConstrainedPID pids_[MAX_WHEEL_NUM];
   PowerLimitNaive* power_limit_;
   float* speeds_;
 };
