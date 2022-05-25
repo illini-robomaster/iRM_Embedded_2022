@@ -262,12 +262,12 @@ volatile bool imu_inited = false;
 void imuTask(void* arg) {
   UNUSED(arg);
 
-//  while (!dbus->keyboard.bit.V) {
-//    if (dbus->keyboard.bit.V) {
-//      break;
-//    }
-//    osDelay(100);
-//  }
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
 
   osDelay(3000);
   print("IMU Initialized!\r\n");
@@ -296,12 +296,12 @@ void gimbalTask(void* arg) {
   control::MotorCANBase* motors_can1_pitch[] = {pitch_motor};
   control::MotorCANBase* motors_can2_yaw[] = {yaw_motor};
 
-//  while (!dbus->keyboard.bit.V) {
-//    if (dbus->keyboard.bit.V) {
-//      break;
-//    }
-//    osDelay(100);
-//  }
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
 
   float angle[3];
   float pitch_curr, yaw_curr;
@@ -310,7 +310,7 @@ void gimbalTask(void* arg) {
   print("Calibrate\r\n");
   gpio_red->Low();
   gpio_green->Low();
-  for (int i = 0; i < 700; i++) {
+  for (int i = 0; i < 800; i++) {
 //  while (true) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
@@ -363,12 +363,12 @@ void gimbalTask(void* arg) {
 void chassisTask(void* arg) {
   UNUSED(arg);
 
-//  while (!dbus->keyboard.bit.V) {
-//    if (dbus->keyboard.bit.V) {
-//      break;
-//    }
-//    osDelay(100);
-//  }
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
 
   osDelay(5000);
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
@@ -379,10 +379,11 @@ void chassisTask(void* arg) {
   float vx_set, vy_set, wz_set;
   float relative_angle;
 
-  float spin_speed = 900;
-  float follow_speed = 400;
+  float spin_speed = 450;
+  float follow_speed = 300;
 
   bool follow_mode = true;
+//  bool prev_mode = true;
 
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
@@ -395,30 +396,31 @@ void chassisTask(void* arg) {
     vx_remote = ch0;
     vy_remote = ch1;
 
-    if (dbus->keyboard.bit.SHIFT)
+    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP)
         follow_mode = !follow_mode;
-    if (dbus->keyboard.bit.A) vx -= 60;
-    if (dbus->keyboard.bit.D) vx += 60;
-    if (dbus->keyboard.bit.W) vy += 60;
-    if (dbus->keyboard.bit.S) vy -= 60;
 
-    if (-30 <= vx && vx <= 30) {
+    if (dbus->keyboard.bit.A) vx -= 80;
+    if (dbus->keyboard.bit.D) vx += 80;
+    if (dbus->keyboard.bit.W) vy += 80;
+    if (dbus->keyboard.bit.S) vy -= 80;
+
+    if (-35 <= vx && vx <= 35) {
         vx = 0;
     }
-    if (-30 <= vy && vy <= 30) {
+    if (-35 <= vy && vy <= 35) {
         vy = 0;
     }
 
     if (vx > 0) {
-        vx -= 40;
+        vx -= 60;
     } else if (vx < 0) {
-        vx += 40;
+        vx += 60;
     }
 
     if (vy > 0) {
-        vy -= 40;
+        vy -= 60;
     } else if (vy < 0) {
-        vy += 40;
+        vy += 60;
     }
 
     vx = clip<float>(vx, -1200, 1200);
@@ -445,8 +447,8 @@ void chassisTask(void* arg) {
       if (relative_angle == 0) {
         spin_mode = false;
       }
+      wz_set = clip<float>(wz_set, -290, 290);
     }
-    wz_set = clip<float>(wz_set, -290, 290);
     chassis->SetSpeed(vx_set, vy_set, wz_set);
 //    print("chassis\r\n");
     chassis->Update(referee->power_heat_data.chassis_power, referee->power_heat_data.chassis_power_buffer);
@@ -461,31 +463,31 @@ void shooterTask(void* arg) {
   UNUSED(arg);
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
-//  while (!dbus->keyboard.bit.V) {
-//    if (dbus->keyboard.bit.V) {
-//      break;
-//    }
-//    osDelay(100);
-//  }
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) {
+      break;
+    }
+    osDelay(100);
+  }
 
   while (!dbus->keyboard.bit.CTRL) {
       if (dbus->swr == remote::DOWN) {
-           for (int i = 0; i < 50; ++i) {
-               shooter->SetFlywheelSpeed(0);
-                shooter->Update();
-                control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-               osDelay(10);
-           }
+//           for (int i = 0; i < 50; ++i) {
+//               shooter->SetFlywheelSpeed(0);
+//                shooter->Update();
+//                control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+//               osDelay(10);
+//           }
           break;
       }
       osDelay(100);
   }
 
-  for (int i = 0; i <=450; i = i + 2) {
+  for (int i = 0; i <=450; i = i + 1) {
       shooter->SetFlywheelSpeed(i);
       shooter->Update();
       control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-      osDelay(10);
+      osDelay(1);
   }
 
   while (true) {
@@ -494,13 +496,13 @@ void shooterTask(void* arg) {
     if (referee->game_robot_status.mains_power_shooter_output && dbus->mouse.l) {
         shooter->LoadNext();
     }
-    if (dbus->swr == remote::UP) {
+    if (referee->game_robot_status.mains_power_shooter_output && dbus->swr == remote::UP) {
         shooter->LoadNext();
     }
-    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+    if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
         shooter->SetFlywheelSpeed(0);
     } else {
-        shooter->SetFlywheelSpeed(500);
+        shooter->SetFlywheelSpeed(450);
     }
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);

@@ -52,14 +52,15 @@ Gimbal::Gimbal(gimbal_t gimbal)
         float yaw_theta_max_out = 1;
         float yaw_omega_max_iout = 500;
         float yaw_omega_max_out = 7000;
+        // pitch_theta_pid_param_ = new float[3]{35, 0, 12};
+        // pitch_omega_pid_param_ = new float[3]{1500, 0.05, 45};
+        // yaw_theta_pid_param_ = new float[3]{43, 0, 12};
+        // yaw_omega_pid_param_ = new float[3]{2900, 0.02, 45};
+
         pitch_theta_pid_param_ = new float[3]{35, 0, 12};
         pitch_omega_pid_param_ = new float[3]{1500, 0.05, 45};
-        yaw_theta_pid_param_ = new float[3]{43, 0, 12};
+        yaw_theta_pid_param_ = new float[3]{35, 0.01, 10};
         yaw_omega_pid_param_ = new float[3]{2900, 0.02, 45};
-        // pitch_theta_pid_param_ = new float[3]{15, 0, 0};
-        // pitch_omega_pid_param_ = new float[3]{3500, 0.1, 10};
-        // yaw_theta_pid_param_ = new float[3]{18, 0, 0.3};
-        // yaw_omega_pid_param_ = new float[3]{3500, 0.1, 0};
         // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
         // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
         // yaw_theta_pid_param_ = new float[3]{38, 0, 0};
