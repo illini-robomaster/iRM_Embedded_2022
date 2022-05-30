@@ -43,7 +43,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
         pids_[FourWheel::back_right].Reinit(pid_param);
-        float motor_I_limit = 100;
+        float motor_I_limit = 50;
         pids_[FourWheel::front_left].ChangeMax(motor_I_limit, motor_range);
         pids_[FourWheel::front_right].ChangeMax(motor_I_limit, motor_range);
         pids_[FourWheel::back_left].ChangeMax(motor_I_limit, motor_range);

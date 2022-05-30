@@ -239,6 +239,9 @@ void KillAll() {
 
   RM_EXPECT_TRUE(false, "Operation killed\r\n");
   while (true) {
+      if (dbus->keyboard.bit.V) {
+          break;
+      }
     fl_motor->SetOutput(0);
     bl_motor->SetOutput(0);
     fr_motor->SetOutput(0);
@@ -327,12 +330,24 @@ void gimbalTask(void* arg) {
   laser->Off();
   print("Gimbal Begin\r\n");
 
+  bool i2c_error_flag = false;
+
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
-      break;
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
+        while (true) {
+            if (dbus->keyboard.bit.V) {
+                break;
+            }
+            osDelay(10);
+        }
+    }
   
-    if (!(imu_pitch->GetAngle(angle)))
-      RM_ASSERT_TRUE(false, "I2C Error!\r\n");
+    if (!(imu_pitch->GetAngle(angle))) {
+        RM_ASSERT_TRUE(false, "I2C Error!\r\n");
+        i2c_error_flag = true;
+    } else {
+        i2c_error_flag = false;
+    }
     angle[2] = poseEstimator->GetYaw();
  
     float pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5;
@@ -350,8 +365,12 @@ void gimbalTask(void* arg) {
     float pitch_diff = wrap<float>(pitch_target - pitch_curr, -PI, PI);
     float yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
     // print("Y_CURR: %6.3f, Y_DIFF: %6.3f\r\n", yaw_curr, yaw_diff);
+    if (!i2c_error_flag) {
+        gimbal->TargetRel(pitch_diff / 28, yaw_diff / 33);
+    } else {
+        gimbal->TargetRel(0, yaw_diff / 33);
+    }
 
-    gimbal->TargetRel(pitch_diff / 28, yaw_diff / 33);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_pitch, 1);
     control::MotorCANBase::TransmitOutput(motors_can2_yaw, 1);
@@ -379,10 +398,12 @@ void chassisTask(void* arg) {
   float vx_set, vy_set, wz_set;
   float relative_angle;
 
-  float spin_speed = 450;
-  float follow_speed = 300;
+  float spin_speed = 650;
+  float follow_speed = 650;
 
   bool follow_mode = true;
+  int mode_change_delay = 200;
+  int mode_change_count = 0;
 //  bool prev_mode = true;
 
   while (true) {
@@ -390,14 +411,26 @@ void chassisTask(void* arg) {
       chassis->SetSpeed(0, 0, 0);
       chassis->Update(referee->power_heat_data.chassis_power,
                       referee->power_heat_data.chassis_power_buffer);
-      break;
+        while (true) {
+            if (dbus->keyboard.bit.V) {
+                break;
+            }
+            osDelay(10);
+        }
     }
 
     vx_remote = ch0;
     vy_remote = ch1;
 
-    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP)
-        follow_mode = !follow_mode;
+
+    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP) {
+        if (mode_change_count > mode_change_delay) {
+            mode_change_count = 0;
+            follow_mode = !follow_mode;
+        }
+    }
+    mode_change_count++;
+
 
     if (dbus->keyboard.bit.A) vx -= 80;
     if (dbus->keyboard.bit.D) vx += 80;
@@ -438,15 +471,15 @@ void chassisTask(void* arg) {
       spin_mode = true;
       wz_set = spin_speed;
     } else {
-      if (spin_mode) {
-        float rotate = follow_speed * relative_angle;
-        wz_set = abs(rotate < spin_speed ? rotate : spin_speed);
-      } else {
+//      if (spin_mode) {
+//        float rotate = follow_speed * relative_angle;
+//        wz_set = abs(rotate < spin_speed ? rotate : spin_speed);
+//      } else {
         wz_set = follow_speed * relative_angle;
-      }
-      if (relative_angle == 0) {
-        spin_mode = false;
-      }
+//      }
+//      if (relative_angle == 0 && !dbus->keyboard.bit.SHIFT) {
+//        spin_mode = false;
+//      }
       wz_set = clip<float>(wz_set, -290, 290);
     }
     chassis->SetSpeed(vx_set, vy_set, wz_set);
@@ -491,8 +524,14 @@ void shooterTask(void* arg) {
   }
 
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
-      break;
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
+        while (true) {
+            if (dbus->keyboard.bit.V) {
+                break;
+            }
+            osDelay(10);
+        }
+    }
     if (referee->game_robot_status.mains_power_shooter_output && dbus->mouse.l) {
         shooter->LoadNext();
     }
