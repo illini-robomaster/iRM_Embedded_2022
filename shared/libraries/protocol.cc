@@ -140,13 +140,50 @@ bool Referee::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
 }
 
 int Referee::ProcessDataTx(int cmd_id, uint8_t* data) {
-  UNUSED(cmd_id);
-  UNUSED(data);
-
-  return -1;
+  int data_len;
+  switch (cmd_id) {
+    case STUDENT_INTERACTIVE: {
+      switch (graph_content_) {
+        case NO_GRAPH:
+          data_len = -1;
+          break;
+        case DELETE_GRAPH:
+          data_len = sizeof(graphic_delete_t);
+          memcpy(data, &graphic_delete, data_len);
+          break;
+        case SINGLE_GRAPH:
+          data_len = sizeof(graphic_single_t);
+          memcpy(data, &graphic_single, data_len);
+          break;
+        case DOUBLE_GRAPH:
+          data_len = sizeof(graphic_double_t);
+          memcpy(data, &graphic_double, data_len);
+          break;
+        case FIVE_GRAPH:
+          data_len = sizeof(graphic_five_t);
+          memcpy(data, &graphic_five, data_len);
+          break;
+        case SEVEN_GRAPH:
+          data_len = sizeof(graphic_seven_t);
+          memcpy(data, &graphic_seven, data_len);
+          break;
+        case CHAR_GRAPH:
+          data_len = sizeof(graphic_character_t);
+          memcpy(data, &graphic_character, data_len);
+          break;
+        default:
+          data_len = -1;
+      }
+      graph_content_ = NO_GRAPH;
+      break;
+    }
+    default:
+      data_len = -1;
+  }
+  return data_len;
 }
 
-void Referee::UIContent(content graph_content) {
+void Referee::PrepareUIContent(content graph_content) {
   graph_content_ = graph_content;
 }
 

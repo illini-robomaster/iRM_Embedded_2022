@@ -18,6 +18,8 @@
 *                                                                          *
 ****************************************************************************/
 
+#pragma once
+
 #include "protocol.h"
 
 /********************** content ID data********************/
@@ -64,7 +66,7 @@
 #define UI_Data_Del_Layer 1
 #define UI_Data_Del_ALL 2
 /********************** operations ************************/
-#define UI_Graph_ADD 1
+#define UI_Graph_Add 1
 #define UI_Graph_Change 2
 #define UI_Graph_Del 3
 /********************** graph configurations - types ******/

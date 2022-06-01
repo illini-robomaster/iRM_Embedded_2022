@@ -131,7 +131,7 @@ class Protocol {
  * 0x0208 BULLET_REMAINING
  * 0x0209 RFID_STATUS
  * 0x020A DART_CLIENT_CMD
- * 0x0301 STUDENT_INTERACTIVE [X]
+ * 0x0301 STUDENT_INTERACTIVE
  * 0x0302 ROBOT_INTERACTIVE [x]
  * 0x0303 ROBOT_COMMAND [x]
  * 0x0304 ROBOT_COMMAND [x]
@@ -158,6 +158,7 @@ typedef enum {
   BULLET_REMAINING = 0x0208,
   RFID_STATUS = 0x0209,
   DART_CLIENT_CMD = 0x020A,
+  STUDENT_INTERACTIVE = 0x0301,
 } referee_cmd;
 
 /* ===== GAME_STATUS 0x0001 1Hz ===== */
@@ -370,11 +371,13 @@ typedef struct {
 } __packed graphic_character_t;
 
 enum content {
-  single_graph,
-  double_graph,
-  five_graph,
-  seven_graph,
-  char_graph,
+  NO_GRAPH,
+  DELETE_GRAPH,
+  SINGLE_GRAPH,
+  DOUBLE_GRAPH,
+  FIVE_GRAPH,
+  SEVEN_GRAPH,
+  CHAR_GRAPH,
 };
 
 class Referee : public Protocol {
@@ -397,7 +400,14 @@ class Referee : public Protocol {
   rfid_status_t rfid_status{};
   dart_client_cmd_t dart_client_cmd{};
 
-  void UIContent(content graph_content);
+  graphic_delete_t graphic_delete{};
+  graphic_single_t graphic_single{};
+  graphic_double_t graphic_double{};
+  graphic_five_t graphic_five{};
+  graphic_seven_t graphic_seven{};
+  graphic_character_t graphic_character{};
+
+  void PrepareUIContent(content graph_content);
 
  private:
   /**
@@ -419,7 +429,7 @@ class Referee : public Protocol {
    */
   int ProcessDataTx(int cmd_id, uint8_t* data) final;
 
-  content graph_content_;
+  content graph_content_ = NO_GRAPH;
 };
 
 /* Command for Host */

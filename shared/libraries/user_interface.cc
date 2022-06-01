@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include "user_interface.h"
+
 #include <cstdarg>
 #include <cstring>
 
@@ -72,10 +73,10 @@ void UserInterface::LineDraw(graphic_data_t* image, const char name[3], uint32_t
  * @param end_x ending x coordinate
  * @param end_y ending y coordinate
  */
-void UserInterface::RectangleDraw(graphic_data_t* image, const char name[3],
-                                  uint32_t graph_operate, uint32_t graph_layer,
-                                  uint32_t graph_color, uint32_t graph_width, uint32_t start_x,
-                                  uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+void UserInterface::RectangleDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                                  uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                                  uint32_t start_x, uint32_t start_y, uint32_t end_x,
+                                  uint32_t end_y) {
   for (int i = 0; i < 3 && name[i] != 0; i++) {
     image->graphic_name[2 - i] = name[i];
   }
@@ -90,7 +91,6 @@ void UserInterface::RectangleDraw(graphic_data_t* image, const char name[3],
   image->end_y = end_y;
 }
 
-
 /**
  *
  * @param image pointer to a graphic_data_t variable; stores image data
@@ -103,10 +103,9 @@ void UserInterface::RectangleDraw(graphic_data_t* image, const char name[3],
  * @param start_y starting y coordinate
  * @param graph_radius graph radius
  */
-void UserInterface::CircleDraw(graphic_data_t* image, const char name[3],
-                               uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color,
-                               uint32_t graph_width, uint32_t start_x, uint32_t start_y,
-                               uint32_t graph_radius) {
+void UserInterface::CircleDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                               uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                               uint32_t start_x, uint32_t start_y, uint32_t graph_radius) {
   for (int i = 0; i < 3 && name[i] != 0; i++) {
     image->graphic_name[2 - i] = name[i];
   }
@@ -119,7 +118,6 @@ void UserInterface::CircleDraw(graphic_data_t* image, const char name[3],
   image->start_y = start_y;
   image->radius = graph_radius;
 }
-
 
 /**
  *
@@ -135,8 +133,9 @@ void UserInterface::CircleDraw(graphic_data_t* image, const char name[3],
  * @param y_length vertical semi-axis length
  */
 void UserInterface::EllipseDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
-                 uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x,
-                 uint32_t start_y, uint32_t x_length, uint32_t y_length) {
+                                uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                                uint32_t start_x, uint32_t start_y, uint32_t x_length,
+                                uint32_t y_length) {
   for (int i = 0; i < 3 && name[i] != 0; i++) {
     image->graphic_name[2 - i] = name[i];
   }
@@ -150,7 +149,6 @@ void UserInterface::EllipseDraw(graphic_data_t* image, const char name[3], uint3
   image->end_x = x_length;
   image->end_y = y_length;
 }
-
 
 /**
  *
@@ -186,7 +184,6 @@ void UserInterface::ArcDraw(graphic_data_t* image, const char name[3], uint32_t 
   image->end_y = y_length;
 }
 
-
 /**
  *
  * @param image pointer to a graphic_data_t variable; stores image data
@@ -201,10 +198,10 @@ void UserInterface::ArcDraw(graphic_data_t* image, const char name[3], uint32_t 
  * @param start_y starting y coordinate
  * @param graph_float float to be displayed
  */
-void UserInterface::FloatDraw(graphic_data_t* image, const char name[3],
-                              uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color,
-                              uint32_t graph_size, uint32_t graph_digit, uint32_t graph_width,
-                              uint32_t start_x, uint32_t start_y, float graph_float) {
+void UserInterface::FloatDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                              uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size,
+                              uint32_t graph_digit, uint32_t graph_width, uint32_t start_x,
+                              uint32_t start_y, float graph_float) {
   for (int i = 0; i < 3 && name[i] != 0; i++) {
     image->graphic_name[2 - i] = name[i];
   }
@@ -225,8 +222,8 @@ void UserInterface::FloatDraw(graphic_data_t* image, const char name[3],
 
 void UserInterface::IntDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
                             uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size,
-                            uint32_t graph_width, uint32_t start_x,
-                            uint32_t start_y, int graph_int) {
+                            uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                            int graph_int) {
   for (int i = 0; i < 3 && name[i] != 0; i++) {
     image->graphic_name[2 - i] = name[i];
   }
@@ -243,7 +240,6 @@ void UserInterface::IntDraw(graphic_data_t* image, const char name[3], uint32_t 
   image->end_x = int_data & 0x003FF800;
   image->end_y = int_data & 0x000007FF;
 }
-
 
 /**
  *
@@ -275,8 +271,6 @@ void UserInterface::CharDraw(graphic_data_t* image, const char name[3], uint32_t
   image->start_x = start_x;
   image->start_y = start_y;
 }
-
-
 
 int UserInterface::UIDelete(uint8_t* data_buffer, uint8_t del_operate, uint8_t del_layer) {
   graphic_delete_t del;
@@ -340,12 +334,13 @@ int UserInterface::GraphRefresh(uint8_t* data_buffer, int cnt, ...) {
       memcpy(data_buffer, &graph, length);
       break;
     }
-    default: ;
+    default:;
   }
   return length;
 }
 
-int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char* theString, int len) {
+int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char* theString,
+                               int len) {
   graphic_character_t char_graph;
   char_graph.header.data_cmd_id = UI_Data_ID_DrawChar;
   char_graph.header.sender_ID = Robot_ID_;
@@ -359,5 +354,3 @@ int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char*
 }
 
 }  // namespace communication
-
-

@@ -21,7 +21,7 @@
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "cmsis_os.h"
-#include "protocol.h"
+#include "user_interface.h"
 
 #define RX_SIGNAL (1 << 0)
 
@@ -38,6 +38,9 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .reserved = 0};
 osThreadId_t refereeTaskHandle;
 
+static communication::UserInterface* UI = nullptr;
+static communication::Referee* referee = nullptr;
+
 class CustomUART : public bsp::UART {
  public:
   using bsp::UART::UART;
@@ -47,7 +50,6 @@ class CustomUART : public bsp::UART {
   void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, RX_SIGNAL); }
 };
 
-static communication::Referee* referee = nullptr;
 static CustomUART* referee_uart = nullptr;
 
 void refereeTask(void* arg) {
@@ -69,7 +71,9 @@ void refereeTask(void* arg) {
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);
 
-  referee_uart = new CustomUART(&huart7);
+  UI = new communication::UserInterface(UI_Data_RobotID_BStandard1, UI_Data_CilentID_BStandard1);
+
+  referee_uart = new CustomUART(&huart6);
   referee_uart->SetupRx(300);
   referee_uart->SetupTx(300);
 
@@ -80,19 +84,25 @@ void RM_RTOS_Threads_Init(void) {
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
 }
 
-void RM_RTOS_Default_Task(const void* argument) {
-  UNUSED(argument);
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
 
+  communication::package_t frame;
+
+  communication::graphic_data_t graph;
+  UI->RectangleDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Green, 5, 960, 640, 1000, 700);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
+  referee->PrepareUIContent(communication::SINGLE_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+  UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Green, 5, 960, 640, 1000, 700);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
   while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-    print("Chassis Power: %.3f\r\n", referee->power_heat_data.chassis_power);
-    print("\r\n");
-    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
-    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+    referee->PrepareUIContent(communication::SINGLE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
     osDelay(100);
   }
 }
