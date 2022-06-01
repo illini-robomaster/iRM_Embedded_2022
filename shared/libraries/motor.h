@@ -275,9 +275,8 @@ typedef enum {
 #define M2006P36_RATIO 36             /* Transmission ratio of M2006P36 */
 
 typedef struct {
-  servo_mode_t mode;  /* turning mode of servomotor, refer to type servo_mode_t                */
-  servo_status_t dir; /* current turning direction of servomotor, refer to type servo_status_t */
-  float speed;        /* motor shaft turning speed                                             */
+  servo_mode_t mode; /* turning mode of servomotor, refer to type servo_mode_t */
+  float speed;       /* motor shaft turning speed                              */
 } servo_jam_t;
 
 class ServoMotor;  // declare first for jam_callback_t to have correct param type
@@ -328,19 +327,6 @@ class ServoMotor {
    * @return current turning mode of motor
    */
   servo_status_t SetTarget(const float target, bool override = false);
-
-  /**
-   * @brief set next target for servomotor, will have no effect if last set target has not been
-   * achieved
-   * @note if motor is not holding, call to this function will have no effect unless override is
-   * true
-   *
-   * @param target   next target for the motor in [rad]
-   * @param mode     servomotor turning mode override, will only have one-time effect
-   * @param override if true, override current target even if motor is not holding right now
-   * @return current turning mode of motor
-   */
-  servo_status_t SetTarget(const float target, const servo_mode_t mode, bool override = false);
 
   /**
    * @brief set turning speed of motor when moving
@@ -460,6 +446,7 @@ class ServoMotor {
   float motor_angle_;  /* current motor angle in [rad], with align_angle subtracted               */
   float offset_angle_; /* cumulative offset angle of motor shaft, range between [0, 2PI] in [rad] */
   float servo_angle_;  /* current angle of motor shaft, range between [0, 2PI] in [rad]           */
+  float cumulated_angle;  
   servo_status_t dir_; /* current moving direction of motor (and motor shaft)                     */
 
   // jam detection
@@ -474,7 +461,8 @@ class ServoMotor {
   PIDController omega_pid_; /* pid for controlling speed of motor */
 
   // edge detectors
-  FloatEdgeDetector* wrap_detector_; /* detect motor motion across encoder boarder               */
+  FloatEdgeDetector* inner_wrap_detector_; /* detect motor motion across encoder boarder               */
+  FloatEdgeDetector* outer_wrap_detector_; /* detect motor motion across encoder boarder               */
   BoolEdgeDetector* hold_detector_;  /* detect motor is in mode toggling, reset pid accordingly  */
   BoolEdgeDetector* jam_detector_;   /* detect motor jam toggling, call jam callback accordingly */
 

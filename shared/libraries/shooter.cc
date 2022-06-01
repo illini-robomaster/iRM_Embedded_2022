@@ -27,8 +27,9 @@ namespace control {
 static auto step_angles_ = std::unordered_map<ServoMotor*, float>();
 
 void jam_callback(ServoMotor* servo, const servo_jam_t data) {
+  UNUSED(data);
   float prev_target = wrap<float>(servo->GetTarget() - step_angles_[servo], 0, 2 * PI);
-  servo->SetTarget(prev_target, static_cast<servo_mode_t>(-data.dir), true);
+  servo->SetTarget(prev_target, true);
 }
 
 Shooter::Shooter(shooter_t shooter) {

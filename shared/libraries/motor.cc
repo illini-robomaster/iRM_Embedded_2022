@@ -247,7 +247,9 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
-  wrap_detector_ = new FloatEdgeDetector(align_angle_, PI);
+  cumulated_angle = 0;
+  inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
+  outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
 
   // dir_ is initialized here
@@ -266,13 +268,9 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
-  return SetTarget(target, mode_, override);
-}
-
-servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
   if (!hold_ && !override) return INPUT_REJECT;
-  target_ = wrap<float>(target, 0, 2 * PI);
-  SetDirUsingMode_(mode);
+  target_ = target;
+  SetDirUsingMode_(mode_);
   return dir_;
 }
 
@@ -298,19 +296,15 @@ void ServoMotor::CalcOutput() {
   // calculate desired output with pid
   int16_t command;
   // v = sqrt(2 * a * d)
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI) * transmission_ratio_;
+  float diff_angle = (target_ - (servo_angle_ + cumulated_angle)) * transmission_ratio_;
   float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
-  if (hold_) {
-    // holding, allow turning in both directions
-    command = omega_pid_.ComputeConstraintedOutput(
-        motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
-  } else {
-    // moving, only allow turn in specified direction(s)
-    command = omega_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
-  }
+  command = omega_pid_.ComputeConstraintedOutput(
+      motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
+  constexpr float dead_zone = 800;
+  if (command < dead_zone && command > -dead_zone) command = 0;
   motor_->SetOutput(command);
 
-  // jam detection machenism
+  // jam detection mechanism
   if (detect_buf_ != nullptr) {
     // update rolling sum and circular buffer
     detect_total_ += command - detect_buf_[detect_head_];
@@ -322,7 +316,6 @@ void ServoMotor::CalcOutput() {
     if (jam_detector_->posEdge()) {
       servo_jam_t data;
       data.mode = mode_;
-      data.dir = dir_;
       data.speed = max_speed_ / transmission_ratio_;
       jam_callback_(this, data);
     }
@@ -338,7 +331,7 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
   constexpr int maximum_command = 32768;  // maximum command that a CAN motor can accept
   RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1,
                  "Effort threshold should between 0 and 1");
-  // storing funcion pointer for future invocation
+  // storing function pointer for future invocation
   jam_callback_ = callback;
 
   // create and initialize circular buffer
@@ -355,9 +348,10 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
-  print("theta: % .4f ", servo_angle_);
-  print("omega: % .4f ", GetOmega());
-  print("target: % .4f ", target_);
+  print("theta: % 9.4f ", servo_angle_);
+  print("theta cumulative: % 9.4f ", servo_angle_ + cumulated_angle);
+  print("omega: % 9.4f ", GetOmega());
+  print("target: % 9.4f ", target_);
   if (hold_)
     print("status: holding\r\n");
   else
@@ -387,31 +381,33 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
   // edge, which means that the motor is turning in positive direction when crossing encoder
   // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
-  wrap_detector_->input(motor_angle_);
-  if (wrap_detector_->negEdge())
+  inner_wrap_detector_->input(motor_angle_);
+  if (inner_wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
-  else if (wrap_detector_->posEdge())
+  else if (inner_wrap_detector_->posEdge())
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
+  outer_wrap_detector_->input(servo_angle_);
+  if (outer_wrap_detector_->negEdge())
+    cumulated_angle += 2 * PI;
+  else if (outer_wrap_detector_->posEdge())
+    cumulated_angle -= 2 * PI;
 
   // determine if the motor should be in hold state
-  float diff = abs(GetThetaDelta(target_));
+  float diff = abs(GetThetaDelta(target_ - cumulated_angle));
   if (!hold_ && diff < proximity_in_) hold_ = true;
   if (hold_ && diff > proximity_out_) hold_ = false;
 }
 
-void ServoMotor::NearestModeSetDir_() {
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
-}
-
 void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
+  float diff_angle;
   switch (mode) {
     case SERVO_ANTICLOCKWISE:
       dir_ = TURNING_ANTICLOCKWISE;
       return;
     case SERVO_NEAREST:
-      NearestModeSetDir_();
+      diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
+      dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
       return;
     case SERVO_CLOCKWISE:
       dir_ = TURNING_CLOCKWISE;

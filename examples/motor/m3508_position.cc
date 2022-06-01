@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-#define WITH_CONTROLLER
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -35,8 +35,8 @@
 #define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH (2 * PI / 4)
-#define SPEED (4 * PI)
-#define ACCELERATION (8 * PI)
+#define SPEED 50
+#define ACCELERATION (20 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -58,7 +58,7 @@ void RM_RTOS_Init() {
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{25, 5, 35};
+  servo_data.omega_pid_param = new float[3]{80, 2, 50};
   servo = new control::ServoMotor(servo_data);
 
 #ifdef WITH_CONTROLLER
@@ -75,7 +75,9 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 
-  float target = NOTCH;
+  float target = 0;
+
+  int i = 0;
 
   while (true) {
 #ifdef WITH_CONTROLLER
@@ -84,12 +86,17 @@ void RM_RTOS_Default_Task(const void* args) {
 #else
     key_detector.input(key.Read());
     if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, 0, 2 * PI);
+      target = 100 * 2 * PI - target;
     }
 #endif
     servo->CalcOutput();
-    servo->PrintData();
+    if (i > 10) {
+      servo->PrintData();
+      i = 0;
+    } else {
+      i++;
+    }
     control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(10);
+    osDelay(2);
   }
 }
