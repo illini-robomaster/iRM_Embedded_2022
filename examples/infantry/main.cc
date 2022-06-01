@@ -503,8 +503,8 @@ void shooterTask(void* arg) {
     osDelay(100);
   }
 
-  while (!dbus->keyboard.bit.CTRL) {
-      if (dbus->swr == remote::DOWN) {
+  while (true) {
+      if (dbus->keyboard.bit.CTRL || dbus->swr == remote::DOWN) {
 //           for (int i = 0; i < 50; ++i) {
 //               shooter->SetFlywheelSpeed(0);
 //                shooter->Update();
@@ -516,12 +516,12 @@ void shooterTask(void* arg) {
       osDelay(100);
   }
 
-  for (int i = 0; i <=450; i = i + 1) {
-      shooter->SetFlywheelSpeed(i);
-      shooter->Update();
-      control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
-      osDelay(1);
-  }
+//  for (int i = 0; i <=450; i = i + 1) {
+//      shooter->SetFlywheelSpeed(i);
+//      shooter->Update();
+//      control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+//      osDelay(1);
+//  }
 
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
@@ -532,17 +532,21 @@ void shooterTask(void* arg) {
             osDelay(10);
         }
     }
-    if (referee->game_robot_status.mains_power_shooter_output && dbus->mouse.l) {
-        shooter->LoadNext();
+//    if (referee->game_robot_status.mains_power_shooter_output && dbus->mouse.l) {
+//        shooter->LoadNext();
+//    }
+//    if (referee->game_robot_status.mains_power_shooter_output && dbus->swr == remote::UP) {
+//        shooter->LoadNext();
+//    }
+//    if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+//        shooter->SetFlywheelSpeed(0);
+//    } else {
+//        shooter->SetFlywheelSpeed(450);
+//    }
+    if (dbus->swr == remote::UP) {
+      shooter->LoadNext();
     }
-    if (referee->game_robot_status.mains_power_shooter_output && dbus->swr == remote::UP) {
-        shooter->LoadNext();
-    }
-    if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
-        shooter->SetFlywheelSpeed(0);
-    } else {
-        shooter->SetFlywheelSpeed(450);
-    }
+    shooter->SetFlywheelSpeed(0);
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);

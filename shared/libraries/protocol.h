@@ -51,6 +51,8 @@ class Protocol {
   package_t Transmit(int cmd_id);
 
  private:
+  int seq = 0;
+
   uint8_t bufferRx[MAX_FRAME_LEN] = {0};
   uint8_t bufferTx[MAX_FRAME_LEN] = {0};
 
@@ -308,6 +310,73 @@ typedef struct {
   uint16_t operate_launch_cmd_time;
 } __packed dart_client_cmd_t;
 
+typedef struct {
+  uint16_t data_cmd_id;
+  uint16_t sender_ID;
+  uint16_t receiver_ID;
+} __packed UI_header_data_t;
+
+typedef struct {
+  UI_header_data_t header;
+  uint8_t data[];
+} __packed robot_interactive_data_t;
+
+typedef struct {
+  UI_header_data_t header;
+  uint8_t operate_type;
+  uint8_t layer;
+} __packed graphic_delete_t;
+
+typedef struct {
+  uint8_t graphic_name[3];
+  uint32_t operate_type:3;
+  uint32_t graphic_type:3;
+  uint32_t layer:4;
+  uint32_t color:4;
+  uint32_t start_angle:9;
+  uint32_t end_angle:9;
+  uint32_t width:10;
+  uint32_t start_x:11;
+  uint32_t start_y:11;
+  uint32_t radius:10;
+  uint32_t end_x:11;
+  uint32_t end_y:11;
+} __packed graphic_data_t;
+
+typedef struct {
+  UI_header_data_t header;
+  graphic_data_t graphic_data_struct;
+} __packed graphic_single_t;
+
+typedef struct {
+  UI_header_data_t header;
+  graphic_data_t graphic_data_struct[2];
+} __packed graphic_double_t;
+
+typedef struct {
+  UI_header_data_t header;
+  graphic_data_t graphic_data_struct[5];
+} __packed graphic_five_t;
+
+typedef struct {
+  UI_header_data_t header;
+  graphic_data_t graphic_data_struct[7];
+} __packed graphic_seven_t;
+
+typedef struct {
+  UI_header_data_t header;
+  graphic_data_t graphic_data_struct;
+  uint8_t data[30];
+} __packed graphic_character_t;
+
+enum content {
+  single_graph,
+  double_graph,
+  five_graph,
+  seven_graph,
+  char_graph,
+};
+
 class Referee : public Protocol {
  public:
   game_status_t game_status{};
@@ -328,6 +397,8 @@ class Referee : public Protocol {
   rfid_status_t rfid_status{};
   dart_client_cmd_t dart_client_cmd{};
 
+  void UIContent(content graph_content);
+
  private:
   /**
    * @brief process the data for certain command and update corresponding status variables
@@ -347,6 +418,8 @@ class Referee : public Protocol {
    * @return length of the data that is copied into buffer
    */
   int ProcessDataTx(int cmd_id, uint8_t* data) final;
+
+  content graph_content_;
 };
 
 /* Command for Host */

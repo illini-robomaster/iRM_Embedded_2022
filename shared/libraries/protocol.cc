@@ -60,6 +60,7 @@ package_t Protocol::Transmit(int cmd_id) {
   if (DATA_LENGTH < 0) return package_t{nullptr, 0};
   bufferTx[1] = (uint8_t)((uint32_t)DATA_LENGTH & 0xFF);
   bufferTx[2] = (uint8_t)((uint32_t)DATA_LENGTH >> BYTE);
+  bufferTx[3] = (uint32_t)seq++;
   AppendHeader(bufferTx, FRAME_HEADER_LEN);
   bufferTx[5] = (uint8_t)((uint32_t)cmd_id & 0xFF);
   bufferTx[6] = (uint8_t)((uint32_t)cmd_id >> BYTE);
@@ -142,9 +143,11 @@ int Referee::ProcessDataTx(int cmd_id, uint8_t* data) {
   UNUSED(cmd_id);
   UNUSED(data);
 
-  /* TODO(neo): if we need to send message to referee in the future, please add handling code here
-   */
   return -1;
+}
+
+void Referee::UIContent(content graph_content) {
+  graph_content_ = graph_content;
 }
 
 bool Host::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
