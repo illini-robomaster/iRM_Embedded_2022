@@ -102,6 +102,7 @@ class UserInterface {
   void FloatDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t graph_digit, uint32_t graph_width, uint32_t start_x, uint32_t start_y, float graph_float);
   void IntDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t graph_width, uint32_t start_x, uint32_t start_y, int graph_int);
   void CharDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t char_length, uint32_t graph_width, uint32_t start_x, uint32_t start_y);
+//  void FloatCharDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t graph_width, uint32_t start_x, uint32_t start_y, float graph_float);
 
   int UIDelete(uint8_t* data_buffer, uint8_t del_operate, uint8_t del_layer);
   int GraphRefresh(uint8_t* data_buffer, int cnt, ...);

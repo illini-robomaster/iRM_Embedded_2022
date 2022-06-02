@@ -89,20 +89,40 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
   communication::package_t frame;
 
-  communication::graphic_data_t graph;
-  UI->RectangleDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Purplish_red, 10, 960, 640, 1000, 700);
-  UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
+  communication::graphic_data_t graph1;
+//  communication::graphic_data_t graph2;
+//  communication::graphic_data_t graph2;
+//  UI->RectangleDraw(&graph1, "0", UI_Graph_Add, 0, UI_Color_Purplish_red, 5, 960, 540, 1000, 700);
+//UI->LineDraw(&graph2, "0", UI_Graph_Add, 0, UI_Color_Orange, 100, 960, 540, 1300, 540);
+//  UI->CircleDraw(&graph2, "1", UI_Graph_Add, 1, UI_Color_Cyan, 5, 960, 540, 50);
+//  UI->ArcDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Cyan, 0, 200, 5, 960, 540, 50, 150);
+//  UI->EllipseDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Cyan, 10, 960, 540, 50, 150);
+//UI->IntDraw(&graph1, "0", UI_Graph_Add, 0, UI_Color_Cyan, 30, 5, 960, 540, -876876586);
+UI->FloatDraw(&graph1, "0", UI_Graph_Add, 0, UI_Color_Cyan, 30, 3, 3, 960, 540, 3.567);
+UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph1);
   referee->PrepareUIContent(communication::SINGLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-  UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Purplish_red, 10, 960, 640, 1000, 700);
-  UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
-  while (true) {
-    referee->PrepareUIContent(communication::SINGLE_GRAPH);
-    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-    referee_uart->Write(frame.data, frame.length);
-    osDelay(100);
-  }
+//char theString[30];
+//int length = snprintf(theString, 30, "%.10f", -3.1415926);
+//UI->CharDraw(&graph1, "1", UI_Graph_Add, 0, UI_Color_Pink, 30, length, 3, 960, 540);
+////UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph1);
+//UI->CharRefresh((uint8_t*)(&referee->graphic_character), graph1, theString, length);
+//  referee->PrepareUIContent(communication::CHAR_GRAPH);
+//  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//  referee_uart->Write(frame.data, frame.length);
+//  osDelay(100);
+
+//  int i = 0;
+//  while (true) {
+//    UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Purplish_red, 10, 960 - i, 640, 1000, 700);
+//    UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
+//    referee->PrepareUIContent(communication::SINGLE_GRAPH);
+//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//    referee_uart->Write(frame.data, frame.length);
+//    osDelay(100);
+//    ++i;
+//  }
 }

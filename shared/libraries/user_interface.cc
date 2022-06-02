@@ -22,6 +22,7 @@
 
 #include <cstdarg>
 #include <cstring>
+#include <stdio.h>
 
 namespace communication {
 
@@ -214,10 +215,15 @@ void UserInterface::FloatDraw(graphic_data_t* image, const char name[3], uint32_
   image->width = graph_width;
   image->start_x = start_x;
   image->start_y = start_y;
-  auto float_data = (int32_t)(graph_float * 1000);
-  image->radius = float_data & 0xFFC00000;
-  image->end_x = float_data & 0x003FF800;
-  image->end_y = float_data & 0x000007FF;
+  float float_data = graph_float;
+  int32_t float2int_data;
+  memcpy(&float2int_data, (uint8_t*)&float_data, 4);
+  image->radius = float2int_data & 0x3FF;
+  image->end_x = (float2int_data & 0x1FFC00) >> 10;
+  image->end_y = (float2int_data & 0xFFE00000) >> 21;
+//  image->radius = (float2int_data & 0xFFC00000) >> 22;
+//  image->end_x = (float2int_data & 0x003FF800) >> 11;
+//  image->end_y = float2int_data & 0x000007FF;
 }
 
 void UserInterface::IntDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
@@ -236,9 +242,9 @@ void UserInterface::IntDraw(graphic_data_t* image, const char name[3], uint32_t 
   image->start_x = start_x;
   image->start_y = start_y;
   int32_t int_data = graph_int;
-  image->radius = int_data & 0xFFC00000;
-  image->end_x = int_data & 0x003FF800;
-  image->end_y = int_data & 0x000007FF;
+  image->radius = int_data & 0x3FF;
+  image->end_x = (int_data & 0x1FFC00) >> 10;
+  image->end_y = (int_data & 0xFFE00000) >> 21;
 }
 
 /**
@@ -346,7 +352,8 @@ int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char*
   char_graph.header.sender_ID = Robot_ID_;
   char_graph.header.receiver_ID = Client_ID_;
   char_graph.graphic_data_struct = image;
-  if (len > 30) return -1;
+  if (len > 30 || len <= 0) return -1;
+  memset(char_graph.data, 0, sizeof(char_graph.data));
   memcpy(char_graph.data, theString, len);
   int length = sizeof(graphic_character_t);
   memcpy(data_buffer, &char_graph, length);
