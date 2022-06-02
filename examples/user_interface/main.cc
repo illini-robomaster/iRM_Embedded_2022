@@ -90,14 +90,14 @@ void RM_RTOS_Default_Task(const void* arguments) {
   communication::package_t frame;
 
   communication::graphic_data_t graph;
-  UI->RectangleDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Green, 5, 960, 640, 1000, 700);
+  UI->RectangleDraw(&graph, "0", UI_Graph_Add, 0, UI_Color_Purplish_red, 10, 960, 640, 1000, 700);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
   referee->PrepareUIContent(communication::SINGLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-  UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Green, 5, 960, 640, 1000, 700);
+  UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Purplish_red, 10, 960, 640, 1000, 700);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
   while (true) {
     referee->PrepareUIContent(communication::SINGLE_GRAPH);
