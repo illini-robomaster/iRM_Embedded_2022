@@ -71,7 +71,7 @@ void refereeTask(void* arg) {
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);
 
-  UI = new communication::UserInterface(UI_Data_RobotID_BStandard1, UI_Data_CilentID_BStandard1);
+  UI = new communication::UserInterface(UI_Data_RobotID_RStandard3, UI_Data_CilentID_RStandard3);
 
   referee_uart = new CustomUART(&huart6);
   referee_uart->SetupRx(300);
