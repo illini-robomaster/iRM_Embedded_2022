@@ -27,3 +27,7 @@ irm_add_arm_executable(${PROJECT_NAME}_typeA
 irm_add_arm_executable(${PROJECT_NAME}_f1
     TARGET F103C8
     SOURCES f103.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_typeC
+    TARGET DJI_Board_TypeC
+    SOURCES typeC.cc)

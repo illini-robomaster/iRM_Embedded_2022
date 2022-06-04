@@ -133,7 +133,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
 
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, , );
+//  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, , );
 
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
