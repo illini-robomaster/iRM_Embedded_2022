@@ -26,20 +26,30 @@ static bsp::GPIO *gpio_red, *gpio_green, *gpio_blue;
 
 void RM_RTOS_Init(void) {
   gpio_red = new bsp::GPIO(LED_R_GPIO_Port, LED_R_Pin);
-  gpio_green = new bsp::GPIO(LED_R_GPIO_Port, LED_R_Pin);
+  gpio_green = new bsp::GPIO(LED_G_GPIO_Port, LED_G_Pin);
   gpio_blue = new bsp::GPIO(LED_B_GPIO_Port, LED_B_Pin);
 //  gpio_red->Low();
 //  gpio_green->Low();
 //  gpio_blue->Low();
-  gpio_red->High();
-  gpio_green->High();
-  gpio_blue->High();
+//  gpio_red->High();
+//  gpio_green->High();
+//  gpio_blue->High();
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   while (true) {
-    gpio_green->Toggle();
+    gpio_red->High();
+    gpio_green->Low();
+    gpio_blue->Low();
+    osDelay(500);
+    gpio_red->Low();
+    gpio_green->High();
+    gpio_blue->Low();
+    osDelay(500);
+    gpio_red->Low();
+    gpio_green->Low();
+    gpio_blue->High();
     osDelay(500);
   }
 }
