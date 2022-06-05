@@ -24,9 +24,9 @@
 //#include "cmsis_os.h"
 //#include "math.h"
 //
-// namespace control {
+//namespace control {
 //
-// MahonyAHRS::MahonyAHRS(bsp::MPU6500* imu, float Ki, float Kp) {
+//MahonyAHRS::MahonyAHRS(bsp::MPU6500* imu, float Ki, float Kp) {
 //  bsp::SetHighresClockTimer(&htim2);
 //  this->imu = imu;
 //  q0 = 1.0f; q1 = 0.0f; q2 = 0.0f; q3 = 0.0f;
@@ -34,7 +34,7 @@
 //  this->Kp = Kp;
 //}
 //
-// void MahonyAHRS::InitQuaternion() {
+//void MahonyAHRS::InitQuaternion() {
 //	int16_t hx, hy;//hz;
 //
 //	hx = imu->mag.x;
@@ -188,7 +188,7 @@
 //	#endif
 //}
 //
-// void MahonyAHRS::MPUMeasureOffset(int cmd) {
+//void MahonyAHRS::MPUMeasureOffset(int cmd) {
 //  static int offset_count = 0;
 //  if (cmd == 0) {
 //    ax_offset = 0;
@@ -217,7 +217,7 @@
 //  }
 //}
 //
-// void MahonyAHRS::Update()  {
+//void MahonyAHRS::Update()  {
 //	float norm;
 //	float hx, hy, hz, bx, bz;
 //	float vx, vy, vz, wx, wy, wz;
@@ -321,7 +321,7 @@
 //	roll =  atan2(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1)* 57.3;
 //}
 //
-// float MahonyAHRS::InvSqrt(float x)
+//float MahonyAHRS::InvSqrt(float x)
 //{
 //	float halfx = 0.5f * x;
 //	float y     = x;

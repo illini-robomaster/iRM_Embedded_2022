@@ -24,8 +24,8 @@
 #include "bsp_uart.h"
 #include "cmsis_os.h"
 #include "dbus.h"
-#include "fortress.h"
 #include "motor.h"
+#include "fortress.h"
 
 static bsp::CAN* can = nullptr;
 

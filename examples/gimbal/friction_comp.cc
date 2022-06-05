@@ -1,35 +1,35 @@
 /****************************************************************************
- *                                                                          *
- *  Copyright (C) 2022 RoboMaster.                                          *
- *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
- *                                                                          *
- *  This program is free software: you can redistribute it and/or modify    *
- *  it under the terms of the GNU General Public License as published by    *
- *  the Free Software Foundation, either version 3 of the License, or       *
- *  (at your option) any later version.                                     *
- *                                                                          *
- *  This program is distributed in the hope that it will be useful,         *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- *  GNU General Public License for more details.                            *
- *                                                                          *
- *  You should have received a copy of the GNU General Public License       *
- *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
- *                                                                          *
- ****************************************************************************/
+*                                                                          *
+*  Copyright (C) 2022 RoboMaster.                                          *
+*  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+*                                                                          *
+*  This program is free software: you can redistribute it and/or modify    *
+*  it under the terms of the GNU General Public License as published by    *
+*  the Free Software Foundation, either version 3 of the License, or       *
+*  (at your option) any later version.                                     *
+*                                                                          *
+*  This program is distributed in the hope that it will be useful,         *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+*  GNU General Public License for more details.                            *
+*                                                                          *
+*  You should have received a copy of the GNU General Public License       *
+*  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+*                                                                          *
+****************************************************************************/
 
 #include <cstring>
+#include "main.h"
 
 #include "bsp_gpio.h"
-#include "bsp_imu_i2c.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
-#include "chassis.h"
+#include "bsp_imu_i2c.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 #include "gimbal.h"
-#include "main.h"
 #include "shooter.h"
+#include "chassis.h"
 
 bsp::CAN* can1 = nullptr;
 bsp::CAN* can2 = nullptr;
@@ -58,7 +58,8 @@ void RM_RTOS_Default_Task(const void* args) {
     float omega = yaw_motor->GetOmega();
     int sign = omega < 0 ? -1 : 1;
     float yaw_offset = 0;
-    if (omega < -0.01 || omega > 0.01) yaw_offset = omega * 968.2362 + sign * 713.84;
+    if (omega < -0.01 || omega > 0.01)
+      yaw_offset = omega * 968.2362 + sign * 713.84;
     print("%8.4f\r\n", omega);
     yaw_motor->SetOutput(yaw_offset);
     control::MotorCANBase::TransmitOutput(can2_yaw, 1);
@@ -93,11 +94,13 @@ void RM_RTOS_Default_Task(const void* args) {
 
   while (true) {
     print("x = [");
-    for (int i = 0; i < speed_vec_len - 1; i++) print("%6.3f, ", outputs[i]);
+    for (int i = 0; i < speed_vec_len - 1; i++)
+      print("%6.3f, ", outputs[i]);
     print("%6.3f]\r\n", outputs[speed_vec_len - 1]);
 
     print("y = [");
-    for (int i = 0; i < speed_vec_len - 1; i++) print("%6.3f, ", inputs[i]);
+    for (int i = 0; i < speed_vec_len - 1; i++)
+      print("%6.3f, ", inputs[i]);
     print("%6.3f]\r\n", inputs[speed_vec_len - 1]);
 
     osDelay(5000);
@@ -105,6 +108,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(5);
 }
+
 
 //  if (!imu->IsRead())
 //    RM_ASSERT_TRUE(false, "IMU Init Failed!\r\n");
@@ -136,7 +140,7 @@ void RM_RTOS_Default_Task(const void* args) {
 //    } else {
 //      yaw_diff = yaw_target - yaw_curr;
 //    }
-
+   
 //    float yaw_offset = 0;
 //    if (dbus->swr == remote::MID) {
 //      chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
@@ -150,3 +154,4 @@ void RM_RTOS_Default_Task(const void* args) {
 
 //    chassis->Update();
 //    control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+   

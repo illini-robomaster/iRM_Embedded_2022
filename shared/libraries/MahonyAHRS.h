@@ -22,9 +22,9 @@
 //
 //#include "bsp_imu.h"
 //
-// namespace control {
+//namespace control {
 //
-// class MahonyAHRS {
+//class MahonyAHRS {
 // public:
 //  MahonyAHRS(bsp::MPU6500* imu, float Ki = 0.01f, float Kp = 2.0f);
 //  void MPUMeasureOffset(int cmd);

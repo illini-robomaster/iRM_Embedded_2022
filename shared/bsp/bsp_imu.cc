@@ -34,23 +34,23 @@
 #define GRAVITY_ACC 9.8f
 #define DEG2RAD(x) ((x) / 180 * M_PI)
 
-#define MAG_SEN 0.3f  // raw int16 data change to uT unit. 原始整型数据变成 单位ut
+#define MAG_SEN 0.3f //raw int16 data change to uT unit. 原始整型数据变成 单位ut
 
-#define IST8310_WHO_AM_I 0x00        // ist8310 "who am I "
-#define IST8310_WHO_AM_I_VALUE 0x10  // device ID
+#define IST8310_WHO_AM_I 0x00       //ist8310 "who am I "
+#define IST8310_WHO_AM_I_VALUE 0x10 //device ID
 
 #define IST8310_WRITE_REG_NUM 4
 
-// the first column:the registers of IST8310. 第一列:IST8310的寄存器
-// the second column: the value to be writed to the registers.第二列:需要写入的寄存器值
-// the third column: return error value.第三列:返回的错误码
-static const uint8_t ist8310_write_reg_data_error[IST8310_WRITE_REG_NUM][3] = {
-    {0x0B, 0x08, 0x01},  // enalbe interrupt  and low pin polarity.开启中断，并且设置低电平
-    {0x41, 0x09, 0x02},   // average 2 times.平均采样两次
-    {0x42, 0xC0, 0x03},   // must be 0xC0. 必须是0xC0
-    {0x0A, 0x0B, 0x04}};  // 200Hz output rate.200Hz输出频率
+//the first column:the registers of IST8310. 第一列:IST8310的寄存器
+//the second column: the value to be writed to the registers.第二列:需要写入的寄存器值
+//the third column: return error value.第三列:返回的错误码
+static const uint8_t ist8310_write_reg_data_error[IST8310_WRITE_REG_NUM][3] ={
+    {0x0B, 0x08, 0x01},     //enalbe interrupt  and low pin polarity.开启中断，并且设置低电平
+    {0x41, 0x09, 0x02},     //average 2 times.平均采样两次
+    {0x42, 0xC0, 0x03},     //must be 0xC0. 必须是0xC0
+    {0x0A, 0x0B, 0x04}};    //200Hz output rate.200Hz输出频率
 
-#define IST8310_IIC_ADDRESS 0x0E  // the I2C address of IST8310
+#define IST8310_IIC_ADDRESS 0x0E  //the I2C address of IST8310
 
 namespace bsp {
 
@@ -169,14 +169,12 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   mpu6500->SPITxRxCpltCallback();
 }
 
-BMI088::BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin)
-    : GPIT(int_pin) {
+BMI088::BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin) : GPIT(int_pin) {
   hi2c_ = hi2c;
   rst_group_ = rst_group;
   rst_pin_ = rst_pin;
   if (ist8310_init() != IST8310_NO_ERROR) {
-    while (true)
-      ;
+    while (true);
   }
 }
 
@@ -196,14 +194,14 @@ uint8_t BMI088::ist8310_init() {
     return IST8310_NO_SENSOR;
   }
 
-  // set mpu6500 sonsor config and check
+  //set mpu6500 sonsor config and check
   for (writeNum = 0; writeNum < IST8310_WRITE_REG_NUM; writeNum++) {
-    ist8310_IIC_write_single_reg(ist8310_write_reg_data_error[writeNum][0],
-                                 ist8310_write_reg_data_error[writeNum][1]);
+    ist8310_IIC_write_single_reg(ist8310_write_reg_data_error[writeNum][0], ist8310_write_reg_data_error[writeNum][1]);
     Delay_us(wait_time);
     res = ist8310_IIC_read_single_reg(ist8310_write_reg_data_error[writeNum][0]);
     Delay_us(wait_time);
-    if (res != ist8310_write_reg_data_error[writeNum][1]) {
+    if (res != ist8310_write_reg_data_error[writeNum][1])
+    {
       return ist8310_write_reg_data_error[writeNum][2];
     }
   }
@@ -213,7 +211,7 @@ uint8_t BMI088::ist8310_init() {
 void BMI088::ist8310_read_mag(float mag_[3]) {
   uint8_t buf[6];
   int16_t temp_ist8310_data = 0;
-  // read the "DATAXL" register (0x03)
+  //read the "DATAXL" register (0x03)
   ist8310_IIC_read_muli_reg(0x03, buf, 6);
 
   temp_ist8310_data = (int16_t)((buf[1] << 8) | buf[0]);
@@ -224,11 +222,17 @@ void BMI088::ist8310_read_mag(float mag_[3]) {
   mag_[2] = MAG_SEN * temp_ist8310_data;
 }
 
-void BMI088::IntCallback() { ist8310_read_mag(mag); }
+void BMI088::IntCallback() {
+  ist8310_read_mag(mag);
+}
 
-void BMI088::ist8310_RST_H() { HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_SET); }
+void BMI088::ist8310_RST_H() {
+  HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_SET);
+}
 
-void BMI088::ist8310_RST_L() { HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_RESET); }
+void BMI088::ist8310_RST_L() {
+  HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_RESET);
+}
 
 void BMI088::Delay_us(uint16_t us) {
   uint32_t ticks = 0;
@@ -237,16 +241,22 @@ void BMI088::Delay_us(uint16_t us) {
   reload = SysTick->LOAD;
   ticks = us * 72;
   told = SysTick->VAL;
-  while (true) {
+  while (true)
+  {
     tnow = SysTick->VAL;
-    if (tnow != told) {
-      if (tnow < told) {
+    if (tnow != told)
+    {
+      if (tnow < told)
+      {
         tcnt += told - tnow;
-      } else {
+      }
+      else
+      {
         tcnt += reload - tnow + told;
       }
       told = tnow;
-      if (tcnt >= ticks) {
+      if (tcnt >= ticks)
+      {
         break;
       }
     }
@@ -255,20 +265,20 @@ void BMI088::Delay_us(uint16_t us) {
 
 uint8_t BMI088::ist8310_IIC_read_single_reg(uint8_t reg) {
   uint8_t res = 0;
-  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS << 1, reg, I2C_MEMADD_SIZE_8BIT, &res, 1, 10);
+  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,&res,1,10);
   return res;
 }
 
 void BMI088::ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data) {
-  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, 10);
+  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,&data,1,10);
 }
 
 void BMI088::ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len) {
-  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS << 1, reg, I2C_MEMADD_SIZE_8BIT, buf, len, 10);
+  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,buf,len,10);
 }
 
 void BMI088::ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len) {
-  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg, I2C_MEMADD_SIZE_8BIT, data, len, 10);
+  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,data,len,10);
 }
 
 } /* namespace bsp */
