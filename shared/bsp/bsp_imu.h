@@ -26,6 +26,10 @@
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
+#define IST8310_DATA_READY_BIT 2
+#define IST8310_NO_ERROR 0x00
+#define IST8310_NO_SENSOR 0x40
+
 namespace bsp {
 
 typedef struct {
@@ -85,6 +89,26 @@ class MPU6500 : public GPIT {
   // TODO(alvin): try to support multiple instances in the future
   static void SPITxRxCpltCallback(SPI_HandleTypeDef* hspi);
   static MPU6500* mpu6500;
+};
+
+class BMI088 : public GPIT {
+ public:
+  BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin);
+  float mag[3];
+ private:
+  uint8_t ist8310_init();
+  void ist8310_read_mag(float mag_[3]);
+  void IntCallback() final;
+
+  void ist8310_RST_H();
+  void ist8310_RST_L();
+  void Delay_us(uint16_t us);
+  uint8_t ist8310_IIC_read_single_reg(uint8_t reg);
+  void ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data);
+  void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+  void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t *data, uint8_t len);
+
+  I2C_HandleTypeDef *hi2c_;
 };
 
 } /* namespace bsp */
