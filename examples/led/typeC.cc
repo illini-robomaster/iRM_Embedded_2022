@@ -18,38 +18,55 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
+#include "bsp_RGB.h"
 #include "cmsis_os.h"
 #include "main.h"
 
-static bsp::GPIO *gpio_red, *gpio_green, *gpio_blue;
+static bsp::RGB *led = nullptr;
 
 void RM_RTOS_Init(void) {
-  gpio_red = new bsp::GPIO(LED_R_GPIO_Port, LED_R_Pin);
-  gpio_green = new bsp::GPIO(LED_G_GPIO_Port, LED_G_Pin);
-  gpio_blue = new bsp::GPIO(LED_B_GPIO_Port, LED_B_Pin);
-//  gpio_red->Low();
-//  gpio_green->Low();
-//  gpio_blue->Low();
-//  gpio_red->High();
-//  gpio_green->High();
-//  gpio_blue->High();
+  led = new bsp::RGB(&htim5, 3, 2, 1, 1000000);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+
+  int RGB_FLOW_COLOR_CHANGE_TIME = 300;
+
+  uint32_t RGB_flow_color[3] = {0xFFFF0000, 0xFF00FF00, 0xFF0000FF};
+
+  float delta_alpha, delta_red, delta_green, delta_blue;
+  float alpha,red,green,blue;
+  uint32_t aRGB;
+
+  int i = 0;
   while (true) {
-    gpio_red->High();
-    gpio_green->Low();
-    gpio_blue->Low();
-    osDelay(500);
-    gpio_red->Low();
-    gpio_green->High();
-    gpio_blue->Low();
-    osDelay(500);
-    gpio_red->Low();
-    gpio_green->Low();
-    gpio_blue->High();
-    osDelay(500);
+    alpha = (RGB_flow_color[i] & 0xFF000000) >> 24;
+    red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+    green = ((RGB_flow_color[i] & 0x0000FF00) >> 8);
+    blue = ((RGB_flow_color[i] & 0x000000FF) >> 0);
+
+    delta_alpha = (float)((RGB_flow_color[(i + 1) % 3] & 0xFF000000) >> 24) - (float)((RGB_flow_color[i] & 0xFF000000) >> 24);
+    delta_red = (float)((RGB_flow_color[(i + 1) % 3] & 0x00FF0000) >> 16) - (float)((RGB_flow_color[i] & 0x00FF0000) >> 16);
+    delta_green = (float)((RGB_flow_color[(i + 1) % 3] & 0x0000FF00) >> 8) - (float)((RGB_flow_color[i] & 0x0000FF00) >> 8);
+    delta_blue = (float)((RGB_flow_color[(i + 1) % 3] & 0x000000FF) >> 0) - (float)((RGB_flow_color[i] & 0x000000FF) >> 0);
+
+    delta_alpha /= RGB_FLOW_COLOR_CHANGE_TIME;
+    delta_red /= RGB_FLOW_COLOR_CHANGE_TIME;
+    delta_green /= RGB_FLOW_COLOR_CHANGE_TIME;
+    delta_blue /= RGB_FLOW_COLOR_CHANGE_TIME;
+    for(int j = 0; j < RGB_FLOW_COLOR_CHANGE_TIME; ++j)
+    {
+      alpha += delta_alpha;
+      red += delta_red;
+      green += delta_green;
+      blue += delta_blue;
+
+      aRGB = ((uint32_t)(alpha)) << 24 | ((uint32_t)(red)) << 16 | ((uint32_t)(green)) << 8 | ((uint32_t)(blue)) << 0;
+      led->Show(aRGB);
+      HAL_Delay(1);
+    }
+    ++i;
+    i = i % 3;
   }
 }

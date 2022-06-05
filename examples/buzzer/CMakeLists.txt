@@ -20,6 +20,12 @@
 
 project(example_buzzer ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
+irm_add_arm_executable(${PROJECT_NAME}_typeA
     TARGET DJI_Board_TypeA
     SOURCES main.cc)
+target_compile_definitions(${PROJECT_NAME}_typeA.elf PRIVATE HTIM=htim12 CHANNEL=1)
+
+irm_add_arm_executable(${PROJECT_NAME}_typeC
+        TARGET DJI_Board_TypeC
+        SOURCES main.cc)
+target_compile_definitions(${PROJECT_NAME}_typeC.elf PRIVATE HTIM=htim4 CHANNEL=3)

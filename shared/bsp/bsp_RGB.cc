@@ -18,38 +18,40 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_gpio.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
+#include "bsp_RGB.h"
 
-#define KEY_GPIO_GROUP GPIOA
-#define KEY_GPIO_PIN GPIO_PIN_0
+namespace bsp {
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
-
-void RM_RTOS_Init() {
-  print_use_uart(&huart1);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+RGB::RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB, uint32_t clock_freq)
+    : R_(htim, channelR, clock_freq, 0, 0),
+      G_(htim, channelG, clock_freq, 0, 0),
+      B_(htim, channelB, clock_freq, 0, 0){
+  R_.Start();
+  G_.Start();
+  B_.Start();
+  R_.SetFrequency(3921);
+  G_.SetFrequency(3921);
+  B_.SetFrequency(3921);
 }
 
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
+void RGB::Show(uint32_t aRGB) {
+  volatile uint8_t alpha;
+  volatile uint16_t red, green, blue;
 
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-  while (true) {
-    motor->PrintData();
-    if (key.Read())
-      motor->SetOutput(800);
-    else
-      motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    motor->PrintData();
-    osDelay(100);
-  }
+  alpha = (aRGB & 0xFF000000) >> 24;
+  red = ((aRGB & 0x00FF0000) >> 16) * alpha / 255.0;
+  green = ((aRGB & 0x0000FF00) >> 8) * alpha / 255.0;
+  blue = ((aRGB & 0x000000FF) >> 0) * alpha / 255.0;
+
+  R_.SetPulseWidth(red);
+  G_.SetPulseWidth(green);
+  B_.SetPulseWidth(blue);
 }
+
+void RGB::Stop() {
+  R_.Stop();
+  G_.Stop();
+  B_.Stop();
+}
+
+}  // namespace bsp

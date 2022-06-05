@@ -54,14 +54,14 @@ void PWM::Stop() { HAL_TIM_PWM_Stop(htim_, channel_); }
 
 void PWM::SetFrequency(uint32_t output_freq) {
   this->output_freq_ = output_freq;
-  uint32_t auto_reload = output_freq > 0 ? clock_freq_ / output_freq_ - 1 : 0;
+  uint32_t auto_reload = output_freq > 0 ? clock_freq_ / output_freq_ : 0;
   __HAL_TIM_SET_AUTORELOAD(htim_, auto_reload);
   __HAL_TIM_SET_COUNTER(htim_, 0);
 }
 
 void PWM::SetPulseWidth(uint32_t pulse_width) {
   this->pulse_width_ = pulse_width;
-  __HAL_TIM_SET_COMPARE(htim_, channel_, clock_freq_ * pulse_width_ / 1000000 - 1);
+  __HAL_TIM_SET_COMPARE(htim_, channel_, clock_freq_ * pulse_width_ / 1000000);
 }
 
 } /* namespace bsp */
