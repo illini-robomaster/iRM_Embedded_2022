@@ -36,7 +36,7 @@ void RM_RTOS_Init(void) {
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
-  bsp::BMI088 imu(&hi2c3, DRDY_IST8310_Pin);
+  bsp::BMI088 imu(&hi2c3, DRDY_IST8310_Pin, GPIOG, GPIO_PIN_6);
 
   while (true) {
     print("Mag: %.2f, %.2f, %.2f\r\n", imu.mag[0], imu.mag[1], imu.mag[2]);

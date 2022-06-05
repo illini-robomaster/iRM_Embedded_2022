@@ -169,8 +169,10 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   mpu6500->SPITxRxCpltCallback();
 }
 
-BMI088::BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin) : GPIT(int_pin) {
+BMI088::BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin) : GPIT(int_pin) {
   hi2c_ = hi2c;
+  rst_group_ = rst_group;
+  rst_pin_ = rst_pin;
   if (ist8310_init() != IST8310_NO_ERROR) {
     while (true);
   }
@@ -225,11 +227,11 @@ void BMI088::IntCallback() {
 }
 
 void BMI088::ist8310_RST_H() {
-  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_SET);
 }
 
 void BMI088::ist8310_RST_L() {
-  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_RESET);
 }
 
 void BMI088::Delay_us(uint16_t us) {

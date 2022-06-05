@@ -93,7 +93,7 @@ class MPU6500 : public GPIT {
 
 class BMI088 : public GPIT {
  public:
-  BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin);
+  BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
   float mag[3];
  private:
   uint8_t ist8310_init();
@@ -109,6 +109,8 @@ class BMI088 : public GPIT {
   void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t *data, uint8_t len);
 
   I2C_HandleTypeDef *hi2c_;
+  GPIO_TypeDef* rst_group_;
+  uint16_t rst_pin_;
 };
 
 } /* namespace bsp */
