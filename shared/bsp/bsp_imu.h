@@ -95,6 +95,7 @@ class BMI088 : public GPIT {
  public:
   BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
   float mag[3];
+
  private:
   uint8_t ist8310_init();
   void ist8310_read_mag(float mag_[3]);
@@ -105,10 +106,10 @@ class BMI088 : public GPIT {
   void Delay_us(uint16_t us);
   uint8_t ist8310_IIC_read_single_reg(uint8_t reg);
   void ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data);
-  void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
-  void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t *data, uint8_t len);
+  void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
+  void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len);
 
-  I2C_HandleTypeDef *hi2c_;
+  I2C_HandleTypeDef* hi2c_;
   GPIO_TypeDef* rst_group_;
   uint16_t rst_pin_;
 };

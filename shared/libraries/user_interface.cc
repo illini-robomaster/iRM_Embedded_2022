@@ -20,10 +20,10 @@
 
 #include "user_interface.h"
 
-#include <cstdarg>
-#include <cstring>
-#include <cstdio>
 #include <cmath>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
 
 namespace communication {
 
@@ -222,9 +222,9 @@ void UserInterface::FloatDraw(graphic_data_t* image, const char name[3], uint32_
   image->radius = float2int_data & 0x3FF;
   image->end_x = (float2int_data & 0x1FFC00) >> 10;
   image->end_y = (float2int_data & 0xFFE00000) >> 21;
-//  image->radius = (float2int_data & 0xFFC00000) >> 22;
-//  image->end_x = (float2int_data & 0x003FF800) >> 11;
-//  image->end_y = float2int_data & 0x000007FF;
+  //  image->radius = (float2int_data & 0xFFC00000) >> 22;
+  //  image->end_x = (float2int_data & 0x003FF800) >> 11;
+  //  image->end_y = float2int_data & 0x000007FF;
 }
 
 void UserInterface::IntDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
@@ -361,62 +361,74 @@ int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char*
   return length;
 }
 
-void UserInterface::ChassisGUIInit(graphic_data_t *gimbal, graphic_data_t *chassis, int x, int y) {
-    gimbal_ = gimbal;
-    chassis_ = chassis;
-    chassisX_ = x;
-    chassisY_ = y;
-    gimbalLen_ = 100, chassisLen_ = 120;
-    LineDraw(gimbal, "g", UI_Graph_Add, 0, UI_Color_White, 10, chassisX_, chassisY_, chassisX_, chassisY_ + gimbalLen_);
-    LineDraw(chassis, "c", UI_Graph_Add, 1, UI_Color_Yellow, 80, chassisX_, chassisY_ - chassisLen_ / 2, chassisX_, chassisY_ + chassisLen_ / 2);
+void UserInterface::ChassisGUIInit(graphic_data_t* gimbal, graphic_data_t* chassis, int x, int y) {
+  gimbal_ = gimbal;
+  chassis_ = chassis;
+  chassisX_ = x;
+  chassisY_ = y;
+  gimbalLen_ = 100, chassisLen_ = 120;
+  LineDraw(gimbal, "g", UI_Graph_Add, 0, UI_Color_White, 10, chassisX_, chassisY_, chassisX_,
+           chassisY_ + gimbalLen_);
+  LineDraw(chassis, "c", UI_Graph_Add, 1, UI_Color_Yellow, 80, chassisX_,
+           chassisY_ - chassisLen_ / 2, chassisX_, chassisY_ + chassisLen_ / 2);
 }
 
 void UserInterface::ChassisGUIUpdate(float relative) {
-    float x_end = chassisX_ + chassisLen_ / 2.0 * sinf(relative);
-    float y_end = chassisY_ + chassisLen_ / 2.0 * cosf(relative);
-    float x_start = chassisX_ - chassisLen_ / 2.0 * sinf(relative);
-    float y_start = chassisY_ - chassisLen_ / 2.0 * cosf(relative);
-    LineDraw(gimbal_, "g", UI_Graph_Change, 0, UI_Color_White, 10, chassisX_, chassisY_, chassisX_, chassisY_ + gimbalLen_);
-    LineDraw(chassis_, "c", UI_Graph_Change, 1, UI_Color_Yellow, 80, (uint32_t)x_start, (uint32_t)y_start, (uint32_t)x_end, (uint32_t)y_end);
+  float x_end = chassisX_ + chassisLen_ / 2.0 * sinf(relative);
+  float y_end = chassisY_ + chassisLen_ / 2.0 * cosf(relative);
+  float x_start = chassisX_ - chassisLen_ / 2.0 * sinf(relative);
+  float y_start = chassisY_ - chassisLen_ / 2.0 * cosf(relative);
+  LineDraw(gimbal_, "g", UI_Graph_Change, 0, UI_Color_White, 10, chassisX_, chassisY_, chassisX_,
+           chassisY_ + gimbalLen_);
+  LineDraw(chassis_, "c", UI_Graph_Change, 1, UI_Color_Yellow, 80, (uint32_t)x_start,
+           (uint32_t)y_start, (uint32_t)x_end, (uint32_t)y_end);
 }
 
-void UserInterface::CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *crosshair2, graphic_data_t *crosshair3, graphic_data_t *crosshair4, graphic_data_t *crosshair5, graphic_data_t *crosshair6, graphic_data_t *crosshair7) {
-    LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 30, centerX_ + 50, centerY_ - 30);
-    LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 40, centerX_ + 30, centerY_ - 40);
-    LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 50, centerX_ + 30, centerY_ - 50);
-    LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 60, centerX_ + 50, centerY_ - 60);
-    LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 70, centerX_ + 30, centerY_ - 70);
-    LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 80, centerX_ + 30, centerY_ - 80);
-    LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_, centerY_ - 30, centerX_, centerY_ - 100);
+void UserInterface::CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                                 graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                                 graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                                 graphic_data_t* crosshair7) {
+  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 30,
+           centerX_ + 50, centerY_ - 30);
+  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 40,
+           centerX_ + 30, centerY_ - 40);
+  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 50,
+           centerX_ + 30, centerY_ - 50);
+  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 60,
+           centerX_ + 50, centerY_ - 60);
+  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 70,
+           centerX_ + 30, centerY_ - 70);
+  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 80,
+           centerX_ + 30, centerY_ - 80);
+  LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_, centerY_ - 30, centerX_,
+           centerY_ - 100);
 }
 
-void UserInterface::SuperCapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, graphic_data_t *percent, int x, int y) {
-    bar_ = bar;
-    percent_ = percent;
-    barStartX_ = x;
-    barStartY_ = y;
-    percentLen_ = snprintf(percentStr_, 30, "%d %%", 100);
-    RectangleDraw(barFrame, "f", UI_Graph_Add, 0, UI_Color_Yellow, 2, x, y, x + 310, y + 30);
-    LineDraw(bar, "b", UI_Graph_Add, 0, UI_Color_Green, 20, x + 5, y + 15, x + 305, y + 15);
-    CharDraw(percent, "cd", UI_Graph_Add, 0, UI_Color_Yellow, 30, percentLen_, 3, x - 30, y);
+void UserInterface::SuperCapGUIInit(graphic_data_t* barFrame, graphic_data_t* bar,
+                                    graphic_data_t* percent, int x, int y) {
+  bar_ = bar;
+  percent_ = percent;
+  barStartX_ = x;
+  barStartY_ = y;
+  percentLen_ = snprintf(percentStr_, 30, "%d %%", 100);
+  RectangleDraw(barFrame, "f", UI_Graph_Add, 0, UI_Color_Yellow, 2, x, y, x + 310, y + 30);
+  LineDraw(bar, "b", UI_Graph_Add, 0, UI_Color_Green, 20, x + 5, y + 15, x + 305, y + 15);
+  CharDraw(percent, "cd", UI_Graph_Add, 0, UI_Color_Yellow, 30, percentLen_, 3, x - 30, y);
 }
 
 void UserInterface::SuperCapGUIUpdate(float cap) {
-    float offset = cap * 300;
-    int x = barStartX_;
-    int y = barStartY_;
-    int color;
-    uint32_t x_end = x + (uint32_t)offset;
-    if (cap >= 0 && cap <= 0.3){
-        color = UI_Color_Pink;
-    }
-    else if (cap > 0.2 && cap < 0.95){
-        color = UI_Color_Orange;
-    }
-    else color = UI_Color_Green;
-    LineDraw(bar_, "b", UI_Graph_Change, 0, color, 20, x + 5, y + 15, x_end, y + 15);
+  float offset = cap * 300;
+  int x = barStartX_;
+  int y = barStartY_;
+  int color;
+  uint32_t x_end = x + (uint32_t)offset;
+  if (cap >= 0 && cap <= 0.3) {
+    color = UI_Color_Pink;
+  } else if (cap > 0.2 && cap < 0.95) {
+    color = UI_Color_Orange;
+  } else
+    color = UI_Color_Green;
+  LineDraw(bar_, "b", UI_Graph_Change, 0, color, 20, x + 5, y + 15, x_end, y + 15);
 }
-
-
 
 }  // namespace communication
