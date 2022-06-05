@@ -24,14 +24,14 @@
 #include "main.h"
 #include "motor.h"
 
-#define KEY_GPIO_GROUP GPIOA
-#define KEY_GPIO_PIN GPIO_PIN_0
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
 
 static bsp::CAN* can1 = nullptr;
 static control::MotorCANBase* motor = nullptr;
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart1);
+  print_use_uart(&huart8);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
@@ -49,7 +49,6 @@ void RM_RTOS_Default_Task(const void* args) {
     else
       motor->SetOutput(0);
     control::MotorCANBase::TransmitOutput(motors, 1);
-    motor->PrintData();
     osDelay(100);
   }
 }
