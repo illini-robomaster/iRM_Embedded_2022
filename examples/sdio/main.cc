@@ -39,7 +39,16 @@ void sd_task(void* argu) {
     ;
 }
 
+const osThreadAttr_t sd_task_thread_attr = {.name = "sdTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 128 * 4,
+                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
+
 void RM_RTOS_Threads_Init(void) {
-  osThreadAttr_t sd_task_thread_attr;
   sd_task_thread = osThreadNew(sd_task, NULL, &sd_task_thread_attr);
 }
