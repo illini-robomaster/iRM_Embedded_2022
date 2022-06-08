@@ -19,41 +19,32 @@
  ****************************************************************************/
 
 #include "bsp_print.h"
-#include "bsp_gpio.h"
 #include "cmsis_os.h"
 #include "main.h"
 #include "motor.h"
 
 static bsp::CAN* can1 = nullptr;
 static control::MotorCANBase* motor = nullptr;
-static bsp::GPIO *key = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
-  key = new bsp::GPIO(KEY_GPIO_Port, KEY_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   while (true) {
-    if (!key->Read()) {
-      int curr[5];
-      for (int & i : curr) {
-        i = motor->GetCurr();
-        osDelay(100);
-      }
-      bool same = true;
-      for (int i = 1; i < 5; ++i) {
-        if (curr[0] != curr[i]) {
-          same = false;
-        }
-      }
-      print("%s\r\n", same ? "disconnected!!!" : "connected");
+    motor->connection_flag_ = false;
+    osDelay(50);
+    set_cursor(0, 0);
+    clear_screen();
+    if (motor->connection_flag_) {
+      print("Motor Connected...\r\n");
+    } else {
+      print("Motor Disconnected!!!\r\n");
     }
-    osDelay(100);
   }
 }

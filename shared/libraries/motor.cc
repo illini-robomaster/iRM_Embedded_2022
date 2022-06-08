@@ -42,6 +42,7 @@ int16_t ClipMotorRange (float output) {
  */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
+  motor->connection_flag_ = true;
   motor->UpdateData(data);
 }
 

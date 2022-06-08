@@ -121,6 +121,8 @@ class MotorCANBase : public MotorBase {
    */
   friend class ServoMotor;
 
+  volatile bool connection_flag_ = false;
+
  protected:
   volatile float theta_;
   volatile float omega_;
