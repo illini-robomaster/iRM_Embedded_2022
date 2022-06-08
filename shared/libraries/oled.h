@@ -48,6 +48,8 @@ class OLED {
  public:
   OLED(I2C_HandleTypeDef *hi2c, uint16_t OLED_i2c_addr);
 
+  bool IsReady();
+
   /**
   * @brief          initialize the oled device
   * @param[in]      none

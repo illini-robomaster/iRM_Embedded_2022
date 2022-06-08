@@ -258,7 +258,11 @@ const unsigned char LOGO_BMP[128][8] = {
 
 OLED::OLED(I2C_HandleTypeDef* hi2c, uint16_t OLED_i2c_addr) {
   hi2c_= hi2c;
-  OLED_i2c_addr_ = OLED_i2c_addr;
+  OLED_i2c_addr_ = OLED_i2c_addr << 1;
+}
+
+bool OLED::IsReady() {
+  return HAL_I2C_IsDeviceReady(hi2c_, OLED_i2c_addr_, 1, 100) == HAL_OK;
 }
 
 void OLED::WriteByte(uint8_t dat, uint8_t cmd) {
@@ -268,9 +272,7 @@ void OLED::WriteByte(uint8_t dat, uint8_t cmd) {
   else
     cmd_data[0] = 0x40;
   cmd_data[1] = dat;
-  if (HAL_I2C_Master_Transmit(hi2c_, OLED_i2c_addr_, cmd_data, 2, 10) == HAL_ERROR) {
-    return;
-  }
+  HAL_I2C_Master_Transmit(hi2c_, OLED_i2c_addr_, cmd_data, 2, 10);
 }
 
 void OLED::Init() {

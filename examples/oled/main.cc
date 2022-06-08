@@ -24,20 +24,22 @@
 #include "cmsis_os.h"
 #include "oled.h"
 
-//static display::OLED *OLED = nullptr;
+static display::OLED *OLED = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-//  OLED = new display::OLED(&hi2c2, 0x3C);
+  OLED = new display::OLED(&hi2c2, 0x3C);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  display::OLED OLED(&hi2c2, 0x3C);
 
-  OLED.Init();
+  print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
+  OLED->Init();
+  print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
   while (true) {
-    OLED.ShowLOGO();
+    OLED->ShowLOGO();
+    print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
     osDelay(1000);
   }
 }
