@@ -20,96 +20,38 @@
 
 #include "main.h"
 
-#include "bsp_print.h"
 #include "bsp_gpio.h"
-#include "bsp_pwm.h"
+#include "bsp_print.h"
 #include "cmsis_os.h"
+#include "stepper.h"
 
 bsp::GPIO *key = nullptr, *dir = nullptr;
-bsp::PWM stepper(&htim1, 1, 1000000, 0, 0);
+control::Stepper* stepper = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   key = new bsp::GPIO(KEY_GPIO_Port, KEY_Pin);
-  dir = new bsp::GPIO(STEPPER_DIR_GPIO_Port, STEPPER_DIR_Pin);
-  stepper.Start();
+  stepper = new control::Stepper(&htim1, 1, 1000000, STEPPER_DIR_GPIO_Port, STEPPER_DIR_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  int speed = 2600;
-  int length = 1200;
+  unsigned speed = 2600;
+  int length = 1800;
   bool direction = false;
   while (true) {
     if (!key->Read()) {
       direction = !direction;
-      if (direction) {
-        dir->High();
+      if (!direction) {
+        stepper->Move(control::FORWARD, speed);
       } else {
-        dir->Low();
+        stepper->Move(control::BACKWARD, speed);
       }
-      stepper.SetFrequency(speed);
-      stepper.SetPulseWidth(1000000/ speed / 2);
       osDelay(length);
-      stepper.SetFrequency(0);
-      stepper.SetPulseWidth(0);
+      stepper->Stop();
     } else {
-      stepper.SetFrequency(0);
-      stepper.SetPulseWidth(0);
+      stepper->Stop();
     }
     osDelay(100);
   }
 }
-
-//void Delay_us(uint16_t us) {
-//  uint32_t ticks = 0;
-//  uint32_t told = 0, tnow = 0, tcnt = 0;
-//  uint32_t reload = 0;
-//  reload = SysTick->LOAD;
-//  ticks = us * 72;
-//  told = SysTick->VAL;
-//  while (true)
-//  {
-//    tnow = SysTick->VAL;
-//    if (tnow != told)
-//    {
-//      if (tnow < told)
-//      {
-//        tcnt += told - tnow;
-//      }
-//      else
-//      {
-//        tcnt += reload - tnow + told;
-//      }
-//      told = tnow;
-//      if (tcnt >= ticks)
-//      {
-//        break;
-//      }
-//    }
-//  }
-//}
-
-//void RM_RTOS_Default_Task(const void* arguments) {
-//  UNUSED(arguments);
-//  int step = 4000;
-//  int period = 1;
-//  bool direction = false;
-//  while (true) {
-//    if (!key->Read()) {
-//      direction = !direction;
-//      if (direction) {
-//        dir->High();
-//      } else {
-//        dir->Low();
-//      }
-//      for (int i = 0; i < step; ++i) {
-//        pul->High();
-//        osDelay(period);
-//        pul->Low();
-//        osDelay(period);
-//      }
-//    }
-//    osDelay(50);
-//  }
-//}

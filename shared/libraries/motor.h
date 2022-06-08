@@ -103,6 +103,10 @@ class MotorCANBase : public MotorBase {
    */
   virtual float GetOmegaDelta(const float target) const;
 
+  virtual int16_t GetCurr() const;
+
+  virtual uint16_t GetTemp() const;
+
   /**
    * @brief transmit CAN message for setting motor outputs
    *
@@ -141,6 +145,8 @@ class Motor2006 : public MotorCANBase {
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
 
+  int16_t GetCurr() const override final;
+
  private:
   volatile int16_t raw_current_get_ = 0;
 };
@@ -158,6 +164,10 @@ class Motor3508 : public MotorCANBase {
   void PrintData() const override final;
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
+
+  int16_t GetCurr() const override final;
+
+  uint16_t GetTemp() const override final;
 
  private:
   volatile int16_t raw_current_get_ = 0;
@@ -178,12 +188,13 @@ class Motor6020 : public MotorCANBase {
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
 
+  int16_t GetCurr() const override final;
+
+  uint16_t GetTemp() const override final;
+
  private:
   volatile int16_t raw_current_get_ = 0;
-  volatile int16_t raw_current_set_ = 0;
   volatile uint8_t raw_temperature_ = 0;
-
-  static const int16_t CURRENT_CORRECTION = -1;  // current direction is reversed
 };
 
 /**

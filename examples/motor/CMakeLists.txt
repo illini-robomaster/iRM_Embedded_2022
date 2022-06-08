@@ -47,3 +47,7 @@ irm_add_arm_executable(${PROJECT_NAME}_m6623
 irm_add_arm_executable(${PROJECT_NAME}_pwm
     TARGET DJI_Board_TypeA
     SOURCES pwm.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_m3508_self-test
+    TARGET DJI_Board_TypeC
+    SOURCES m3508_self-test.cc)

@@ -20,11 +20,22 @@
 
 #pragma once
 
+#include "bsp_gpio.h"
+#include "bsp_pwm.h"
+
 namespace control {
+
+enum dir {FORWARD, BACKWARD};
 
 class Stepper {
  public:
-  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq);
-
+  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq, GPIO_TypeDef* dir_group, uint16_t dir_pin);
+  void Move(dir direction, unsigned speed);
+  void Stop();
+ private:
+  bsp::PWM stepper_;
+  bsp::GPIO dir_;
 };
+
+
 }

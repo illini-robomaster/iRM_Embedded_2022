@@ -18,33 +18,42 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "stepper.h"
+#include "bsp_print.h"
+#include "bsp_gpio.h"
+#include "cmsis_os.h"
+#include "main.h"
+#include "motor.h"
 
-namespace control {
+static bsp::CAN* can1 = nullptr;
+static control::MotorCANBase* motor = nullptr;
+static bsp::GPIO *key = nullptr;
 
-Stepper::Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq,
-                 GPIO_TypeDef* dir_group, uint16_t dir_pin)
-    : stepper_(htim, channel, clock_freq, 0, 0), dir_(dir_group, dir_pin) {
-  stepper_.Start();
+void RM_RTOS_Init() {
+  print_use_uart(&huart1);
+
+  can1 = new bsp::CAN(&hcan1, 0x201);
+  motor = new control::Motor3508(can1, 0x201);
+  key = new bsp::GPIO(KEY_GPIO_Port, KEY_Pin);
 }
 
-void Stepper::Move(dir direction, unsigned int speed) {
-  switch (direction) {
-    case FORWARD:
-      dir_.High();
-      break;
-    case BACKWARD:
-      dir_.Low();
-      break;
-    default:;
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
+
+  while (true) {
+    if (!key->Read()) {
+      int curr[5];
+      for (int & i : curr) {
+        i = motor->GetCurr();
+        osDelay(100);
+      }
+      bool same = true;
+      for (int i = 1; i < 5; ++i) {
+        if (curr[0] != curr[i]) {
+          same = false;
+        }
+      }
+      print("%s\r\n", same ? "disconnected!!!" : "connected");
+    }
+    osDelay(100);
   }
-  stepper_.SetFrequency(speed);
-  stepper_.SetPulseWidth(1000000 / speed / 2);
 }
-
-void Stepper::Stop() {
-  stepper_.SetFrequency(0);
-  stepper_.SetPulseWidth(0);
-}
-
-}  // namespace control
