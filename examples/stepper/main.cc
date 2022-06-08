@@ -22,16 +22,43 @@
 
 #include "bsp_print.h"
 #include "bsp_gpio.h"
+#include "bsp_pwm.h"
 #include "cmsis_os.h"
 
-bsp::GPIO *key = nullptr, *dir = nullptr, *pul = nullptr;
+bsp::GPIO *key = nullptr, *dir = nullptr;
+bsp::PWM stepper(&htim1, 1, 1000000, 0, 0);
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   key = new bsp::GPIO(KEY_GPIO_Port, KEY_Pin);
   dir = new bsp::GPIO(STEPPER_DIR_GPIO_Port, STEPPER_DIR_Pin);
-  pul = new bsp::GPIO(STEPPER_PUL_GPIO_Port, STEPPER_PUL_Pin);
-  pul->Low();
+  stepper.Start();
+}
+
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
+  int speed = 2600;
+  int length = 1200;
+  bool direction = false;
+  while (true) {
+    if (!key->Read()) {
+      direction = !direction;
+      if (direction) {
+        dir->High();
+      } else {
+        dir->Low();
+      }
+      stepper.SetFrequency(speed);
+      stepper.SetPulseWidth(1000000/ speed / 2);
+      osDelay(length);
+      stepper.SetFrequency(0);
+      stepper.SetPulseWidth(0);
+    } else {
+      stepper.SetFrequency(0);
+      stepper.SetPulseWidth(0);
+    }
+    osDelay(100);
+  }
 }
 
 //void Delay_us(uint16_t us) {
@@ -63,26 +90,26 @@ void RM_RTOS_Init(void) {
 //  }
 //}
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-  int step = 4000;
-  int period = 1;
-  bool direction = false;
-  while (true) {
-    if (!key->Read()) {
-      direction = !direction;
-      if (direction) {
-        dir->High();
-      } else {
-        dir->Low();
-      }
-      for (int i = 0; i < step; ++i) {
-        pul->High();
-        osDelay(period);
-        pul->Low();
-        osDelay(period);
-      }
-    }
-    osDelay(50);
-  }
-}
+//void RM_RTOS_Default_Task(const void* arguments) {
+//  UNUSED(arguments);
+//  int step = 4000;
+//  int period = 1;
+//  bool direction = false;
+//  while (true) {
+//    if (!key->Read()) {
+//      direction = !direction;
+//      if (direction) {
+//        dir->High();
+//      } else {
+//        dir->Low();
+//      }
+//      for (int i = 0; i < step; ++i) {
+//        pul->High();
+//        osDelay(period);
+//        pul->Low();
+//        osDelay(period);
+//      }
+//    }
+//    osDelay(50);
+//  }
+//}
