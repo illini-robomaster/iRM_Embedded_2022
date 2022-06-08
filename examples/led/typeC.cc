@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_RGB.h"
+#include "bsp_rgb.h"
 #include "cmsis_os.h"
 #include "main.h"
 
