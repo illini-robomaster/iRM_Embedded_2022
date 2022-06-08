@@ -78,8 +78,10 @@ void RM_RTOS_Default_Task(const void *argument);
 #define BUZZER_GPIO_Port GPIOD
 #define KEY_Pin GPIO_PIN_0
 #define KEY_GPIO_Port GPIOA
-#define STEPPER_Pin GPIO_PIN_15
-#define STEPPER_GPIO_Port GPIOB
+#define STEPPER_PUL_Pin GPIO_PIN_9
+#define STEPPER_PUL_GPIO_Port GPIOE
+#define STEPPER_DIR_Pin GPIO_PIN_15
+#define STEPPER_DIR_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
