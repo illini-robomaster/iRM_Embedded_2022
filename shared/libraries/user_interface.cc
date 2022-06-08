@@ -390,18 +390,16 @@ void UserInterface::CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *cro
     LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_, centerY_ - 30, centerX_, centerY_ - 100);
 }
 
-void UserInterface::SuperCapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, graphic_data_t *percent, int x, int y) {
+void UserInterface::CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, int x, int y) {
     bar_ = bar;
-    percent_ = percent;
     barStartX_ = x;
     barStartY_ = y;
-    percentLen_ = snprintf(percentStr_, 30, "%d %%", 100);
-    RectangleDraw(barFrame, "f", UI_Graph_Add, 0, UI_Color_Yellow, 2, x, y, x + 310, y + 30);
-    LineDraw(bar, "b", UI_Graph_Add, 0, UI_Color_Green, 20, x + 5, y + 15, x + 305, y + 15);
-    CharDraw(percent, "cd", UI_Graph_Add, 0, UI_Color_Yellow, 30, percentLen_, 3, x - 30, y);
+    RectangleDraw(barFrame, "FM", UI_Graph_Add, 0, UI_Color_Yellow, 2, x, y, x + 310, y + 30);
+    LineDraw(bar, "Bar", UI_Graph_Add, 0, UI_Color_Green, 20, x + 5, y + 15, x + 305, y + 15);
 }
 
-void UserInterface::SuperCapGUIUpdate(float cap) {
+void UserInterface::CapGUIUpdate(float cap) {
+    cap_ = cap;
     float offset = cap * 300;
     int x = barStartX_;
     int y = barStartY_;
@@ -414,9 +412,41 @@ void UserInterface::SuperCapGUIUpdate(float cap) {
         color = UI_Color_Orange;
     }
     else color = UI_Color_Green;
-    LineDraw(bar_, "b", UI_Graph_Change, 0, color, 20, x + 5, y + 15, x_end, y + 15);
+    LineDraw(bar_, "Bar", UI_Graph_Change, 0, color, 20, x + 5, y + 15, x_end, y + 15);
 }
 
+void UserInterface::CapGUICharInit(graphic_data_t *percent) {
+    percent_ = percent;
+    percentLen_ = snprintf(percentStr_, 30, "%d%%", 100);
+    CharDraw(percent, "PG", UI_Graph_Add, 0, UI_Color_Yellow, 15, percentLen_, 2, barStartX_ - 50, barStartY_ + 23);
+}
 
+void UserInterface::CapGUICharUpdate() {
+    percentLen_ = snprintf(percentStr_, 30, "%d%%", (int)(cap_ * 100));
+    CharDraw(percent_, "PG", UI_Graph_Change, 0, UI_Color_Yellow, 15, percentLen_, 2, barStartX_ - 50, barStartY_ + 23);
+}
+
+void UserInterface::DiagGUIInit(graphic_data_t *message, int len) {
+    diag_ = message;
+    CharDraw(message, "M0", UI_Graph_Add, 0, UI_Color_Yellow, 10, len, 2, diagStartX_, diagStartY_);
+}
+
+void UserInterface::DiagGUIUpdate(int len) {
+//    int currY = diagStartY_ - messageCount_ * 15;
+    int currY = diagStartY_;
+//    char name[10];
+//    snprintf(name, 10, "DG%d", messageCount_);
+    CharDraw(diag_, "M0", UI_Graph_Change, 0, UI_Color_Yellow, 10, len, 2, diagStartX_, currY);
+//    CharDraw(diag_, "M1", UI_Graph_Change, 2, UI_Color_Yellow, 10, len, 2, diagStartX_, currY - 15);
+
+}
+
+void UserInterface::addMessage(char *messageStr, int len, UserInterface *UI, Referee *referee, graphic_data_t *graph) {
+    messageCount_++;
+    if (messageCount_ > 9)
+        return;
+    UI->DiagGUIUpdate(len);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), *graph, messageStr, len);
+}
 
 }  // namespace communication

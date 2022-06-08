@@ -111,19 +111,33 @@ class UserInterface {
   void ChassisGUIInit(graphic_data_t *gimbal, graphic_data_t *chassis, int x, int y);
   void ChassisGUIUpdate(float relative);
   void CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *crosshair2, graphic_data_t *crosshair3, graphic_data_t *crosshair4, graphic_data_t *crosshair5, graphic_data_t *crosshair6, graphic_data_t *crosshair7);
-  void SuperCapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, graphic_data_t *percent, int x, int y);
-  void SuperCapGUIUpdate(float cap);    // cap 0 - 1
+  void CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, int x, int y);
+  void CapGUIUpdate(float cap);    // cap 0 - 1
+  void CapGUICharInit(graphic_data_t *percent);
+  void CapGUICharUpdate();
+  void DiagGUIInit(graphic_data_t *message, int len);
+  void DiagGUIUpdate(int len);
+  void DiagGUIClear();
+  void addMessage(char *messageStr, int len, UserInterface *UI, Referee *referee, graphic_data_t *graph);
+
+  char* getPercentStr(){
+      return percentStr_;
+  }
+  int getPercentLen(){
+      return percentLen_;
+  }
 
  private:
-  int Robot_ID_;
-  int Client_ID_;
-  int centerX_ = 960;
-  int centerY_ = 540;
   graphic_data_t *gimbal_;
   graphic_data_t *chassis_;
   graphic_data_t *crosshair_;
   graphic_data_t  *bar_;
   graphic_data_t *percent_;
+  graphic_data_t  *diag_;
+  int Robot_ID_;
+  int Client_ID_;
+  int centerX_ = 960;
+  int centerY_ = 540;
   int chassisX_;
   int chassisY_;
   int gimbalLen_;
@@ -132,6 +146,10 @@ class UserInterface {
   int barStartY_;
   char percentStr_[30];
   int percentLen_;
+  float cap_;
+  int diagStartX_ = 1470;
+  int diagStartY_ = 880; // 420 - 880
+  int messageCount_ = 0;
 };
 
 }

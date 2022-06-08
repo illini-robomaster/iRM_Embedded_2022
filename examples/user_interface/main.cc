@@ -102,6 +102,14 @@ void RM_RTOS_Default_Task(const void* arguments) {
   communication::graphic_data_t graphBarFrame;
   communication::graphic_data_t graphBar;
   communication::graphic_data_t graphPercent;
+  communication::graphic_data_t graphDiag0;
+//  communication::graphic_data_t graphDiag1;
+//  communication::graphic_data_t graphDiag2;
+//  communication::graphic_data_t graphDiag3;
+//  communication::graphic_data_t graphDiag4;
+//  communication::graphic_data_t graphDiag5;
+//  communication::graphic_data_t graphDiag6;
+//  communication::graphic_data_t graphDiag7;
 
 //  communication::graphic_data_t graph2;
 //  communication::graphic_data_t graph2;
@@ -128,17 +136,37 @@ void RM_RTOS_Default_Task(const void* arguments) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-  UI->SuperCapGUIInit(&graphBarFrame, &graphBar, &graphPercent, 1500, 350);
+  UI->CapGUIInit(&graphBarFrame, &graphBar, 1500, 350);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, , );
-
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-//  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, percentString, );
+  UI->CapGUICharInit(&graphPercent);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(), UI->getPercentLen());
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+  char diagStr[30] = "Diagnosis";
+  UI->DiagGUIInit(&graphDiag0, 30);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag0, diagStr, 9);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+  char msgBuffer[30] = "Updated";
+  UI->addMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag0);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+//  char msgBuffer2[30] = "Updated2";
+//  UI->addMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag1);
 //  referee->PrepareUIContent(communication::CHAR_GRAPH);
 //  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
 //  referee_uart->Write(frame.data, frame.length);
@@ -153,21 +181,20 @@ void RM_RTOS_Default_Task(const void* arguments) {
       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
       referee_uart->Write(frame.data, frame.length);
       i+=0.1;
-      osDelay(50);
 
-      UI->SuperCapGUIUpdate(std::abs(sin(j)));
+      UI->CapGUIUpdate(std::abs(sin(j)));
       UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
       referee->PrepareUIContent(communication::SINGLE_GRAPH);
       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
       referee_uart->Write(frame.data, frame.length);
       j+=0.1;
-      osDelay(50);
 
-//      UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, percentString, );
-//      referee->PrepareUIContent(communication::CHAR_GRAPH);
-//      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//      referee_uart->Write(frame.data, frame.length);
-//      osDelay(100);
+      UI->CapGUICharUpdate();
+      UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(), UI->getPercentLen());
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      osDelay(100);
   }
 
 //char theString[30];
