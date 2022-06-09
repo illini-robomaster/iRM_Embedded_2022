@@ -108,8 +108,10 @@ class UserInterface {
   int GraphRefresh(uint8_t* data_buffer, int cnt, ...);
   int CharRefresh(uint8_t* data_buffer, graphic_data_t image, char* theString, int len);
 
-  void ChassisGUIInit(graphic_data_t *gimbal, graphic_data_t *chassis, int x, int y);
+  void ChassisGUIInit(graphic_data_t *chassis, graphic_data_t *arrow, int x, int y);
   void ChassisGUIUpdate(float relative);
+  void GimbalGUIInit(graphic_data_t *gimbal);
+  void GimbalGUIUpdate();
   void CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *crosshair2, graphic_data_t *crosshair3, graphic_data_t *crosshair4, graphic_data_t *crosshair5, graphic_data_t *crosshair6, graphic_data_t *crosshair7);
   void CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, int x, int y);
   void CapGUIUpdate(float cap);    // cap 0 - 1
@@ -130,10 +132,11 @@ class UserInterface {
  private:
   graphic_data_t *gimbal_;
   graphic_data_t *chassis_;
+  graphic_data_t *arrow_;
   graphic_data_t *crosshair_;
-  graphic_data_t  *bar_;
+  graphic_data_t *bar_;
   graphic_data_t *percent_;
-  graphic_data_t  *diag_;
+  graphic_data_t *diag_;
   int Robot_ID_;
   int Client_ID_;
   int centerX_ = 960;
