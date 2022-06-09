@@ -232,12 +232,12 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
-    : omega_pid_(PIDController(servo.omega_pid_param)) {
-  motor_ = servo.motor;
-  max_speed_ = servo.transmission_ratio * servo.max_speed;
-  max_acceleration_ = servo.transmission_ratio * servo.max_acceleration;
-  transmission_ratio_ = servo.transmission_ratio;
+ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out)
+    : omega_pid_(PIDController(data.omega_pid_param)) {
+  motor_ = data.motor;
+  max_speed_ = data.transmission_ratio * data.max_speed;
+  max_acceleration_ = data.transmission_ratio * data.max_acceleration;
+  transmission_ratio_ = data.transmission_ratio;
   proximity_in_ = proximity_in;
   proximity_out_ = proximity_out;
 
@@ -253,7 +253,7 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
   hold_detector_ = new BoolEdgeDetector(false);
 
   // override origianal motor rx callback with servomotor callback
-  servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
+  data.motor->can_->RegisterRxCallback(data.motor->rx_id_, servomotor_callback, this);
 
   // Initially jam detection is not enabled, it is enabled only if user calls
   // RegisterJamCallback in the future.
@@ -288,7 +288,7 @@ void ServoMotor::SetMaxAcceleration(const float max_acceleration) {
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->edge()) omega_pid_.Reset();
+  if (hold_detector_->posEdge()) omega_pid_.Reset();
   if (hold_detector_->negEdge()) start_time_ = GetHighresTickMicroSec();
 
   // calculate desired output with pid
@@ -397,6 +397,71 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   float diff = abs(GetThetaDelta(target_angle_));
   if (!hold_ && diff < proximity_in_) hold_ = true;
   if (hold_ && diff > proximity_out_) hold_ = false;
+}
+
+SteeringMotor::SteeringMotor(steering_t data) {
+  servo_t servo_data;
+  servo_data.motor = data.motor;
+  servo_data.max_speed = data.max_speed;
+  servo_data.max_acceleration = data.max_acceleration;
+  servo_data.transmission_ratio = data.transmission_ratio;
+  servo_data.omega_pid_param = data.omega_pid_param;
+  servo_ = new ServoMotor(servo_data);
+
+  test_speed_ = data.test_speed;
+  align_detect_func = data.align_detect_func;
+  align_angle_ = 0;
+  align_detector = new BoolEdgeDetector(false);
+}
+
+float SteeringMotor::GetRawTheta() const {
+  return servo_->GetTheta();
+}
+
+void SteeringMotor::PrintData() const {
+  servo_->PrintData();
+}
+
+void SteeringMotor::TurnRelative(float angle) {
+  servo_->SetTarget(servo_->GetTarget() + angle, true);
+}
+
+bool SteeringMotor::AlignUpdate() {
+  static bool pos_align_complete = false;
+  static bool neg_align_complete = false;
+  static float pos_align_angle = 0;
+  static float neg_align_angle = 0;
+
+  if (pos_align_complete && neg_align_complete) {
+    align_angle_ = (pos_align_angle + neg_align_angle) / 2;
+    servo_->SetTarget(align_angle_, true);
+    servo_->CalcOutput();
+    return true;
+  }
+
+  static bool first = false;
+  if (!first) {
+    align_detector->input(align_detect_func());
+    first = true;
+  }
+  
+  align_detector->input(align_detect_func());
+  if (align_detector->posEdge()) {
+    pos_align_angle = servo_->GetTheta();
+    print("pos: %8.4f\r\n", pos_align_angle);
+    pos_align_complete = true;
+  } else if (align_detector->negEdge()) {
+    neg_align_angle = servo_->GetTheta();
+    print("neg: %8.4f\r\n", neg_align_angle);
+    neg_align_complete = true;
+  }
+  servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstraintedOutput(
+      servo_->motor_->GetOmegaDelta(test_speed_ * servo_->transmission_ratio_)));
+  return false;
+}
+
+void SteeringMotor::Update() {
+  servo_->CalcOutput();
 }
 
 } /* namespace control */

@@ -1,0 +1,93 @@
+/****************************************************************************
+ *                                                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
+ *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+ *                                                                          *
+ *  This program is free software: you can redistribute it and/or modify    *
+ *  it under the terms of the GNU General Public License as published by    *
+ *  the Free Software Foundation, either version 3 of the License, or       *
+ *  (at your option) any later version.                                     *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                          *
+ ****************************************************************************/
+
+#include "bsp_gpio.h"
+#include "bsp_print.h"
+#include "bsp_os.h"
+#include "cmsis_os.h"
+#include "controller.h"
+#include "main.h"
+#include "motor.h"
+#include "utils.h"
+#include "dbus.h"
+
+#define SPEED (5 * PI)
+#define TEST_SPEED (0.5 * PI)
+#define ACCELERATION (20 * PI)
+
+bsp::CAN* can1 = nullptr;
+control::MotorCANBase* motor = nullptr;
+control::SteeringMotor* steering = nullptr;
+remote::DBUS* dbus = nullptr;
+
+bool steering_align_detect() {
+  float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
+  return abs(theta - 3) < 0.05;
+}
+
+void RM_RTOS_Init() {
+  print_use_uart(&huart8);
+  bsp::SetHighresClockTimer(&htim2);
+
+  can1 = new bsp::CAN(&hcan1, 0x201);
+  motor = new control::Motor3508(can1, 0x201);
+
+  control::steering_t steering_data;
+  steering_data.motor = motor;
+  steering_data.max_speed = SPEED;
+  steering_data.test_speed = TEST_SPEED;
+  steering_data.max_acceleration = ACCELERATION;
+  steering_data.transmission_ratio = M3508P19_RATIO;
+  steering_data.omega_pid_param = new float[3]{70, 0.1, 150};
+  steering_data.align_detect_func = steering_align_detect;
+  steering = new control::SteeringMotor(steering_data);
+
+  dbus = new remote::DBUS(&huart1);
+}
+
+void RM_RTOS_Default_Task(const void* args) {
+  UNUSED(args);
+  osDelay(500);  // DBUS initialization needs time
+  control::MotorCANBase* motors[] = {motor};
+
+  print("Alignment Begin\r\n");
+  while (!steering->AlignUpdate()) {
+    steering->AlignUpdate();
+    control::MotorCANBase::TransmitOutput(motors, 1);
+    osDelay(2);
+  }
+  print("\r\nAlignment End\r\n");
+
+  while (true) {
+    steering->TurnRelative(float(dbus->ch1) / remote::DBUS::ROCKER_MAX / 20);
+    steering->Update();
+    control::MotorCANBase::TransmitOutput(motors, 1);
+
+    static int i = 0;
+    if (i > 100) {
+      steering->PrintData();
+      i = 0;
+    } else {
+      i++;
+    }
+
+    osDelay(2);
+  }
+}

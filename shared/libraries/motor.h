@@ -313,7 +313,7 @@ class ServoMotor {
    *
    * @note proximity_out should be greater than proximity_in
    */
-  ServoMotor(servo_t servo, float proximity_in = 0.05, float proximity_out = 0.15);
+  ServoMotor(servo_t data, float proximity_in = 0.05, float proximity_out = 0.15);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been
@@ -428,6 +428,8 @@ class ServoMotor {
    */
   void UpdateData(const uint8_t data[]);
 
+  friend class SteeringMotor;
+
  private:
   // refer to servo_t for details
   MotorCANBase* motor_;
@@ -463,6 +465,42 @@ class ServoMotor {
   FloatEdgeDetector* outer_wrap_detector_; /* detect motor motion across encoder boarder               */
   BoolEdgeDetector* hold_detector_;  /* detect motor is in mode toggling, reset pid accordingly  */
   BoolEdgeDetector* jam_detector_;   /* detect motor jam toggling, call jam callback accordingly */
+};
+
+typedef bool (*align_detect_t)(void);
+
+/**
+ * @brief structure used when steering motor instance is initialized
+ */
+typedef struct {
+  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor      */
+  float max_speed;          /* desired turning speed of motor shaft, in [rad/s]  */
+  float test_speed;
+  float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
+  float transmission_ratio; /* transmission ratio of motor                       */
+  float* omega_pid_param;   /* pid parameter used to control speed of motor      */
+  align_detect_t align_detect_func;
+} steering_t;
+
+class SteeringMotor {
+ public:
+  SteeringMotor(steering_t data);
+  float GetRawTheta() const;
+  /**
+   * @brief print out motor data
+   */
+  void PrintData() const;
+  void TurnRelative(float angle);
+  bool AlignUpdate();
+  void Update();
+ private:
+  ServoMotor* servo_;
+
+  float test_speed_;
+  align_detect_t align_detect_func;
+  float align_angle_;
+
+  BoolEdgeDetector* align_detector;
 };
 
 } /* namespace control */
