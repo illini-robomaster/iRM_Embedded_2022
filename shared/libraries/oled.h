@@ -121,6 +121,8 @@ class OLED {
    */
   void ShowChar(uint8_t row, uint8_t col, uint8_t chr);
 
+  void ShowBlock(uint8_t row, uint8_t col, bool correct);
+
   /**
   * @brief          show a character string
   * @param[in]      row: row of character string begin

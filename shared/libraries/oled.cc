@@ -25,7 +25,7 @@
 
 namespace display {
 
-const unsigned char asc2_1206[95][12]={
+const unsigned char asc2_1206[95][12] = {
     {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},/*" ",0*/
     {0x00,0x00,0x00,0x00,0x3F,0x40,0x00,0x00,0x00,0x00,0x00,0x00},/*"!",1*/
     {0x00,0x00,0x30,0x00,0x40,0x00,0x30,0x00,0x40,0x00,0x00,0x00},/*""",2*/
@@ -395,6 +395,58 @@ void OLED::ShowChar(uint8_t row, uint8_t col, uint8_t chr) {
 
   for (t = 0; t < 12; ++t) {
     temp = asc2_1206[chr][t];
+    for (t1 = 0; t1 < 8; ++t1) {
+      if (temp & 0x80)
+        DrawPoint(x, y, PEN_WRITE);
+      else
+        DrawPoint(x, y, PEN_CLEAR);
+      temp <<= 1;
+      y++;
+      if ((y - y0) == 12) {
+        y = y0;
+        x++;
+        break;
+      }
+    }
+  }
+}
+
+const unsigned char block_graph[4][12] = {
+    {0x00,0x00,0x7F,0xE0,0x40,0x20,0x40,0x20,0x40,0x20,0x40,0x20},/*wrong block*/
+    {0x40,0x20,0x40,0x20,0x40,0x20,0x40,0x20,0x7F,0xE0,0x00,0x00},/*wrong block*/
+    {0x00,0x00,0x7F,0xE0,0x40,0x20,0x42,0x20,0x41,0x20,0x40,0xA0},/*correct block*/
+    {0x43,0x20,0x4C,0x20,0x58,0x20,0x40,0x20,0x7F,0xE0,0x00,0x00},/*correct block*/
+};
+
+void OLED::ShowBlock(uint8_t row, uint8_t col, bool correct) {
+  uint8_t x = col * 6;
+  uint8_t y = row * 12;
+  uint8_t temp, t, t1;
+  uint8_t y0 = y;
+
+  for (t = 0; t < 12; ++t) {
+    temp = block_graph[2 * correct][t];
+    for (t1 = 0; t1 < 8; ++t1) {
+      if (temp & 0x80)
+        DrawPoint(x, y, PEN_WRITE);
+      else
+        DrawPoint(x, y, PEN_CLEAR);
+      temp <<= 1;
+      y++;
+      if ((y - y0) == 12) {
+        y = y0;
+        x++;
+        break;
+      }
+    }
+  }
+
+  x = (col + 1) * 6;
+  y = row * 12;
+  y0 = y;
+
+  for (t = 0; t < 12; ++t) {
+    temp = block_graph[2 * correct + 1][t];
     for (t1 = 0; t1 < 8; ++t1) {
       if (temp & 0x80)
         DrawPoint(x, y, PEN_WRITE);
