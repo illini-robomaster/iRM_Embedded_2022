@@ -91,18 +91,25 @@ class MPU6500 : public GPIT {
   static MPU6500* mpu6500;
 };
 
-class BMI088 : public GPIT {
+typedef struct ist8310_real_data_t {
+  uint8_t status;
+  float mag[3];
+} ist8310_real_data_t;
+
+class IST8310 : public GPIT {
  public:
-  BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
+  IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
+  bool IsReady();
   float mag[3];
  private:
   uint8_t ist8310_init();
+  void ist8310_read_over(uint8_t *status_buf, ist8310_real_data_t *ist8310_real_data);
   void ist8310_read_mag(float mag_[3]);
   void IntCallback() final;
 
   void ist8310_RST_H();
   void ist8310_RST_L();
-  void Delay_us(uint16_t us);
+  static void Delay_us(uint16_t us);
   uint8_t ist8310_IIC_read_single_reg(uint8_t reg);
   void ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data);
   void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
@@ -112,5 +119,7 @@ class BMI088 : public GPIT {
   GPIO_TypeDef* rst_group_;
   uint16_t rst_pin_;
 };
+
+
 
 } /* namespace bsp */

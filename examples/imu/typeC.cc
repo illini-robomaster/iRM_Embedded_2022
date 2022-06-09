@@ -19,27 +19,29 @@
 ****************************************************************************/
 
 #include "main.h"
+#include "i2c.h"
 
 #include "bsp_imu.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
 
-extern I2C_HandleTypeDef hi2c3;
-
-//static bsp::BMI088 *imu = nullptr;
+static bsp::IST8310 *IST8310 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-//  imu = new bsp::BMI088(&hi2c3, DRDY_IST8310_Pin);
+  IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, GPIOG, GPIO_PIN_6);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
-  bsp::BMI088 imu(&hi2c3, DRDY_IST8310_Pin, GPIOG, GPIO_PIN_6);
+  print("%s\r\n", IST8310->IsReady() ? "Ready" : "Not Ready");
+  osDelay(500);
 
   while (true) {
-    print("Mag: %.2f, %.2f, %.2f\r\n", imu.mag[0], imu.mag[1], imu.mag[2]);
-    osDelay(200);
+    set_cursor(0, 0);
+    clear_screen();
+    print("Mag: %.2f, %.2f, %.2f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
+    osDelay(100);
   }
 }

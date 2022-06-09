@@ -169,20 +169,22 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   mpu6500->SPITxRxCpltCallback();
 }
 
-BMI088::BMI088(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin) : GPIT(int_pin) {
+IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin) : GPIT(int_pin) {
   hi2c_ = hi2c;
   rst_group_ = rst_group;
   rst_pin_ = rst_pin;
-  if (ist8310_init() != IST8310_NO_ERROR) {
-    while (true);
-  }
+  ist8310_init();
 }
 
-uint8_t BMI088::ist8310_init() {
-  static const uint8_t wait_time = 150;
-  static const uint8_t sleepTime = 50;
-  uint8_t res = 0;
-  uint8_t writeNum = 0;
+bool IST8310::IsReady() {
+  return HAL_I2C_IsDeviceReady(hi2c_, IST8310_IIC_ADDRESS << 1, 1, 100) == HAL_OK;
+}
+
+uint8_t IST8310::ist8310_init() {
+  const uint8_t wait_time = 1;
+  const uint8_t sleepTime = 50;
+  uint8_t res;
+  uint8_t writeNum;
 
   ist8310_RST_L();
   HAL_Delay(sleepTime);
@@ -190,25 +192,38 @@ uint8_t BMI088::ist8310_init() {
   HAL_Delay(sleepTime);
 
   res = ist8310_IIC_read_single_reg(IST8310_WHO_AM_I);
-  if (res != IST8310_WHO_AM_I_VALUE) {
+  if (res != IST8310_WHO_AM_I_VALUE)
     return IST8310_NO_SENSOR;
-  }
 
   //set mpu6500 sonsor config and check
   for (writeNum = 0; writeNum < IST8310_WRITE_REG_NUM; writeNum++) {
     ist8310_IIC_write_single_reg(ist8310_write_reg_data_error[writeNum][0], ist8310_write_reg_data_error[writeNum][1]);
-    Delay_us(wait_time);
+    HAL_Delay(wait_time);
     res = ist8310_IIC_read_single_reg(ist8310_write_reg_data_error[writeNum][0]);
-    Delay_us(wait_time);
+    HAL_Delay(wait_time);
     if (res != ist8310_write_reg_data_error[writeNum][1])
-    {
       return ist8310_write_reg_data_error[writeNum][2];
-    }
   }
   return IST8310_NO_ERROR;
 }
 
-void BMI088::ist8310_read_mag(float mag_[3]) {
+void IST8310::ist8310_read_over(uint8_t* status_buf, ist8310_real_data_t* ist8310_real_data) {
+  if (status_buf[0] & 0x01) {
+    int16_t temp_ist8310_data = 0;
+    ist8310_real_data->status |= 1 << IST8310_DATA_READY_BIT;
+
+    temp_ist8310_data = (int16_t)((status_buf[2] << 8) | status_buf[1]);
+    ist8310_real_data->mag[0] = MAG_SEN * temp_ist8310_data;
+    temp_ist8310_data = (int16_t)((status_buf[4] << 8) | status_buf[3]);
+    ist8310_real_data->mag[1] = MAG_SEN * temp_ist8310_data;
+    temp_ist8310_data = (int16_t)((status_buf[6] << 8) | status_buf[5]);
+    ist8310_real_data->mag[2] = MAG_SEN * temp_ist8310_data;
+  } else {
+    ist8310_real_data->status &= ~(1 << IST8310_DATA_READY_BIT);
+  }
+}
+
+void IST8310::ist8310_read_mag(float mag_[3]) {
   uint8_t buf[6];
   int16_t temp_ist8310_data = 0;
   //read the "DATAXL" register (0x03)
@@ -222,63 +237,57 @@ void BMI088::ist8310_read_mag(float mag_[3]) {
   mag_[2] = MAG_SEN * temp_ist8310_data;
 }
 
-void BMI088::IntCallback() {
+void IST8310::IntCallback() {
   ist8310_read_mag(mag);
 }
 
-void BMI088::ist8310_RST_H() {
+void IST8310::ist8310_RST_H() {
   HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_SET);
 }
 
-void BMI088::ist8310_RST_L() {
+void IST8310::ist8310_RST_L() {
   HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_RESET);
 }
 
-void BMI088::Delay_us(uint16_t us) {
-  uint32_t ticks = 0;
-  uint32_t told = 0, tnow = 0, tcnt = 0;
-  uint32_t reload = 0;
+void IST8310::Delay_us(uint16_t us) {
+  uint32_t ticks;
+  uint32_t told, tnow, tcnt = 0;
+  uint32_t reload;
   reload = SysTick->LOAD;
   ticks = us * 72;
   told = SysTick->VAL;
-  while (true)
-  {
+  while (true) {
     tnow = SysTick->VAL;
-    if (tnow != told)
-    {
-      if (tnow < told)
-      {
+    if (tnow != told) {
+      if (tnow < told) {
         tcnt += told - tnow;
-      }
-      else
-      {
+      } else {
         tcnt += reload - tnow + told;
       }
       told = tnow;
-      if (tcnt >= ticks)
-      {
+      if (tcnt >= ticks) {
         break;
       }
     }
   }
 }
 
-uint8_t BMI088::ist8310_IIC_read_single_reg(uint8_t reg) {
+uint8_t IST8310::ist8310_IIC_read_single_reg(uint8_t reg) {
   uint8_t res = 0;
-  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,&res,1,10);
+  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,&res,1,10);
   return res;
 }
 
-void BMI088::ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data) {
-  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,&data,1,10);
+void IST8310::ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data) {
+  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,&data,1,10);
 }
 
-void BMI088::ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len) {
-  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,buf,len,10);
+void IST8310::ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len) {
+  HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,buf,len,10);
 }
 
-void BMI088::ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len) {
-  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS <<1, reg,I2C_MEMADD_SIZE_8BIT,data,len,10);
+void IST8310::ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len) {
+  HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,data,len,10);
 }
 
 } /* namespace bsp */

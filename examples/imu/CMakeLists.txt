@@ -32,6 +32,6 @@ irm_add_arm_executable(imu_estimate
     TARGET DJI_Board_TypeA
     SOURCES poseEstimate.cc)
 
-irm_add_arm_executable(${PROJECT_NAME}_BMI088
+irm_add_arm_executable(${PROJECT_NAME}_typeC
     TARGET DJI_Board_TypeC
-    SOURCES BMI088.cc)
+    SOURCES typeC.cc)

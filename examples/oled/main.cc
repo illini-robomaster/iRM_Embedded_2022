@@ -35,11 +35,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
-  OLED->Init();
-  print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
   while (true) {
     OLED->ShowLOGO();
-    print("%s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
     osDelay(1000);
   }
 }
