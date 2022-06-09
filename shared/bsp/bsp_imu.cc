@@ -249,29 +249,6 @@ void IST8310::ist8310_RST_L() {
   HAL_GPIO_WritePin(rst_group_, rst_pin_, GPIO_PIN_RESET);
 }
 
-void IST8310::Delay_us(uint16_t us) {
-  uint32_t ticks;
-  uint32_t told, tnow, tcnt = 0;
-  uint32_t reload;
-  reload = SysTick->LOAD;
-  ticks = us * 72;
-  told = SysTick->VAL;
-  while (true) {
-    tnow = SysTick->VAL;
-    if (tnow != told) {
-      if (tnow < told) {
-        tcnt += told - tnow;
-      } else {
-        tcnt += reload - tnow + told;
-      }
-      told = tnow;
-      if (tcnt >= ticks) {
-        break;
-      }
-    }
-  }
-}
-
 uint8_t IST8310::ist8310_IIC_read_single_reg(uint8_t reg) {
   uint8_t res = 0;
   HAL_I2C_Mem_Read(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,&res,1,10);
