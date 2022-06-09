@@ -42,7 +42,6 @@ Shooter::Shooter(shooter_t shooter) {
 
   switch (shooter.model) {
     case SHOOTER_STANDARD_ZERO:
-      servo_data.mode = control::SERVO_ANTICLOCKWISE;
       servo_data.max_speed = 2 * PI;
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
@@ -52,7 +51,6 @@ Shooter::Shooter(shooter_t shooter) {
       break;
 
     case SHOOTER_STANDARD_2022:
-      servo_data.mode = control::SERVO_ANTICLOCKWISE;
       servo_data.max_speed = 2 * PI;
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;

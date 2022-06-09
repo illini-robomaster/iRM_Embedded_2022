@@ -21,6 +21,7 @@
 #include "motor.h"
 
 #include "arm_math.h"
+#include "bsp_os.h"
 #include "bsp_error_handler.h"
 #include "utils.h"
 
@@ -234,7 +235,6 @@ static void servomotor_callback(const uint8_t data[], void* args) {
 ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
     : omega_pid_(PIDController(servo.omega_pid_param)) {
   motor_ = servo.motor;
-  mode_ = servo.mode;
   max_speed_ = servo.transmission_ratio * servo.max_speed;
   max_acceleration_ = servo.transmission_ratio * servo.max_acceleration;
   transmission_ratio_ = servo.transmission_ratio;
@@ -242,18 +242,15 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
   proximity_out_ = proximity_out;
 
   hold_ = true;
-  target_ = 0;
+  target_angle_ = 0;
   align_angle_ = -1;  // Wait for Update to initialize
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
-  cumulated_angle = 0;
+  cumulated_angle_ = 0;
   inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
   outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
-
-  // dir_ is initialized here
-  SetDirUsingMode_(servo.mode);
 
   // override origianal motor rx callback with servomotor callback
   servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
@@ -269,9 +266,9 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
 
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
   if (!hold_ && !override) return INPUT_REJECT;
-  target_ = target;
-  SetDirUsingMode_(mode_);
-  return dir_;
+  servo_status_t dir = target < target_angle_ ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
+  target_angle_ = target;
+  return dir;
 }
 
 void ServoMotor::SetMaxSpeed(const float max_speed) {
@@ -292,15 +289,20 @@ void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
   if (hold_detector_->edge()) omega_pid_.Reset();
+  if (hold_detector_->negEdge()) start_time_ = GetHighresTickMicroSec();
 
   // calculate desired output with pid
   int16_t command;
   // v = sqrt(2 * a * d)
-  float diff_angle = (target_ - (servo_angle_ + cumulated_angle)) * transmission_ratio_;
-  float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
+  uint32_t current_time = GetHighresTickMicroSec();
+  float speed_max_start = (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
+  float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
+  float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
+  float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
+  current_speed = clip<float>(current_speed, 0, max_speed_);
   command = omega_pid_.ComputeConstraintedOutput(
-      motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
-  constexpr float dead_zone = 800;
+      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
+  constexpr float dead_zone = 0;
   if (command < dead_zone && command > -dead_zone) command = 0;
   motor_->SetOutput(command);
 
@@ -315,7 +317,6 @@ void ServoMotor::CalcOutput() {
     jam_detector_->input(abs(detect_total_) >= jam_threshold_);
     if (jam_detector_->posEdge()) {
       servo_jam_t data;
-      data.mode = mode_;
       data.speed = max_speed_ / transmission_ratio_;
       jam_callback_(this, data);
     }
@@ -324,7 +325,7 @@ void ServoMotor::CalcOutput() {
 
 bool ServoMotor::Holding() const { return hold_; }
 
-float ServoMotor::GetTarget() const { return target_; }
+float ServoMotor::GetTarget() const { return target_angle_; }
 
 void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold,
                                      uint8_t detect_period) {
@@ -348,20 +349,19 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
-  print("theta: % 9.4f ", servo_angle_);
-  print("theta cumulative: % 9.4f ", servo_angle_ + cumulated_angle);
+  print("theta: % 9.4f ", GetTheta());
   print("omega: % 9.4f ", GetOmega());
-  print("target: % 9.4f ", target_);
+  print("target: % 9.4f ", target_angle_);
   if (hold_)
     print("status: holding\r\n");
   else
     print("status: moving\r\n");
 }
 
-float ServoMotor::GetTheta() const { return servo_angle_; }
+float ServoMotor::GetTheta() const { return servo_angle_ + cumulated_angle_; }
 
 float ServoMotor::GetThetaDelta(const float target) const {
-  return wrap<float>(target - servo_angle_, -PI, PI);
+  return target - GetTheta();
 }
 
 float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
@@ -389,32 +389,14 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
   outer_wrap_detector_->input(servo_angle_);
   if (outer_wrap_detector_->negEdge())
-    cumulated_angle += 2 * PI;
+    cumulated_angle_ += 2 * PI;
   else if (outer_wrap_detector_->posEdge())
-    cumulated_angle -= 2 * PI;
+    cumulated_angle_ -= 2 * PI;
 
   // determine if the motor should be in hold state
-  float diff = abs(GetThetaDelta(target_ - cumulated_angle));
+  float diff = abs(GetThetaDelta(target_angle_));
   if (!hold_ && diff < proximity_in_) hold_ = true;
   if (hold_ && diff > proximity_out_) hold_ = false;
-}
-
-void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
-  float diff_angle;
-  switch (mode) {
-    case SERVO_ANTICLOCKWISE:
-      dir_ = TURNING_ANTICLOCKWISE;
-      return;
-    case SERVO_NEAREST:
-      diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-      dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
-      return;
-    case SERVO_CLOCKWISE:
-      dir_ = TURNING_CLOCKWISE;
-      return;
-    default:
-      RM_ASSERT_TRUE(false, "Invalid servo turining mode");
-  }
 }
 
 } /* namespace control */

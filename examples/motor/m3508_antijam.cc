@@ -22,6 +22,7 @@
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
+#include "bsp_os.h"
 #include "cmsis_os.h"
 #include "controller.h"
 #include "main.h"
@@ -33,7 +34,7 @@
 
 #define NOTCH (2 * PI / 4)
 #define SPEED (2 * PI)
-#define ACCELERATION (8 * PI)
+#define ACCELERATION (20 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -42,23 +43,29 @@ BoolEdgeDetector key_detector(false);
 
 void jam_callback(control::ServoMotor* servo, const control::servo_jam_t data) {
   UNUSED(data);
-  float prev_target = wrap<float>(servo->GetTarget() - NOTCH, 0, 2 * PI);
-  servo->SetTarget(prev_target, control::SERVO_CLOCKWISE, true);
-  print("Antijam engage\r\n");
+  float servo_target = servo->GetTarget();
+  if (servo_target < servo->GetTheta()) {
+    print("Antijam in operation\r\n");
+  } else {
+    float prev_target = servo->GetTarget() - NOTCH;
+    servo->SetTarget(prev_target, true);
+    print("Antijam engage\r\n");
+  }
 }
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
+  bsp::SetHighresClockTimer(&htim2);
+
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
 
   control::servo_t servo_data;
   servo_data.motor = motor;
-  servo_data.mode = control::SERVO_ANTICLOCKWISE;
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{25, 5, 35};
+  servo_data.omega_pid_param = new float[3]{60, 0.5, 100};
   servo = new control::ServoMotor(servo_data);
 
   servo->RegisterJamCallback(jam_callback, 0.6);
@@ -73,10 +80,10 @@ void RM_RTOS_Default_Task(const void* args) {
   while (true) {
     key_detector.input(key.Read());
     if (key_detector.posEdge() && servo->SetTarget(servo->GetTarget() + NOTCH) != 0) {
-      print("Servomotor step forward\r\n");
+      print("Servomotor step forward, target: %8.4f\r\n", servo->GetTarget());
     }
     servo->CalcOutput();
     control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(10);
+    osDelay(2);
   }
 }

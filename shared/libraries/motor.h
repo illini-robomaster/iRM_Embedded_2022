@@ -290,7 +290,6 @@ typedef void (*jam_callback_t)(ServoMotor* servo, const servo_jam_t data);
  */
 typedef struct {
   MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor      */
-  servo_mode_t mode;        /* mode of turning, refer to type servo_mode_t       */
   float max_speed;          /* desired turning speed of motor shaft, in [rad/s]  */
   float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
   float transmission_ratio; /* transmission ratio of motor                       */
@@ -432,7 +431,6 @@ class ServoMotor {
  private:
   // refer to servo_t for details
   MotorCANBase* motor_;
-  servo_mode_t mode_;
   float max_speed_;
   float max_acceleration_;
   float transmission_ratio_;
@@ -441,13 +439,13 @@ class ServoMotor {
 
   // angle control
   bool hold_;          /* true if motor is holding now, otherwise moving now                      */
-  float target_;       /* desired target angle, range between [0, 2PI] in [rad]                   */
+  uint32_t start_time_;
+  float target_angle_; /* desired target angle, range between [0, 2PI] in [rad]                   */
   float align_angle_;  /* motor angle when a instance of this class is created with that motor    */
   float motor_angle_;  /* current motor angle in [rad], with align_angle subtracted               */
   float offset_angle_; /* cumulative offset angle of motor shaft, range between [0, 2PI] in [rad] */
   float servo_angle_;  /* current angle of motor shaft, range between [0, 2PI] in [rad]           */
-  float cumulated_angle;  
-  servo_status_t dir_; /* current moving direction of motor (and motor shaft)                     */
+  float cumulated_angle_; 
 
   // jam detection
   jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed */
@@ -465,19 +463,6 @@ class ServoMotor {
   FloatEdgeDetector* outer_wrap_detector_; /* detect motor motion across encoder boarder               */
   BoolEdgeDetector* hold_detector_;  /* detect motor is in mode toggling, reset pid accordingly  */
   BoolEdgeDetector* jam_detector_;   /* detect motor jam toggling, call jam callback accordingly */
-
-  /**
-   * @brief when motor is in SERVO_NEAREST mode, finding the nearest direction to make the turn
-   *
-   */
-  void NearestModeSetDir_();
-
-  /**
-   * @brief set turning direction of the motor using specified turning mode
-   *
-   * @param mode mode of servomotor, refer to type servo_mode_t
-   */
-  void SetDirUsingMode_(servo_mode_t mode);
 };
 
 } /* namespace control */
