@@ -155,8 +155,11 @@ class OLED {
   * @retval         none
    */
   void ShowLOGO(void);
+  void ShowDiagram(void);
+  void Cat(unsigned char graph[128][8]);
+  void DrawCat(void);
 
- private:
+      private:
   /**
   * @brief          write data/command to OLED, if you use spi, please rewrite the function
   * @param[in]      dat: the data ready to write
