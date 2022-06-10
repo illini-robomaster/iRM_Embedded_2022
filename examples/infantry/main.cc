@@ -25,7 +25,7 @@
 #include "bsp_uart.h"
 #include "bsp_laser.h"
 #include "bsp_imu.h"
-#include "bsp_imu_i2c.h"
+#include "bsp_imu_ext.h"
 #include "bsp_os.h"
 #include "cmsis_os.h"
 #include "dbus.h"

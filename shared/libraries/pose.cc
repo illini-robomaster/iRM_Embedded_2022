@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include "arm_math.h"
-#include "bsp_imu.h"
 #include "cmsis_os.h"
 #include "utils.h"
 

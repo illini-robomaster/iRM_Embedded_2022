@@ -1,6 +1,6 @@
 
 
-#include "bsp_imu_i2c.h"
+#include "bsp_imu_ext.h"
 #include "utils.h"
 
 namespace bsp {

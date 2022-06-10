@@ -66,6 +66,8 @@ void RM_RTOS_Default_Task(const void *argument);
 /* Private defines -----------------------------------------------------------*/
 #define RSTN_IST8310_Pin GPIO_PIN_6
 #define RSTN_IST8310_GPIO_Port GPIOG
+#define HEATER_Pin GPIO_PIN_6
+#define HEATER_GPIO_Port GPIOF
 #define LED_R_Pin GPIO_PIN_12
 #define LED_R_GPIO_Port GPIOH
 #define DRDY_IST8310_Pin GPIO_PIN_3
@@ -79,6 +81,16 @@ void RM_RTOS_Default_Task(const void *argument);
 #define BUZZER_GPIO_Port GPIOD
 #define KEY_Pin GPIO_PIN_0
 #define KEY_GPIO_Port GPIOA
+#define CS1_ACCEL_Pin GPIO_PIN_4
+#define CS1_ACCEL_GPIO_Port GPIOA
+#define INT1_ACCEL_Pin GPIO_PIN_4
+#define INT1_ACCEL_GPIO_Port GPIOC
+#define INT1_ACCEL_EXTI_IRQn EXTI4_IRQn
+#define INT1_GRYO_Pin GPIO_PIN_5
+#define INT1_GRYO_GPIO_Port GPIOC
+#define INT1_GRYO_EXTI_IRQn EXTI9_5_IRQn
+#define CS1_GYRO_Pin GPIO_PIN_0
+#define CS1_GYRO_GPIO_Port GPIOB
 #define STEPPER_DIR_Pin GPIO_PIN_15
 #define STEPPER_DIR_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */

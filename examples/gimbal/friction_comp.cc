@@ -24,7 +24,7 @@
 #include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
-#include "bsp_imu_i2c.h"
+#include "bsp_imu_ext.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 #include "gimbal.h"

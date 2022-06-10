@@ -18,28 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(buzzer)
-add_subdirectory(chassis)
-add_subdirectory(dbus)
-add_subdirectory(eigen)
-add_subdirectory(gimbal)
-add_subdirectory(imu)
-add_subdirectory(infantry)
-add_subdirectory(led)
-add_subdirectory(motor)
-add_subdirectory(sdio)
-add_subdirectory(turret)
-add_subdirectory(uart)
-add_subdirectory(usb)
-add_subdirectory(shooter)
-add_subdirectory(rtos)
-add_subdirectory(laser)
-add_subdirectory(ultrasonic)
-add_subdirectory(referee)
-add_subdirectory(protocol)
-add_subdirectory(relay)
-add_subdirectory(fortress)
-add_subdirectory(user_interface)
-add_subdirectory(stepper)
-add_subdirectory(oled)
-add_subdirectory(heater)
+project(example_heater ASM C CXX)
+
+irm_add_arm_executable(${PROJECT_NAME}
+    TARGET DJI_Board_TypeC
+    SOURCES main.cc)
