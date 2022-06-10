@@ -25,10 +25,10 @@ namespace bsp {
 Heater::Heater(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, float temp) : pwm_(htim, channel, clock_freq, 2000, 0), pid_() {
   temp_ = temp;
   pwm_.Start();
-  float* pid_param = new float[3]{160, 0.02, 0};
+  float* pid_param = new float[3]{160, 0.1, 0};
   pid_.Reinit(pid_param);
-  float heater_I_limit = 440;
-  float heater_output_limit = 450;
+  float heater_I_limit = 900;
+  float heater_output_limit = 500;
   pid_.ChangeMax(heater_I_limit, heater_output_limit);
 }
 
