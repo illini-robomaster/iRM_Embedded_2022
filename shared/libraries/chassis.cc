@@ -92,9 +92,8 @@ void Chassis::Update() {
       motors_[FourWheel::front_left]->SetOutput(
           pids_[FourWheel::front_left].ComputeConstrainedOutput(
               motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
-      motors_[FourWheel::back_left]->SetOutput(
-          pids_[FourWheel::back_left].ComputeConstrainedOutput(
-              motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
+      motors_[FourWheel::back_left]->SetOutput(pids_[FourWheel::back_left].ComputeConstrainedOutput(
+          motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
       motors_[FourWheel::front_right]->SetOutput(
           pids_[FourWheel::front_right].ComputeConstrainedOutput(
               motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right])));
