@@ -97,7 +97,7 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 #endif
     float diff = motor->GetOmegaDelta(target);
-    int16_t out = pid.ComputeConstraintedOutput(diff);
+    int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
     motor->PrintData();

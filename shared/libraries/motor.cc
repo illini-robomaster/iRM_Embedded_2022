@@ -28,6 +28,12 @@ using namespace bsp;
 
 namespace control {
 
+int16_t ClipMotorRange (float output) {
+  constexpr int MIN = -motor_range; /* Minimum that a 16-bit number can represent */
+  constexpr int MAX = motor_range;  /* Maximum that a 16-bit number can represent */
+  return (int16_t)clip<int>((int)output, MIN, MAX);
+}
+
 /**
  * @brief standard can motor callback, used to update motor data
  *
@@ -36,6 +42,7 @@ namespace control {
  */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
+  motor->connection_flag_ = true;
   motor->UpdateData(data);
 }
 
@@ -86,6 +93,14 @@ float MotorCANBase::GetOmega() const { return omega_; }
 
 float MotorCANBase::GetOmegaDelta(float target) const { return target - omega_; }
 
+int16_t MotorCANBase::GetCurr() const {
+  return 0;
+}
+
+uint16_t MotorCANBase::GetTemp() const {
+  return 0;
+}
+
 Motor3508::Motor3508(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
 }
@@ -114,6 +129,14 @@ void Motor3508::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
+int16_t Motor3508::GetCurr() const {
+  return raw_current_get_;
+}
+
+uint16_t Motor3508::GetTemp() const {
+  return raw_temperature_;
+}
+
 Motor6020::Motor6020(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
 }
@@ -140,6 +163,14 @@ void Motor6020::PrintData() const {
 void Motor6020::SetOutput(int16_t val) {
   constexpr int16_t MAX_ABS_CURRENT = 30000;  // ~
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
+}
+
+int16_t Motor6020::GetCurr() const {
+    return raw_current_get_;
+}
+
+uint16_t Motor6020::GetTemp() const {
+  return raw_temperature_;
 }
 
 Motor6623::Motor6623(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
@@ -201,6 +232,10 @@ void Motor2006::PrintData() const {
 void Motor2006::SetOutput(int16_t val) {
   constexpr int16_t MAX_ABS_CURRENT = 10000;  // ~10A
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
+}
+
+int16_t Motor2006::GetCurr() const {
+  return raw_current_get_;
 }
 
 MotorPWMBase::MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq,
@@ -302,11 +337,11 @@ void ServoMotor::CalcOutput() {
   float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
   if (hold_) {
     // holding, allow turning in both directions
-    command = omega_pid_.ComputeConstraintedOutput(
+    command = omega_pid_.ComputeConstrainedOutput(
         motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
   } else {
     // moving, only allow turn in specified direction(s)
-    command = omega_pid_.ComputeConstraintedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
+    command = omega_pid_.ComputeConstrainedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
   }
   motor_->SetOutput(command);
 
