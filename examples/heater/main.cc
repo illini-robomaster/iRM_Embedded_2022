@@ -30,7 +30,7 @@ static bsp::BMI088 *BMI088 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  heater = new bsp::Heater(&htim10, 1, 1000000, 40);
+  heater = new bsp::Heater(&htim10, 1, 1000000, 45);
   BMI088 = new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
 }
 
@@ -38,8 +38,6 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   float gyro[3], accel[3], temp;
-
-  while(BMI088->Init()) ;
 
   int i = 0;
   while (true) {

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "bsp_gpio.h"
+#include "bsp_heater.h"
 #include "spi.h"
 
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
@@ -305,19 +306,27 @@ class MPU6500 : public GPIT {
   static MPU6500* mpu6500;
 };
 
-typedef struct IST8310_real_data_t {
+typedef struct {
+  I2C_HandleTypeDef* hi2c;
+  uint16_t int_pin;
+  GPIO_TypeDef* rst_group;
+  uint16_t rst_pin;
+} IST8310_init_t;
+
+typedef struct {
   uint8_t status;
   float mag[3];
-} ist8310_real_data_t;
+} IST8310_real_data_t;
 
 class IST8310 : public GPIT {
  public:
+  IST8310(IST8310_init_t init);
   IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
   bool IsReady();
   float mag[3];
  private:
-  uint8_t ist8310_init();
-  void ist8310_read_over(uint8_t *status_buf, ist8310_real_data_t *ist8310_real_data);
+  uint8_t Init();
+  void ist8310_read_over(uint8_t *status_buf, IST8310_real_data_t *ist8310_real_data);
   void ist8310_read_mag(float mag_[3]);
   void IntCallback() final;
 
@@ -333,14 +342,14 @@ class IST8310 : public GPIT {
   uint16_t rst_pin_;
 };
 
-typedef struct BMI088_RAW_DATA {
+typedef struct {
   uint8_t status;
   int16_t accel[3];
   int16_t temp;
   int16_t gyro[3];
 } __packed BMI088_raw_data_t;
 
-typedef struct BMI088_REAL_DATA {
+typedef struct {
   uint8_t status;
   float accel[3];
   float temp;
@@ -369,10 +378,19 @@ enum {
   BMI088_NO_SENSOR = 0xFF,
 };
 
+typedef struct {
+  SPI_HandleTypeDef* hspi;
+  GPIO_TypeDef* CS_ACCEL_Port;
+  uint16_t CS_ACCEL_Pin;
+  GPIO_TypeDef* CS_GYRO_Port;
+  uint16_t CS_GYRO_Pin;
+} BMI088_init_t;
+
 class BMI088 {
  public:
+  BMI088(BMI088_init_t init);
   BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin, GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
-  uint8_t Init();
+  bool IsReady();
   void Read(float gyro[3], float accel[3], float *temperate);
  private:
   SPI_HandleTypeDef* hspi_;
@@ -380,6 +398,8 @@ class BMI088 {
   uint16_t CS1_ACCEL_Pin_;
   GPIO_TypeDef* CS1_GYRO_GPIO_Port_;
   uint16_t CS1_GYRO_Pin_;
+
+  uint8_t Init();
 
   bool bmi088_accel_init(void);
   bool bmi088_gyro_init(void);
@@ -403,6 +423,31 @@ class BMI088 {
   void BMI088_gyro_write_single_reg(uint8_t reg, uint8_t data);
   void BMI088_gyro_read_single_reg(uint8_t reg, uint8_t* data);
   void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+};
+
+typedef struct {
+  IST8310_init_t IST8310;
+  BMI088_init_t BMI088;
+  bsp::heater_init_t heater;
+} IMU_typeC_init_t;
+
+class IMU_typeC {
+ public:
+  IMU_typeC(IMU_typeC_init_t init);
+  void GetAngle(float q[4], float *yaw, float *pitch, float *roll);
+ private:
+  IST8310 IST8310_;
+  BMI088 BMI088_;
+  bsp::Heater heater_;
+
+  float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  float INS_angle[3] = {0.0f, 0.0f, 0.0f};
+
+  BMI088_real_data_t BMI088_real_data_;
+  IST8310_real_data_t IST8310_real_data_;
+
+  void AHRS_init(float quat[4], float accel[3], float mag[3]);
+  void AHRS_update(float quat[4], float time, float gyro[3], float accel[3], float mag[3]);
 };
 
 } /* namespace bsp */

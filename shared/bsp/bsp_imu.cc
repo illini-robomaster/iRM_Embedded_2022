@@ -25,6 +25,7 @@
 #include "bsp_error_handler.h"
 #include "bsp_mpu6500_reg.h"
 #include "bsp_os.h"
+#include "MahonyAHRS.h"
 
 #define MPU6500_DELAY 55  // SPI delay
 // configured with initialization sequences
@@ -169,18 +170,25 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   mpu6500->SPITxRxCpltCallback();
 }
 
+IST8310::IST8310(IST8310_init_t init) : GPIT(init.int_pin) {
+  hi2c_ = init.hi2c;
+  rst_group_ = init.rst_group;
+  rst_pin_ = init.rst_pin;
+  Init();
+}
+
 IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin) : GPIT(int_pin) {
   hi2c_ = hi2c;
   rst_group_ = rst_group;
   rst_pin_ = rst_pin;
-  ist8310_init();
+  Init();
 }
 
 bool IST8310::IsReady() {
   return HAL_I2C_IsDeviceReady(hi2c_, IST8310_IIC_ADDRESS << 1, 1, 100) == HAL_OK;
 }
 
-uint8_t IST8310::ist8310_init() {
+uint8_t IST8310::Init() {
   const uint8_t wait_time = 1;
   const uint8_t sleepTime = 50;
   uint8_t res;
@@ -207,7 +215,7 @@ uint8_t IST8310::ist8310_init() {
   return IST8310_NO_ERROR;
 }
 
-void IST8310::ist8310_read_over(uint8_t* status_buf, ist8310_real_data_t* ist8310_real_data) {
+void IST8310::ist8310_read_over(uint8_t* status_buf, IST8310_real_data_t* ist8310_real_data) {
   if (status_buf[0] & 0x01) {
     int16_t temp_ist8310_data = 0;
     ist8310_real_data->status |= 1 << IST8310_DATA_READY_BIT;
@@ -267,12 +275,26 @@ void IST8310::ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len
   HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg,I2C_MEMADD_SIZE_8BIT,data,len,10);
 }
 
+BMI088::BMI088(BMI088_init_t init) {
+  hspi_ = init.hspi;
+  CS1_ACCEL_GPIO_Port_ = init.CS_ACCEL_Port;
+  CS1_ACCEL_Pin_ = init.CS_ACCEL_Pin;
+  CS1_GYRO_GPIO_Port_ = init.CS_GYRO_Port;
+  CS1_GYRO_Pin_ = init.CS_GYRO_Pin;
+  Init();
+}
+
 BMI088::BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin, GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin) {
   hspi_ = hspi;
   CS1_ACCEL_GPIO_Port_ = CS_ACCEL_Port;
   CS1_ACCEL_Pin_ = CS_ACCEL_Pin;
   CS1_GYRO_GPIO_Port_ = CS_GYRO_Port;
   CS1_GYRO_Pin_ = CS_GYRO_Pin;
+  Init();
+}
+
+bool BMI088::IsReady() {
+  return HAL_SPI_Init(hspi_) == HAL_OK;
 }
 
 void BMI088::BMI088_ACCEL_NS_L() {
@@ -382,6 +404,8 @@ uint8_t BMI088::Init() {
   error |= bmi088_accel_init();
   error |= bmi088_gyro_init();
 
+  hspi_->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+
   return error;
 }
 
@@ -487,6 +511,31 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
     bmi088_raw_temp -= 2048;
 
   *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
+}
+
+IMU_typeC::IMU_typeC(IMU_typeC_init_t init): IST8310_(init.IST8310), BMI088_(init.BMI088), heater_(init.heater) {
+  BMI088_.Read(BMI088_real_data_.gyro, BMI088_real_data_.accel, &BMI088_real_data_.temp);
+  AHRS_init(INS_quat, BMI088_real_data_.accel, IST8310_real_data_.mag);
+}
+
+void IMU_typeC::AHRS_init(float* quat, float* accel, float* mag) {
+  UNUSED(accel);
+  UNUSED(mag);
+  quat[0] = 1.0f;
+  quat[1] = 0.0f;
+  quat[2] = 0.0f;
+  quat[3] = 0.0f;
+}
+
+void IMU_typeC::AHRS_update(float* quat, float time, float* gyro, float* accel, float* mag) {
+  UNUSED(time);
+  MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1], mag[2]);
+}
+
+void IMU_typeC::GetAngle(float* q, float* yaw, float* pitch, float* roll) {
+  *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f);
+  *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]));
+  *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f);
 }
 
 } /* namespace bsp */

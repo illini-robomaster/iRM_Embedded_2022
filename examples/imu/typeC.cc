@@ -34,13 +34,26 @@ void RM_RTOS_Init(void) {
   BMI088 = new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
 }
 
+float invSqrt(float x) {
+  union {
+    float f;
+    uint32_t i;
+  } conv;
+
+  float x2;
+  const float threehalfs = 1.5F;
+
+  x2 = x * 0.5F;
+  conv.f  = x;
+  conv.i  = 0x5f3759df - ( conv.i >> 1 );
+  conv.f  = conv.f * ( threehalfs - ( x2 * conv.f * conv.f ) );
+  return conv.f;
+}
+
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   float gyro[3], accel[3], temp;
-
-  print("Mag %s\r\n", IST8310->IsReady() ? "Ready" : "Not Ready");
-  while(BMI088->Init()) ;
 
   while (true) {
     set_cursor(0, 0);
@@ -48,6 +61,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
     print("Mag:: %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
     BMI088->Read(gyro, accel, &temp);
     print("IMU::\r\ngyro %.1f %.1f %.1f\r\naccel %.1f %.1f %.1f\r\ntemp %.1f\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], temp);
+    print("%.5f\r\n", invSqrt(60));
     osDelay(100);
   }
 }
