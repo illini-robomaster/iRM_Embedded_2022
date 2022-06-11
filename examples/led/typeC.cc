@@ -18,13 +18,13 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_rgb.h"
 #include "cmsis_os.h"
 #include "main.h"
+#include "rgb.h"
 
-static bsp::RGB* led = nullptr;
+static display::RGB* led = nullptr;
 
-void RM_RTOS_Init(void) { led = new bsp::RGB(&htim5, 3, 2, 1, 1000000); }
+void RM_RTOS_Init(void) { led = new display::RGB(&htim5, 3, 2, 1, 1000000); }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);

@@ -22,7 +22,7 @@
 
 #include "bsp_pwm.h"
 
-namespace bsp {
+namespace display {
 
 class RGB {
  public:
@@ -32,7 +32,7 @@ class RGB {
   void Stop();
 
  private:
-  PWM R_, G_, B_;
+  bsp::PWM R_, G_, B_;
 };
 
-}  // namespace bsp
+}  // namespace display

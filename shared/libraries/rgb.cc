@@ -18,9 +18,9 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_rgb.h"
+#include "rgb.h"
 
-namespace bsp {
+namespace display {
 
 RGB::RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
          uint32_t clock_freq)
@@ -55,4 +55,4 @@ void RGB::Stop() {
   B_.Stop();
 }
 
-}  // namespace bsp
+}  // namespace display
