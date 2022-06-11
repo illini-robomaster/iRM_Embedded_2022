@@ -44,7 +44,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
     BMI088->Read(gyro, accel, &temp);
     float output = heater->Update(temp);
     if (++i % 200 == 0) {
-      print("Temperature: %.2f, PWM output: %.2f\r\n", temp, output);
+      print("Temperature: %.3f, PWM output: %.3f\r\n", temp, output);
     }
     osDelay(1);
   }
