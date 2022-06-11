@@ -20,7 +20,10 @@
 
 project(example_led ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
+irm_add_arm_executable(${PROJECT_NAME}_typeA
     TARGET DJI_Board_TypeA
     SOURCES typeA.cc)
 
+irm_add_arm_executable(${PROJECT_NAME}_typeC
+    TARGET DJI_Board_TypeC
+    SOURCES typeC.cc)

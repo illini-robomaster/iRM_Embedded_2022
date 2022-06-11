@@ -18,51 +18,41 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_pwm.h"
+#include "rgb.h"
 
-#include "bsp_error_handler.h"
-#include "cmsis_os.h"
+namespace display {
 
-namespace bsp {
-
-PWM::PWM(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq,
-         uint32_t pulse_width)
-    : htim_(htim), clock_freq_(clock_freq), output_freq_(output_freq), pulse_width_(pulse_width) {
-  switch (channel) {
-    case 1:
-      channel_ = TIM_CHANNEL_1;
-      break;
-    case 2:
-      channel_ = TIM_CHANNEL_2;
-      break;
-    case 3:
-      channel_ = TIM_CHANNEL_3;
-      break;
-    case 4:
-      channel_ = TIM_CHANNEL_4;
-      break;
-    default:
-      bsp_error_handler(__FUNCTION__, __LINE__, "pwm channel not valid");
-  }
-  SetFrequency(output_freq);
-  SetPulseWidth(pulse_width);
+RGB::RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
+         uint32_t clock_freq)
+    : R_(htim, channelR, clock_freq, 0, 0),
+      G_(htim, channelG, clock_freq, 0, 0),
+      B_(htim, channelB, clock_freq, 0, 0) {
+  R_.Start();
+  G_.Start();
+  B_.Start();
+  R_.SetFrequency(3921);
+  G_.SetFrequency(3921);
+  B_.SetFrequency(3921);
 }
 
-void PWM::Start() { HAL_TIM_PWM_Start(htim_, channel_); }
+void RGB::Show(uint32_t aRGB) {
+  volatile uint8_t alpha;
+  volatile uint16_t red, green, blue;
 
-void PWM::Stop() { HAL_TIM_PWM_Stop(htim_, channel_); }
+  alpha = (aRGB & 0xFF000000) >> 24;
+  red = ((aRGB & 0x00FF0000) >> 16) * alpha / 255.0;
+  green = ((aRGB & 0x0000FF00) >> 8) * alpha / 255.0;
+  blue = ((aRGB & 0x000000FF) >> 0) * alpha / 255.0;
 
-void PWM::SetFrequency(uint32_t output_freq) {
-  this->output_freq_ = output_freq;
-  uint32_t auto_reload = output_freq > 0 ? clock_freq_ / output_freq_ - 1 : 0;
-  __HAL_TIM_SET_AUTORELOAD(htim_, auto_reload);
-  __HAL_TIM_SET_COUNTER(htim_, 0);
+  R_.SetPulseWidth(red);
+  G_.SetPulseWidth(green);
+  B_.SetPulseWidth(blue);
 }
 
-void PWM::SetPulseWidth(uint32_t pulse_width) {
-  this->pulse_width_ = pulse_width;
-  uint32_t compare = pulse_width > 0 ? clock_freq_ * pulse_width_ / 1000000 - 1 : 0;
-  __HAL_TIM_SET_COMPARE(htim_, channel_, compare);
+void RGB::Stop() {
+  R_.Stop();
+  G_.Stop();
+  B_.Stop();
 }
 
-} /* namespace bsp */
+}  // namespace display
