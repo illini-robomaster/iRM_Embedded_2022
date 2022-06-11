@@ -19,4 +19,3 @@
 # ---------------------------------------------------------------------- #
 
 add_subdirectory(Infantry)
-add_subdirectory(config)
