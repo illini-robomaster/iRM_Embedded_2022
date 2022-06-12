@@ -72,8 +72,8 @@ void Gimbal::Update() {
   }
 
   constexpr float multiplier = 50;
-  pitch_motor_->SetOutput(pitch_pid_->ComputeConstraintedOutput(pitch_diff * multiplier));
-  yaw_motor_->SetOutput(yaw_pid_->ComputeConstraintedOutput(yaw_diff * multiplier));
+  pitch_motor_->SetOutput(pitch_pid_->ComputeConstrainedOutput(pitch_diff * multiplier));
+  yaw_motor_->SetOutput(yaw_pid_->ComputeConstrainedOutput(yaw_diff * multiplier));
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {

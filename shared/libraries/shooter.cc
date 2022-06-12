@@ -120,8 +120,8 @@ void Shooter::Update() {
       flywheel_turning_detector_->input(speed_ == 0);
       float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
       float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
-      left_flywheel_motor_->SetOutput(left_pid_->ComputeConstraintedOutput(left_diff));
-      right_flywheel_motor_->SetOutput(right_pid_->ComputeConstraintedOutput(right_diff));
+      left_flywheel_motor_->SetOutput(left_pid_->ComputeConstrainedOutput(left_diff));
+      right_flywheel_motor_->SetOutput(right_pid_->ComputeConstrainedOutput(right_diff));
       load_servo_->CalcOutput();
       break;
   }

@@ -18,28 +18,41 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#include "rgb.h"
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "dbus.h"
+namespace display {
 
-static remote::DBUS* dbus;
-
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  dbus = new remote::DBUS(&huart3);
+RGB::RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
+         uint32_t clock_freq)
+    : R_(htim, channelR, clock_freq, 0, 0),
+      G_(htim, channelG, clock_freq, 0, 0),
+      B_(htim, channelB, clock_freq, 0, 0) {
+  R_.Start();
+  G_.Start();
+  B_.Start();
+  R_.SetFrequency(3921);
+  G_.SetFrequency(3921);
+  B_.SetFrequency(3921);
 }
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+void RGB::Show(uint32_t aRGB) {
+  volatile uint8_t alpha;
+  volatile uint16_t red, green, blue;
 
-  // NOTE(alvin): print is split because of stack usage is almost reaching limits
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
-    print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
-    osDelay(100);
-  }
+  alpha = (aRGB & 0xFF000000) >> 24;
+  red = ((aRGB & 0x00FF0000) >> 16) * alpha / 255.0;
+  green = ((aRGB & 0x0000FF00) >> 8) * alpha / 255.0;
+  blue = ((aRGB & 0x000000FF) >> 0) * alpha / 255.0;
+
+  R_.SetPulseWidth(red);
+  G_.SetPulseWidth(green);
+  B_.SetPulseWidth(blue);
 }
+
+void RGB::Stop() {
+  R_.Stop();
+  G_.Stop();
+  B_.Stop();
+}
+
+}  // namespace display

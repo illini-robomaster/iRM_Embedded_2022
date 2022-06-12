@@ -18,28 +18,21 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#pragma once
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "dbus.h"
+#include "bsp_pwm.h"
 
-static remote::DBUS* dbus;
+namespace display {
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  dbus = new remote::DBUS(&huart3);
-}
+class RGB {
+ public:
+  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
+      uint32_t clock_freq);
+  void Show(uint32_t aRGB);
+  void Stop();
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+ private:
+  bsp::PWM R_, G_, B_;
+};
 
-  // NOTE(alvin): print is split because of stack usage is almost reaching limits
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
-    print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
-    osDelay(100);
-  }
-}
+}  // namespace display
