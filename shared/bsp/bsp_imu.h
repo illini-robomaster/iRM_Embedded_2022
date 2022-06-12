@@ -22,6 +22,7 @@
 
 #include "bsp_gpio.h"
 #include "bsp_heater.h"
+#include "cmsis_os.h"
 #include "spi.h"
 
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
@@ -245,6 +246,39 @@
 #define BMI088_GYRO_250_SEN 0.00013315805450396191230191732547673f
 #define BMI088_GYRO_125_SEN 0.000066579027251980956150958662738366f
 
+#define SPI_DMA_GYRO_LENGHT       8
+#define SPI_DMA_ACCEL_LENGHT      9
+#define SPI_DMA_ACCEL_TEMP_LENGHT 4
+
+#define IMU_DR_SHFITS        0
+#define IMU_SPI_SHFITS       1
+#define IMU_UPDATE_SHFITS    2
+#define IMU_NOTIFY_SHFITS    3
+
+
+#define BMI088_GYRO_RX_BUF_DATA_OFFSET  1
+#define BMI088_ACCEL_RX_BUF_DATA_OFFSET 2
+
+#define IST8310_RX_BUF_DATA_OFFSET 16
+
+#define INS_TASK_INIT_TIME 7
+
+#define INS_YAW_ADDRESS_OFFSET    0
+#define INS_PITCH_ADDRESS_OFFSET  1
+#define INS_ROLL_ADDRESS_OFFSET   2
+
+#define INS_GYRO_X_ADDRESS_OFFSET 0
+#define INS_GYRO_Y_ADDRESS_OFFSET 1
+#define INS_GYRO_Z_ADDRESS_OFFSET 2
+
+#define INS_ACCEL_X_ADDRESS_OFFSET 0
+#define INS_ACCEL_Y_ADDRESS_OFFSET 1
+#define INS_ACCEL_Z_ADDRESS_OFFSET 2
+
+#define INS_MAG_X_ADDRESS_OFFSET 0
+#define INS_MAG_Y_ADDRESS_OFFSET 1
+#define INS_MAG_Z_ADDRESS_OFFSET 2
+
 namespace bsp {
 
 typedef struct {
@@ -401,14 +435,14 @@ class BMI088 {
 
   uint8_t Init();
 
-  bool bmi088_accel_init(void);
-  bool bmi088_gyro_init(void);
+  bool bmi088_accel_init();
+  bool bmi088_gyro_init();
 
-  void BMI088_ACCEL_NS_L(void);
-  void BMI088_ACCEL_NS_H(void);
+  void BMI088_ACCEL_NS_L();
+  void BMI088_ACCEL_NS_H();
 
-  void BMI088_GYRO_NS_L(void);
-  void BMI088_GYRO_NS_H(void);
+  void BMI088_GYRO_NS_L();
+  void BMI088_GYRO_NS_H();
 
   uint8_t BMI088_read_write_byte(uint8_t tx_data);
 
@@ -425,10 +459,25 @@ class BMI088 {
   void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
 };
 
+class IMU_INT : public GPIT {
+ public:
+  IMU_INT(uint16_t INT_pin, void (*callback)());
+ private:
+  void (*callback_)();
+  void IntCallback() final;
+};
+
 typedef struct {
   IST8310_init_t IST8310;
   BMI088_init_t BMI088;
   bsp::heater_init_t heater;
+
+  SPI_HandleTypeDef *hspi;
+  DMA_HandleTypeDef *hdma_spi_rx;
+  DMA_HandleTypeDef *hdma_spi_tx;
+
+  uint16_t Accel_INT_pin_;
+  uint16_t Gyro_INT_pin_;
 } IMU_typeC_init_t;
 
 class IMU_typeC {
@@ -440,14 +489,47 @@ class IMU_typeC {
   BMI088 BMI088_;
   bsp::Heater heater_;
 
+  IST8310_init_t IST8310_param_;
+  BMI088_init_t BMI088_param_;
+
+  IMU_INT Accel_INT;
+  IMU_INT Gyro_INT;
+
+  void Accel_INT_callback();
+  void Gyro_INT_callback();
+
+  SPI_HandleTypeDef *hspi_;
+  DMA_HandleTypeDef *hdma_spi_rx_;
+  DMA_HandleTypeDef *hdma_spi_tx_;
+
   float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float INS_angle[3] = {0.0f, 0.0f, 0.0f};
 
   BMI088_real_data_t BMI088_real_data_;
   IST8310_real_data_t IST8310_real_data_;
 
+  volatile uint8_t gyro_update_flag = 0;
+  volatile uint8_t accel_update_flag = 0;
+  volatile uint8_t accel_temp_update_flag = 0;
+  volatile uint8_t mag_update_flag = 0;
+  volatile uint8_t imu_start_dma_flag = 0;
+
+  uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
+  uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {0x82,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+
+  uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT];
+  uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {0x92,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+
+  uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT];
+  uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0xA2,0xFF,0xFF,0xFF};
+
   void AHRS_init(float quat[4], float accel[3], float mag[3]);
   void AHRS_update(float quat[4], float time, float gyro[3], float accel[3], float mag[3]);
+
+  void SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num);
+  void SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr);
+
+  void imu_cmd_spi_dma();
 };
 
 } /* namespace bsp */

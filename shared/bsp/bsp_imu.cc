@@ -513,9 +513,37 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 }
 
+IMU_INT::IMU_INT(uint16_t INT_pin, void (*callback)()) : GPIT(INT_pin) {
+  callback_ = callback;
+}
+
+void IMU_INT::IntCallback() {
+  callback_();
+}
+
 IMU_typeC::IMU_typeC(IMU_typeC_init_t init): IST8310_(init.IST8310), BMI088_(init.BMI088), heater_(init.heater) {
+  IST8310_param_ = init.IST8310;
+  BMI088_param_ = init.BMI088;
+  hspi_ = init.hspi;
+  hdma_spi_rx_ = init.hdma_spi_rx;
+  hdma_spi_tx_ = init.hdma_spi_tx;
   BMI088_.Read(BMI088_real_data_.gyro, BMI088_real_data_.accel, &BMI088_real_data_.temp);
   AHRS_init(INS_quat, BMI088_real_data_.accel, IST8310_real_data_.mag);
+  SPI_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+  imu_start_dma_flag = 1;
+}
+
+void IMU_typeC::Accel_INT_callback() {
+  accel_update_flag |= 1 << IMU_DR_SHFITS;
+  accel_temp_update_flag |= 1 << IMU_DR_SHFITS;
+  if(imu_start_dma_flag)
+    imu_cmd_spi_dma();
+}
+
+void IMU_typeC::Gyro_INT_callback() {
+  gyro_update_flag |= 1 << IMU_DR_SHFITS;
+  if(imu_start_dma_flag)
+    imu_cmd_spi_dma();
 }
 
 void IMU_typeC::AHRS_init(float* quat, float* accel, float* mag) {
@@ -536,6 +564,139 @@ void IMU_typeC::GetAngle(float* q, float* yaw, float* pitch, float* roll) {
   *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f);
   *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]));
   *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f);
+}
+
+void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
+  SET_BIT(hspi1.Instance->CR2, SPI_CR2_TXDMAEN);
+  SET_BIT(hspi1.Instance->CR2, SPI_CR2_RXDMAEN);
+
+  __HAL_SPI_ENABLE(&hspi1);
+
+
+  //disable DMA
+  //失效DMA
+  __HAL_DMA_DISABLE(hdma_spi_rx_);
+
+  while(hdma_spi_rx_->Instance->CR & DMA_SxCR_EN)
+  {
+    __HAL_DMA_DISABLE(hdma_spi_rx_);
+  }
+
+  __HAL_DMA_CLEAR_FLAG(hdma_spi_rx_, DMA_LISR_TCIF2);
+
+  hdma_spi_rx_->Instance->PAR = (uint32_t) & (SPI1->DR);
+  //memory buffer 1
+  //内存缓冲区1
+  hdma_spi_rx_->Instance->M0AR = (uint32_t)(rx_buf);
+  //data length
+  //数据长度
+  __HAL_DMA_SET_COUNTER(hdma_spi_rx_, num);
+
+  __HAL_DMA_ENABLE_IT(hdma_spi_rx_, DMA_IT_TC);
+
+
+  //disable DMA
+  //失效DMA
+  __HAL_DMA_DISABLE(hdma_spi_tx_);
+
+  while(hdma_spi_tx_->Instance->CR & DMA_SxCR_EN)
+  {
+    __HAL_DMA_DISABLE(hdma_spi_tx_);
+  }
+
+
+  __HAL_DMA_CLEAR_FLAG(hdma_spi_tx_, DMA_LISR_TCIF3);
+
+  hdma_spi_tx_->Instance->PAR = (uint32_t) & (SPI1->DR);
+  //memory buffer 1
+  //内存缓冲区1
+  hdma_spi_tx_->Instance->M0AR = (uint32_t)(tx_buf);
+  //data length
+  //数据长度
+  __HAL_DMA_SET_COUNTER(hdma_spi_tx_, num);
+}
+
+void IMU_typeC::SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) {
+  //disable DMA
+  //失效DMA
+  __HAL_DMA_DISABLE(hdma_spi_rx_);
+  __HAL_DMA_DISABLE(hdma_spi_tx_);
+  while(hdma_spi_rx_->Instance->CR & DMA_SxCR_EN)
+  {
+    __HAL_DMA_DISABLE(hdma_spi_rx_);
+  }
+  while(hdma_spi_tx_->Instance->CR & DMA_SxCR_EN)
+  {
+    __HAL_DMA_DISABLE(hdma_spi_tx_);
+  }
+  //clear flag
+  //清除标志位
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi_->hdmarx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmarx, __HAL_DMA_GET_HT_FLAG_INDEX(hspi_->hdmarx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmarx, __HAL_DMA_GET_TE_FLAG_INDEX(hspi_->hdmarx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmarx, __HAL_DMA_GET_DME_FLAG_INDEX(hspi_->hdmarx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmarx, __HAL_DMA_GET_FE_FLAG_INDEX(hspi_->hdmarx));
+
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmatx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi_->hdmatx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmatx, __HAL_DMA_GET_HT_FLAG_INDEX(hspi_->hdmatx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmatx, __HAL_DMA_GET_TE_FLAG_INDEX(hspi_->hdmatx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmatx, __HAL_DMA_GET_DME_FLAG_INDEX(hspi_->hdmatx));
+  __HAL_DMA_CLEAR_FLAG (hspi_->hdmatx, __HAL_DMA_GET_FE_FLAG_INDEX(hspi_->hdmatx));
+  //set memory address
+  //设置数据地址
+  hdma_spi_rx_->Instance->M0AR = rx_buf;
+  hdma_spi_tx_->Instance->M0AR = tx_buf;
+  //set data length
+  //设置数据长度
+  __HAL_DMA_SET_COUNTER(hdma_spi_rx_, ndtr);
+  __HAL_DMA_SET_COUNTER(hdma_spi_tx_, ndtr);
+  //enable DMA
+  //使能DMA
+  __HAL_DMA_ENABLE(hdma_spi_rx_);
+  __HAL_DMA_ENABLE(hdma_spi_tx_);
+}
+
+void IMU_typeC::imu_cmd_spi_dma() {
+  UBaseType_t uxSavedInterruptStatus;
+  uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+
+  //开启陀螺仪的DMA传输
+  if( (gyro_update_flag & (1 << IMU_DR_SHFITS) ) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
+      && !(accel_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
+  {
+    gyro_update_flag &= ~(1 << IMU_DR_SHFITS);
+    gyro_update_flag |= (1 << IMU_SPI_SHFITS);
+
+    HAL_GPIO_WritePin(BMI088_param_.CS_GYRO_Port, BMI088_param_.CS_GYRO_Pin, GPIO_PIN_RESET);
+    SPI_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+    return;
+  }
+  //开启加速度计的DMA传输
+  if((accel_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
+      && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
+  {
+    accel_update_flag &= ~(1 << IMU_DR_SHFITS);
+    accel_update_flag |= (1 << IMU_SPI_SHFITS);
+
+    HAL_GPIO_WritePin(BMI088_param_.CS_ACCEL_Port, BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_RESET);
+    SPI_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf, SPI_DMA_ACCEL_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+    return;
+  }
+
+  if((accel_temp_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
+      && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)))
+  {
+    accel_temp_update_flag &= ~(1 << IMU_DR_SHFITS);
+    accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
+
+    HAL_GPIO_WritePin(BMI088_param_.CS_ACCEL_Port, BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_RESET);
+    SPI_DMA_enable((uint32_t)accel_temp_dma_tx_buf, (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_ACCEL_TEMP_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+    return;
+  }
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
 } /* namespace bsp */
