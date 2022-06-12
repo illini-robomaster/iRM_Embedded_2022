@@ -20,12 +20,7 @@
 
 project(example_eigen ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_f4
+irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES typeA.cc
-    DEPENDS eigen3)
-
-irm_add_arm_executable(${PROJECT_NAME}_f1
-    TARGET F103C8
-    SOURCES f103.cc
     DEPENDS eigen3)

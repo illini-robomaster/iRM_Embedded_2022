@@ -27,6 +27,10 @@
 
 namespace control {
 
+constexpr int motor_range = 32767;
+
+int16_t ClipMotorRange(float output);
+
 /**
  * @brief base class for motor representation
  */
@@ -99,6 +103,10 @@ class MotorCANBase : public MotorBase {
    */
   virtual float GetOmegaDelta(const float target) const;
 
+  virtual int16_t GetCurr() const;
+
+  virtual uint16_t GetTemp() const;
+
   /**
    * @brief transmit CAN message for setting motor outputs
    *
@@ -112,6 +120,8 @@ class MotorCANBase : public MotorBase {
    *        many of the private parameters of MotorCANBase.
    */
   friend class ServoMotor;
+
+  volatile bool connection_flag_ = false;
 
  protected:
   volatile float theta_;
@@ -137,6 +147,8 @@ class Motor2006 : public MotorCANBase {
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
 
+  int16_t GetCurr() const override final;
+
  private:
   volatile int16_t raw_current_get_ = 0;
 };
@@ -154,6 +166,10 @@ class Motor3508 : public MotorCANBase {
   void PrintData() const override final;
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
+
+  int16_t GetCurr() const override final;
+
+  uint16_t GetTemp() const override final;
 
  private:
   volatile int16_t raw_current_get_ = 0;
@@ -174,12 +190,13 @@ class Motor6020 : public MotorCANBase {
   /* override base implementation with max current protection */
   void SetOutput(int16_t val) override final;
 
+  int16_t GetCurr() const override final;
+
+  uint16_t GetTemp() const override final;
+
  private:
   volatile int16_t raw_current_get_ = 0;
-  volatile int16_t raw_current_set_ = 0;
   volatile uint8_t raw_temperature_ = 0;
-
-  static const int16_t CURRENT_CORRECTION = -1;  // current direction is reversed
 };
 
 /**
@@ -294,6 +311,8 @@ typedef struct {
   float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
   float transmission_ratio; /* transmission ratio of motor                       */
   float* omega_pid_param;   /* pid parameter used to control speed of motor      */
+  float max_iout;
+  float max_out;
 } servo_t;
 
 /**
@@ -313,7 +332,7 @@ class ServoMotor {
    *
    * @note proximity_out should be greater than proximity_in
    */
-  ServoMotor(servo_t data, float proximity_in = 0.05, float proximity_out = 0.15);
+  ServoMotor(servo_t data, float proximity_in = 0.05, float proximity_out = 0.15, float align_angle = -1);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been
@@ -458,7 +477,8 @@ class ServoMotor {
   int16_t* detect_buf_; /* circular buffer                                                    */
 
   // pid controllers
-  PIDController omega_pid_; /* pid for controlling speed of motor */
+  ConstrainedPID omega_pid_; /* pid for controlling speed of motor */
+  ConstrainedPID theta_pid_;
 
   // edge detectors
   FloatEdgeDetector* inner_wrap_detector_; /* detect motor motion across encoder boarder               */
@@ -478,7 +498,10 @@ typedef struct {
   float test_speed;
   float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
   float transmission_ratio; /* transmission ratio of motor                       */
+  float offset_angle;
   float* omega_pid_param;   /* pid parameter used to control speed of motor      */
+  float max_iout;
+  float max_out;
   align_detect_t align_detect_func;
 } steering_t;
 

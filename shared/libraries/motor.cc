@@ -29,6 +29,12 @@ using namespace bsp;
 
 namespace control {
 
+int16_t ClipMotorRange(float output) {
+  constexpr int MIN = -motor_range; /* Minimum that a 16-bit number can represent */
+  constexpr int MAX = motor_range;  /* Maximum that a 16-bit number can represent */
+  return (int16_t)clip<int>((int)output, MIN, MAX);
+}
+
 /**
  * @brief standard can motor callback, used to update motor data
  *
@@ -37,6 +43,7 @@ namespace control {
  */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
+  motor->connection_flag_ = true;
   motor->UpdateData(data);
 }
 
@@ -87,6 +94,10 @@ float MotorCANBase::GetOmega() const { return omega_; }
 
 float MotorCANBase::GetOmegaDelta(float target) const { return target - omega_; }
 
+int16_t MotorCANBase::GetCurr() const { return 0; }
+
+uint16_t MotorCANBase::GetTemp() const { return 0; }
+
 Motor3508::Motor3508(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
 }
@@ -115,6 +126,10 @@ void Motor3508::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
+int16_t Motor3508::GetCurr() const { return raw_current_get_; }
+
+uint16_t Motor3508::GetTemp() const { return raw_temperature_; }
+
 Motor6020::Motor6020(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
 }
@@ -142,6 +157,10 @@ void Motor6020::SetOutput(int16_t val) {
   constexpr int16_t MAX_ABS_CURRENT = 30000;  // ~
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
+
+int16_t Motor6020::GetCurr() const { return raw_current_get_; }
+
+uint16_t Motor6020::GetTemp() const { return raw_temperature_; }
 
 Motor6623::Motor6623(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
@@ -204,6 +223,8 @@ void Motor2006::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
+int16_t Motor2006::GetCurr() const { return raw_current_get_; }
+
 MotorPWMBase::MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq,
                            uint32_t output_freq, uint32_t idle_throttle)
     : pwm_(htim, channel, clock_freq, output_freq, idle_throttle), idle_throttle_(idle_throttle) {
@@ -232,8 +253,7 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out)
-    : omega_pid_(PIDController(data.omega_pid_param)) {
+ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out, float align_angle) {
   motor_ = data.motor;
   max_speed_ = data.transmission_ratio * data.max_speed;
   max_acceleration_ = data.transmission_ratio * data.max_acceleration;
@@ -243,7 +263,7 @@ ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out)
 
   hold_ = true;
   target_angle_ = 0;
-  align_angle_ = -1;  // Wait for Update to initialize
+  align_angle_ = align_angle;  // Wait for Update to initialize
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
@@ -251,6 +271,9 @@ ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out)
   inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
   outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
+
+  omega_pid_.Reinit(data.omega_pid_param, data.max_iout, data.max_out);
+  theta_pid_.Reinit(7000, 0, 8000, 500, 10000);
 
   // override origianal motor rx callback with servomotor callback
   data.motor->can_->RegisterRxCallback(data.motor->rx_id_, servomotor_callback, this);
@@ -288,22 +311,31 @@ void ServoMotor::SetMaxAcceleration(const float max_acceleration) {
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->posEdge()) omega_pid_.Reset();
-  if (hold_detector_->negEdge()) start_time_ = GetHighresTickMicroSec();
+  if (hold_detector_->posEdge()) {
+    omega_pid_.Reset();
+  }
+  if (hold_detector_->negEdge()) {
+    start_time_ = GetHighresTickMicroSec();
+    theta_pid_.Reset();
+  }
 
   // calculate desired output with pid
   int16_t command;
-  // v = sqrt(2 * a * d)
-  uint32_t current_time = GetHighresTickMicroSec();
-  float speed_max_start = (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
   float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
-  float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
-  float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
-  current_speed = clip<float>(current_speed, 0, max_speed_);
-  command = omega_pid_.ComputeConstraintedOutput(
-      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
-  constexpr float dead_zone = 0;
-  if (command < dead_zone && command > -dead_zone) command = 0;
+  if (hold_) {
+    command = theta_pid_.ComputeConstrainedOutput(target_diff);
+  } else {
+    // v = sqrt(2 * a * d)
+    uint32_t current_time = GetHighresTickMicroSec();
+    float speed_max_start = (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
+    float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
+    float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
+    current_speed = clip<float>(current_speed, 0, max_speed_);
+    command = omega_pid_.ComputeConstrainedOutput(
+        motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
+  }
+  // constexpr float dead_zone = 0;
+  // if (command < dead_zone && command > -dead_zone) command = 0;
   motor_->SetOutput(command);
 
   // jam detection mechanism
@@ -375,7 +407,7 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
 
   // TODO: change the align angle calibration method
   // This is a dumb method to get the align angle
-  if (align_angle_ == -1) align_angle_ = motor_->theta_;
+  if (align_angle_ < 0) align_angle_ = motor_->theta_;
 
   motor_angle_ = motor_->theta_ - align_angle_;
   // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
@@ -406,6 +438,8 @@ SteeringMotor::SteeringMotor(steering_t data) {
   servo_data.max_acceleration = data.max_acceleration;
   servo_data.transmission_ratio = data.transmission_ratio;
   servo_data.omega_pid_param = data.omega_pid_param;
+  servo_data.max_iout = data.max_iout;
+  servo_data.max_out = data.max_out;
   servo_ = new ServoMotor(servo_data);
 
   test_speed_ = data.test_speed;
@@ -455,7 +489,7 @@ bool SteeringMotor::AlignUpdate() {
     print("neg: %8.4f\r\n", neg_align_angle);
     neg_align_complete = true;
   }
-  servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstraintedOutput(
+  servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(
       servo_->motor_->GetOmegaDelta(test_speed_ * servo_->transmission_ratio_)));
   return false;
 }

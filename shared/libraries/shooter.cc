@@ -46,6 +46,8 @@ Shooter::Shooter(shooter_t shooter) {
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
+      servo_data.max_iout = 1000;
+      servo_data.max_out = 10000;
 
       load_step_angle_ = 2 * PI / 8;
       break;
@@ -55,6 +57,8 @@ Shooter::Shooter(shooter_t shooter) {
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
+      servo_data.max_iout = 1000;
+      servo_data.max_out = 10000;
 
       left_pid_ = new PIDController(80, 3, 0.1);
       right_pid_ = new PIDController(80, 3, 0.1);
@@ -119,8 +123,8 @@ void Shooter::Update() {
       flywheel_turning_detector_->input(speed_ == 0);
       float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
       float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
-      left_flywheel_motor_->SetOutput(left_pid_->ComputeConstraintedOutput(left_diff));
-      right_flywheel_motor_->SetOutput(right_pid_->ComputeConstraintedOutput(right_diff));
+      left_flywheel_motor_->SetOutput(left_pid_->ComputeConstrainedOutput(left_diff));
+      right_flywheel_motor_->SetOutput(right_pid_->ComputeConstrainedOutput(right_diff));
       load_servo_->CalcOutput();
       break;
   }

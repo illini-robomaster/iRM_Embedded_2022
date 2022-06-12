@@ -66,6 +66,8 @@ void RM_RTOS_Init() {
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
   servo_data.omega_pid_param = new float[3]{60, 0.5, 100};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 10000;
   servo = new control::ServoMotor(servo_data);
 
   servo->RegisterJamCallback(jam_callback, 0.6);
@@ -75,7 +77,7 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   control::MotorCANBase* motors[] = {motor};
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   while (true) {
     key_detector.input(key.Read());

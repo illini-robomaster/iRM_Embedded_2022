@@ -28,18 +28,24 @@
 #include "utils.h"
 #include "dbus.h"
 
-#define SPEED (5 * PI)
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
+
+#define SPEED (10 * PI)
 #define TEST_SPEED (0.5 * PI)
-#define ACCELERATION (20 * PI)
+#define ACCELERATION (100 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::SteeringMotor* steering = nullptr;
 remote::DBUS* dbus = nullptr;
 
+bsp::GPIO* key = nullptr;
+
 bool steering_align_detect() {
-  float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
-  return abs(theta - 3) < 0.05;
+  // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
+  // return abs(theta - 3) < 0.05;
+  return key->Read() == 1;
 }
 
 void RM_RTOS_Init() {
@@ -54,8 +60,11 @@ void RM_RTOS_Init() {
   steering_data.max_speed = SPEED;
   steering_data.test_speed = TEST_SPEED;
   steering_data.max_acceleration = ACCELERATION;
-  steering_data.transmission_ratio = M3508P19_RATIO;
-  steering_data.omega_pid_param = new float[3]{70, 0.1, 150};
+  steering_data.transmission_ratio = 8;
+  steering_data.offset_angle = 5.96;
+  steering_data.omega_pid_param = new float[3]{100, 1.8, 200};
+  steering_data.max_iout = 1000;
+  steering_data.max_out = 10000;
   steering_data.align_detect_func = steering_align_detect;
   steering = new control::SteeringMotor(steering_data);
 
@@ -64,8 +73,10 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  osDelay(500);  // DBUS initialization needs time
   control::MotorCANBase* motors[] = {motor};
+  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+
+  osDelay(500);  // DBUS initialization needs time
 
   print("Alignment Begin\r\n");
   while (!steering->AlignUpdate()) {
