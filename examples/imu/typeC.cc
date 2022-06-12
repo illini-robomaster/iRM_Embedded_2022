@@ -1,37 +1,53 @@
 /****************************************************************************
- *                                                                          *
- *  Copyright (C) 2022 RoboMaster.                                          *
- *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
- *                                                                          *
- *  This program is free software: you can redistribute it and/or modify    *
- *  it under the terms of the GNU General Public License as published by    *
- *  the Free Software Foundation, either version 3 of the License, or       *
- *  (at your option) any later version.                                     *
- *                                                                          *
- *  This program is distributed in the hope that it will be useful,         *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- *  GNU General Public License for more details.                            *
- *                                                                          *
- *  You should have received a copy of the GNU General Public License       *
- *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
- *                                                                          *
- ****************************************************************************/
+*                                                                          *
+*  Copyright (C) 2022 RoboMaster.                                          *
+*  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+*                                                                          *
+*  This program is free software: you can redistribute it and/or modify    *
+*  it under the terms of the GNU General Public License as published by    *
+*  the Free Software Foundation, either version 3 of the License, or       *
+*  (at your option) any later version.                                     *
+*                                                                          *
+*  This program is distributed in the hope that it will be useful,         *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+*  GNU General Public License for more details.                            *
+*                                                                          *
+*  You should have received a copy of the GNU General Public License       *
+*  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+*                                                                          *
+****************************************************************************/
+
+#include "main.h"
+#include "i2c.h"
 
 #include "bsp_imu.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "i2c.h"
-#include "main.h"
 
-static bsp::IST8310* IST8310 = nullptr;
-static bsp::BMI088* BMI088 = nullptr;
+static bsp::IST8310 *IST8310 = nullptr;
+static bsp::BMI088 *BMI088 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, GPIOG, GPIO_PIN_6);
-  BMI088 =
-      new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
+  BMI088 = new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
+}
+
+float invSqrt(float x) {
+  union {
+    float f;
+    uint32_t i;
+  } conv;
+
+  float x2;
+  const float threehalfs = 1.5F;
+
+  x2 = x * 0.5F;
+  conv.f  = x;
+  conv.i  = 0x5f3759df - ( conv.i >> 1 );
+  conv.f  = conv.f * ( threehalfs - ( x2 * conv.f * conv.f ) );
+  return conv.f;
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -44,8 +60,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
     clear_screen();
     print("Mag:: %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
     BMI088->Read(gyro, accel, &temp);
-    print("IMU::\r\ngyro %.1f %.1f %.1f\r\naccel %.1f %.1f %.1f\r\ntemp %.1f\r\n", gyro[0], gyro[1],
-          gyro[2], accel[0], accel[1], accel[2], temp);
+    print("IMU::\r\ngyro %.1f %.1f %.1f\r\naccel %.1f %.1f %.1f\r\ntemp %.1f\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], temp);
+    print("%.5f\r\n", invSqrt(60));
     osDelay(100);
   }
 }

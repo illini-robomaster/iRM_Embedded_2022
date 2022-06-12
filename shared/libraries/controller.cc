@@ -19,8 +19,8 @@
  ****************************************************************************/
 
 #include "controller.h"
-
 #include "motor.h"
+
 #include "utils.h"
 
 namespace control {
@@ -70,9 +70,9 @@ void PIDController::Reinit(float* param) { Reinit(param[0], param[1], param[2]);
 void PIDController::Reset() { arm_pid_init_f32(&pid_f32_, 1); }
 
 ConstrainedPID::ConstrainedPID() {
-  Reinit(0, 0, 0);
-  Reset();
-  ChangeMax(0, 0);
+    Reinit(0, 0, 0);
+    Reset();
+    ChangeMax(0, 0);
 }
 
 ConstrainedPID::ConstrainedPID(float kp, float ki, float kd, float max_iout, float max_out) {

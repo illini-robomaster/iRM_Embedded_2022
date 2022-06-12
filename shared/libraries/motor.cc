@@ -28,7 +28,7 @@ using namespace bsp;
 
 namespace control {
 
-int16_t ClipMotorRange(float output) {
+int16_t ClipMotorRange (float output) {
   constexpr int MIN = -motor_range; /* Minimum that a 16-bit number can represent */
   constexpr int MAX = motor_range;  /* Maximum that a 16-bit number can represent */
   return (int16_t)clip<int>((int)output, MIN, MAX);
@@ -93,9 +93,13 @@ float MotorCANBase::GetOmega() const { return omega_; }
 
 float MotorCANBase::GetOmegaDelta(float target) const { return target - omega_; }
 
-int16_t MotorCANBase::GetCurr() const { return 0; }
+int16_t MotorCANBase::GetCurr() const {
+  return 0;
+}
 
-uint16_t MotorCANBase::GetTemp() const { return 0; }
+uint16_t MotorCANBase::GetTemp() const {
+  return 0;
+}
 
 Motor3508::Motor3508(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
@@ -125,9 +129,13 @@ void Motor3508::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
-int16_t Motor3508::GetCurr() const { return raw_current_get_; }
+int16_t Motor3508::GetCurr() const {
+  return raw_current_get_;
+}
 
-uint16_t Motor3508::GetTemp() const { return raw_temperature_; }
+uint16_t Motor3508::GetTemp() const {
+  return raw_temperature_;
+}
 
 Motor6020::Motor6020(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
@@ -157,9 +165,13 @@ void Motor6020::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
-int16_t Motor6020::GetCurr() const { return raw_current_get_; }
+int16_t Motor6020::GetCurr() const {
+    return raw_current_get_;
+}
 
-uint16_t Motor6020::GetTemp() const { return raw_temperature_; }
+uint16_t Motor6020::GetTemp() const {
+  return raw_temperature_;
+}
 
 Motor6623::Motor6623(CAN* can, uint16_t rx_id) : MotorCANBase(can, rx_id) {
   can->RegisterRxCallback(rx_id, can_motor_callback, this);
@@ -222,7 +234,9 @@ void Motor2006::SetOutput(int16_t val) {
   output_ = clip<int16_t>(val, -MAX_ABS_CURRENT, MAX_ABS_CURRENT);
 }
 
-int16_t Motor2006::GetCurr() const { return raw_current_get_; }
+int16_t Motor2006::GetCurr() const {
+  return raw_current_get_;
+}
 
 MotorPWMBase::MotorPWMBase(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq,
                            uint32_t output_freq, uint32_t idle_throttle)

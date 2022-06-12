@@ -24,7 +24,7 @@
 #include "cmsis_os.h"
 #include "oled.h"
 
-static display::OLED* OLED = nullptr;
+static display::OLED *OLED = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);

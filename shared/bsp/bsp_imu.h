@@ -32,7 +32,7 @@
 #define IST8310_NO_ERROR 0x00
 #define IST8310_NO_SENSOR 0x40
 
-#define BMI088_ACC_CHIP_ID 0x00  // the register is  " Who am I "
+#define BMI088_ACC_CHIP_ID 0x00 // the register is  " Who am I "
 #define BMI088_ACC_CHIP_ID_VALUE 0x1E
 
 #define BMI088_ACC_ERR_REG 0x02
@@ -246,25 +246,26 @@
 #define BMI088_GYRO_250_SEN 0.00013315805450396191230191732547673f
 #define BMI088_GYRO_125_SEN 0.000066579027251980956150958662738366f
 
-#define SPI_DMA_GYRO_LENGHT 8
-#define SPI_DMA_ACCEL_LENGHT 9
+#define SPI_DMA_GYRO_LENGHT       8
+#define SPI_DMA_ACCEL_LENGHT      9
 #define SPI_DMA_ACCEL_TEMP_LENGHT 4
 
-#define IMU_DR_SHFITS 0
-#define IMU_SPI_SHFITS 1
-#define IMU_UPDATE_SHFITS 2
-#define IMU_NOTIFY_SHFITS 3
+#define IMU_DR_SHFITS        0
+#define IMU_SPI_SHFITS       1
+#define IMU_UPDATE_SHFITS    2
+#define IMU_NOTIFY_SHFITS    3
 
-#define BMI088_GYRO_RX_BUF_DATA_OFFSET 1
+
+#define BMI088_GYRO_RX_BUF_DATA_OFFSET  1
 #define BMI088_ACCEL_RX_BUF_DATA_OFFSET 2
 
 #define IST8310_RX_BUF_DATA_OFFSET 16
 
 #define INS_TASK_INIT_TIME 7
 
-#define INS_YAW_ADDRESS_OFFSET 0
-#define INS_PITCH_ADDRESS_OFFSET 1
-#define INS_ROLL_ADDRESS_OFFSET 2
+#define INS_YAW_ADDRESS_OFFSET    0
+#define INS_PITCH_ADDRESS_OFFSET  1
+#define INS_ROLL_ADDRESS_OFFSET   2
 
 #define INS_GYRO_X_ADDRESS_OFFSET 0
 #define INS_GYRO_Y_ADDRESS_OFFSET 1
@@ -353,27 +354,24 @@ typedef struct {
 
 class IST8310 : public GPIT {
  public:
-  IST8310(IST8310_init_t init, void (*callback)() = nullptr);
-  IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin,
-          void (*callback)() = nullptr);
+  IST8310(IST8310_init_t init);
+  IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin);
   bool IsReady();
   float mag[3];
-
  private:
   uint8_t Init();
-  void ist8310_read_over(uint8_t* status_buf, IST8310_real_data_t* ist8310_real_data);
+  void ist8310_read_over(uint8_t *status_buf, IST8310_real_data_t *ist8310_real_data);
   void ist8310_read_mag(float mag_[3]);
-  void (*callback_)();
   void IntCallback() final;
 
   void ist8310_RST_H();
   void ist8310_RST_L();
   uint8_t ist8310_IIC_read_single_reg(uint8_t reg);
   void ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data);
-  void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
-  void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t* data, uint8_t len);
+  void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+  void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t *data, uint8_t len);
 
-  I2C_HandleTypeDef* hi2c_;
+  I2C_HandleTypeDef *hi2c_;
   GPIO_TypeDef* rst_group_;
   uint16_t rst_pin_;
 };
@@ -425,11 +423,9 @@ typedef struct {
 class BMI088 {
  public:
   BMI088(BMI088_init_t init);
-  BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin,
-         GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
+  BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin, GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
   bool IsReady();
-  void Read(float gyro[3], float accel[3], float* temperate);
-
+  void Read(float gyro[3], float accel[3], float *temperate);
  private:
   SPI_HandleTypeDef* hspi_;
   GPIO_TypeDef* CS1_ACCEL_GPIO_Port_;
@@ -451,35 +447,23 @@ class BMI088 {
   uint8_t BMI088_read_write_byte(uint8_t tx_data);
 
   void BMI088_write_single_reg(uint8_t reg, uint8_t data);
-  void BMI088_read_single_reg(uint8_t reg, uint8_t* data);
-  void BMI088_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
+  void BMI088_read_single_reg(uint8_t reg, uint8_t *data);
+  void BMI088_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
 
   void BMI088_accel_write_single_reg(uint8_t reg, uint8_t data);
   void BMI088_accel_read_single_reg(uint8_t reg, uint8_t* data);
-  void BMI088_accel_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
+  void BMI088_accel_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
 
   void BMI088_gyro_write_single_reg(uint8_t reg, uint8_t data);
   void BMI088_gyro_read_single_reg(uint8_t reg, uint8_t* data);
-  void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
+  void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
 };
 
-class IMU_typeC;
-
-class Accel_INT : public GPIT {
+class IMU_INT : public GPIT {
  public:
-  Accel_INT(uint16_t INT_pin, IMU_typeC* imu);
-
+  IMU_INT(uint16_t INT_pin, void (*callback)());
  private:
-  IMU_typeC* imu_;
-  void IntCallback() final;
-};
-
-class Gyro_INT : public GPIT {
- public:
-  Gyro_INT(uint16_t INT_pin, IMU_typeC* imu);
-
- private:
-  IMU_typeC* imu_;
+  void (*callback_)();
   void IntCallback() final;
 };
 
@@ -488,9 +472,9 @@ typedef struct {
   BMI088_init_t BMI088;
   bsp::heater_init_t heater;
 
-  SPI_HandleTypeDef* hspi;
-  DMA_HandleTypeDef* hdma_spi_rx;
-  DMA_HandleTypeDef* hdma_spi_tx;
+  SPI_HandleTypeDef *hspi;
+  DMA_HandleTypeDef *hdma_spi_rx;
+  DMA_HandleTypeDef *hdma_spi_tx;
 
   uint16_t Accel_INT_pin_;
   uint16_t Gyro_INT_pin_;
@@ -499,8 +483,7 @@ typedef struct {
 class IMU_typeC {
  public:
   IMU_typeC(IMU_typeC_init_t init);
-  void GetAngle(float q[4], float* yaw, float* pitch, float* roll);
-
+  void GetAngle(float q[4], float *yaw, float *pitch, float *roll);
  private:
   IST8310 IST8310_;
   BMI088 BMI088_;
@@ -509,15 +492,15 @@ class IMU_typeC {
   IST8310_init_t IST8310_param_;
   BMI088_init_t BMI088_param_;
 
-  friend class Accel_INT;
-  friend class Gyro_INT;
+  IMU_INT Accel_INT;
+  IMU_INT Gyro_INT;
 
-  Accel_INT Accel_INT_;
-  Gyro_INT Gyro_INT_;
+  void Accel_INT_callback();
+  void Gyro_INT_callback();
 
-  SPI_HandleTypeDef* hspi_;
-  DMA_HandleTypeDef* hdma_spi_rx_;
-  DMA_HandleTypeDef* hdma_spi_tx_;
+  SPI_HandleTypeDef *hspi_;
+  DMA_HandleTypeDef *hdma_spi_rx_;
+  DMA_HandleTypeDef *hdma_spi_tx_;
 
   float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float INS_angle[3] = {0.0f, 0.0f, 0.0f};
@@ -532,14 +515,13 @@ class IMU_typeC {
   volatile uint8_t imu_start_dma_flag = 0;
 
   uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
-  uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+  uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {0x82,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
   uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT];
-  uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {0x92, 0xFF, 0xFF, 0xFF, 0xFF,
-                                                    0xFF, 0xFF, 0xFF, 0xFF};
+  uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {0x92,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
   uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT];
-  uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0xA2, 0xFF, 0xFF, 0xFF};
+  uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0xA2,0xFF,0xFF,0xFF};
 
   void AHRS_init(float quat[4], float accel[3], float mag[3]);
   void AHRS_update(float quat[4], float time, float gyro[3], float accel[3], float mag[3]);

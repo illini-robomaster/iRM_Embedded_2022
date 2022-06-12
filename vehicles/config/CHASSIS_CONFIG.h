@@ -18,45 +18,8 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
-#include "oled.h"
+/********* THIS FILE IS AUTO GENERATED. DO NOT CHANGE IT MANUALLY. **********/
+/********* CHANGE CONFIG FILES IN /config TO MODIFY THIS FILE. **************/
+/********* EVERY GENERATION REWRITE THE WHOLE FILE. *************************/
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
-static display::OLED *OLED = nullptr;
 
-void RM_RTOS_Init() {
-  print_use_uart(&huart1);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
-  OLED = new display::OLED(&hi2c2, 0x3C);
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-
-  print("OLED %s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
-  OLED->ShowLOGO();
-  osDelay(200);
-  OLED->OperateGram(display::PEN_CLEAR);
-  OLED->ShowString(0, 0, (uint8_t*)"C1");
-
-  while (true) {
-    motor->connection_flag_ = false;
-    osDelay(50);
-    set_cursor(0, 0);
-    clear_screen();
-    if (motor->connection_flag_) {
-      OLED->ShowBlock(0, 2, true);
-      print("Motor Connected...\r\n");
-    } else {
-      OLED->ShowBlock(0, 2, false);
-      print("Motor Disconnected!!!\r\n");
-    }
-    OLED->RefreshGram();
-  }
-}

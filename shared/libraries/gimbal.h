@@ -38,10 +38,10 @@ typedef enum { GIMBAL_STANDARD_ZERO, GIMBAL_STANDARD_2022_ALPHA } gimbal_model_t
  *       encoder values through uart/gdb
  */
 typedef struct {
-  float pitch_offset_; /* pitch offset angle (angle when muzzle is at vertical center) */
-  float yaw_offset_;   /* yaw offset angle (angle when muzzle is at horizontal center) */
-  float pitch_max_;    /* maximum pitch angle the gimbal can turn from center          */
-  float yaw_max_;      /* maximum yaw angle the gimbal can turn from center            */
+  float pitch_offset_;    /* pitch offset angle (angle when muzzle is at vertical center) */
+  float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */
+  float pitch_max_;       /* maximum pitch angle the gimbal can turn from center          */
+  float yaw_max_;         /* maximum yaw angle the gimbal can turn from center            */
 } gimbal_data_t;
 
 /**
@@ -109,10 +109,10 @@ class Gimbal {
   gimbal_data_t data_;
 
   // pitch and yaw pid
-  float* pitch_theta_pid_param_;    /* pid param that used to control pitch motor when moving  */
-  float* pitch_omega_pid_param_;    /* pid param that used to control pitch motor when holding */
-  float* yaw_theta_pid_param_;      /* pid param that used to control yaw motor when moving    */
-  float* yaw_omega_pid_param_;      /* pid param that used to control yaw motor when holding   */
+  float* pitch_theta_pid_param_; /* pid param that used to control pitch motor when moving  */
+  float* pitch_omega_pid_param_; /* pid param that used to control pitch motor when holding */
+  float* yaw_theta_pid_param_;   /* pid param that used to control yaw motor when moving    */
+  float* yaw_omega_pid_param_;   /* pid param that used to control yaw motor when holding   */
   ConstrainedPID* pitch_theta_pid_; /* pitch theta pid */
   ConstrainedPID* pitch_omega_pid_; /* pitch omega pid */
   ConstrainedPID* yaw_theta_pid_;   /* yaw theta pid   */

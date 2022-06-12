@@ -18,45 +18,26 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
-#include "motor.h"
-#include "oled.h"
+/********* THIS FILE IS AUTO GENERATED. DO NOT CHANGE IT MANUALLY. **********/
+/********* CHANGE CONFIG FILES IN /config TO MODIFY THIS FILE. **************/
+/********* EVERY GENERATION REWRITE THE WHOLE FILE. *************************/
 
-static bsp::CAN* can1 = nullptr;
-static control::MotorCANBase* motor = nullptr;
-static display::OLED *OLED = nullptr;
+const float __PITCH_OFFSET = 4.725;
+const float __PITCH_MAX = 0.408;
+const float __PITCH_PROXIMITY = 0.136;
+const float __PITCH_MOVE_KP = 1400;
+const float __PITCH_MOVE_KI = 0;
+const float __PITCH_MOVE_KD = 2200;
+const float __PITCH_HOLD_KP = 3200;
+const float __PITCH_HOLD_KI = 100;
+const float __PITCH_HOLD_KD = 3100;
+const float __YAW_OFFSET = 3.406;
+const float __YAW_MAX = 1.551;
+const float __YAW_PROXIMITY = 0.517;
+const float __YAW_MOVE_KP = 1000;
+const float __YAW_MOVE_KI = 0;
+const float __YAW_MOVE_KD = 200;
+const float __YAW_HOLD_KP = 3000;
+const float __YAW_HOLD_KI = 60;
+const float __YAW_HOLD_KD = 2500;
 
-void RM_RTOS_Init() {
-  print_use_uart(&huart1);
-
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
-  OLED = new display::OLED(&hi2c2, 0x3C);
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-
-  print("OLED %s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
-  OLED->ShowLOGO();
-  osDelay(200);
-  OLED->OperateGram(display::PEN_CLEAR);
-  OLED->ShowString(0, 0, (uint8_t*)"C1");
-
-  while (true) {
-    motor->connection_flag_ = false;
-    osDelay(50);
-    set_cursor(0, 0);
-    clear_screen();
-    if (motor->connection_flag_) {
-      OLED->ShowBlock(0, 2, true);
-      print("Motor Connected...\r\n");
-    } else {
-      OLED->ShowBlock(0, 2, false);
-      print("Motor Disconnected!!!\r\n");
-    }
-    OLED->RefreshGram();
-  }
-}
