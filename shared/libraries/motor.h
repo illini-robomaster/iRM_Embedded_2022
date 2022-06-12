@@ -29,7 +29,7 @@ namespace control {
 
 constexpr int motor_range = 32767;
 
-int16_t ClipMotorRange (float output);
+int16_t ClipMotorRange(float output);
 
 /**
  * @brief base class for motor representation

@@ -26,7 +26,7 @@
 
 static bsp::CAN* can1 = nullptr;
 static control::MotorCANBase* motor = nullptr;
-static display::OLED *OLED = nullptr;
+static display::OLED* OLED = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);

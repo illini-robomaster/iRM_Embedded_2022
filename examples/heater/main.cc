@@ -25,13 +25,14 @@
 #include "bsp_print.h"
 #include "cmsis_os.h"
 
-static bsp::Heater *heater = nullptr;
-static bsp::BMI088 *BMI088 = nullptr;
+static bsp::Heater* heater = nullptr;
+static bsp::BMI088* BMI088 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   heater = new bsp::Heater(&htim10, 1, 1000000, 45);
-  BMI088 = new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
+  BMI088 =
+      new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {

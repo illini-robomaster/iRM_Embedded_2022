@@ -26,11 +26,8 @@ namespace control {
 
 class Pose {
  public:
-  typedef enum {
-    X,     Y,     Z,
-    X_NEG, Y_NEG, Z_NEG
-  } imu_gravity_dir_t;
-  
+  typedef enum { X, Y, Z, X_NEG, Y_NEG, Z_NEG } imu_gravity_dir_t;
+
   /** @description: constructor for Pose
    *  @param: _imu: imu pointer
    **/

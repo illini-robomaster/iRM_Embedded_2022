@@ -130,9 +130,7 @@ float Pose::GetGravity(void) {
   return acce / NUM;
 }
 
-void Pose::SetGravityDir(imu_gravity_dir_t _dir) {
-  gravityDir = _dir;
-}
+void Pose::SetGravityDir(imu_gravity_dir_t _dir) { gravityDir = _dir; }
 
 void Pose::SetOffset(float _acc_x_off, float _acc_y_off, float _acc_z_off, float _gyro_x_off,
                      float _gyro_y_off, float _gyro_z_off) {
@@ -159,18 +157,16 @@ void Pose::SetAlpha(float _alpha) {
 }
 
 void Pose::ComplementaryFilterUpdate(void) {
-  float time_diff_sec = (float) (imu->timestamp - timestamp) / USEC_TO_SEC;
+  float time_diff_sec = (float)(imu->timestamp - timestamp) / USEC_TO_SEC;
   if (gravityDir == X) {
     // compute pitch and roll based on acce meter
     pitchAcc = atan2f(imu->acce.z - acc_z_off, imu->acce.x - acc_x_off);
     rollAcc = atan2f(imu->acce.y - acc_y_off, imu->acce.x - acc_x_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.y - gyro_y_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.y - gyro_y_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.z - gyro_z_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.z - gyro_z_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.x - gyro_x_off) * time_diff_sec;
@@ -180,11 +176,9 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.z - acc_z_off, imu->acce.y - acc_y_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.z - gyro_z_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.z - gyro_z_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.x - gyro_x_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.x - gyro_x_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.y - gyro_y_off) * time_diff_sec;
@@ -194,11 +188,9 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.x - acc_x_off, imu->acce.z - acc_z_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.x - gyro_x_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.x - gyro_x_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.y - gyro_y_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.z - gyro_z_off) * time_diff_sec;
@@ -209,11 +201,9 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.y + acc_y_off, imu->acce.x + acc_x_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.y + gyro_y_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.y + gyro_y_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.z + gyro_z_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.z + gyro_z_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.x - gyro_x_off) * time_diff_sec;
@@ -223,11 +213,9 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.z + acc_z_off, imu->acce.y + acc_y_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.z + gyro_z_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.z + gyro_z_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.x + gyro_x_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.x + gyro_x_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.y - gyro_y_off) * time_diff_sec;
@@ -237,11 +225,9 @@ void Pose::ComplementaryFilterUpdate(void) {
     rollAcc = atan2f(imu->acce.x + acc_x_off, imu->acce.z + acc_z_off);
 
     // estimate pose from gyro and acce
-    pitch = alpha * (pitch + (imu->gyro.x + gyro_x_off) * time_diff_sec) +
-        (1.0 - alpha) * pitchAcc;
+    pitch = alpha * (pitch + (imu->gyro.x + gyro_x_off) * time_diff_sec) + (1.0 - alpha) * pitchAcc;
 
-    roll = alpha * (roll + (imu->gyro.y + gyro_y_off) * time_diff_sec) -
-        (1.0 - alpha) * rollAcc;
+    roll = alpha * (roll + (imu->gyro.y + gyro_y_off) * time_diff_sec) - (1.0 - alpha) * rollAcc;
 
     // yaw cannot rely on acce.
     yaw = yaw + (imu->gyro.z - gyro_z_off) * time_diff_sec;
