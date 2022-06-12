@@ -21,8 +21,10 @@
 #include "bsp_imu.h"
 
 #include <cmath>
-
 #include "MahonyAHRS.h"
+
+#include "dma.h"
+
 #include "bsp_error_handler.h"
 #include "bsp_mpu6500_reg.h"
 #include "bsp_os.h"
@@ -546,6 +548,8 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init)
       heater_(init.heater),
       Accel_INT_(init.Accel_INT_pin_, this),
       Gyro_INT_(init.Gyro_INT_pin_, this) {
+  RM_ASSERT_FALSE(FindInstance(init.hspi), "Uart repeated initialization");
+  spi_ptr_map[init.hspi] = this;
   IST8310_param_ = init.IST8310;
   BMI088_param_ = init.BMI088;
   hspi_ = init.hspi;
@@ -555,6 +559,15 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init)
   AHRS_init(INS_quat, BMI088_real_data_.accel, IST8310_real_data_.mag);
   SPI_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
   imu_start_dma_flag = 1;
+}
+
+IMU_typeC* IMU_typeC::FindInstance(SPI_HandleTypeDef* hspi) {
+  const auto it = spi_ptr_map.find(hspi);
+  if (it == spi_ptr_map.end()) {
+    return nullptr;
+  }
+
+  return it->second;
 }
 
 void IMU_typeC::AHRS_init(float* quat, float* accel, float* mag) {
@@ -705,4 +718,49 @@ void IMU_typeC::imu_cmd_spi_dma() {
   taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
+void DMACallbackWrapper(SPI_HandleTypeDef *hspi) {
+  if(__HAL_DMA_GET_FLAG(hspi->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi->hdmarx)) != RESET) {
+    __HAL_DMA_CLEAR_FLAG(hspi->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi->hdmarx));
+
+    IMU_typeC* imu = IMU_typeC::FindInstance(hspi);
+    if (!imu) return;
+
+    //gyro read over
+    //陀螺仪读取完毕
+    if(imu->gyro_update_flag & (1 << IMU_SPI_SHFITS)) {
+      imu->gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
+      imu->gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_GYRO_Port, imu->BMI088_param_.CS_GYRO_Pin, GPIO_PIN_SET);
+    }
+    //accel read over
+    //加速度计读取完毕
+    if(imu->accel_update_flag & (1 << IMU_SPI_SHFITS)) {
+      imu->accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
+      imu->accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_SET);
+    }
+    //temperature read over
+    //温度读取完毕
+    if(imu->accel_temp_update_flag & (1 << IMU_SPI_SHFITS)) {
+      imu->accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
+      imu->accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_SET);
+    }
+
+    imu->imu_cmd_spi_dma();
+
+    if(imu->gyro_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+      imu->gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+      imu->gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
+      imu->RxCompleteCallback();
+    }
+  }
+}
+
+void IMU_typeC::RxCompleteCallback() {}
+
 } /* namespace bsp */
+
+void RM_DMA_IRQHandler(SPI_HandleTypeDef *hspi) {
+  bsp::DMACallbackWrapper(hspi);
+}

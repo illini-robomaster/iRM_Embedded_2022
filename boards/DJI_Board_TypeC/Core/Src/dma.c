@@ -69,6 +69,7 @@ void MX_DMA_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
-
+__weak void RM_DMA_IRQHandler(SPI_HandleTypeDef *hspi) {
+}
 /* USER CODE END 2 */
 

@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "bsp_gpio.h"
 #include "bsp_heater.h"
 #include "cmsis_os.h"
@@ -501,7 +503,13 @@ class IMU_typeC {
   IMU_typeC(IMU_typeC_init_t init);
   void GetAngle(float q[4], float* yaw, float* pitch, float* roll);
 
+ protected:
+  virtual void RxCompleteCallback();
+
  private:
+  static std::map<SPI_HandleTypeDef*, IMU_typeC*> spi_ptr_map;
+  static IMU_typeC* FindInstance(SPI_HandleTypeDef* hspi);
+
   friend class IST8310;
 
   IST8310 IST8310_;
@@ -550,6 +558,8 @@ class IMU_typeC {
   void SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr);
 
   void imu_cmd_spi_dma();
+
+  friend void DMACallbackWrapper(SPI_HandleTypeDef *hspi);
 };
 
 } /* namespace bsp */

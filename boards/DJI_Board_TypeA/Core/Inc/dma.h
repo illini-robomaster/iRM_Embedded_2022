@@ -40,7 +40,7 @@ extern "C" {
 void MX_DMA_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void RM_DMA_IRQHandler(SPI_HandleTypeDef *hspi);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
