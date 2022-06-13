@@ -31,5 +31,9 @@ irm_add_arm_executable(imu_calibrate
 irm_add_arm_executable(imu_estimate
     TARGET DJI_Board_TypeA
     SOURCES poseEstimate.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_imu_ext
+        TARGET DJI_Board_TypeC
+        SOURCES imu_ext.cc)
     
 

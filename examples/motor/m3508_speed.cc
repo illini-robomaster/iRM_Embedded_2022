@@ -19,7 +19,8 @@
  ****************************************************************************/
 
 // If want controller to be used
-#define WITH_CONTROLLER
+//
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -32,8 +33,8 @@
 #include "dbus.h"
 #endif
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+#define KEY_Pin GPIO_PIN_0
+#define KEY_GPIO_Port GPIOA
 
 #ifdef WITH_CONTROLLER
 #define TARGET_SPEED 160
@@ -51,7 +52,7 @@ BoolEdgeDetector detector(false);
 #endif
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+  print_use_uart(&huart1);
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
 
@@ -69,7 +70,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+  bsp::GPIO key(KEY_GPIO_Port, KEY_Pin);
 
 #ifdef WITH_CONTROLLER
   float target = 0;
@@ -87,7 +88,7 @@ void RM_RTOS_Default_Task(const void* args) {
       target = 0;
     }
 #else
-    detector.input(key.Read());
+    detector.input(!key.Read());
     if (detector.posEdge()) {
       target = TARGET_SPEED2;
       pid.Reset();
