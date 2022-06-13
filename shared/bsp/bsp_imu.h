@@ -20,19 +20,19 @@
 
 #pragma once
 
-#include "bsp_gpio.h"
-#include "spi.h"
-#include "i2c.h"
-
 #include <stddef.h>
+
 #include <Eigen/Dense>
+
+#include "bsp_gpio.h"
+#include "i2c.h"
+#include "spi.h"
 
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
 // ist8310 error handling
 #define IST8310_DATA_READY_BIT 2
-
 
 namespace bsp {
 
@@ -104,15 +104,14 @@ class IST8310 : public GPIT {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-
   uint8_t Init();
   void IntCallback() override final;
 
   // polling interfaces used only in initialization
   uint8_t ReadReg(uint8_t reg);
   void WriteReg(uint8_t reg, uint8_t data);
-  void ReadRegs(uint8_t reg, uint8_t *buf, uint8_t len);
-  void WriteRegs(uint8_t reg, uint8_t *data, uint8_t len);
+  void ReadRegs(uint8_t reg, uint8_t* buf, uint8_t len);
+  void WriteRegs(uint8_t reg, uint8_t* data, uint8_t len);
 
   friend void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c);
   static IST8310* ist8310;
@@ -120,7 +119,7 @@ class IST8310 : public GPIT {
   IST8310_Callback callback_ = nullptr;
   uint8_t buf_[6];
 
-  I2C_HandleTypeDef *hi2c_;
+  I2C_HandleTypeDef* hi2c_;
   GPIO reset_;
 };
 
@@ -160,20 +159,13 @@ enum {
   BMI088_NO_SENSOR = 0xFF,
 };
 
-typedef struct {
-  SPI_HandleTypeDef* hspi;
-  GPIO_TypeDef* CS_ACCEL_Port;
-  uint16_t CS_ACCEL_Pin;
-  GPIO_TypeDef* CS_GYRO_Port;
-  uint16_t CS_GYRO_Pin;
-} BMI088_init_t;
-
 class BMI088 {
  public:
-  BMI088(BMI088_init_t init);
-  BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin, GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
+  BMI088(SPI_HandleTypeDef* hspi, GPIO_TypeDef* CS_ACCEL_Port, uint16_t CS_ACCEL_Pin,
+         GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
   bool IsReady();
-  void Read(float gyro[3], float accel[3], float *temperate);
+  void Read(float gyro[3], float accel[3], float* temperate);
+
  private:
   SPI_HandleTypeDef* hspi_;
   GPIO_TypeDef* CS1_ACCEL_GPIO_Port_;
@@ -195,16 +187,16 @@ class BMI088 {
   uint8_t BMI088_read_write_byte(uint8_t tx_data);
 
   void BMI088_write_single_reg(uint8_t reg, uint8_t data);
-  void BMI088_read_single_reg(uint8_t reg, uint8_t *data);
-  void BMI088_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+  void BMI088_read_single_reg(uint8_t reg, uint8_t* data);
+  void BMI088_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
 
   void BMI088_accel_write_single_reg(uint8_t reg, uint8_t data);
   void BMI088_accel_read_single_reg(uint8_t reg, uint8_t* data);
-  void BMI088_accel_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+  void BMI088_accel_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
 
   void BMI088_gyro_write_single_reg(uint8_t reg, uint8_t data);
   void BMI088_gyro_read_single_reg(uint8_t reg, uint8_t* data);
-  void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
+  void BMI088_gyro_read_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len);
 };
 
 } /* namespace bsp */

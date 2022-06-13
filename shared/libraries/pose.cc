@@ -128,12 +128,12 @@ void Pose::ComplementaryFilterUpdate(void) {
   rollAcc = atan2f(imu->acce.x() - acc_x_off, imu->acce.z() - acc_z_off);
 
   // estimate pose from gyro and acce
-  pitch = alpha * (pitch +
-                   (imu->gyro.x() - gyro_x_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) +
+  pitch = alpha * (pitch + (imu->gyro.x() - gyro_x_off) * (float)(imu->timestamp - timestamp) /
+                               USEC_TO_SEC) +
           (1.0 - alpha) * pitchAcc;
 
-  roll = alpha * (roll +
-                  (imu->gyro.y() - gyro_y_off) * (float)(imu->timestamp - timestamp) / USEC_TO_SEC) -
+  roll = alpha * (roll + (imu->gyro.y() - gyro_y_off) * (float)(imu->timestamp - timestamp) /
+                             USEC_TO_SEC) -
          (1.0 - alpha) * rollAcc;
 
   // yaw cannot rely on acce.
