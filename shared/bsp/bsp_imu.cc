@@ -163,10 +163,11 @@ void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   UNUSED(hi2c);
 
   // copy magnetic data from raw buffer
+  // also convert from left-handed NEU coordinate to right-handed NED coordinate
   IST8310* sensor = IST8310::ist8310;
   sensor->mag[0] = MAG_SEN * (int16_t)((sensor->buf_[1] << 8) | sensor->buf_[0]);
   sensor->mag[1] = MAG_SEN * (int16_t)((sensor->buf_[3] << 8) | sensor->buf_[2]);
-  sensor->mag[2] = MAG_SEN * (int16_t)((sensor->buf_[5] << 8) | sensor->buf_[4]);
+  sensor->mag[2] = -MAG_SEN * (int16_t)((sensor->buf_[5] << 8) | sensor->buf_[4]);
 
   // call user callback
   if (IST8310::ist8310->callback_) {
