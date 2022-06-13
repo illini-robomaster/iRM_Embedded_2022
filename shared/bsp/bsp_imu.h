@@ -98,8 +98,10 @@ class IST8310 : public GPIT {
   IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset);
   void RegisterCallback(IST8310_Callback callback);
 
-  float mag[3];
+  Eigen::Vector3f mag;
   uint32_t timestamp = 0;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
 
