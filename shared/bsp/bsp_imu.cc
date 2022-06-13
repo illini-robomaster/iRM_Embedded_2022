@@ -252,7 +252,7 @@ void IST8310::ist8310_read_mag(float mag_[3]) {
 }
 
 void IST8310::IntCallback() {
-  if (imu_) {
+  if (imu_ && imu_->useMag_) {
     imu_->mag_update_flag |= 1 << IMU_DR_SHFITS;
 
     if (imu_->mag_update_flag &= 1 << IMU_DR_SHFITS) {
@@ -585,10 +585,14 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init, bool useMag)
   spi_ptr_map[init.hspi] = this;
   IST8310_param_ = init.IST8310;
   BMI088_param_ = init.BMI088;
+  heater_param_ = init.heater;
   hspi_ = init.hspi;
   hdma_spi_rx_ = init.hdma_spi_rx;
   hdma_spi_tx_ = init.hdma_spi_tx;
   BMI088_.Read(BMI088_real_data_.gyro, BMI088_real_data_.accel, &BMI088_real_data_.temp);
+  accel_fliter_1[0] = accel_fliter_2[0] = accel_fliter_3[0] = BMI088_real_data_.accel[0];
+  accel_fliter_1[1] = accel_fliter_2[1] = accel_fliter_3[1] = BMI088_real_data_.accel[1];
+  accel_fliter_1[2] = accel_fliter_2[2] = accel_fliter_3[2] = BMI088_real_data_.accel[2];
   AHRS_init(INS_quat, BMI088_real_data_.accel, IST8310_real_data_.mag);
   SPI_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
   imu_start_dma_flag = 1;
@@ -612,8 +616,43 @@ void IMU_typeC::Update() {
     TempControl(BMI088_real_data_.temp);
   }
 
-  AHRS_update(INS_quat, 0.001f, BMI088_real_data_.gyro, BMI088_real_data_.accel, IST8310_real_data_.mag);
-  GetAngle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
+  if (Temp > heater_param_.temp - 2) {
+    if (!useMag_) {
+      if (++count_ < zeroDriftTry) {
+        for (int i = 0; i < 3; ++i) {
+          zeroDriftTemp[i] += BMI088_real_data_.gyro[i];
+        }
+        return;
+      } else if (count_ == zeroDriftTry) {
+        for (int i = 0; i < 3; ++i) {
+          zeroDrift[i] = zeroDriftTemp[i] / (float)zeroDriftTry;
+        }
+        return;
+      }
+      for (int i = 0; i < 3; ++i) {
+        BMI088_real_data_.gyro[i] -= zeroDrift[i];
+      }
+    }
+    accel_fliter_1[0] = accel_fliter_2[0];
+    accel_fliter_2[0] = accel_fliter_3[0];
+    accel_fliter_3[0] = accel_fliter_2[0] * fliter_num[0] + accel_fliter_1[0] * fliter_num[1] + BMI088_real_data_.accel[0] * fliter_num[2];
+    accel_fliter_1[1] = accel_fliter_2[1];
+    accel_fliter_2[1] = accel_fliter_3[1];
+    accel_fliter_3[1] = accel_fliter_2[1] * fliter_num[0] + accel_fliter_1[1] * fliter_num[1] + BMI088_real_data_.accel[1] * fliter_num[2];
+    accel_fliter_1[2] = accel_fliter_2[2];
+    accel_fliter_2[2] = accel_fliter_3[2];
+    accel_fliter_3[2] = accel_fliter_2[2] * fliter_num[0] + accel_fliter_1[2] * fliter_num[1] + BMI088_real_data_.accel[2] * fliter_num[2];
+    AHRS_update(INS_quat, 0.001f, BMI088_real_data_.gyro, BMI088_real_data_.accel, IST8310_real_data_.mag);
+    GetAngle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
+  }
+}
+
+bool IMU_typeC::DataReady() {
+  if (useMag_) {
+    return Temp > heater_param_.temp - 2;
+  } else {
+    return Temp > heater_param_.temp - 2 && count_ > zeroDriftTry;
+  }
 }
 
 std::map<SPI_HandleTypeDef*, IMU_typeC*> IMU_typeC::spi_ptr_map;

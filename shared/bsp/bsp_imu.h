@@ -504,7 +504,9 @@ typedef struct {
 class IMU_typeC {
  public:
   IMU_typeC(IMU_typeC_init_t init, bool useMag = true);
+  void Calibrate();
   void Update();
+  bool DataReady();
 
   float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float INS_angle[3] = {0.0f, 0.0f, 0.0f};
@@ -515,15 +517,26 @@ class IMU_typeC {
 
  private:
   bool useMag_;
+  unsigned long count_ = 0;
+
+  unsigned zeroDriftTry = 1000;
+  float zeroDrift[3] = {0, 0, 0};
+  float zeroDriftTemp[3] = {0, 0, 0};
+
+  float accel_fliter_1[3] = {0.0f, 0.0f, 0.0f};
+  float accel_fliter_2[3] = {0.0f, 0.0f, 0.0f};
+  float accel_fliter_3[3] = {0.0f, 0.0f, 0.0f};
+  const float fliter_num[3] = {1.929454039488895f, -0.93178349823448126f, 0.002329458745586203f};
 
   friend class IST8310;
 
   IST8310 IST8310_;
   BMI088 BMI088_;
-  bsp::Heater heater_;
+  Heater heater_;
 
   IST8310_init_t IST8310_param_;
   BMI088_init_t BMI088_param_;
+  heater_init_t heater_param_;
 
   friend class Accel_INT;
   friend class Gyro_INT;
