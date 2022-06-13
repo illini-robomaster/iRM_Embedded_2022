@@ -70,7 +70,7 @@ const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 256 * 4,
                                              .priority = (osPriority_t)osPriorityNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -137,8 +137,10 @@ void RM_RTOS_Default_Task(const void* arg) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0], imu->INS_angle[1], imu->INS_angle[2]);
-    osDelay(100);
+    print("# %.2f s\r\n", HAL_GetTick() / 1000.0);
+    print("Temp: %.2f\r\n", imu->Temp);
+    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180, imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+    osDelay(50);
   }
 }
 

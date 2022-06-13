@@ -503,7 +503,7 @@ typedef struct {
 
 class IMU_typeC {
  public:
-  IMU_typeC(IMU_typeC_init_t init);
+  IMU_typeC(IMU_typeC_init_t init, bool useMag = true);
   void Update();
 
   float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -514,6 +514,8 @@ class IMU_typeC {
   virtual void RxCompleteCallback();
 
  private:
+  bool useMag_;
+
   friend class IST8310;
 
   IST8310 IST8310_;

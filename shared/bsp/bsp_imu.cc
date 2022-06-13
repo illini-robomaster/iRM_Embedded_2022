@@ -574,12 +574,13 @@ void Gyro_INT::IntCallback() {
   if (imu_->imu_start_dma_flag) imu_->imu_cmd_spi_dma();
 }
 
-IMU_typeC::IMU_typeC(IMU_typeC_init_t init)
+IMU_typeC::IMU_typeC(IMU_typeC_init_t init, bool useMag)
     : IST8310_(init.IST8310, this),
       BMI088_(init.BMI088),
       heater_(init.heater),
       Accel_INT_(init.Accel_INT_pin_, this),
       Gyro_INT_(init.Gyro_INT_pin_, this) {
+  useMag_ = useMag;
   RM_ASSERT_FALSE(FindInstance(init.hspi), "Uart repeated initialization");
   spi_ptr_map[init.hspi] = this;
   IST8310_param_ = init.IST8310;
@@ -637,8 +638,12 @@ void IMU_typeC::AHRS_init(float* quat, float* accel, float* mag) {
 
 void IMU_typeC::AHRS_update(float* quat, float time, float* gyro, float* accel, float* mag) {
   UNUSED(time);
-  MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1],
-                   mag[2]);
+
+  if (useMag_) {
+    MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1], mag[2]);
+  } else {
+    MahonyAHRSupdateIMU(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2]);
+  }
 }
 
 void IMU_typeC::GetAngle(float* q, float* yaw, float* pitch, float* roll) {
