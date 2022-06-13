@@ -22,6 +22,7 @@
 
 #include "bsp_gpio.h"
 #include "spi.h"
+#include "i2c.h"
 
 #include <stddef.h>
 #include <Eigen/Dense>
@@ -96,6 +97,7 @@ class IST8310 : public GPIT {
  public:
   IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset);
   void RegisterCallback(IST8310_Callback callback);
+
   float mag[3];
   uint32_t timestamp = 0;
 
@@ -103,7 +105,6 @@ class IST8310 : public GPIT {
 
   uint8_t Init();
   void IntCallback() override final;
-  void ReadData(float mag_[3]);
 
   // polling interfaces used only in initialization
   uint8_t ReadReg(uint8_t reg);
@@ -111,7 +112,11 @@ class IST8310 : public GPIT {
   void ReadRegs(uint8_t reg, uint8_t *buf, uint8_t len);
   void WriteRegs(uint8_t reg, uint8_t *data, uint8_t len);
 
+  friend void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c);
+  static IST8310* ist8310;
+
   IST8310_Callback callback_ = nullptr;
+  uint8_t buf_[6];
 
   I2C_HandleTypeDef *hi2c_;
   GPIO reset_;

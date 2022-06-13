@@ -35,3 +35,7 @@ irm_add_arm_executable(imu_estimate
 irm_add_arm_executable(${PROJECT_NAME}_typeC
     TARGET DJI_Board_TypeC
     SOURCES typeC.cc)
+
+irm_add_arm_executable(ist8310_timestamp
+    TARGET DJI_Board_TypeC
+    SOURCES ist8310_timestamp.cc)

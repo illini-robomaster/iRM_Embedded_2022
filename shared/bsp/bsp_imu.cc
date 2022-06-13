@@ -157,25 +157,38 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   mpu6500->SPITxRxCpltCallback();
 }
 
+IST8310* IST8310::ist8310 = nullptr;
+
+void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c) {
+  UNUSED(hi2c);
+
+  // copy magnetic data from raw buffer
+  IST8310* sensor = IST8310::ist8310;
+  sensor->mag[0] = MAG_SEN * (int16_t)((sensor->buf_[1] << 8) | sensor->buf_[0]);
+  sensor->mag[1] = MAG_SEN * (int16_t)((sensor->buf_[3] << 8) | sensor->buf_[2]);
+  sensor->mag[2] = MAG_SEN * (int16_t)((sensor->buf_[5] << 8) | sensor->buf_[4]);
+
+  // call user callback
+  if (IST8310::ist8310->callback_) {
+    IST8310::ist8310->callback_(*IST8310::ist8310);
+  }
+}
+
 IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
     : GPIT(int_pin),
       hi2c_(hi2c),
       reset_(reset) {
 
-  const uint32_t init_len = 4;
+  // set global pointer
+  RM_ASSERT_EQ(ist8310, nullptr, "Repeated initialization of IST8310");
+  ist8310 = this;
 
-  //the first column:the registers of IST8310.
-  //the second column: the value to be writed to the registers.
-  const uint8_t init_data[init_len][2] = {
-      {IST8310_CNTL2, IST8310_DREN},  // enable interrupt and low pin polarity.
-      {IST8310_AVGCNTL, IST8310_Y_AVG_2 | IST8310_XZ_AVG_2}, // average 2 times.
-      {IST8310_PDCNTL, IST8310_PD_NORMAL}, // normal pulse duration (required by documentation)
-      {0x0A, 0x0B},     //200Hz output rate.
-  };
+  // register I2C rx complete callback
+  HAL_I2C_RegisterCallback(hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, I2CRxCpltCallback);
 
+  // reset device
   const uint8_t wait_time = 1;
   const uint8_t sleepTime = 50;
-
   // reset is active low
   reset_.Low();
   HAL_Delay(sleepTime);
@@ -185,6 +198,17 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
   if (ReadReg(IST8310_WHO_AM_I) != IST8310_WHO_AM_I_VALUE) {
     bsp_error_handler(__FUNCTION__, __LINE__, "No IST8310 sensor");
   }
+
+  // init sequence
+  const uint32_t init_len = 4;
+  // the first column:the registers of IST8310.
+  // the second column: the value to be writed to the registers.
+  const uint8_t init_data[init_len][2] = {
+      {IST8310_CNTL2, IST8310_DREN},  // enable interrupt and low pin polarity.
+      {IST8310_AVGCNTL, IST8310_Y_AVG_2 | IST8310_XZ_AVG_2}, // average 2 times.
+      {IST8310_PDCNTL, IST8310_PD_NORMAL}, // normal pulse duration (required by documentation)
+      {IST8310_CNTL1, 0x0B},     //200Hz output rate TODO(alvin): this is undocumented.
+  };
 
   //set sensor config and check for errors
   for (uint8_t i = 0; i < init_len; ++i) {
@@ -201,23 +225,13 @@ void IST8310::RegisterCallback(IST8310_Callback callback) {
   callback_ = callback;
 }
 
-void IST8310::ReadData(float mag_[3]) {
-  uint8_t buf[6];
-  int16_t temp_ist8310_data = 0;
-  ReadRegs(IST8310_DATA, buf, 6);
-
-  temp_ist8310_data = (int16_t)((buf[1] << 8) | buf[0]);
-  mag_[0] = MAG_SEN * temp_ist8310_data;
-  temp_ist8310_data = (int16_t)((buf[3] << 8) | buf[2]);
-  mag_[1] = MAG_SEN * temp_ist8310_data;
-  temp_ist8310_data = (int16_t)((buf[5] << 8) | buf[4]);
-  mag_[2] = MAG_SEN * temp_ist8310_data;
-}
-
 void IST8310::IntCallback() {
-  // TODO(alvin): add logic here
-  ReadData(this->mag);
+  // set data ready timestamp
   timestamp = GetHighresTickMicroSec();
+
+  // read data register async
+  HAL_I2C_Mem_Read_DMA(hi2c_, IST8310_IIC_ADDRESS << 1, IST8310_DATA,
+                       I2C_MEMADD_SIZE_8BIT, buf_, 6);
 
   if (callback_) { callback_(*this); }
 }
