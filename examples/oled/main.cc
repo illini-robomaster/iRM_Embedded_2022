@@ -37,6 +37,9 @@ void RM_RTOS_Default_Task(const void* arguments) {
   print("OLED %s\r\n", OLED->IsReady() ? "Ready" : "Not Ready");
 
   while (true) {
-    OLED->DrawCat();
+    osDelay(50);
+    OLED->DrawIMUData(1.0, 2.0, 3.0);
+
+    OLED->RefreshGram();
   }
 }

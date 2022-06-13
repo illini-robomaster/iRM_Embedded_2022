@@ -158,6 +158,7 @@ class OLED {
   void ShowDiagram(void);
   void Cat(unsigned char graph[128][8]);
   void DrawCat(void);
+  void DrawIMUData(float roll, float yaw, float pitch);
 
       private:
   /**
