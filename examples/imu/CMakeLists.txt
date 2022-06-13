@@ -20,14 +20,14 @@
 
 project(example_imu ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
+irm_add_arm_executable(${PROJECT_NAME}_typeA
     TARGET DJI_Board_TypeA
-    SOURCES main.cc)
+    SOURCES typeA.cc)
 
 irm_add_arm_executable(imu_calibrate
     TARGET DJI_Board_TypeA
     SOURCES calibrate.cc)
-    
+
 irm_add_arm_executable(imu_estimate
     TARGET DJI_Board_TypeA
     SOURCES poseEstimate.cc)

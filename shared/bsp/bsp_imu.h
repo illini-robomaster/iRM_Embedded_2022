@@ -23,6 +23,9 @@
 #include "bsp_gpio.h"
 #include "spi.h"
 
+#include <stddef.h>
+#include <Eigen/Dense>
+
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
@@ -31,12 +34,6 @@
 
 
 namespace bsp {
-
-typedef struct {
-  float x;
-  float y;
-  float z;
-} vec3f_t;
 
 class MPU6500 : public GPIT {
  public:
@@ -55,15 +52,17 @@ class MPU6500 : public GPIT {
   void Reset();
 
   // 3-axis accelerometer
-  vec3f_t acce;
+  Eigen::Vector3f acce;
   // 3-axis gyroscope
-  vec3f_t gyro;
+  Eigen::Vector3f gyro;
   // 3-axis magnetometer
-  vec3f_t mag;
+  Eigen::Vector3f mag;
   // sensor temperature
   float temp;
   // sensor timestamp
   uint32_t timestamp = 0;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
   /**
@@ -92,11 +91,16 @@ class MPU6500 : public GPIT {
 };
 
 class IST8310 : public GPIT {
+  typedef void (*IST8310_Callback)(const IST8310& sensor);
+
  public:
   IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset);
+  void RegisterCallback(IST8310_Callback callback);
   float mag[3];
+  uint32_t timestamp = 0;
 
  private:
+
   uint8_t Init();
   void IntCallback() override final;
   void ReadData(float mag_[3]);
@@ -106,6 +110,8 @@ class IST8310 : public GPIT {
   void WriteReg(uint8_t reg, uint8_t data);
   void ReadRegs(uint8_t reg, uint8_t *buf, uint8_t len);
   void WriteRegs(uint8_t reg, uint8_t *data, uint8_t len);
+
+  IST8310_Callback callback_ = nullptr;
 
   I2C_HandleTypeDef *hi2c_;
   GPIO reset_;

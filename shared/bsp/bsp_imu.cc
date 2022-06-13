@@ -135,16 +135,16 @@ void MPU6500::SPITxRxCpltCallback() {
   for (size_t i = 0; i < MPU6500_SIZEOF_DATA; i += 2)
     array[i / 2] = (int16_t)(buff[i] << 8 | buff[i + 1]);
 
-  acce.x = (float)array[0] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
-  acce.y = (float)array[1] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
-  acce.z = (float)array[2] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
+  acce.x() = (float)array[0] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
+  acce.y() = (float)array[1] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
+  acce.z() = (float)array[2] / (MPU6500_ACC_FACTOR / GRAVITY_ACC);
   temp = (float)array[3] / MPU6500_TEMP_FACTOR + MPU6500_TEMP_OFFSET;
-  gyro.x = DEG2RAD((float)array[4] / MPU6500_GYRO_FACTOR);
-  gyro.y = DEG2RAD((float)array[5] / MPU6500_GYRO_FACTOR);
-  gyro.z = DEG2RAD((float)array[6] / MPU6500_GYRO_FACTOR);
-  mag.x = (float)array[7];
-  mag.y = (float)array[8];
-  mag.z = (float)array[9];
+  gyro.x() = DEG2RAD((float)array[4] / MPU6500_GYRO_FACTOR);
+  gyro.y() = DEG2RAD((float)array[5] / MPU6500_GYRO_FACTOR);
+  gyro.z() = DEG2RAD((float)array[6] / MPU6500_GYRO_FACTOR);
+  mag.x() = (float)array[7];
+  mag.y() = (float)array[8];
+  mag.z() = (float)array[9];
 }
 
 void MPU6500::IntCallback() {
@@ -167,15 +167,16 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
   //the first column:the registers of IST8310.
   //the second column: the value to be writed to the registers.
   const uint8_t init_data[init_len][2] = {
-      {0x0B, 0x08},     //enalbe interrupt and low pin polarity.
-      {0x41, 0x09},     //average 2 times.
-      {0x42, 0xC0},     //must be 0xC0. TODO(alvin): ???
+      {IST8310_CNTL2, IST8310_DREN},  // enable interrupt and low pin polarity.
+      {IST8310_AVGCNTL, IST8310_Y_AVG_2 | IST8310_XZ_AVG_2}, // average 2 times.
+      {IST8310_PDCNTL, IST8310_PD_NORMAL}, // normal pulse duration (required by documentation)
       {0x0A, 0x0B},     //200Hz output rate.
   };
 
   const uint8_t wait_time = 1;
   const uint8_t sleepTime = 50;
 
+  // reset is active low
   reset_.Low();
   HAL_Delay(sleepTime);
   reset_.High();
@@ -196,10 +197,14 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
   }
 }
 
+void IST8310::RegisterCallback(IST8310_Callback callback) {
+  callback_ = callback;
+}
+
 void IST8310::ReadData(float mag_[3]) {
   uint8_t buf[6];
   int16_t temp_ist8310_data = 0;
-  ReadRegs(IST8310_DATAXL, buf, 6);
+  ReadRegs(IST8310_DATA, buf, 6);
 
   temp_ist8310_data = (int16_t)((buf[1] << 8) | buf[0]);
   mag_[0] = MAG_SEN * temp_ist8310_data;
@@ -211,6 +216,10 @@ void IST8310::ReadData(float mag_[3]) {
 
 void IST8310::IntCallback() {
   // TODO(alvin): add logic here
+  ReadData(this->mag);
+  timestamp = GetHighresTickMicroSec();
+
+  if (callback_) { callback_(*this); }
 }
 
 uint8_t IST8310::ReadReg(uint8_t reg) {

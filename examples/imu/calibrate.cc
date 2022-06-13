@@ -18,6 +18,8 @@
  *                                                                          *
  ****************************************************************************/
 
+#include <Eigen/Dense>
+
 #include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_os.h"
@@ -31,9 +33,9 @@
 
 typedef struct {
   char header;
-  bsp::vec3f_t acce;
-  bsp::vec3f_t gyro;
-  bsp::vec3f_t mag;
+  float acce[3];
+  float gyro[3];
+  float mag[3];
   char terminator;
 } __attribute__((packed)) imu_data_t;
 
@@ -58,9 +60,9 @@ void RM_RTOS_Default_Task(const void* arguments) {
   osDelay(10);
 
   while (true) {
-    imu_data.acce = imu->acce;
-    imu_data.gyro = imu->gyro;
-    imu_data.mag = imu->mag;
+    memcpy(imu_data.acce, imu->acce.data(), 3 * sizeof(float));
+    memcpy(imu_data.gyro, imu->gyro.data(), 3 * sizeof(float));
+    memcpy(imu_data.mag, imu->mag.data(), 3 * sizeof(float));
     usb->Write((uint8_t*)&imu_data, sizeof(imu_data));
     osDelay(10);
   }
