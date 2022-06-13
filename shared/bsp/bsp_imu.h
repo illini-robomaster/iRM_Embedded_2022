@@ -361,11 +361,11 @@ class IST8310 : public GPIT {
   IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, GPIO_TypeDef* rst_group, uint16_t rst_pin,
           IMU_typeC* imu = nullptr);
   bool IsReady();
+  void ist8310_read_over(uint8_t* status_buf, IST8310_real_data_t* ist8310_real_data);
   float mag[3];
 
  private:
   uint8_t Init();
-  void ist8310_read_over(uint8_t* status_buf, IST8310_real_data_t* ist8310_real_data);
   void ist8310_read_mag(float mag_[3]);
   IMU_typeC* imu_;
   void IntCallback() final;
@@ -433,6 +433,9 @@ class BMI088 {
          GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
   bool IsReady();
   void Read(float gyro[3], float accel[3], float* temperate);
+  void temperature_read_over(uint8_t *rx_buf, float *temperate);
+  void accel_read_over(uint8_t *rx_buf, float accel[3], float *time);
+  void gyro_read_over(uint8_t *rx_buf, float gyro[3]);
 
  private:
   SPI_HandleTypeDef* hspi_;
@@ -488,7 +491,7 @@ class Gyro_INT : public GPIT {
 typedef struct {
   IST8310_init_t IST8310;
   BMI088_init_t BMI088;
-  bsp::heater_init_t heater;
+  heater_init_t heater;
 
   SPI_HandleTypeDef* hspi;
   DMA_HandleTypeDef* hdma_spi_rx;
@@ -501,15 +504,16 @@ typedef struct {
 class IMU_typeC {
  public:
   IMU_typeC(IMU_typeC_init_t init);
-  void GetAngle(float q[4], float* yaw, float* pitch, float* roll);
+  void Update();
+
+  float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  float INS_angle[3] = {0.0f, 0.0f, 0.0f};
+  float Temp = 0;
 
  protected:
   virtual void RxCompleteCallback();
 
  private:
-  static std::map<SPI_HandleTypeDef*, IMU_typeC*> spi_ptr_map;
-  static IMU_typeC* FindInstance(SPI_HandleTypeDef* hspi);
-
   friend class IST8310;
 
   IST8310 IST8310_;
@@ -528,9 +532,6 @@ class IMU_typeC {
   SPI_HandleTypeDef* hspi_;
   DMA_HandleTypeDef* hdma_spi_rx_;
   DMA_HandleTypeDef* hdma_spi_tx_;
-
-  float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-  float INS_angle[3] = {0.0f, 0.0f, 0.0f};
 
   BMI088_real_data_t BMI088_real_data_;
   IST8310_real_data_t IST8310_real_data_;
@@ -560,6 +561,12 @@ class IMU_typeC {
   void imu_cmd_spi_dma();
 
   friend void DMACallbackWrapper(SPI_HandleTypeDef *hspi);
+
+  static std::map<SPI_HandleTypeDef*, IMU_typeC*> spi_ptr_map;
+  static IMU_typeC* FindInstance(SPI_HandleTypeDef* hspi);
+
+  float TempControl(float real_temp);
+  void GetAngle(float q[4], float* yaw, float* pitch, float* roll);
 };
 
 } /* namespace bsp */

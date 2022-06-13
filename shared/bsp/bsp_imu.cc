@@ -527,6 +527,38 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 }
 
+void BMI088::temperature_read_over(uint8_t* rx_buf, float* temperate) {
+  int16_t bmi088_raw_temp;
+  bmi088_raw_temp = (int16_t)((rx_buf[0] << 3) | (rx_buf[1] >> 5));
+
+  if (bmi088_raw_temp > 1023)
+    bmi088_raw_temp -= 2048;
+  *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
+}
+
+void BMI088::accel_read_over(uint8_t* rx_buf, float* accel, float* time) {
+  int16_t bmi088_raw_temp;
+  uint32_t sensor_time;
+  bmi088_raw_temp = (int16_t)((rx_buf[1]) << 8) | rx_buf[0];
+  accel[0] = bmi088_raw_temp * BMI088_ACCEL_SEN;
+  bmi088_raw_temp = (int16_t)((rx_buf[3]) << 8) | rx_buf[2];
+  accel[1] = bmi088_raw_temp * BMI088_ACCEL_SEN;
+  bmi088_raw_temp = (int16_t)((rx_buf[5]) << 8) | rx_buf[4];
+  accel[2] = bmi088_raw_temp * BMI088_ACCEL_SEN;
+  sensor_time = (uint32_t)((rx_buf[8] << 16) | (rx_buf[7] << 8) | rx_buf[6]);
+  *time = sensor_time * 39.0625f;
+}
+
+void BMI088::gyro_read_over(uint8_t* rx_buf, float* gyro) {
+  int16_t bmi088_raw_temp;
+  bmi088_raw_temp = (int16_t)((rx_buf[1]) << 8) | rx_buf[0];
+  gyro[0] = bmi088_raw_temp * BMI088_GYRO_SEN;
+  bmi088_raw_temp = (int16_t)((rx_buf[3]) << 8) | rx_buf[2];
+  gyro[1] = bmi088_raw_temp * BMI088_GYRO_SEN;
+  bmi088_raw_temp = (int16_t)((rx_buf[5]) << 8) | rx_buf[4];
+  gyro[2] = bmi088_raw_temp * BMI088_GYRO_SEN;
+}
+
 Accel_INT::Accel_INT(uint16_t INT_pin, IMU_typeC* imu) : GPIT(INT_pin) { imu_ = imu; }
 
 void Accel_INT::IntCallback() {
@@ -561,6 +593,30 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init)
   imu_start_dma_flag = 1;
 }
 
+void IMU_typeC::Update() {
+  if(gyro_update_flag & (1 << IMU_NOTIFY_SHFITS)) {
+    gyro_update_flag &= ~(1 << IMU_NOTIFY_SHFITS);
+    BMI088_.gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET, BMI088_real_data_.gyro);
+  }
+
+  if(accel_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+    accel_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+    BMI088_.accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, BMI088_real_data_.accel, &BMI088_real_data_.time);
+  }
+
+  if(accel_temp_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+    accel_temp_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+    BMI088_.temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &BMI088_real_data_.temp);
+    Temp = BMI088_real_data_.temp;
+    TempControl(BMI088_real_data_.temp);
+  }
+
+  AHRS_update(INS_quat, 0.001f, BMI088_real_data_.gyro, BMI088_real_data_.accel, IST8310_real_data_.mag);
+  GetAngle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
+}
+
+std::map<SPI_HandleTypeDef*, IMU_typeC*> IMU_typeC::spi_ptr_map;
+
 IMU_typeC* IMU_typeC::FindInstance(SPI_HandleTypeDef* hspi) {
   const auto it = spi_ptr_map.find(hspi);
   if (it == spi_ptr_map.end()) {
@@ -589,6 +645,10 @@ void IMU_typeC::GetAngle(float* q, float* yaw, float* pitch, float* roll) {
   *yaw = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f);
   *pitch = asinf(-2.0f * (q[1] * q[3] - q[0] * q[2]));
   *roll = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f);
+}
+
+float IMU_typeC::TempControl(float real_temp) {
+  return heater_.Update(real_temp);
 }
 
 void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
