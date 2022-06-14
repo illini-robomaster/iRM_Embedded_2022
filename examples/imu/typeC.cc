@@ -18,43 +18,6 @@
 *                                                                          *
 ****************************************************************************/
 
-//#define IMU_POLLING
-
-#ifdef IMU_POLLING
-
-#include "main.h"
-#include "i2c.h"
-
-#include "bsp_imu.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-
-static bsp::IST8310 *IST8310 = nullptr;
-static bsp::BMI088 *BMI088 = nullptr;
-
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, GPIOG, GPIO_PIN_6);
-  BMI088 = new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
-}
-
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-
-  float gyro[3], accel[3], temp;
-
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("Mag:: %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
-    BMI088->Read(gyro, accel, &temp);
-    print("IMU::\r\ngyro %.1f %.1f %.1f\r\naccel %.1f %.1f %.1f\r\ntemp %.1f\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], temp);
-    osDelay(100);
-  }
-}
-
-#else
-
 #include "main.h"
 #include "i2c.h"
 #include "spi.h"
@@ -143,5 +106,3 @@ void RM_RTOS_Default_Task(const void* arg) {
     osDelay(50);
   }
 }
-
-#endif
