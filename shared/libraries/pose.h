@@ -21,6 +21,9 @@
 #pragma once
 
 #include "bsp_imu.h"
+#include "cmsis_os.h"
+
+#include <Eigen/Dense>
 
 namespace control {
 
@@ -119,5 +122,65 @@ class Pose {
   float rollAcc;
 
 };  // class Pose end
+
+class AHRSFilter {
+ public:
+  AHRSFilter(const Eigen::Vector3f &gyro_noise,
+             const Eigen::Vector3f &accel_noise,
+             const Eigen::Vector3f &mag_noise,
+             const Eigen::Vector3f &gyro_bias_noise,
+             const Eigen::Vector3f &accel_bias_noise,
+             const Eigen::Vector3f &mag_bias_noise,
+             const Eigen::Vector3f &gravity_field,
+             const Eigen::Vector3f &magnetic_field,
+             const osMutexId_t &lock);
+
+  void Initialize(const Eigen::Quaternionf &pose,
+                  const Eigen::Vector3f &accel_bias,
+                  const Eigen::Vector3f &gyro_bias,
+                  const Eigen::Vector3f &mag_bias,
+                  const Eigen::Vector3f &pose_prior,
+                  const Eigen::Vector3f &accel_bias_prior,
+                  const Eigen::Vector3f &gyro_bias_prior,
+                  const Eigen::Vector3f &mag_bias_prior,
+                  const Eigen::Vector3f &gyro_body,
+                  const uint32_t timestamp);
+
+  void MeasureGyro(const Eigen::Vector3f &gyro_body, const uint32_t timestamp);
+
+  void MeasureAccel(const Eigen::Vector3f &accel_body, const uint32_t timestamp);
+
+  void MeasureMag(const Eigen::Vector3f &mag_body, const uint32_t timestamp);
+
+  Eigen::Quaternionf GetLatestPose() const;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+ private:
+  void Predict(const uint32_t timestamp,
+               Eigen::Matrix<float, 13, 1>* const proc_states,
+               Eigen::Matrix<float, 12, 12>* const proc_states_cov) const;
+
+  // filter states
+  Eigen::Matrix<float, 13, 1> states_;
+  Eigen::Matrix<float, 12, 12> states_cov_;
+  Eigen::Vector3f latest_gyro_;
+  uint32_t latest_time_; // in [us]
+
+  // noise models
+  const Eigen::Vector3f gyro_noise_;
+  const Eigen::Vector3f accel_noise_;
+  const Eigen::Vector3f mag_noise_;
+  const Eigen::Vector3f gyro_bias_noise_;
+  const Eigen::Vector3f accel_bias_noise_;
+  const Eigen::Vector3f mag_bias_noise_;
+
+  // constants
+  const Eigen::Vector3f g_; // gravity field
+  const Eigen::Vector3f m_; // magnetic field
+
+  // data lock
+  osMutexId_t lock_;
+};
 
 } /* namespace control */

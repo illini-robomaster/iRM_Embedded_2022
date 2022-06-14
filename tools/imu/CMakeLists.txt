@@ -18,19 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-cmake_minimum_required(VERSION 3.8)
+project(imu_tools ASM C CXX)
 
-include(cmake/arm_toolchain.cmake)
-include(cmake/build_helper.cmake)
-include(cmake/clang_format.cmake)
-include(cmake/doxygen.cmake)
-
-project(iRM_Embedded_2022)
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-add_subdirectory(boards)
-add_subdirectory(shared)
-add_subdirectory(vehicles)
-add_subdirectory(examples)
-add_subdirectory(tools)
+irm_add_arm_executable(${PROJECT_NAME}_calib_typeC
+    TARGET DJI_Board_TypeC
+    SOURCES calibrate_typeC.cc)
