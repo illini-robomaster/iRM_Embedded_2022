@@ -67,7 +67,7 @@
  * @author Nickel_Liang
  * @date   2018-04-15
  */
-template<class... Args>
+template <class... Args>
 void bsp_error_handler(const char* func, int line, const char* msg, Args... args) {
   print("[Error at %s:%d] ", func, line);
   print(msg, args...);

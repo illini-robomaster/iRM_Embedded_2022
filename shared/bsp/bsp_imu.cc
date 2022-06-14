@@ -39,11 +39,10 @@
 #define IST8310_IIC_ADDRESS 0x0E  // the I2C address of IST8310
 
 // BMI088
-#define BMI088_DELAY 55 // SPI polling delay
+#define BMI088_DELAY 55  // SPI polling delay
 
 #define GRAVITY_ACC 9.8f
 #define DEG2RAD(x) ((x) / 180 * M_PI)
-
 
 namespace bsp {
 
@@ -73,8 +72,7 @@ MPU6500::MPU6500(SPI_HandleTypeDef* hspi, const GPIO& chip_select, uint16_t int_
   uint8_t tmp;
   for (size_t i = 0; i < init_len; ++i) {
     ReadReg(init_data[i][0], &tmp);
-    if (tmp != init_data[i][1])
-      RM_ASSERT_FAIL("MPU6500 init failed at iteration %d", i);
+    if (tmp != init_data[i][1]) RM_ASSERT_FAIL("MPU6500 init failed at iteration %d", i);
   }
   // setup interrupt callback
   RM_ASSERT_FALSE(mpu6500, "Repteated intialization of MPU6500");
@@ -284,22 +282,22 @@ static BMI088* bmi088 = nullptr;
 static const float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
 static const float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
 
-void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   UNUSED(hspi);
 
   UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
   bmi088->spi_busy_ = false;
-  if (bmi088->accel_cs_.Read() == 0) { // handle accel data
+  if (bmi088->accel_cs_.Read() == 0) {  // handle accel data
     bmi088->accel_cs_.High();
 
     // copy accel data
-    const uint8_t *buf = bmi088->accel_buf_ + BMI088_TX_SIZE + 1;
+    const uint8_t* buf = bmi088->accel_buf_ + BMI088_TX_SIZE + 1;
     bmi088->accel.x() = BMI088_ACCEL_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
     bmi088->accel.y() = BMI088_ACCEL_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
     bmi088->accel.z() = BMI088_ACCEL_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
 
     // copy temperature data
-    const uint8_t *tbuf = buf + BMI088_TEMP_BUF_OFFSET;
+    const uint8_t* tbuf = buf + BMI088_TEMP_BUF_OFFSET;
     const int16_t temp_uint = ((int16_t)(tbuf[0] << 3) | (tbuf[1] >> 5));
     const int16_t temp_int = temp_uint > 1023 ? temp_uint - 2048 : temp_uint;
     bmi088->temperature = temp_int * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
@@ -312,11 +310,11 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
     taskEXIT_CRITICAL_FROM_ISR(isrflags);
 
     if (bmi088->accel_callback_) bmi088->accel_callback_(*bmi088);
-  } else if (bmi088->gyro_cs_.Read() == 0) { // handle gyro data
+  } else if (bmi088->gyro_cs_.Read() == 0) {  // handle gyro data
     bmi088->gyro_cs_.High();
 
     // copy data
-    const uint8_t *buf = bmi088->gyro_buf_ + BMI088_TX_SIZE;
+    const uint8_t* buf = bmi088->gyro_buf_ + BMI088_TX_SIZE;
     bmi088->gyro.x() = BMI088_GYRO_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
     bmi088->gyro.y() = BMI088_GYRO_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
     bmi088->gyro.z() = BMI088_GYRO_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
@@ -332,11 +330,8 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   }
 }
 
-BMI088::BMI088(SPI_HandleTypeDef* hspi,
-               const GPIO &accel_cs,
-               const GPIO &gyro_cs,
-               uint16_t accel_int_pin,
-               uint16_t gyro_int_pin)
+BMI088::BMI088(SPI_HandleTypeDef* hspi, const GPIO& accel_cs, const GPIO& gyro_cs,
+               uint16_t accel_int_pin, uint16_t gyro_int_pin)
     : hspi_(hspi),
       accel_cs_(accel_cs),
       gyro_cs_(gyro_cs),
@@ -355,13 +350,9 @@ BMI088::BMI088(SPI_HandleTypeDef* hspi,
   gyro_int_.Start();
 }
 
-void BMI088::RegisterAccelCallback(CallbackTypeDef callback) {
-  accel_callback_ = callback;
-}
+void BMI088::RegisterAccelCallback(CallbackTypeDef callback) { accel_callback_ = callback; }
 
-void BMI088::RegisterGyroCallback(CallbackTypeDef callback) {
-  gyro_callback_ = callback;
-}
+void BMI088::RegisterGyroCallback(CallbackTypeDef callback) { gyro_callback_ = callback; }
 
 void BMI088::AccelIntCallback() {
   UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
@@ -411,21 +402,19 @@ uint8_t BMI088::AccelReadReg(uint8_t reg) {
   return res;
 }
 
-void BMI088::AccelReadRegs(uint8_t reg, uint8_t *data, uint8_t len) {
+void BMI088::AccelReadRegs(uint8_t reg, uint8_t* data, uint8_t len) {
   uint8_t tx = reg | 0x80;
 
   accel_cs_.Low();
   HAL_SPI_Transmit(hspi_, &tx, 1, BMI088_DELAY);
-  HAL_SPI_Receive(hspi_, &tx, 1, BMI088_DELAY); // dummy bit as required by doc
+  HAL_SPI_Receive(hspi_, &tx, 1, BMI088_DELAY);  // dummy bit as required by doc
   HAL_SPI_Receive(hspi_, data, len, BMI088_DELAY);
   accel_cs_.High();
 }
 
-void BMI088::AccelWriteReg(uint8_t reg, uint8_t data) {
-  AccelWriteRegs(reg, &data, 1);
-}
+void BMI088::AccelWriteReg(uint8_t reg, uint8_t data) { AccelWriteRegs(reg, &data, 1); }
 
-void BMI088::AccelWriteRegs(uint8_t reg, uint8_t *data, uint8_t len) {
+void BMI088::AccelWriteRegs(uint8_t reg, uint8_t* data, uint8_t len) {
   uint8_t tx = reg & 0x7f;
 
   accel_cs_.Low();
@@ -440,7 +429,7 @@ uint8_t BMI088::GyroReadReg(uint8_t reg) {
   return res;
 }
 
-void BMI088::GyroReadRegs(uint8_t reg, uint8_t *data, uint8_t len) {
+void BMI088::GyroReadRegs(uint8_t reg, uint8_t* data, uint8_t len) {
   uint8_t tx = reg | 0x80;
 
   gyro_cs_.Low();
@@ -449,11 +438,9 @@ void BMI088::GyroReadRegs(uint8_t reg, uint8_t *data, uint8_t len) {
   gyro_cs_.High();
 }
 
-void BMI088::GyroWriteReg(uint8_t reg, uint8_t data) {
-  GyroWriteRegs(reg, &data, 1);
-}
+void BMI088::GyroWriteReg(uint8_t reg, uint8_t data) { GyroWriteRegs(reg, &data, 1); }
 
-void BMI088::GyroWriteRegs(uint8_t reg, uint8_t *data, uint8_t len) {
+void BMI088::GyroWriteRegs(uint8_t reg, uint8_t* data, uint8_t len) {
   uint8_t tx = reg & 0x7f;
 
   gyro_cs_.Low();
@@ -479,14 +466,13 @@ void BMI088::AccelInit() {
   // initialization sequence for imu data
   const uint8_t init_len = 6;
   const uint8_t init_data[init_len][2] = {
-    {BMI088_ACC_PWR_CTRL, BMI088_ACC_ENABLE_ACC_ON},
-    {BMI088_ACC_PWR_CONF, BMI088_ACC_PWR_ACTIVE_MODE},
-    {BMI088_ACC_CONF, BMI088_ACC_NORMAL | BMI088_ACC_800_HZ | BMI088_ACC_CONF_MUST_Set},
-    {BMI088_ACC_RANGE, BMI088_ACC_RANGE_3G},
-    {BMI088_INT1_IO_CTRL,
-     BMI088_ACC_INT1_IO_ENABLE | BMI088_ACC_INT1_GPIO_PP | BMI088_ACC_INT1_GPIO_LOW},
-    {BMI088_INT_MAP_DATA, BMI088_ACC_INT1_DRDY_INTERRUPT}};
-
+      {BMI088_ACC_PWR_CTRL, BMI088_ACC_ENABLE_ACC_ON},
+      {BMI088_ACC_PWR_CONF, BMI088_ACC_PWR_ACTIVE_MODE},
+      {BMI088_ACC_CONF, BMI088_ACC_NORMAL | BMI088_ACC_800_HZ | BMI088_ACC_CONF_MUST_Set},
+      {BMI088_ACC_RANGE, BMI088_ACC_RANGE_3G},
+      {BMI088_INT1_IO_CTRL,
+       BMI088_ACC_INT1_IO_ENABLE | BMI088_ACC_INT1_GPIO_PP | BMI088_ACC_INT1_GPIO_LOW},
+      {BMI088_INT_MAP_DATA, BMI088_ACC_INT1_DRDY_INTERRUPT}};
 
   // set accel sensor config and check
   const uint8_t wait_time = 1;
@@ -513,18 +499,17 @@ void BMI088::GyroInit() {
 
   const uint8_t init_len = 6;
   const uint8_t init_data[init_len][2] = {
-    {BMI088_GYRO_RANGE, BMI088_GYRO_2000},
-    {BMI088_GYRO_BANDWIDTH, BMI088_GYRO_1000_116_HZ | BMI088_GYRO_BANDWIDTH_MUST_Set},
-    {BMI088_GYRO_LPM1, BMI088_GYRO_NORMAL_MODE},
-    {BMI088_GYRO_CTRL, BMI088_DRDY_ON},
-    {BMI088_GYRO_INT3_INT4_IO_CONF, BMI088_GYRO_INT3_GPIO_PP | BMI088_GYRO_INT3_GPIO_LOW},
-    {BMI088_GYRO_INT3_INT4_IO_MAP, BMI088_GYRO_DRDY_IO_INT3}};
+      {BMI088_GYRO_RANGE, BMI088_GYRO_2000},
+      {BMI088_GYRO_BANDWIDTH, BMI088_GYRO_1000_116_HZ | BMI088_GYRO_BANDWIDTH_MUST_Set},
+      {BMI088_GYRO_LPM1, BMI088_GYRO_NORMAL_MODE},
+      {BMI088_GYRO_CTRL, BMI088_DRDY_ON},
+      {BMI088_GYRO_INT3_INT4_IO_CONF, BMI088_GYRO_INT3_GPIO_PP | BMI088_GYRO_INT3_GPIO_LOW},
+      {BMI088_GYRO_INT3_INT4_IO_MAP, BMI088_GYRO_DRDY_IO_INT3}};
 
   // set gyro sensor config and check
   const uint8_t wait_time = 1;
   for (uint8_t i = 0; i < init_len; ++i) {
-    GyroWriteReg(init_data[i][0],
-                                 init_data[i][1]);
+    GyroWriteReg(init_data[i][0], init_data[i][1]);
     HAL_Delay(wait_time);
 
     if (GyroReadReg(init_data[i][0]) != init_data[i][1]) {

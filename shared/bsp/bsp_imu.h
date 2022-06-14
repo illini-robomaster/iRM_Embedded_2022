@@ -31,16 +31,16 @@
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
-#define BMI088_TX_SIZE          1   // 1 byte for tx data
+#define BMI088_TX_SIZE 1  // 1 byte for tx data
 
 // 0x02 - 0x07
-#define BMI088_GYRO_SIZE        6
+#define BMI088_GYRO_SIZE 6
 // 0x12 - 0x23 + 1 extra byte for dummy data (see doc)
-#define BMI088_ACCEL_SIZE       19
+#define BMI088_ACCEL_SIZE 19
 
-#define BMI088_GYRO_BUF_SIZE    (BMI088_GYRO_SIZE + BMI088_TX_SIZE)
-#define BMI088_ACCEL_BUF_SIZE   (BMI088_ACCEL_SIZE + BMI088_TX_SIZE)
-#define BMI088_TEMP_BUF_OFFSET  (BMI088_TEMP_M - BMI088_ACCEL_XOUT_L)
+#define BMI088_GYRO_BUF_SIZE (BMI088_GYRO_SIZE + BMI088_TX_SIZE)
+#define BMI088_ACCEL_BUF_SIZE (BMI088_ACCEL_SIZE + BMI088_TX_SIZE)
+#define BMI088_TEMP_BUF_OFFSET (BMI088_TEMP_M - BMI088_ACCEL_XOUT_L)
 
 namespace bsp {
 
@@ -138,10 +138,7 @@ class BMI088 {
   typedef void (*CallbackTypeDef)(const BMI088&);
 
  public:
-  BMI088(SPI_HandleTypeDef* hspi,
-         const GPIO &accel_cs,
-         const GPIO &gyro_cs,
-         uint16_t accel_int_pin,
+  BMI088(SPI_HandleTypeDef* hspi, const GPIO& accel_cs, const GPIO& gyro_cs, uint16_t accel_int_pin,
          uint16_t gyro_int_pin);
 
   void Read(float gyro[3], float accel[3], float* temperate);
@@ -198,7 +195,7 @@ class BMI088 {
 
   friend void BMI088AccelIntCallback(void* data);
   friend void BMI088GyroIntCallback(void* data);
-  friend void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi);
+  friend void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef* hspi);
 };
 
 } /* namespace bsp */

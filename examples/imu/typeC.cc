@@ -37,17 +37,17 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, bsp::GPIO(GPIOG, GPIO_PIN_6));
-  BMI088 = new bsp::BMI088(&hspi1,
-      bsp::GPIO(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin), bsp::GPIO(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin),
-      INT1_ACCEL_Pin, INT1_GYRO_Pin);
+  BMI088 =
+      new bsp::BMI088(&hspi1, bsp::GPIO(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin),
+                      bsp::GPIO(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin), INT1_ACCEL_Pin, INT1_GYRO_Pin);
 
   while (true) {
     set_cursor(0, 0);
     clear_screen();
 
-    print("IMU:\r\ngyro %.1f %.1f %.1f %lu\r\naccel %.1f %.1f %.1f %lu\r\n",
-          BMI088->gyro.x(), BMI088->gyro.y(), BMI088->gyro.z(), BMI088->gyro_timestamp,
-          BMI088->accel.x(), BMI088->accel.y(), BMI088->accel.z(), BMI088->accel_timestamp);
+    print("IMU:\r\ngyro %.1f %.1f %.1f %lu\r\naccel %.1f %.1f %.1f %lu\r\n", BMI088->gyro.x(),
+          BMI088->gyro.y(), BMI088->gyro.z(), BMI088->gyro_timestamp, BMI088->accel.x(),
+          BMI088->accel.y(), BMI088->accel.z(), BMI088->accel_timestamp);
     print("mag %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
     print("temp %.1f", BMI088->temperature);
     osDelay(100);

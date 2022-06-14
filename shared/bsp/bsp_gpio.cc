@@ -46,8 +46,7 @@ template uint8_t GPIO::Read<false>();
 
 template <bool IsInput>
 uint8_t GPIO::Read() {
-  if (IsInput)
-    state_ = (HAL_GPIO_ReadPin(group_, pin_) == GPIO_PIN_SET);
+  if (IsInput) state_ = (HAL_GPIO_ReadPin(group_, pin_) == GPIO_PIN_SET);
 
   return state_;
 }
@@ -55,7 +54,7 @@ uint8_t GPIO::Read() {
 GPIT* GPIT::gpits[NUM_GPITS] = {NULL};
 
 GPIT::GPIT(uint16_t pin, CallbackTypeDef callback, void* data)
-  : pin_(pin), callback_(callback), data_(data) {
+    : pin_(pin), callback_(callback), data_(data) {
   int gpio_idx = GetGPIOIndex(pin);
 
   RM_ASSERT_TRUE(gpio_idx >= 0 && gpio_idx < NUM_GPITS, "invalid GPIO index");
