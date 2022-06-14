@@ -36,7 +36,7 @@
 
 namespace bsp {
 
-class MPU6500 : public GPIT {
+class MPU6500 {
  public:
   /**
    * @brief constructor for a MPU6500 IMU sensor
@@ -78,20 +78,21 @@ class MPU6500 : public GPIT {
   void ReadRegs(uint8_t reg_start, uint8_t* data, uint8_t len);
 
   void SPITxRxCpltCallback();
-  void IntCallback() override final;
 
   SPI_HandleTypeDef* hspi_;
+  GPIT int_;
   GPIO chip_select_;
 
   uint8_t io_buff_[MPU6500_SIZEOF_DATA + 1];  // spi tx+rx buffer
 
   // global interrupt wrapper
   // NOTE(alvin): currently support single instance only
+  friend void MPU6500IntCallback(void* data);
   static void SPITxRxCpltCallback(SPI_HandleTypeDef* hspi);
   static MPU6500* mpu6500;
 };
 
-class IST8310 : public GPIT {
+class IST8310 {
   typedef void (*IST8310_Callback)(const IST8310& sensor);
 
  public:
@@ -105,21 +106,23 @@ class IST8310 : public GPIT {
 
  private:
   uint8_t Init();
-  void IntCallback() override final;
 
   // polling interfaces used only in initialization
   uint8_t ReadReg(uint8_t reg);
   void WriteReg(uint8_t reg, uint8_t data);
   void ReadRegs(uint8_t reg, uint8_t* data, uint8_t len);
   void WriteRegs(uint8_t reg, uint8_t* data, uint8_t len);
+  void IntCallback();
 
-  friend void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c);
+  friend void IST8310IntCallback(void* data);
+  friend void IST8310I2cRxCpltCallback(I2C_HandleTypeDef* hi2c);
   static IST8310* ist8310;
 
   IST8310_Callback callback_ = nullptr;
   uint8_t buf_[6];
 
   I2C_HandleTypeDef* hi2c_;
+  GPIT int_;
   GPIO reset_;
 };
 

@@ -48,14 +48,14 @@ uint8_t GPIO::Read() {
 
 GPIT* GPIT::gpits[NUM_GPITS] = {NULL};
 
-GPIT::GPIT(uint16_t pin) : pin_(pin) {
+GPIT::GPIT(uint16_t pin, CallbackTypeDef callback, void* data)
+  : pin_(pin), callback_(callback), data_(data) {
   int gpio_idx = GetGPIOIndex(pin);
-  if (gpio_idx >= 0 && gpio_idx < NUM_GPITS && !gpits[gpio_idx]) gpits[gpio_idx] = this;
-}
 
-void GPIT::IntCallback(uint16_t pin) {
-  int gpio_idx = GetGPIOIndex(pin);
-  if (gpio_idx >= 0 && gpio_idx < NUM_GPITS && gpits[gpio_idx]) gpits[gpio_idx]->IntCallback();
+  RM_ASSERT_TRUE(gpio_idx >= 0 && gpio_idx < NUM_GPITS, "invalid GPIO index");
+  RM_ASSERT_FALSE(gpits[gpio_idx], "repeated GPIT initialization");
+
+  gpits[gpio_idx] = this;
 }
 
 int GPIT::GetGPIOIndex(uint16_t pin) {
@@ -64,6 +64,17 @@ int GPIT::GetGPIOIndex(uint16_t pin) {
   return -1;
 }
 
+void GPITCallbackWrapper(uint16_t pin) {
+  int gpio_idx = GPIT::GetGPIOIndex(pin);
+  if (gpio_idx >= 0 && gpio_idx < NUM_GPITS && GPIT::gpits[gpio_idx]) {
+    GPIT* gpit = GPIT::gpits[gpio_idx];
+
+    if (gpit && gpit->callback_) {
+      gpit->callback_(gpit->data_);
+    }
+  }
+}
+
 } /* namespace bsp */
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) { bsp::GPIT::IntCallback(GPIO_Pin); }
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) { bsp::GPITCallbackWrapper(GPIO_Pin); }

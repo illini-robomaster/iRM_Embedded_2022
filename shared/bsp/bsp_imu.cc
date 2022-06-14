@@ -48,8 +48,16 @@ namespace bsp {
 
 MPU6500* MPU6500::mpu6500 = nullptr;
 
+void MPU6500IntCallback(void* data) {
+  MPU6500* mpu6500 = static_cast<MPU6500*>(data);
+  if (mpu6500) {
+    mpu6500->timestamp = GetHighresTickMicroSec();
+    mpu6500->UpdateData();
+  }
+}
+
 MPU6500::MPU6500(SPI_HandleTypeDef* hspi, const GPIO& chip_select, uint16_t int_pin)
-    : GPIT(int_pin), hspi_(hspi), chip_select_(chip_select) {
+    : hspi_(hspi), int_(int_pin, MPU6500IntCallback, this), chip_select_(chip_select) {
   const uint8_t init_len = 7;
   const uint8_t init_data[init_len][2] = {
       {MPU6500_PWR_MGMT_1, 0x03},      // auto select clock source
@@ -151,11 +159,6 @@ void MPU6500::SPITxRxCpltCallback() {
   mag.z() = (float)array[9];
 }
 
-void MPU6500::IntCallback() {
-  timestamp = GetHighresTickMicroSec();
-  UpdateData();
-}
-
 void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   UNUSED(hspi);
   mpu6500->SPITxRxCpltCallback();
@@ -163,7 +166,7 @@ void MPU6500::SPITxRxCpltCallback(SPI_HandleTypeDef* hspi) {
 
 IST8310* IST8310::ist8310 = nullptr;
 
-void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c) {
+void IST8310I2cRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   UNUSED(hi2c);
 
   // copy magnetic data from raw buffer
@@ -179,14 +182,21 @@ void I2CRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   }
 }
 
+void IST8310IntCallback(void* data) {
+  IST8310* ist8310 = static_cast<IST8310*>(data);
+  if (ist8310) {
+    ist8310->IntCallback();
+  }
+}
+
 IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
-    : GPIT(int_pin), hi2c_(hi2c), reset_(reset) {
+    : hi2c_(hi2c), int_(int_pin, IST8310IntCallback, this), reset_(reset) {
   // set global pointer
   RM_ASSERT_FALSE(ist8310, "Repeated initialization of IST8310");
   ist8310 = this;
 
   // register I2C rx complete callback
-  HAL_I2C_RegisterCallback(hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, I2CRxCpltCallback);
+  HAL_I2C_RegisterCallback(hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, IST8310I2cRxCpltCallback);
 
   // reset device
   const uint8_t wait_time = 1;
