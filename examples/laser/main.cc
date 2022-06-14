@@ -27,7 +27,7 @@
 static bsp::Laser* laser;
 
 void RM_RTOS_Init(void) {
-  print_use_uart(&huart8);
+  print_use_uart(&huart1);
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
 }
 

@@ -64,6 +64,8 @@ void RM_RTOS_Default_Task(const void *argument);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LASER_Pin GPIO_PIN_8
+#define LASER_GPIO_Port GPIOC
 #define RSTN_IST8310_Pin GPIO_PIN_6
 #define RSTN_IST8310_GPIO_Port GPIOG
 #define HEATER_Pin GPIO_PIN_6
