@@ -45,10 +45,11 @@ void RM_RTOS_Default_Task(const void* arguments) {
     set_cursor(0, 0);
     clear_screen();
 
-    print("IMU::\r\ngyro %.1f %.1f %.1f %lu\r\naccel %.1f %.1f %.1f %lu\r\n",
+    print("IMU:\r\ngyro %.1f %.1f %.1f %lu\r\naccel %.1f %.1f %.1f %lu\r\n",
           BMI088->gyro.x(), BMI088->gyro.y(), BMI088->gyro.z(), BMI088->gyro_timestamp,
           BMI088->accel.x(), BMI088->accel.y(), BMI088->accel.z(), BMI088->accel_timestamp);
-    print("Mag:: %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
+    print("mag %.1f, %.1f, %.1f\r\n", IST8310->mag[0], IST8310->mag[1], IST8310->mag[2]);
+    print("temp %.1f", BMI088->temperature);
     osDelay(100);
   }
 }

@@ -292,11 +292,17 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (bmi088->accel_cs_.Read() == 0) { // handle accel data
     bmi088->accel_cs_.High();
 
-    // copy data
-    const uint8_t *buf = bmi088->accel_buf_ + 2;
+    // copy accel data
+    const uint8_t *buf = bmi088->accel_buf_ + BMI088_TX_SIZE + 1;
     bmi088->accel.x() = BMI088_ACCEL_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
     bmi088->accel.y() = BMI088_ACCEL_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
     bmi088->accel.z() = BMI088_ACCEL_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
+
+    // copy temperature data
+    const uint8_t *tbuf = buf + BMI088_TEMP_BUF_OFFSET;
+    const int16_t temp_uint = ((int16_t)(tbuf[0] << 3) | (tbuf[1] >> 5));
+    const int16_t temp_int = temp_uint > 1023 ? temp_uint - 2048 : temp_uint;
+    bmi088->temperature = temp_int * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 
     if (bmi088->gyro_pending_) {
       bmi088->gyro_pending_ = false;
@@ -310,7 +316,7 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
     bmi088->gyro_cs_.High();
 
     // copy data
-    const uint8_t *buf = bmi088->gyro_buf_ + 1;
+    const uint8_t *buf = bmi088->gyro_buf_ + BMI088_TX_SIZE;
     bmi088->gyro.x() = BMI088_GYRO_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
     bmi088->gyro.y() = BMI088_GYRO_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
     bmi088->gyro.z() = BMI088_GYRO_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
@@ -375,7 +381,7 @@ void BMI088::AccelIntCallback() {
 void BMI088::AccelRead() {
   accel_cs_.Low();
   accel_buf_[0] = BMI088_ACCEL_XOUT_L | 0x80;
-  HAL_SPI_TransmitReceive_DMA(hspi_, accel_buf_, accel_buf_, BMI088_ACCEL_SIZEOF_DATA + 1);
+  HAL_SPI_TransmitReceive_DMA(hspi_, accel_buf_, accel_buf_, BMI088_ACCEL_BUF_SIZE);
 }
 
 void BMI088::GyroIntCallback() {
@@ -396,7 +402,7 @@ void BMI088::GyroIntCallback() {
 void BMI088::GyroRead() {
   gyro_cs_.Low();
   gyro_buf_[0] = BMI088_GYRO_X_L | 0x80;
-  HAL_SPI_TransmitReceive_DMA(hspi_, gyro_buf_, gyro_buf_, BMI088_GYRO_SIZEOF_DATA + 1);
+  HAL_SPI_TransmitReceive_DMA(hspi_, gyro_buf_, gyro_buf_, BMI088_GYRO_SIZE);
 }
 
 uint8_t BMI088::AccelReadReg(uint8_t reg) {
@@ -532,8 +538,8 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   uint8_t buf[8] = {0, 0, 0, 0, 0, 0};
   int16_t bmi088_raw_temp;
 
+  // read accel data
   AccelReadRegs(BMI088_ACCEL_XOUT_L, buf, 6);
-
   bmi088_raw_temp = (int16_t)((buf[1]) << 8) | buf[0];
   accel[0] = bmi088_raw_temp * BMI088_ACCEL_SEN;
   bmi088_raw_temp = (int16_t)((buf[3]) << 8) | buf[2];
@@ -541,6 +547,7 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   bmi088_raw_temp = (int16_t)((buf[5]) << 8) | buf[4];
   accel[2] = bmi088_raw_temp * BMI088_ACCEL_SEN;
 
+  // read gyro data
   GyroReadRegs(BMI088_GYRO_X_L, buf, 6);
   bmi088_raw_temp = (int16_t)((buf[1]) << 8) | buf[0];
   gyro[0] = bmi088_raw_temp * BMI088_GYRO_SEN;
@@ -548,12 +555,11 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   gyro[1] = bmi088_raw_temp * BMI088_GYRO_SEN;
   bmi088_raw_temp = (int16_t)((buf[5]) << 8) | buf[4];
   gyro[2] = bmi088_raw_temp * BMI088_GYRO_SEN;
+
+  // read temperature data
   AccelReadRegs(BMI088_TEMP_M, buf, 2);
-
   bmi088_raw_temp = (int16_t)((buf[0] << 3) | (buf[1] >> 5));
-
   if (bmi088_raw_temp > 1023) bmi088_raw_temp -= 2048;
-
   *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 }
 

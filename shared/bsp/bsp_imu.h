@@ -31,8 +31,16 @@
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
-#define BMI088_GYRO_SIZEOF_DATA   6
-#define BMI088_ACCEL_SIZEOF_DATA  7 // 1 byte for dummy data
+#define BMI088_TX_SIZE          1   // 1 byte for tx data
+
+// 0x02 - 0x07
+#define BMI088_GYRO_SIZE        6
+// 0x12 - 0x23 + 1 extra byte for dummy data (see doc)
+#define BMI088_ACCEL_SIZE       19
+
+#define BMI088_GYRO_BUF_SIZE    (BMI088_GYRO_SIZE + BMI088_TX_SIZE)
+#define BMI088_ACCEL_BUF_SIZE   (BMI088_ACCEL_SIZE + BMI088_TX_SIZE)
+#define BMI088_TEMP_BUF_OFFSET  (BMI088_TEMP_M - BMI088_ACCEL_XOUT_L)
 
 namespace bsp {
 
@@ -135,6 +143,7 @@ class BMI088 {
          const GPIO &gyro_cs,
          uint16_t accel_int_pin,
          uint16_t gyro_int_pin);
+
   void Read(float gyro[3], float accel[3], float* temperate);
 
   void RegisterAccelCallback(CallbackTypeDef callback);
@@ -142,6 +151,8 @@ class BMI088 {
 
   Eigen::Vector3f accel;
   Eigen::Vector3f gyro;
+  float temperature;
+
   uint32_t accel_timestamp = 0;
   uint32_t gyro_timestamp = 0;
 
@@ -163,9 +174,8 @@ class BMI088 {
   bool accel_pending_ = false;
   bool gyro_pending_ = false;
 
-  // raw buffers for imu data (+1 for tx/rx buffer)
-  uint8_t accel_buf_[BMI088_ACCEL_SIZEOF_DATA + 1];
-  uint8_t gyro_buf_[BMI088_GYRO_SIZEOF_DATA + 1];
+  uint8_t accel_buf_[BMI088_ACCEL_BUF_SIZE];
+  uint8_t gyro_buf_[BMI088_GYRO_BUF_SIZE];
 
   // polling interfaces used only in initialization
   uint8_t AccelReadReg(uint8_t reg);
