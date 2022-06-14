@@ -20,6 +20,10 @@
 
 project(imu_tools ASM C CXX)
 
+irm_add_arm_executable(${PROJECT_NAME}_calib_typeA
+    TARGET DJI_Board_TypeA
+    SOURCES calibrate_typeA.cc)
+
 irm_add_arm_executable(${PROJECT_NAME}_calib_typeC
     TARGET DJI_Board_TypeC
     SOURCES calibrate_typeC.cc)
