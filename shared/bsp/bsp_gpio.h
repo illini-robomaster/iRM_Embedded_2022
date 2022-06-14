@@ -76,8 +76,9 @@ class GPIO {
 };
 
 class GPIT {
- public:
   typedef void (*CallbackTypeDef)(void*);
+
+ public:
   /**
    * @brief Contructor for general purpose interrupt pins
    *

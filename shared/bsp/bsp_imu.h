@@ -127,6 +127,8 @@ class IST8310 {
 };
 
 class BMI088 {
+  typedef void (*CallbackTypeDef)(const BMI088&);
+
  public:
   BMI088(SPI_HandleTypeDef* hspi,
          const GPIO &accel_cs,
@@ -134,6 +136,9 @@ class BMI088 {
          uint16_t accel_int_pin,
          uint16_t gyro_int_pin);
   void Read(float gyro[3], float accel[3], float* temperate);
+
+  void RegisterAccelCallback(CallbackTypeDef callback);
+  void RegisterGyroCallback(CallbackTypeDef callback);
 
   Eigen::Vector3f accel;
   Eigen::Vector3f gyro;
@@ -150,6 +155,9 @@ class BMI088 {
   // interrupt pins
   GPIT accel_int_;
   GPIT gyro_int_;
+
+  CallbackTypeDef accel_callback_ = nullptr;
+  CallbackTypeDef gyro_callback_ = nullptr;
 
   bool spi_busy_ = false;
   bool accel_pending_ = false;

@@ -305,7 +305,7 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
     }
     taskEXIT_CRITICAL_FROM_ISR(isrflags);
 
-    // TODO(alvin): user callback
+    if (bmi088->accel_callback_) bmi088->accel_callback_(*bmi088);
   } else if (bmi088->gyro_cs_.Read() == 0) { // handle gyro data
     bmi088->gyro_cs_.High();
 
@@ -322,7 +322,7 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
     }
     taskEXIT_CRITICAL_FROM_ISR(isrflags);
 
-    // TODO(alvin): user callback
+    if (bmi088->gyro_callback_) bmi088->gyro_callback_(*bmi088);
   }
 }
 
@@ -347,6 +347,14 @@ BMI088::BMI088(SPI_HandleTypeDef* hspi,
 
   accel_int_.Start();
   gyro_int_.Start();
+}
+
+void BMI088::RegisterAccelCallback(CallbackTypeDef callback) {
+  accel_callback_ = callback;
+}
+
+void BMI088::RegisterGyroCallback(CallbackTypeDef callback) {
+  gyro_callback_ = callback;
 }
 
 void BMI088::AccelIntCallback() {
