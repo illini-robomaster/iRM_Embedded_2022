@@ -26,13 +26,10 @@
 #include "main.h"
 
 static bsp::IST8310* IST8310 = nullptr;
-static bsp::BMI088* BMI088 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, bsp::GPIO(GPIOG, GPIO_PIN_6));
-  BMI088 =
-      new bsp::BMI088(&hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin);
   bsp::SetHighresClockTimer(&htim5);
 }
 
