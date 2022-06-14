@@ -108,25 +108,28 @@ class UserInterface {
   int GraphRefresh(uint8_t* data_buffer, int cnt, ...);
   int CharRefresh(uint8_t* data_buffer, graphic_data_t image, char* theString, int len);
 
-  void ChassisGUIInit(graphic_data_t *chassis, graphic_data_t *arrow, int x, int y);
+  void ChassisGUIInit(graphic_data_t *chassis, graphic_data_t *arrow, graphic_data_t *gimbal, graphic_data_t *empty1, graphic_data_t *empty2);
   void ChassisGUIUpdate(float relative);
-  void GimbalGUIInit(graphic_data_t *gimbal);
-  void GimbalGUIUpdate();
   void CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *crosshair2, graphic_data_t *crosshair3, graphic_data_t *crosshair4, graphic_data_t *crosshair5, graphic_data_t *crosshair6, graphic_data_t *crosshair7);
-  void CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar, int x, int y);
+  void CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar);
   void CapGUIUpdate(float cap);    // cap 0 - 1
   void CapGUICharInit(graphic_data_t *percent);
   void CapGUICharUpdate();
   void DiagGUIInit(graphic_data_t *message, int len);
   void DiagGUIUpdate(int len);
-  void DiagGUIClear();
-  void addMessage(char *messageStr, int len, UserInterface *UI, Referee *referee, graphic_data_t *graph);
+  void DiagGUIClear(UserInterface *UI, Referee *referee, graphic_data_t *graph, int currCount);
+  void AddMessage(char *messageStr, int len, UserInterface *UI, Referee *referee, graphic_data_t *graph);
+  void ModeGUIInit(graphic_data_t *modeGraph, int len);
+  void ModeGuiUpdate(graphic_data_t *modeGraph, int len);     // 0 - normal, 1 - spin
 
   char* getPercentStr(){
       return percentStr_;
   }
   int getPercentLen(){
       return percentLen_;
+  }
+  int getMessageCount(){
+      return messageCount_;
   }
 
  private:
@@ -141,18 +144,20 @@ class UserInterface {
   int Client_ID_;
   int centerX_ = 960;
   int centerY_ = 540;
-  int chassisX_;
-  int chassisY_;
+  int chassisX_ = 1300;
+  int chassisY_ = 120;
   int gimbalLen_;
   int chassisLen_;
-  int barStartX_;
-  int barStartY_;
+  int barStartX_ = 1500;
+  int barStartY_ = 350;
   char percentStr_[30];
   int percentLen_;
   float cap_;
   int diagStartX_ = 1470;
-  int diagStartY_ = 880; // 420 - 880
+  int diagStartY_ = 910; // 420 - 910
   int messageCount_ = 0;
+  int modeStartX_ = 1220;
+  int modeStartY_ = 45;
 };
 
 }

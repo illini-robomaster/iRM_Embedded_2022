@@ -39,7 +39,7 @@ control::ServoMotor* load_servo = nullptr;
 control::Shooter* shooter = nullptr;
 
 void RM_RTOS_Init() {
-  dbus = new remote::DBUS(&huart1);
+  dbus = new remote::DBUS(&huart3);
 
   can = new bsp::CAN(&hcan1, 0x201);
   left_flywheel_motor = new control::Motor3508(can, 0x201);
@@ -50,6 +50,7 @@ void RM_RTOS_Init() {
   shooter_data.left_flywheel_motor = left_flywheel_motor;
   shooter_data.right_flywheel_motor = right_flywheel_motor;
   shooter_data.load_motor = load_motor;
+  shooter_data.model = control::SHOOTER_STANDARD_2022;
   shooter = new control::Shooter(shooter_data);
 }
 
@@ -62,7 +63,8 @@ void RM_RTOS_Default_Task(const void* args) {
   laser.High();
 
   while (true) {
-    shooter->SetFlywheelSpeed(dbus->ch1);
+    if (dbus->swr == remote::DOWN) shooter->SetFlywheelSpeed(500);
+    if (dbus->swr == remote::UP) shooter->SetFlywheelSpeed(0);
     if (dbus->ch3 > 500) shooter->LoadNext();
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors, 3);

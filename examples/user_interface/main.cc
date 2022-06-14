@@ -92,8 +92,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   communication::graphic_data_t graphGimbal;
   communication::graphic_data_t graphChassis;
   communication::graphic_data_t graphArrow;
-//  communication::graphic_data_t graphEmpty1;
-//  communication::graphic_data_t graphEmpty2;
+  communication::graphic_data_t graphEmpty1;
+  communication::graphic_data_t graphEmpty2;
   communication::graphic_data_t graphCrosshair1;
   communication::graphic_data_t graphCrosshair2;
   communication::graphic_data_t graphCrosshair3;
@@ -104,18 +104,12 @@ void RM_RTOS_Default_Task(const void* arguments) {
   communication::graphic_data_t graphBarFrame;
   communication::graphic_data_t graphBar;
   communication::graphic_data_t graphPercent;
-  communication::graphic_data_t graphDiag0;
+  communication::graphic_data_t graphDiag;
+  communication::graphic_data_t graphMode;
 
-  UI->ChassisGUIInit(&graphChassis, &graphArrow, 1300, 120);
-  UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphChassis, graphArrow);
-  referee->PrepareUIContent(communication::DOUBLE_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(100);
-
-  UI->GimbalGUIInit(&graphGimbal);
-  UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphGimbal);
-  referee->PrepareUIContent(communication::SINGLE_GRAPH);
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal, graphEmpty1, graphEmpty2);
+  referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
@@ -127,7 +121,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-  UI->CapGUIInit(&graphBarFrame, &graphBar, 1500, 350);
+  UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
@@ -141,37 +135,69 @@ void RM_RTOS_Default_Task(const void* arguments) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-  char diagStr[30] = "Diagnosis";
-  UI->DiagGUIInit(&graphDiag0, 30);
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag0, diagStr, 9);
+  char diagStr[30] = " ";
+  UI->DiagGUIInit(&graphDiag, 30);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
   char msgBuffer[30] = "Error_one";
-  UI->addMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag0);
+  UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
   char msgBuffer2[30] = "Error_two";
-  UI->addMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag0);
+  UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(100);
 
-//  osDelay(3000);
-//  UI->DiagGUIClear();
+  char msgBuffer3[30] = "Error_three";
+  UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+  char str[] = "NORMAL MODE";
+  UI->ModeGUIInit(&graphMode, sizeof str - 1);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, str, sizeof str);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+  osDelay(2000);
+  char modeStr[] = "SPIN MODE";     // mode name
+  UI->ModeGuiUpdate(&graphMode, sizeof modeStr - 1);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(100);
+
+
+//  osDelay(2000);
+////   clear diagnosis messages
+//  for (int i = 1; i <= UI->getMessageCount(); ++i){
+//    UI->DiagGUIClear(UI, referee, &graphDiag, i);
+//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//    referee_uart->Write(frame.data, frame.length);
+//    osDelay(50);
+//  }
+
 
   float i = 0;
   float j = 1.0;
   while (true){
       UI->ChassisGUIUpdate(i);
-      UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphChassis, graphArrow);
-      referee->PrepareUIContent(communication::DOUBLE_GRAPH);
+      UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal, graphEmpty1, graphEmpty2);
+      referee->PrepareUIContent(communication::FIVE_GRAPH);
       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
       referee_uart->Write(frame.data, frame.length);
       i+=0.1;
@@ -189,26 +215,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
       referee_uart->Write(frame.data, frame.length);
       osDelay(100);
+
   }
 
-//char theString[30];
-//int length = snprintf(theString, 30, "%.10f", -3.1415926);
-//UI->CharDraw(&graph1, "1", UI_Graph_Add, 0, UI_Color_Pink, 30, length, 3, 960, 540);
-////UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph1);
-//UI->CharRefresh((uint8_t*)(&referee->graphic_character), graph1, theString, length);
-//  referee->PrepareUIContent(communication::CHAR_GRAPH);
-//  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//  referee_uart->Write(frame.data, frame.length);
-//  osDelay(100);
-
-//  int i = 0;
-//  while (true) {
-//    UI->RectangleDraw(&graph, "0", UI_Graph_Change, 0, UI_Color_Purplish_red, 10, 960 - i, 640, 1000, 700);
-//    UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graph);
-//    referee->PrepareUIContent(communication::SINGLE_GRAPH);
-//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//    referee_uart->Write(frame.data, frame.length);
-//    osDelay(100);
-//    ++i;
-//  }
 }
