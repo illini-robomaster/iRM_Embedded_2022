@@ -1,54 +1,54 @@
 /****************************************************************************
-*                                                                          *
-*  Copyright (C) 2022 RoboMaster.                                          *
-*  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
-*                                                                          *
-*  This program is free software: you can redistribute it and/or modify    *
-*  it under the terms of the GNU General Public License as published by    *
-*  the Free Software Foundation, either version 3 of the License, or       *
-*  (at your option) any later version.                                     *
-*                                                                          *
-*  This program is distributed in the hope that it will be useful,         *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
-*  GNU General Public License for more details.                            *
-*                                                                          *
-*  You should have received a copy of the GNU General Public License       *
-*  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
-*                                                                          *
-****************************************************************************/
-
-#include "main.h"
-#include "i2c.h"
-#include "spi.h"
+ *                                                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
+ *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+ *                                                                          *
+ *  This program is free software: you can redistribute it and/or modify    *
+ *  it under the terms of the GNU General Public License as published by    *
+ *  the Free Software Foundation, either version 3 of the License, or       *
+ *  (at your option) any later version.                                     *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                          *
+ ****************************************************************************/
 
 #include "bsp_imu.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "i2c.h"
+#include "main.h"
+#include "spi.h"
 
 #define RX_SIGNAL (1 << 0)
 
 const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
-                                             .attr_bits = osThreadDetached,
-                                             .cb_mem = nullptr,
-                                             .cb_size = 0,
-                                             .stack_mem = nullptr,
-                                             .stack_size = 256 * 4,
-                                             .priority = (osPriority_t)osPriorityNormal,
-                                             .tz_module = 0,
-                                             .reserved = 0};
+                                         .attr_bits = osThreadDetached,
+                                         .cb_mem = nullptr,
+                                         .cb_size = 0,
+                                         .stack_mem = nullptr,
+                                         .stack_size = 256 * 4,
+                                         .priority = (osPriority_t)osPriorityNormal,
+                                         .tz_module = 0,
+                                         .reserved = 0};
 osThreadId_t imuTaskHandle;
 
 class IMU : public bsp::IMU_typeC {
  public:
   using bsp::IMU_typeC::IMU_typeC;
+
  protected:
   void RxCompleteCallback() final { osThreadFlagsSet(imuTaskHandle, RX_SIGNAL); }
 };
 
-static IMU *imu = nullptr;
+static IMU* imu = nullptr;
 
-void imuTask (void* arg) {
+void imuTask(void* arg) {
   UNUSED(arg);
 
   while (true) {
@@ -100,9 +100,11 @@ void RM_RTOS_Default_Task(const void* arg) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0, imu->DataReady() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+    print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+          imu->DataReady() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
     print("Temp: %.2f\r\n", imu->Temp);
-    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180, imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+          imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
     osDelay(50);
   }
 }

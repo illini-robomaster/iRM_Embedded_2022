@@ -433,9 +433,9 @@ class BMI088 {
          GPIO_TypeDef* CS_GYRO_Port, uint16_t CS_GYRO_Pin);
   bool IsReady();
   void Read(float gyro[3], float accel[3], float* temperate);
-  void temperature_read_over(uint8_t *rx_buf, float *temperate);
-  void accel_read_over(uint8_t *rx_buf, float accel[3], float *time);
-  void gyro_read_over(uint8_t *rx_buf, float gyro[3]);
+  void temperature_read_over(uint8_t* rx_buf, float* temperate);
+  void accel_read_over(uint8_t* rx_buf, float accel[3], float* time);
+  void gyro_read_over(uint8_t* rx_buf, float gyro[3]);
 
  private:
   SPI_HandleTypeDef* hspi_;
@@ -575,7 +575,7 @@ class IMU_typeC {
 
   void imu_cmd_spi_dma();
 
-  friend void DMACallbackWrapper(SPI_HandleTypeDef *hspi);
+  friend void DMACallbackWrapper(SPI_HandleTypeDef* hspi);
 
   static std::map<SPI_HandleTypeDef*, IMU_typeC*> spi_ptr_map;
   static IMU_typeC* FindInstance(SPI_HandleTypeDef* hspi);

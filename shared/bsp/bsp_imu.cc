@@ -21,13 +21,12 @@
 #include "bsp_imu.h"
 
 #include <cmath>
+
 #include "MahonyAHRS.h"
-
-#include "dma.h"
-
 #include "bsp_error_handler.h"
 #include "bsp_mpu6500_reg.h"
 #include "bsp_os.h"
+#include "dma.h"
 
 #define MPU6500_DELAY 55  // SPI delay
 // configured with initialization sequences
@@ -531,8 +530,7 @@ void BMI088::temperature_read_over(uint8_t* rx_buf, float* temperate) {
   int16_t bmi088_raw_temp;
   bmi088_raw_temp = (int16_t)((rx_buf[0] << 3) | (rx_buf[1] >> 5));
 
-  if (bmi088_raw_temp > 1023)
-    bmi088_raw_temp -= 2048;
+  if (bmi088_raw_temp > 1023) bmi088_raw_temp -= 2048;
   *temperate = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 }
 
@@ -599,19 +597,22 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init, bool useMag)
 }
 
 void IMU_typeC::Update() {
-  if(gyro_update_flag & (1 << IMU_NOTIFY_SHFITS)) {
+  if (gyro_update_flag & (1 << IMU_NOTIFY_SHFITS)) {
     gyro_update_flag &= ~(1 << IMU_NOTIFY_SHFITS);
-    BMI088_.gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET, BMI088_real_data_.gyro);
+    BMI088_.gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET,
+                           BMI088_real_data_.gyro);
   }
 
-  if(accel_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+  if (accel_update_flag & (1 << IMU_UPDATE_SHFITS)) {
     accel_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
-    BMI088_.accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, BMI088_real_data_.accel, &BMI088_real_data_.time);
+    BMI088_.accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET,
+                            BMI088_real_data_.accel, &BMI088_real_data_.time);
   }
 
-  if(accel_temp_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+  if (accel_temp_update_flag & (1 << IMU_UPDATE_SHFITS)) {
     accel_temp_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
-    BMI088_.temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &BMI088_real_data_.temp);
+    BMI088_.temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET,
+                                  &BMI088_real_data_.temp);
     Temp = BMI088_real_data_.temp;
     TempControl(BMI088_real_data_.temp);
   }
@@ -635,15 +636,20 @@ void IMU_typeC::Update() {
     }
     accel_fliter_1[0] = accel_fliter_2[0];
     accel_fliter_2[0] = accel_fliter_3[0];
-    accel_fliter_3[0] = accel_fliter_2[0] * fliter_num[0] + accel_fliter_1[0] * fliter_num[1] + BMI088_real_data_.accel[0] * fliter_num[2];
+    accel_fliter_3[0] = accel_fliter_2[0] * fliter_num[0] + accel_fliter_1[0] * fliter_num[1] +
+                        BMI088_real_data_.accel[0] * fliter_num[2];
     accel_fliter_1[1] = accel_fliter_2[1];
     accel_fliter_2[1] = accel_fliter_3[1];
-    accel_fliter_3[1] = accel_fliter_2[1] * fliter_num[0] + accel_fliter_1[1] * fliter_num[1] + BMI088_real_data_.accel[1] * fliter_num[2];
+    accel_fliter_3[1] = accel_fliter_2[1] * fliter_num[0] + accel_fliter_1[1] * fliter_num[1] +
+                        BMI088_real_data_.accel[1] * fliter_num[2];
     accel_fliter_1[2] = accel_fliter_2[2];
     accel_fliter_2[2] = accel_fliter_3[2];
-    accel_fliter_3[2] = accel_fliter_2[2] * fliter_num[0] + accel_fliter_1[2] * fliter_num[1] + BMI088_real_data_.accel[2] * fliter_num[2];
-    AHRS_update(INS_quat, 0.001f, BMI088_real_data_.gyro, BMI088_real_data_.accel, IST8310_real_data_.mag);
-    GetAngle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
+    accel_fliter_3[2] = accel_fliter_2[2] * fliter_num[0] + accel_fliter_1[2] * fliter_num[1] +
+                        BMI088_real_data_.accel[2] * fliter_num[2];
+    AHRS_update(INS_quat, 0.001f, BMI088_real_data_.gyro, BMI088_real_data_.accel,
+                IST8310_real_data_.mag);
+    GetAngle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET,
+             INS_angle + INS_ROLL_ADDRESS_OFFSET);
   }
 }
 
@@ -679,7 +685,8 @@ void IMU_typeC::AHRS_update(float* quat, float time, float* gyro, float* accel, 
   UNUSED(time);
 
   if (useMag_) {
-    MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1], mag[2]);
+    MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1],
+                     mag[2]);
   } else {
     MahonyAHRSupdateIMU(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2]);
   }
@@ -691,9 +698,7 @@ void IMU_typeC::GetAngle(float* q, float* yaw, float* pitch, float* roll) {
   *roll = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f);
 }
 
-float IMU_typeC::TempControl(float real_temp) {
-  return heater_.Update(real_temp);
-}
+float IMU_typeC::TempControl(float real_temp) { return heater_.Update(real_temp); }
 
 void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
   SET_BIT(hspi1.Instance->CR2, SPI_CR2_TXDMAEN);
@@ -822,38 +827,41 @@ void IMU_typeC::imu_cmd_spi_dma() {
   taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
-void DMACallbackWrapper(SPI_HandleTypeDef *hspi) {
-  if(__HAL_DMA_GET_FLAG(hspi->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi->hdmarx)) != RESET) {
+void DMACallbackWrapper(SPI_HandleTypeDef* hspi) {
+  if (__HAL_DMA_GET_FLAG(hspi->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi->hdmarx)) != RESET) {
     __HAL_DMA_CLEAR_FLAG(hspi->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi->hdmarx));
 
     IMU_typeC* imu = IMU_typeC::FindInstance(hspi);
     if (!imu) return;
 
-    //gyro read over
+    // gyro read over
     //陀螺仪读取完毕
-    if(imu->gyro_update_flag & (1 << IMU_SPI_SHFITS)) {
+    if (imu->gyro_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
-      HAL_GPIO_WritePin(imu->BMI088_param_.CS_GYRO_Port, imu->BMI088_param_.CS_GYRO_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_GYRO_Port, imu->BMI088_param_.CS_GYRO_Pin,
+                        GPIO_PIN_SET);
     }
-    //accel read over
+    // accel read over
     //加速度计读取完毕
-    if(imu->accel_update_flag & (1 << IMU_SPI_SHFITS)) {
+    if (imu->accel_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
-      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin,
+                        GPIO_PIN_SET);
     }
-    //temperature read over
+    // temperature read over
     //温度读取完毕
-    if(imu->accel_temp_update_flag & (1 << IMU_SPI_SHFITS)) {
+    if (imu->accel_temp_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
-      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(imu->BMI088_param_.CS_ACCEL_Port, imu->BMI088_param_.CS_ACCEL_Pin,
+                        GPIO_PIN_SET);
     }
 
     imu->imu_cmd_spi_dma();
 
-    if(imu->gyro_update_flag & (1 << IMU_UPDATE_SHFITS)) {
+    if (imu->gyro_update_flag & (1 << IMU_UPDATE_SHFITS)) {
       imu->gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
       imu->gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
       imu->RxCompleteCallback();
@@ -865,6 +873,4 @@ void IMU_typeC::RxCompleteCallback() {}
 
 } /* namespace bsp */
 
-void RM_DMA_IRQHandler(SPI_HandleTypeDef *hspi) {
-  bsp::DMACallbackWrapper(hspi);
-}
+void RM_DMA_IRQHandler(SPI_HandleTypeDef* hspi) { bsp::DMACallbackWrapper(hspi); }
