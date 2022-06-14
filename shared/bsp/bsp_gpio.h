@@ -66,6 +66,7 @@ class GPIO {
    *
    * @return 1 for high and 0 for low
    */
+  template <bool IsInput = false>
   uint8_t Read();
 
  private:
@@ -86,12 +87,17 @@ class GPIT {
    */
   GPIT(uint16_t pin, CallbackTypeDef callback, void* data);
 
+  void Start();
+
+  void Stop();
+
  private:
   friend void GPITCallbackWrapper(uint16_t pin);
 
   uint16_t pin_;
   CallbackTypeDef callback_;
   void* data_;
+  bool activated_ = false;
 
   static int GetGPIOIndex(uint16_t pin);
   static GPIT* gpits[NUM_GPITS];

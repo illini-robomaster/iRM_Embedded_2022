@@ -41,8 +41,14 @@ void GPIO::Toggle() {
   state_ ^= 1;
 }
 
+template uint8_t GPIO::Read<true>();
+template uint8_t GPIO::Read<false>();
+
+template <bool IsInput>
 uint8_t GPIO::Read() {
-  state_ = (HAL_GPIO_ReadPin(group_, pin_) == GPIO_PIN_SET);
+  if (IsInput)
+    state_ = (HAL_GPIO_ReadPin(group_, pin_) == GPIO_PIN_SET);
+
   return state_;
 }
 
@@ -58,6 +64,10 @@ GPIT::GPIT(uint16_t pin, CallbackTypeDef callback, void* data)
   gpits[gpio_idx] = this;
 }
 
+void GPIT::Start() { activated_ = true; }
+
+void GPIT::Stop() { activated_ = false; }
+
 int GPIT::GetGPIOIndex(uint16_t pin) {
   for (int i = 0; i < NUM_GPITS; ++i)
     if (pin == (1 << i)) return i;
@@ -69,7 +79,7 @@ void GPITCallbackWrapper(uint16_t pin) {
   if (gpio_idx >= 0 && gpio_idx < NUM_GPITS && GPIT::gpits[gpio_idx]) {
     GPIT* gpit = GPIT::gpits[gpio_idx];
 
-    if (gpit && gpit->callback_) {
+    if (gpit && gpit->activated_ && gpit->callback_) {
       gpit->callback_(gpit->data_);
     }
   }

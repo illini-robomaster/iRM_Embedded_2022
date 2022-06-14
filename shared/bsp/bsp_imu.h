@@ -31,8 +31,8 @@
 // acc (6 bytes) + temp (2 bytes) + gyro (6 bytes) + mag (6 bytes)
 #define MPU6500_SIZEOF_DATA 20
 
-// ist8310 error handling
-#define IST8310_DATA_READY_BIT 2
+#define BMI088_GYRO_SIZEOF_DATA   6
+#define BMI088_ACCEL_SIZEOF_DATA  7 // 1 byte for dummy data
 
 namespace bsp {
 
@@ -128,7 +128,11 @@ class IST8310 {
 
 class BMI088 {
  public:
-  BMI088(SPI_HandleTypeDef* hspi, const GPIO &accel_cs, const GPIO &gyro_cs);
+  BMI088(SPI_HandleTypeDef* hspi,
+         const GPIO &accel_cs,
+         const GPIO &gyro_cs,
+         uint16_t accel_int_pin,
+         uint16_t gyro_int_pin);
   void Read(float gyro[3], float accel[3], float* temperate);
 
   Eigen::Vector3f accel;
@@ -140,12 +144,20 @@ class BMI088 {
 
  private:
   SPI_HandleTypeDef* hspi_;
+  // chip select pins
   GPIO accel_cs_;
   GPIO gyro_cs_;
+  // interrupt pins
+  GPIT accel_int_;
+  GPIT gyro_int_;
 
   bool spi_busy_ = false;
-  bool accel_ready_ = false;
-  bool gyro_ready_ = false;
+  bool accel_pending_ = false;
+  bool gyro_pending_ = false;
+
+  // raw buffers for imu data (+1 for tx/rx buffer)
+  uint8_t accel_buf_[BMI088_ACCEL_SIZEOF_DATA + 1];
+  uint8_t gyro_buf_[BMI088_GYRO_SIZEOF_DATA + 1];
 
   // polling interfaces used only in initialization
   uint8_t AccelReadReg(uint8_t reg);
@@ -159,7 +171,16 @@ class BMI088 {
   void GyroWriteRegs(uint8_t reg, uint8_t* data, uint8_t len);
 
   void AccelInit();
+  void AccelRead();
+  void AccelIntCallback();
+
   void GyroInit();
+  void GyroRead();
+  void GyroIntCallback();
+
+  friend void BMI088AccelIntCallback(void* data);
+  friend void BMI088GyroIntCallback(void* data);
+  friend void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi);
 };
 
 } /* namespace bsp */

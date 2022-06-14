@@ -27,6 +27,7 @@
 #include "bsp_ist8310_reg.h"
 #include "bsp_mpu6500_reg.h"
 #include "bsp_os.h"
+#include "cmsis_os.h"
 
 // MPU6500
 #define MPU6500_DELAY 55  // SPI polling delay
@@ -50,10 +51,8 @@ MPU6500* MPU6500::mpu6500 = nullptr;
 
 void MPU6500IntCallback(void* data) {
   MPU6500* mpu6500 = static_cast<MPU6500*>(data);
-  if (mpu6500) {
-    mpu6500->timestamp = GetHighresTickMicroSec();
-    mpu6500->UpdateData();
-  }
+  mpu6500->timestamp = GetHighresTickMicroSec();
+  mpu6500->UpdateData();
 }
 
 MPU6500::MPU6500(SPI_HandleTypeDef* hspi, const GPIO& chip_select, uint16_t int_pin)
@@ -85,6 +84,9 @@ MPU6500::MPU6500(SPI_HandleTypeDef* hspi, const GPIO& chip_select, uint16_t int_
   IST8310Init();
   // enable imu interrupt
   WriteReg(MPU6500_INT_ENABLE, 0x01);
+
+  // actiave interrupt
+  int_.Start();
 }
 
 void MPU6500::IST8310Init() {
@@ -105,6 +107,7 @@ void MPU6500::IST8310Init() {
 void MPU6500::UpdateData() {
   chip_select_.Low();
   io_buff_[0] = MPU6500_ACCEL_XOUT_H | 0x80;
+
   HAL_SPI_TransmitReceive_DMA(hspi_, io_buff_, io_buff_, MPU6500_SIZEOF_DATA + 1);
 }
 
@@ -169,12 +172,15 @@ IST8310* IST8310::ist8310 = nullptr;
 void IST8310I2cRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   UNUSED(hi2c);
 
+  IST8310* sensor = IST8310::ist8310;
+
   // copy magnetic data from raw buffer
   // also convert from left-handed NEU coordinate to right-handed NED coordinate
-  IST8310* sensor = IST8310::ist8310;
-  sensor->mag.x() = IST8310_MAG_SEN * (int16_t)((sensor->buf_[1] << 8) | sensor->buf_[0]);
-  sensor->mag.y() = IST8310_MAG_SEN * (int16_t)((sensor->buf_[3] << 8) | sensor->buf_[2]);
-  sensor->mag.z() = -IST8310_MAG_SEN * (int16_t)((sensor->buf_[5] << 8) | sensor->buf_[4]);
+  UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
+  sensor->mag.x() = IST8310_MAG_SEN * ((int16_t)(sensor->buf_[1] << 8) | sensor->buf_[0]);
+  sensor->mag.y() = IST8310_MAG_SEN * ((int16_t)(sensor->buf_[3] << 8) | sensor->buf_[2]);
+  sensor->mag.z() = -IST8310_MAG_SEN * ((int16_t)(sensor->buf_[5] << 8) | sensor->buf_[4]);
+  taskEXIT_CRITICAL_FROM_ISR(isrflags);
 
   // call user callback
   if (IST8310::ist8310->callback_) {
@@ -184,9 +190,7 @@ void IST8310I2cRxCpltCallback(I2C_HandleTypeDef* hi2c) {
 
 void IST8310IntCallback(void* data) {
   IST8310* ist8310 = static_cast<IST8310*>(data);
-  if (ist8310) {
-    ist8310->IntCallback();
-  }
+  ist8310->IntCallback();
 }
 
 IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
@@ -231,6 +235,9 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
     }
     HAL_Delay(wait_time);
   }
+
+  // actiave interrupt
+  int_.Start();
 }
 
 void IST8310::RegisterCallback(IST8310_Callback callback) { callback_ = callback; }
@@ -242,10 +249,6 @@ void IST8310::IntCallback() {
   // read data register async
   HAL_I2C_Mem_Read_DMA(hi2c_, IST8310_IIC_ADDRESS << 1, IST8310_DATA, I2C_MEMADD_SIZE_8BIT, buf_,
                        6);
-
-  if (callback_) {
-    callback_(*this);
-  }
 }
 
 uint8_t IST8310::ReadReg(uint8_t reg) {
@@ -266,10 +269,126 @@ void IST8310::WriteRegs(uint8_t reg, uint8_t* data, uint8_t len) {
   HAL_I2C_Mem_Write(hi2c_, IST8310_IIC_ADDRESS << 1, reg, I2C_MEMADD_SIZE_8BIT, data, len, timeout);
 }
 
-BMI088::BMI088(SPI_HandleTypeDef* hspi, const GPIO &accel_cs, const GPIO &gyro_cs)
-    : hspi_(hspi), accel_cs_(accel_cs), gyro_cs_(gyro_cs) {
+void BMI088AccelIntCallback(void* data) {
+  BMI088* bmi088 = static_cast<BMI088*>(data);
+  bmi088->AccelIntCallback();
+}
+
+void BMI088GyroIntCallback(void* data) {
+  BMI088* bmi088 = static_cast<BMI088*>(data);
+  bmi088->GyroIntCallback();
+}
+
+static BMI088* bmi088 = nullptr;
+
+static const float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
+static const float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
+
+void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+  UNUSED(hspi);
+
+  UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
+  bmi088->spi_busy_ = false;
+  if (bmi088->accel_cs_.Read() == 0) { // handle accel data
+    bmi088->accel_cs_.High();
+
+    // copy data
+    const uint8_t *buf = bmi088->accel_buf_ + 2;
+    bmi088->accel.x() = BMI088_ACCEL_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
+    bmi088->accel.y() = BMI088_ACCEL_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
+    bmi088->accel.z() = BMI088_ACCEL_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
+
+    if (bmi088->gyro_pending_) {
+      bmi088->gyro_pending_ = false;
+      bmi088->spi_busy_ = true;
+      bmi088->GyroRead();
+    }
+    taskEXIT_CRITICAL_FROM_ISR(isrflags);
+
+    // TODO(alvin): user callback
+  } else if (bmi088->gyro_cs_.Read() == 0) { // handle gyro data
+    bmi088->gyro_cs_.High();
+
+    // copy data
+    const uint8_t *buf = bmi088->gyro_buf_ + 1;
+    bmi088->gyro.x() = BMI088_GYRO_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
+    bmi088->gyro.y() = BMI088_GYRO_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
+    bmi088->gyro.z() = BMI088_GYRO_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
+
+    if (bmi088->accel_pending_) {
+      bmi088->accel_pending_ = false;
+      bmi088->spi_busy_ = true;
+      bmi088->AccelRead();
+    }
+    taskEXIT_CRITICAL_FROM_ISR(isrflags);
+
+    // TODO(alvin): user callback
+  }
+}
+
+BMI088::BMI088(SPI_HandleTypeDef* hspi,
+               const GPIO &accel_cs,
+               const GPIO &gyro_cs,
+               uint16_t accel_int_pin,
+               uint16_t gyro_int_pin)
+    : hspi_(hspi),
+      accel_cs_(accel_cs),
+      gyro_cs_(gyro_cs),
+      accel_int_(accel_int_pin, BMI088AccelIntCallback, this),
+      gyro_int_(gyro_int_pin, BMI088GyroIntCallback, this) {
+  RM_ASSERT_FALSE(bmi088, "repeated initialization of BMI088");
+  bmi088 = this;
+
   AccelInit();
   GyroInit();
+
+  // register SPI rx/tx complete callback handler
+  HAL_SPI_RegisterCallback(hspi, HAL_SPI_TX_RX_COMPLETE_CB_ID, &BMI088SpiTxRxCpltCallback);
+
+  accel_int_.Start();
+  gyro_int_.Start();
+}
+
+void BMI088::AccelIntCallback() {
+  UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
+  // check ongoing SPI transfer
+  if (spi_busy_) {
+    accel_pending_ = true;
+    taskEXIT_CRITICAL_FROM_ISR(isrflags);
+    return;
+  }
+  spi_busy_ = true;
+
+  accel_timestamp = GetHighresTickMicroSec();
+  AccelRead();
+  taskEXIT_CRITICAL_FROM_ISR(isrflags);
+}
+
+void BMI088::AccelRead() {
+  accel_cs_.Low();
+  accel_buf_[0] = BMI088_ACCEL_XOUT_L | 0x80;
+  HAL_SPI_TransmitReceive_DMA(hspi_, accel_buf_, accel_buf_, BMI088_ACCEL_SIZEOF_DATA + 1);
+}
+
+void BMI088::GyroIntCallback() {
+  UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
+  // check ongoing SPI transfer
+  if (spi_busy_) {
+    gyro_pending_ = true;
+    taskEXIT_CRITICAL_FROM_ISR(isrflags);
+    return;
+  }
+  spi_busy_ = true;
+
+  gyro_timestamp = GetHighresTickMicroSec();
+  GyroRead();
+  taskEXIT_CRITICAL_FROM_ISR(isrflags);
+}
+
+void BMI088::GyroRead() {
+  gyro_cs_.Low();
+  gyro_buf_[0] = BMI088_GYRO_X_L | 0x80;
+  HAL_SPI_TransmitReceive_DMA(hspi_, gyro_buf_, gyro_buf_, BMI088_GYRO_SIZEOF_DATA + 1);
 }
 
 uint8_t BMI088::AccelReadReg(uint8_t reg) {
@@ -328,9 +447,6 @@ void BMI088::GyroWriteRegs(uint8_t reg, uint8_t *data, uint8_t len) {
   HAL_SPI_Transmit(hspi_, data, len, BMI088_DELAY);
   gyro_cs_.High();
 }
-
-static float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
-static float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
 
 void BMI088::AccelInit() {
   // accel software reset
@@ -417,15 +533,13 @@ void BMI088::Read(float* gyro, float* accel, float* temperate) {
   bmi088_raw_temp = (int16_t)((buf[5]) << 8) | buf[4];
   accel[2] = bmi088_raw_temp * BMI088_ACCEL_SEN;
 
-  GyroReadRegs(BMI088_GYRO_CHIP_ID, buf, 8);
-  if (buf[0] == BMI088_GYRO_CHIP_ID_VALUE) {
-    bmi088_raw_temp = (int16_t)((buf[3]) << 8) | buf[2];
-    gyro[0] = bmi088_raw_temp * BMI088_GYRO_SEN;
-    bmi088_raw_temp = (int16_t)((buf[5]) << 8) | buf[4];
-    gyro[1] = bmi088_raw_temp * BMI088_GYRO_SEN;
-    bmi088_raw_temp = (int16_t)((buf[7]) << 8) | buf[6];
-    gyro[2] = bmi088_raw_temp * BMI088_GYRO_SEN;
-  }
+  GyroReadRegs(BMI088_GYRO_X_L, buf, 6);
+  bmi088_raw_temp = (int16_t)((buf[1]) << 8) | buf[0];
+  gyro[0] = bmi088_raw_temp * BMI088_GYRO_SEN;
+  bmi088_raw_temp = (int16_t)((buf[3]) << 8) | buf[2];
+  gyro[1] = bmi088_raw_temp * BMI088_GYRO_SEN;
+  bmi088_raw_temp = (int16_t)((buf[5]) << 8) | buf[4];
+  gyro[2] = bmi088_raw_temp * BMI088_GYRO_SEN;
   AccelReadRegs(BMI088_TEMP_M, buf, 2);
 
   bmi088_raw_temp = (int16_t)((buf[0] << 3) | (buf[1] >> 5));
