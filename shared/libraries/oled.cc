@@ -2282,12 +2282,12 @@ void OLED::DrawIMUData(float roll, float yaw, float pitch) {
 //  uint8_t *r = reinterpret_cast<uint8_t*>(&roll);
 //  uint8_t *y = reinterpret_cast<uint8_t*>(&yaw);
 //  uint8_t *p = reinterpret_cast<uint8_t*>(&pitch);
-  char r[5];
-  char y[5];
-  char p[5];
-  sprintf(r, "%.2f", roll);
-  sprintf(y, "%.2f", yaw);
-  sprintf(p, "%.2f", pitch);
+  char r[8];
+  char y[8];
+  char p[8];
+  sprintf(r, "%.5f", roll);
+  sprintf(y, "%.5f", yaw);
+  sprintf(p, "%.5f", pitch);
   ShowString(0, 7, (uint8_t*)r);
   ShowString(1, 7, (uint8_t*)y);
   ShowString(2, 7, (uint8_t*)p);
