@@ -18,13 +18,30 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "main.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "cmsis_os.h"
 #include "user_interface.h"
+#include "bsp_gpio.h"
+#include "bsp_laser.h"
+#include "cmsis_os.h"
+#include "dbus.h"
+#include "shooter.h"
 #include <cmath>
 
 #define RX_SIGNAL (1 << 0)
+#define LASER_Pin GPIO_PIN_13
+#define LASER_GPIO_Port GPIOG
+
+bsp::CAN* can = nullptr;
+control::MotorCANBase* left_flywheel_motor = nullptr;
+control::MotorCANBase* right_flywheel_motor = nullptr;
+control::MotorCANBase* load_motor = nullptr;
+
+remote::DBUS* dbus = nullptr;
+control::ServoMotor* load_servo = nullptr;
+control::Shooter* shooter = nullptr;
 
 extern osThreadId_t defaultTaskHandle;
 
@@ -79,6 +96,20 @@ void RM_RTOS_Init(void) {
   referee_uart->SetupTx(300);
 
   referee = new communication::Referee;
+
+  dbus = new remote::DBUS(&huart3);
+
+  can = new bsp::CAN(&hcan1, 0x201);
+  left_flywheel_motor = new control::Motor3508(can, 0x201);
+  right_flywheel_motor = new control::Motor3508(can, 0x202);
+  load_motor = new control::Motor3508(can, 0x203);
+
+  control::shooter_t shooter_data;
+  shooter_data.left_flywheel_motor = left_flywheel_motor;
+  shooter_data.right_flywheel_motor = right_flywheel_motor;
+  shooter_data.load_motor = load_motor;
+  shooter_data.model = control::SHOOTER_STANDARD_2022;
+  shooter = new control::Shooter(shooter_data);
 }
 
 void RM_RTOS_Threads_Init(void) {
@@ -87,6 +118,11 @@ void RM_RTOS_Threads_Init(void) {
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
+  osDelay(500);  // DBUS initialization needs time
+
+  control::MotorCANBase* motors[] = {left_flywheel_motor, right_flywheel_motor, load_motor};
+  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+  laser.High();
 
   communication::package_t frame;
   communication::graphic_data_t graphGimbal;
@@ -216,6 +252,12 @@ void RM_RTOS_Default_Task(const void* arguments) {
       referee_uart->Write(frame.data, frame.length);
       osDelay(100);
 
+      if (dbus->swr == remote::DOWN) shooter->SetFlywheelSpeed(500);
+      if (dbus->swr == remote::UP) shooter->SetFlywheelSpeed(0);
+      if (dbus->ch3 > 500) shooter->LoadNext();
+      shooter->Update();
+      control::MotorCANBase::TransmitOutput(motors, 3);
+      osDelay(10);
   }
 
 }

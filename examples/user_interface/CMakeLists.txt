@@ -21,5 +21,5 @@
 project(example_user_interface ASM C CXX)
 
 irm_add_arm_executable(${PROJECT_NAME}
-    TARGET DJI_Board_TypeA
+    TARGET DJI_Board_TypeC
     SOURCES main.cc)
