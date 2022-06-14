@@ -43,5 +43,6 @@ void RM_RTOS_Default_Task(const void* argument) {
 
   while (true) {
     OLED->DrawCat();
+    osDelay(1);
   }
 }
