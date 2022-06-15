@@ -43,7 +43,7 @@ function(irm_add_arm_executable name)
     add_executable(${name}.elf ${ARG_SOURCES})
     target_link_libraries(${name}.elf
         PRIVATE ${ARG_DEPENDS} ${ARG_TARGET} ${ARG_TARGET}_irm)
-    
+
     target_include_directories(${name}.elf PRIVATE ${ARG_INCLUDES})
     target_link_options(${name}.elf PRIVATE -Wl,-Map=${MAP_FILE})
 
@@ -79,7 +79,6 @@ function(irm_add_board_specific_library name)
     cmake_parse_arguments(ARG "" "TARGET" "SOURCES;INCLUDES;DEPENDS" ${ARGN})
     add_library(${name} OBJECT ${ARG_SOURCES})
     target_link_libraries(${name}
-        PUBLIC ${ARG_TARGET}_interface
-        PRIVATE ${ARG_DEPENDS})
+        PUBLIC ${ARG_TARGET}_interface ${ARG_DEPENDS})
     target_include_directories(${name} PUBLIC ${ARG_INCLUDES})
 endfunction(irm_add_board_specific_library)

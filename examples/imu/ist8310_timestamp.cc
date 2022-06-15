@@ -18,52 +18,26 @@
  *                                                                          *
  ****************************************************************************/
 
-#include <Eigen/Dense>
-
-#include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_os.h"
-#include "bsp_usb.h"
+#include "bsp_print.h"
 #include "cmsis_os.h"
+#include "i2c.h"
 #include "main.h"
 
-#define ONBOARD_IMU_SPI hspi5
-#define ONBOARD_IMU_CS_GROUP GPIOF
-#define ONBOARD_IMU_CS_PIN GPIO_PIN_6
-
-typedef struct {
-  char header;
-  float acce[3];
-  float gyro[3];
-  float mag[3];
-  char terminator;
-} __attribute__((packed)) imu_data_t;
-
-static bsp::MPU6500* imu = nullptr;
-static bsp::VirtualUSB* usb = nullptr;
-
-static imu_data_t imu_data;
+static bsp::IST8310* IST8310 = nullptr;
 
 void RM_RTOS_Init(void) {
-  bsp::SetHighresClockTimer(&htim2);
-  imu_data.header = 's';
-  imu_data.terminator = '\0';
+  print_use_uart(&huart1);
+  IST8310 = new bsp::IST8310(&hi2c3, DRDY_IST8310_Pin, bsp::GPIO(GPIOG, GPIO_PIN_6));
+  bsp::SetHighresClockTimer(&htim5);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
-  bsp::GPIO chip_select(ONBOARD_IMU_CS_GROUP, ONBOARD_IMU_CS_PIN);
-  imu = new bsp::MPU6500(&ONBOARD_IMU_SPI, chip_select, MPU6500_IT_Pin);
-  usb = new bsp::VirtualUSB();
-  usb->SetupTx(sizeof(imu_data_t));
-  osDelay(10);
-
   while (true) {
-    memcpy(imu_data.acce, imu->acce.data(), 3 * sizeof(float));
-    memcpy(imu_data.gyro, imu->gyro.data(), 3 * sizeof(float));
-    memcpy(imu_data.mag, imu->mag.data(), 3 * sizeof(float));
-    usb->Write((uint8_t*)&imu_data, sizeof(imu_data));
-    osDelay(10);
+    print("%lu\r\n", IST8310->timestamp);
+    osDelay(3);
   }
 }

@@ -66,6 +66,7 @@ class GPIO {
    *
    * @return 1 for high and 0 for low
    */
+  template <bool IsInput = false>
   uint8_t Read();
 
  private:
@@ -75,32 +76,32 @@ class GPIO {
 };
 
 class GPIT {
+  typedef void (*CallbackTypeDef)(void*);
+
  public:
   /**
    * @brief Contructor for general purpose interrupt pins
    *
    * @param pin interrupt pin number (x in EXTIx)
+   * @param callback callback function pointer to call when interrupt happens
+   * @param data associated data for the callback functions
    */
-  GPIT(uint16_t pin);
+  GPIT(uint16_t pin, CallbackTypeDef callback, void* data);
 
-  /**
-   * @brief Callback back when interrupt happens
-   */
-  virtual void IntCallback() = 0;
+  void Start();
 
-  /**
-   * @brief wrapper for global interrupt handler
-   *
-   * @param pin interrupt pin number
-   */
-  static void IntCallback(uint16_t pin);
+  void Stop();
 
  private:
-  static int GetGPIOIndex(uint16_t pin);
-
-  static GPIT* gpits[NUM_GPITS];
+  friend void GPITCallbackWrapper(uint16_t pin);
 
   uint16_t pin_;
+  CallbackTypeDef callback_;
+  void* data_;
+  bool activated_ = false;
+
+  static int GetGPIOIndex(uint16_t pin);
+  static GPIT* gpits[NUM_GPITS];
 };
 
 } /* namespace bsp */
