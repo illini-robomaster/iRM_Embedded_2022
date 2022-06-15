@@ -27,3 +27,7 @@ irm_add_arm_executable(${PROJECT_NAME}
 irm_add_arm_executable(${PROJECT_NAME}_imu
     TARGET DJI_Board_TypeA
     SOURCES imu_stablized.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_typeC
+        TARGET DJI_Board_TypeC
+        SOURCES typeC.cc)

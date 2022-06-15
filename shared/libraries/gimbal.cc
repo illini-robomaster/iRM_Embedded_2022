@@ -19,15 +19,57 @@ Gimbal::Gimbal(gimbal_t gimbal)
       data_.yaw_offset_ = 3.406f;
       data_.pitch_max_ = 0.408f;
       data_.yaw_max_ = 1.551f;
-      data_.pitch_proximity_ = data_.pitch_max_ / 3.0;
-      data_.yaw_proximity_ = data_.yaw_max_ / 6.0;
+      {
+        float pitch_theta_max_iout = 0;
+        float pitch_theta_max_out = 0;
+        float pitch_omega_max_iout = 0;
+        float pitch_omega_max_out = 0;
+        float yaw_theta_max_iout = 0;
+        float yaw_theta_max_out = 0;
+        float yaw_omega_max_iout = 0;
+        float yaw_omega_max_out = 0;
+        pitch_theta_pid_param_ = new float[3]{0, 0, 0};
+        pitch_omega_pid_param_ = new float[3]{0, 0, 0};
+        yaw_theta_pid_param_ = new float[3]{0, 0, 0};
+        yaw_omega_pid_param_ = new float[3]{0, 0, 0};
+        pitch_theta_pid_ = new ConstrainedPID(pitch_theta_pid_param_, pitch_theta_max_iout, pitch_theta_max_out);
+        pitch_omega_pid_ = new ConstrainedPID(pitch_omega_pid_param_, pitch_omega_max_iout, pitch_omega_max_out);
+        yaw_theta_pid_ = new ConstrainedPID(yaw_theta_pid_param_, yaw_theta_max_iout, yaw_theta_max_out);
+        yaw_omega_pid_ = new ConstrainedPID(yaw_omega_pid_param_, yaw_omega_max_iout, yaw_omega_max_out);
+      }
+      break;
+    case GIMBAL_STANDARD_TWO:
+      data_.pitch_offset_ = 1.0500f;
+      data_.yaw_offset_ = 0.5323f;
+      data_.pitch_max_ = 0.5080f;
+      data_.yaw_max_ = PI;
+      {
+        float pitch_theta_max_iout = 0;
+        float pitch_theta_max_out = 2;
+        float pitch_omega_max_iout = 1500;
+        float pitch_omega_max_out = 7000;
+        float yaw_theta_max_iout = 0;
+        float yaw_theta_max_out = 1;
+        float yaw_omega_max_iout = 7000;
+        float yaw_omega_max_out = 7000;
+        // pitch_theta_pid_param_ = new float[3]{35, 0, 12};
+        // pitch_omega_pid_param_ = new float[3]{1500, 0.05, 45};
+        // yaw_theta_pid_param_ = new float[3]{43, 0, 12};
+        // yaw_omega_pid_param_ = new float[3]{2900, 0.02, 45};
 
-      pitch_move_pid_param_ = new float[3]{1400, 0, 2200};
-      pitch_hold_pid_param_ = new float[3]{3200, 100, 3100};
-      yaw_move_pid_param_ = new float[3]{1000, 0, 2000};
-      yaw_hold_pid_param_ = new float[3]{3000, 60, 2500};
-      pitch_pid_ = new PIDController(pitch_move_pid_param_);
-      yaw_pid_ = new PIDController(yaw_move_pid_param_);
+        pitch_theta_pid_param_ = new float[3]{35, 0, 12};
+        pitch_omega_pid_param_ = new float[3]{1500, 0.05, 45};
+        yaw_theta_pid_param_ = new float[3]{35, 0, 0.6};
+        yaw_omega_pid_param_ = new float[3]{3500, 20, 0};
+        // pitch_theta_pid_param_ = new float[3]{25, 0, 0.05};
+        // pitch_omega_pid_param_ = new float[3]{1200, 0, 0};
+        // yaw_theta_pid_param_ = new float[3]{38, 0, 0};
+        // yaw_omega_pid_param_ = new float[3]{2600, 0, 30};
+        pitch_theta_pid_ = new ConstrainedPID(pitch_theta_pid_param_, pitch_theta_max_iout, pitch_theta_max_out);
+        pitch_omega_pid_ = new ConstrainedPID(pitch_omega_pid_param_, pitch_omega_max_iout, pitch_omega_max_out);
+        yaw_theta_pid_ = new ConstrainedPID(yaw_theta_pid_param_, yaw_theta_max_iout, yaw_theta_max_out);
+        yaw_omega_pid_ = new ConstrainedPID(yaw_omega_pid_param_, yaw_omega_max_iout, yaw_omega_max_out);
+      }
       break;
     default:
       RM_ASSERT_TRUE(false, "No gimbal type specified");
@@ -38,42 +80,39 @@ Gimbal::Gimbal(gimbal_t gimbal)
 }
 
 Gimbal::~Gimbal() {
-  delete pitch_move_pid_param_;
-  pitch_move_pid_param_ = nullptr;
-  delete pitch_hold_pid_param_;
-  pitch_hold_pid_param_ = nullptr;
-  delete yaw_move_pid_param_;
-  yaw_move_pid_param_ = nullptr;
-  delete yaw_hold_pid_param_;
-  yaw_hold_pid_param_ = nullptr;
-  delete pitch_pid_;
-  pitch_pid_ = nullptr;
-  delete yaw_pid_;
-  yaw_pid_ = nullptr;
+  delete pitch_theta_pid_param_;
+  pitch_theta_pid_param_ = nullptr;
+  delete pitch_omega_pid_param_;
+  pitch_omega_pid_param_ = nullptr;
+  delete yaw_theta_pid_param_;
+  yaw_theta_pid_param_ = nullptr;
+  delete yaw_omega_pid_param_;
+  yaw_omega_pid_param_ = nullptr;
+  delete pitch_theta_pid_;
+  pitch_theta_pid_ = nullptr;
+  delete pitch_omega_pid_;
+  pitch_omega_pid_ = nullptr;
+  delete yaw_theta_pid_;
+  yaw_theta_pid_ = nullptr;
+  delete yaw_omega_pid_;
+  yaw_omega_pid_ = nullptr;
 }
 
-gimbal_data_t Gimbal::GetData() const { return data_; }
+gimbal_data_t* Gimbal::GetData() { return &data_; }
 
 void Gimbal::Update() {
-  float pitch_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
-  float yaw_diff = yaw_motor_->GetThetaDelta(yaw_angle_);
-  pitch_detector_.input(abs(pitch_diff) > data_.pitch_proximity_);
-  yaw_detector_.input(abs(yaw_diff) > data_.yaw_proximity_);
+  float pt_diff = pitch_motor_->GetThetaDelta(pitch_angle_);
+  float pt_out = pitch_theta_pid_->ComputeOutput(pt_diff);
+  float po_in = pitch_motor_->GetOmegaDelta(pt_out);
+  float po_out = pitch_omega_pid_->ComputeConstrainedOutput(po_in);
 
-  if (pitch_detector_.posEdge()) {
-    pitch_pid_->Reinit(pitch_move_pid_param_);
-  } else if (pitch_detector_.negEdge()) {
-    pitch_pid_->Reinit(pitch_hold_pid_param_);
-  }
-  if (yaw_detector_.posEdge()) {
-    yaw_pid_->Reinit(yaw_move_pid_param_);
-  } else if (yaw_detector_.negEdge()) {
-    yaw_pid_->Reinit(yaw_hold_pid_param_);
-  }
+  float yt_diff = yaw_motor_->GetThetaDelta(yaw_angle_);
+  float yt_out = yaw_theta_pid_->ComputeOutput(yt_diff);
+  float yt_in = yaw_motor_->GetOmegaDelta(yt_out);
+  float yo_out = yaw_omega_pid_->ComputeConstrainedOutput(yt_in);
 
-  constexpr float multiplier = 50;
-  pitch_motor_->SetOutput(pitch_pid_->ComputeConstrainedOutput(pitch_diff * multiplier));
-  yaw_motor_->SetOutput(yaw_pid_->ComputeConstrainedOutput(yaw_diff * multiplier));
+  pitch_motor_->SetOutput(po_out);
+  yaw_motor_->SetOutput(yo_out);
 }
 
 void Gimbal::TargetAbs(float abs_pitch, float abs_yaw) {

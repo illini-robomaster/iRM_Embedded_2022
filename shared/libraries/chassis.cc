@@ -19,10 +19,7 @@
  ****************************************************************************/
 
 #include "chassis.h"
-
 #include "bsp_error_handler.h"
-#include "can.h"
-#include "cmath"
 
 namespace control {
 
@@ -33,6 +30,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
   // data initialization using acquired model
   switch (chassis.model) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_MECANUM:
       motors_ = new MotorCANBase*[FourWheel::motor_num];
       motors_[FourWheel::front_left] = chassis.motors[FourWheel::front_left];
       motors_[FourWheel::front_right] = chassis.motors[FourWheel::front_right];
@@ -40,11 +38,27 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
       {
-        float* pid_param = new float[3]{20, 8, 2};  // {5, 3, 0.1}
+        float* pid_param = new float[3]{30, 0.05, 1};  // {20, 0.01, 0.1}
         pids_[FourWheel::front_left].Reinit(pid_param);
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
         pids_[FourWheel::back_right].Reinit(pid_param);
+        float motor_I_limit = 50;
+        pids_[FourWheel::front_left].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::front_right].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::back_left].ChangeMax(motor_I_limit, motor_range);
+        pids_[FourWheel::back_right].ChangeMax(motor_I_limit, motor_range);
+      }
+
+      {
+        power_limit_t power_limit_param;
+        power_limit_param.power_limit = 120;
+        power_limit_param.WARNING_power = 105;
+        power_limit_param.WARNING_power_buff = 50;
+        power_limit_param.buffer_total_current_limit = 16000;
+        power_limit_param.power_total_current_limit = power_limit_param.power_limit * (20000 / 80.0);
+
+        power_limit_ = new PowerLimitNaive(FourWheel::motor_num, &power_limit_param);
       }
 
       speeds_ = new float[FourWheel::motor_num];
@@ -58,6 +72,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
 Chassis::~Chassis() {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_MECANUM:
       motors_[FourWheel::front_left] = nullptr;
       motors_[FourWheel::front_right] = nullptr;
       motors_[FourWheel::back_left] = nullptr;
@@ -74,6 +89,7 @@ Chassis::~Chassis() {
 void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
+    case CHASSIS_MECANUM:
       constexpr int MAX_ABS_CURRENT = 12288;  // refer to MotorM3508 for details
       float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
       float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
@@ -86,20 +102,25 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
   }
 }
 
-void Chassis::Update() {
+void Chassis::Update(float chassis_power, float chassis_power_buffer) {
   switch (model_) {
     case CHASSIS_STANDARD_ZERO:
-      motors_[FourWheel::front_left]->SetOutput(
-          pids_[FourWheel::front_left].ComputeConstrainedOutput(
-              motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left])));
-      motors_[FourWheel::back_left]->SetOutput(pids_[FourWheel::back_left].ComputeConstrainedOutput(
-          motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left])));
-      motors_[FourWheel::front_right]->SetOutput(
-          pids_[FourWheel::front_right].ComputeConstrainedOutput(
-              motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right])));
-      motors_[FourWheel::back_right]->SetOutput(
-          pids_[FourWheel::back_right].ComputeConstrainedOutput(
-              motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right])));
+    case CHASSIS_MECANUM:
+      float PID_output[FourWheel::motor_num];
+      float output[FourWheel::motor_num];
+
+      PID_output[FourWheel::front_left] = pids_[FourWheel::front_left].ComputeOutput(motors_[FourWheel::front_left]->GetOmegaDelta(speeds_[FourWheel::front_left]));
+      PID_output[FourWheel::back_left] = pids_[FourWheel::back_left].ComputeOutput(motors_[FourWheel::back_left]->GetOmegaDelta(speeds_[FourWheel::back_left]));
+      PID_output[FourWheel::front_right] = pids_[FourWheel::front_right].ComputeOutput(motors_[FourWheel::front_right]->GetOmegaDelta(speeds_[FourWheel::front_right]));
+      PID_output[FourWheel::back_right] = pids_[FourWheel::back_right].ComputeOutput(motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right]));
+
+      power_limit_->Output(chassis_power, chassis_power_buffer, PID_output, output);
+
+      motors_[FourWheel::front_left]->SetOutput(control::ClipMotorRange(output[FourWheel::front_left]));
+      motors_[FourWheel::back_left]->SetOutput(control::ClipMotorRange(output[FourWheel::back_left]));
+      motors_[FourWheel::front_right]->SetOutput(control::ClipMotorRange(output[FourWheel::front_right]));
+      motors_[FourWheel::back_right]->SetOutput(control::ClipMotorRange(output[FourWheel::back_right]));
+
       break;
   }
 }

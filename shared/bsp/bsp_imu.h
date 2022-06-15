@@ -519,7 +519,7 @@ class IMU_typeC {
   bool useMag_;
   unsigned long count_ = 0;
 
-  unsigned zeroDriftTry = 1000;
+  unsigned zeroDriftTry = 2000;
   float zeroDrift[3] = {0, 0, 0};
   float zeroDriftTemp[3] = {0, 0, 0};
 

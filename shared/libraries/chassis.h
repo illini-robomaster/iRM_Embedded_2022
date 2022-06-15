@@ -22,15 +22,16 @@
 
 #include "controller.h"
 #include "motor.h"
+#include "power_limit.h"
 
-#define MAX_WHEEL_NUM 6
+#define MAX_WHEEL_NUM 4
 
 namespace control {
 
 /**
  * @brief chassis models
  */
-typedef enum { CHASSIS_STANDARD_ZERO } chassis_model_t;
+typedef enum { CHASSIS_STANDARD_ZERO, CHASSIS_MECANUM } chassis_model_t;
 
 /**
  * @brief structure used when chassis instance is initialized
@@ -77,7 +78,7 @@ class Chassis {
    * @brief calculate the output of the motors under current configuration
    * @note does not command the motor immediately
    */
-  void Update();
+  void Update(float chassis_power, float chassis_power_buffer);
 
  private:
   // acquired from user
@@ -85,7 +86,8 @@ class Chassis {
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
-  PIDController pids_[MAX_WHEEL_NUM];
+  ConstrainedPID pids_[MAX_WHEEL_NUM];
+  PowerLimitNaive* power_limit_;
   float* speeds_;
 };
 

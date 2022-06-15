@@ -36,7 +36,7 @@ remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan1, 0x201);
+  can = new bsp::CAN(&hcan2, 0x201, false);
   fl_motor = new control::Motor3508(can, 0x201);
   fr_motor = new control::Motor3508(can, 0x202);
   bl_motor = new control::Motor3508(can, 0x203);
@@ -53,7 +53,7 @@ void RM_RTOS_Init() {
   chassis_data.model = control::CHASSIS_STANDARD_ZERO;
   chassis = new control::Chassis(chassis_data);
 
-  dbus = new remote::DBUS(&huart3);
+  dbus = new remote::DBUS(&huart1);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -71,7 +71,8 @@ void RM_RTOS_Default_Task(const void* args) {
       RM_ASSERT_TRUE(false, "Operation killed");
     }
 
-    chassis->Update();
+    chassis->Update(10, 60);
+    fl_motor->PrintData();
     control::MotorCANBase::TransmitOutput(motors, 4);
     osDelay(10);
   }
