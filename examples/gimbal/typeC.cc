@@ -298,9 +298,9 @@ void RM_RTOS_Init(void) {
   control::chassis_t chassis_data;
   chassis_data.motors = motors;
   chassis_data.model = control::CHASSIS_MECANUM;
-//  UNUSED(chassis_data);
-//  UNUSED(chassis);
-  chassis = new control::Chassis(chassis_data);
+  UNUSED(chassis_data);
+  UNUSED(chassis);
+//  chassis = new control::Chassis(chassis_data);
 }
 
 //=====================================================================================================
