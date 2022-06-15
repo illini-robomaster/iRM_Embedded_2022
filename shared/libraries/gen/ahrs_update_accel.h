@@ -21,8 +21,9 @@ namespace sym {
  *     g: Matrix31
  *
  * Outputs:
- *     next_states: Matrix13_1
- *     next_states_cov: Matrix12_12
+ *     innovation: Matrix31
+ *     innovation_cov: Matrix33
+ *     H: Matrix3_12
  */
 template <typename Scalar>
 void AhrsUpdateAccel(const Eigen::Matrix<Scalar, 13, 1>& states,
@@ -30,842 +31,111 @@ void AhrsUpdateAccel(const Eigen::Matrix<Scalar, 13, 1>& states,
                      const Eigen::Matrix<Scalar, 3, 1>& accel_body,
                      const Eigen::Matrix<Scalar, 3, 1>& accel_noise,
                      const Eigen::Matrix<Scalar, 3, 1>& g,
-                     Eigen::Matrix<Scalar, 13, 1>* const next_states = nullptr,
-                     Eigen::Matrix<Scalar, 12, 12>* const next_states_cov = nullptr) {
-  // Total ops: 2517
+                     Eigen::Matrix<Scalar, 3, 1>* const innovation = nullptr,
+                     Eigen::Matrix<Scalar, 3, 3>* const innovation_cov = nullptr,
+                     Eigen::Matrix<Scalar, 3, 12>* const H = nullptr) {
+  // Total ops: 212
 
   // Input arrays
 
-  // Intermediate terms (194)
-  const Scalar _tmp0 = 2 * states(1, 0);
-  const Scalar _tmp1 = _tmp0 * states(0, 0);
-  const Scalar _tmp2 = -_tmp1;
-  const Scalar _tmp3 = 2 * states(3, 0);
-  const Scalar _tmp4 = _tmp3 * states(2, 0);
-  const Scalar _tmp5 = -_tmp4;
-  const Scalar _tmp6 = _tmp3 * states(1, 0);
-  const Scalar _tmp7 = 2 * states(0, 0) * states(2, 0);
-  const Scalar _tmp8 = -_tmp7;
-  const Scalar _tmp9 = std::pow(states(3, 0), Scalar(2));
-  const Scalar _tmp10 = -_tmp9;
-  const Scalar _tmp11 = std::pow(states(0, 0), Scalar(2));
-  const Scalar _tmp12 = -_tmp11;
-  const Scalar _tmp13 = std::pow(states(1, 0), Scalar(2));
-  const Scalar _tmp14 = std::pow(states(2, 0), Scalar(2));
-  const Scalar _tmp15 = g(0, 0) * (_tmp10 + _tmp12 + _tmp13 + _tmp14) + g(1, 0) * (_tmp2 + _tmp5) +
-                        g(2, 0) * (_tmp6 + _tmp8);
-  const Scalar _tmp16 = _tmp15 * states_cov(2, 2);
-  const Scalar _tmp17 = _tmp12 + _tmp9;
-  const Scalar _tmp18 = -_tmp13;
-  const Scalar _tmp19 = _tmp14 + _tmp18;
-  const Scalar _tmp20 = _tmp3 * states(0, 0);
-  const Scalar _tmp21 = -_tmp20;
-  const Scalar _tmp22 = _tmp0 * states(2, 0);
-  const Scalar _tmp23 = g(0, 0) * (_tmp6 + _tmp7) + g(1, 0) * (_tmp21 + _tmp22);
-  const Scalar _tmp24 = _tmp23 + g(2, 0) * (_tmp17 + _tmp19);
-  const Scalar _tmp25 = _tmp16 + _tmp24 * states_cov(2, 0) + states_cov(2, 7);
-  const Scalar _tmp26 = -_tmp6;
-  const Scalar _tmp27 = -_tmp14;
-  const Scalar _tmp28 = _tmp13 + _tmp27;
-  const Scalar _tmp29 = _tmp10 + _tmp11;
-  const Scalar _tmp30 = -_tmp22;
-  const Scalar _tmp31 =
-      g(0, 0) * (_tmp26 + _tmp8) + g(1, 0) * (_tmp20 + _tmp30) + g(2, 0) * (_tmp28 + _tmp29);
-  const Scalar _tmp32 = g(0, 0) * (_tmp1 + _tmp5) + g(2, 0) * (_tmp20 + _tmp22);
-  const Scalar _tmp33 = _tmp32 + g(1, 0) * (_tmp17 + _tmp28);
-  const Scalar _tmp34 = _tmp33 * states_cov(2, 2);
-  const Scalar _tmp35 = _tmp31 * states_cov(1, 2) + _tmp34 + states_cov(6, 2);
-  const Scalar _tmp36 = _tmp31 * states_cov(1, 0) + _tmp33 * states_cov(2, 0) + states_cov(6, 0);
-  const Scalar _tmp37 = _tmp15 * _tmp35 + _tmp24 * _tmp36 + _tmp31 * states_cov(1, 7) +
-                        _tmp33 * states_cov(2, 7) + states_cov(6, 7);
-  const Scalar _tmp38 = _tmp16 + _tmp24 * states_cov(0, 2) + states_cov(7, 2);
-  const Scalar _tmp39 = _tmp15 * states_cov(2, 1) + _tmp24 * states_cov(0, 1) + states_cov(7, 1);
-  const Scalar _tmp40 = _tmp31 * states_cov(1, 1);
-  const Scalar _tmp41 = _tmp33 * states_cov(2, 1) + _tmp40 + states_cov(6, 1);
-  const Scalar _tmp42 =
-      Scalar(1.0) / (_tmp31 * _tmp41 + _tmp31 * states_cov(1, 6) + _tmp33 * _tmp35 +
-                     _tmp33 * states_cov(2, 6) + accel_noise(0, 0) + states_cov(6, 6));
-  const Scalar _tmp43 = _tmp42 * (_tmp15 * states_cov(2, 6) + _tmp24 * states_cov(0, 6) +
-                                  _tmp31 * _tmp39 + _tmp33 * _tmp38 + states_cov(7, 6));
-  const Scalar _tmp44 = _tmp24 * states_cov(0, 0);
-  const Scalar _tmp45 = _tmp15 * states_cov(2, 0) + _tmp44 + states_cov(7, 0);
-  const Scalar _tmp46 = Scalar(1.0) / (_tmp15 * _tmp38 + _tmp15 * states_cov(2, 7) +
-                                       _tmp24 * _tmp45 + _tmp24 * states_cov(0, 7) -
-                                       _tmp37 * _tmp43 + accel_noise(1, 0) + states_cov(7, 7));
-  const Scalar _tmp47 =
-      g(0, 0) * (_tmp2 + _tmp4) + g(1, 0) * (_tmp19 + _tmp29) + g(2, 0) * (_tmp21 + _tmp30);
-  const Scalar _tmp48 = g(1, 0) * (_tmp1 + _tmp4) + g(2, 0) * (_tmp26 + _tmp7);
-  const Scalar _tmp49 = _tmp48 + g(0, 0) * (_tmp11 + _tmp18 + _tmp27 + _tmp9);
-  const Scalar _tmp50 = _tmp31 * states_cov(1, 8) + _tmp33 * states_cov(2, 8) + _tmp36 * _tmp47 +
-                        _tmp41 * _tmp49 + states_cov(6, 8);
-  const Scalar _tmp51 = _tmp15 * states_cov(2, 8) + _tmp24 * states_cov(0, 8) + _tmp39 * _tmp49 -
-                        _tmp43 * _tmp50 + _tmp45 * _tmp47 + states_cov(7, 8);
-  const Scalar _tmp52 = _tmp47 * states_cov(0, 2) + _tmp49 * states_cov(1, 2) + states_cov(8, 2);
-  const Scalar _tmp53 = _tmp49 * states_cov(1, 1);
-  const Scalar _tmp54 = _tmp47 * states_cov(0, 1) + _tmp53 + states_cov(8, 1);
-  const Scalar _tmp55 = _tmp42 * (_tmp31 * _tmp54 + _tmp33 * _tmp52 + _tmp47 * states_cov(0, 6) +
-                                  _tmp49 * states_cov(1, 6) + states_cov(8, 6));
-  const Scalar _tmp56 = _tmp47 * states_cov(0, 0);
-  const Scalar _tmp57 = _tmp49 * states_cov(1, 0) + _tmp56 + states_cov(8, 0);
-  const Scalar _tmp58 =
-      _tmp46 * (_tmp15 * _tmp52 + _tmp24 * _tmp57 - _tmp37 * _tmp55 + _tmp47 * states_cov(0, 7) +
-                _tmp49 * states_cov(1, 7) + states_cov(8, 7));
-  const Scalar _tmp59 = _tmp51 * _tmp58;
-  const Scalar _tmp60 =
-      Scalar(1.0) /
-      (_tmp47 * _tmp57 + _tmp47 * states_cov(0, 8) + _tmp49 * _tmp54 + _tmp49 * states_cov(1, 8) -
-       _tmp50 * _tmp55 - _tmp59 + accel_noise(2, 0) + states_cov(8, 8));
-  const Scalar _tmp61 = _tmp46 * (_tmp59 * _tmp60 + 1);
-  const Scalar _tmp62 =
-      _tmp60 * (_tmp47 * states_cov(2, 0) + _tmp49 * states_cov(2, 1) + states_cov(2, 8));
-  const Scalar _tmp63 = _tmp31 * states_cov(2, 1) + _tmp34 + states_cov(2, 6);
-  const Scalar _tmp64 = _tmp50 * _tmp60;
-  const Scalar _tmp65 = _tmp42 * (-_tmp37 * _tmp61 + _tmp58 * _tmp64);
-  const Scalar _tmp66 = _tmp25 * _tmp61 - _tmp58 * _tmp62 + _tmp63 * _tmp65;
-  const Scalar _tmp67 = -2 * _tmp14;
-  const Scalar _tmp68 = 1 - 2 * _tmp11;
-  const Scalar _tmp69 = -_tmp32 + accel_body(1, 0) - g(1, 0) * (_tmp67 + _tmp68) - states(8, 0);
-  const Scalar _tmp70 = -2 * _tmp13;
-  const Scalar _tmp71 = -_tmp48 + accel_body(0, 0) - g(0, 0) * (_tmp67 + _tmp70 + 1) - states(7, 0);
-  const Scalar _tmp72 = _tmp43 * _tmp58 - _tmp55;
-  const Scalar _tmp73 = _tmp51 * _tmp60;
-  const Scalar _tmp74 = _tmp46 * (-_tmp43 - _tmp72 * _tmp73);
-  const Scalar _tmp75 = _tmp42 * (-_tmp37 * _tmp74 - _tmp64 * _tmp72 + 1);
-  const Scalar _tmp76 = _tmp25 * _tmp74 + _tmp62 * _tmp72 + _tmp63 * _tmp75;
-  const Scalar _tmp77 = _tmp46 * _tmp73;
-  const Scalar _tmp78 = _tmp42 * (_tmp37 * _tmp77 - _tmp64);
-  const Scalar _tmp79 = -_tmp25 * _tmp77 + _tmp62 + _tmp63 * _tmp78;
-  const Scalar _tmp80 = -_tmp23 + accel_body(2, 0) - g(2, 0) * (_tmp68 + _tmp70) - states(9, 0);
-  const Scalar _tmp81 = _tmp66 * _tmp69 + _tmp71 * _tmp76 + _tmp79 * _tmp80;
-  const Scalar _tmp82 = _tmp60 * (_tmp49 * states_cov(0, 1) + _tmp56 + states_cov(0, 8));
-  const Scalar _tmp83 = _tmp15 * states_cov(0, 2) + _tmp44 + states_cov(0, 7);
-  const Scalar _tmp84 = _tmp31 * states_cov(0, 1) + _tmp33 * states_cov(0, 2) + states_cov(0, 6);
-  const Scalar _tmp85 = -_tmp77 * _tmp83 + _tmp78 * _tmp84 + _tmp82;
-  const Scalar _tmp86 = -_tmp58 * _tmp82 + _tmp61 * _tmp83 + _tmp65 * _tmp84;
-  const Scalar _tmp87 = _tmp72 * _tmp82 + _tmp74 * _tmp83 + _tmp75 * _tmp84;
-  const Scalar _tmp88 = _tmp69 * _tmp86 + _tmp71 * _tmp87 + _tmp80 * _tmp85;
-  const Scalar _tmp89 = _tmp60 * (_tmp47 * states_cov(1, 0) + _tmp53 + states_cov(1, 8));
-  const Scalar _tmp90 = _tmp33 * states_cov(1, 2) + _tmp40 + states_cov(1, 6);
-  const Scalar _tmp91 = _tmp15 * states_cov(1, 2) + _tmp24 * states_cov(1, 0) + states_cov(1, 7);
-  const Scalar _tmp92 = _tmp72 * _tmp89 + _tmp74 * _tmp91 + _tmp75 * _tmp90;
-  const Scalar _tmp93 = -_tmp58 * _tmp89 + _tmp61 * _tmp91 + _tmp65 * _tmp90;
-  const Scalar _tmp94 = -_tmp77 * _tmp91 + _tmp78 * _tmp90 + _tmp89;
-  const Scalar _tmp95 = _tmp69 * _tmp93 + _tmp71 * _tmp92 + _tmp80 * _tmp94;
-  const Scalar _tmp96 = std::sqrt(Scalar(std::pow(_tmp81, Scalar(2)) + std::pow(_tmp88, Scalar(2)) +
-                                         std::pow(_tmp95, Scalar(2))));
-  const Scalar _tmp97 = (Scalar(1) / Scalar(2)) * _tmp96;
-  const Scalar _tmp98 = std::sin(_tmp97) / _tmp96;
-  const Scalar _tmp99 = _tmp81 * _tmp98;
-  const Scalar _tmp100 = _tmp98 * states(3, 0);
-  const Scalar _tmp101 = std::cos(_tmp97);
-  const Scalar _tmp102 = _tmp95 * _tmp98;
-  const Scalar _tmp103 = _tmp88 * _tmp98;
-  const Scalar _tmp104 =
-      _tmp60 * (_tmp47 * states_cov(3, 0) + _tmp49 * states_cov(3, 1) + states_cov(3, 8));
-  const Scalar _tmp105 = _tmp15 * states_cov(3, 2) + _tmp24 * states_cov(3, 0) + states_cov(3, 7);
-  const Scalar _tmp106 = _tmp31 * states_cov(3, 1) + _tmp33 * states_cov(3, 2) + states_cov(3, 6);
-  const Scalar _tmp107 = _tmp104 - _tmp105 * _tmp77 + _tmp106 * _tmp78;
-  const Scalar _tmp108 = _tmp104 * _tmp72 + _tmp105 * _tmp74 + _tmp106 * _tmp75;
-  const Scalar _tmp109 = -_tmp104 * _tmp58 + _tmp105 * _tmp61 + _tmp106 * _tmp65;
-  const Scalar _tmp110 = _tmp15 * states_cov(4, 2) + _tmp24 * states_cov(4, 0) + states_cov(4, 7);
-  const Scalar _tmp111 = _tmp31 * states_cov(4, 1) + _tmp33 * states_cov(4, 2) + states_cov(4, 6);
-  const Scalar _tmp112 =
-      _tmp60 * (_tmp47 * states_cov(4, 0) + _tmp49 * states_cov(4, 1) + states_cov(4, 8));
-  const Scalar _tmp113 = _tmp110 * _tmp61 + _tmp111 * _tmp65 - _tmp112 * _tmp58;
-  const Scalar _tmp114 = _tmp110 * _tmp74 + _tmp111 * _tmp75 + _tmp112 * _tmp72;
-  const Scalar _tmp115 = -_tmp110 * _tmp77 + _tmp111 * _tmp78 + _tmp112;
-  const Scalar _tmp116 = _tmp31 * states_cov(5, 1) + _tmp33 * states_cov(5, 2) + states_cov(5, 6);
-  const Scalar _tmp117 =
-      _tmp60 * (_tmp47 * states_cov(5, 0) + _tmp49 * states_cov(5, 1) + states_cov(5, 8));
-  const Scalar _tmp118 = _tmp15 * states_cov(5, 2) + _tmp24 * states_cov(5, 0) + states_cov(5, 7);
-  const Scalar _tmp119 = _tmp116 * _tmp75 + _tmp117 * _tmp72 + _tmp118 * _tmp74;
-  const Scalar _tmp120 = _tmp116 * _tmp65 - _tmp117 * _tmp58 + _tmp118 * _tmp61;
-  const Scalar _tmp121 = _tmp116 * _tmp78 + _tmp117 - _tmp118 * _tmp77;
-  const Scalar _tmp122 = _tmp15 * states_cov(6, 2) + _tmp24 * states_cov(6, 0) + states_cov(6, 7);
-  const Scalar _tmp123 =
-      _tmp60 * (_tmp47 * states_cov(6, 0) + _tmp49 * states_cov(6, 1) + states_cov(6, 8));
-  const Scalar _tmp124 = _tmp31 * states_cov(6, 1) + _tmp33 * states_cov(6, 2) + states_cov(6, 6);
-  const Scalar _tmp125 = _tmp122 * _tmp61 - _tmp123 * _tmp58 + _tmp124 * _tmp65;
-  const Scalar _tmp126 = -_tmp122 * _tmp77 + _tmp123 + _tmp124 * _tmp78;
-  const Scalar _tmp127 = _tmp122 * _tmp74 + _tmp123 * _tmp72 + _tmp124 * _tmp75;
-  const Scalar _tmp128 =
-      _tmp60 * (_tmp47 * states_cov(7, 0) + _tmp49 * states_cov(7, 1) + states_cov(7, 8));
-  const Scalar _tmp129 = _tmp31 * states_cov(7, 1) + _tmp33 * states_cov(7, 2) + states_cov(7, 6);
-  const Scalar _tmp130 = _tmp15 * states_cov(7, 2) + _tmp24 * states_cov(7, 0) + states_cov(7, 7);
-  const Scalar _tmp131 = _tmp128 + _tmp129 * _tmp78 - _tmp130 * _tmp77;
-  const Scalar _tmp132 = -_tmp128 * _tmp58 + _tmp129 * _tmp65 + _tmp130 * _tmp61;
-  const Scalar _tmp133 = _tmp128 * _tmp72 + _tmp129 * _tmp75 + _tmp130 * _tmp74;
-  const Scalar _tmp134 =
-      _tmp60 * (_tmp47 * states_cov(8, 0) + _tmp49 * states_cov(8, 1) + states_cov(8, 8));
-  const Scalar _tmp135 = _tmp15 * states_cov(8, 2) + _tmp24 * states_cov(8, 0) + states_cov(8, 7);
-  const Scalar _tmp136 = _tmp31 * states_cov(8, 1) + _tmp33 * states_cov(8, 2) + states_cov(8, 6);
-  const Scalar _tmp137 = _tmp134 - _tmp135 * _tmp77 + _tmp136 * _tmp78;
-  const Scalar _tmp138 = _tmp134 * _tmp72 + _tmp135 * _tmp74 + _tmp136 * _tmp75;
-  const Scalar _tmp139 = -_tmp134 * _tmp58 + _tmp135 * _tmp61 + _tmp136 * _tmp65;
-  const Scalar _tmp140 =
-      _tmp60 * (_tmp47 * states_cov(9, 0) + _tmp49 * states_cov(9, 1) + states_cov(9, 8));
-  const Scalar _tmp141 = _tmp31 * states_cov(9, 1) + _tmp33 * states_cov(9, 2) + states_cov(9, 6);
-  const Scalar _tmp142 = _tmp15 * states_cov(9, 2) + _tmp24 * states_cov(9, 0) + states_cov(9, 7);
-  const Scalar _tmp143 = _tmp140 + _tmp141 * _tmp78 - _tmp142 * _tmp77;
-  const Scalar _tmp144 = _tmp140 * _tmp72 + _tmp141 * _tmp75 + _tmp142 * _tmp74;
-  const Scalar _tmp145 = -_tmp140 * _tmp58 + _tmp141 * _tmp65 + _tmp142 * _tmp61;
-  const Scalar _tmp146 =
-      _tmp15 * states_cov(10, 2) + _tmp24 * states_cov(10, 0) + states_cov(10, 7);
-  const Scalar _tmp147 =
-      _tmp60 * (_tmp47 * states_cov(10, 0) + _tmp49 * states_cov(10, 1) + states_cov(10, 8));
-  const Scalar _tmp148 =
-      _tmp31 * states_cov(10, 1) + _tmp33 * states_cov(10, 2) + states_cov(10, 6);
-  const Scalar _tmp149 = -_tmp146 * _tmp77 + _tmp147 + _tmp148 * _tmp78;
-  const Scalar _tmp150 = _tmp146 * _tmp61 - _tmp147 * _tmp58 + _tmp148 * _tmp65;
-  const Scalar _tmp151 = _tmp146 * _tmp74 + _tmp147 * _tmp72 + _tmp148 * _tmp75;
-  const Scalar _tmp152 =
-      _tmp60 * (_tmp47 * states_cov(11, 0) + _tmp49 * states_cov(11, 1) + states_cov(11, 8));
-  const Scalar _tmp153 =
-      _tmp15 * states_cov(11, 2) + _tmp24 * states_cov(11, 0) + states_cov(11, 7);
-  const Scalar _tmp154 =
-      _tmp31 * states_cov(11, 1) + _tmp33 * states_cov(11, 2) + states_cov(11, 6);
-  const Scalar _tmp155 = -_tmp152 * _tmp58 + _tmp153 * _tmp61 + _tmp154 * _tmp65;
-  const Scalar _tmp156 = _tmp152 - _tmp153 * _tmp77 + _tmp154 * _tmp78;
-  const Scalar _tmp157 = _tmp152 * _tmp72 + _tmp153 * _tmp74 + _tmp154 * _tmp75;
-  const Scalar _tmp158 = _tmp24 * _tmp86 + _tmp47 * _tmp85;
-  const Scalar _tmp159 = _tmp31 * _tmp87 + _tmp49 * _tmp85;
-  const Scalar _tmp160 = _tmp15 * _tmp86 + _tmp33 * _tmp87;
-  const Scalar _tmp161 = _tmp15 * _tmp93 + _tmp33 * _tmp92;
-  const Scalar _tmp162 = _tmp24 * _tmp93 + _tmp47 * _tmp94;
-  const Scalar _tmp163 = _tmp31 * _tmp92 + _tmp49 * _tmp94;
-  const Scalar _tmp164 = _tmp31 * _tmp76 + _tmp49 * _tmp79;
-  const Scalar _tmp165 = _tmp15 * _tmp66 + _tmp33 * _tmp76;
-  const Scalar _tmp166 = _tmp24 * _tmp66 + _tmp47 * _tmp79;
-  const Scalar _tmp167 = _tmp108 * _tmp33 + _tmp109 * _tmp15;
-  const Scalar _tmp168 = _tmp107 * _tmp49 + _tmp108 * _tmp31;
-  const Scalar _tmp169 = _tmp107 * _tmp47 + _tmp109 * _tmp24;
-  const Scalar _tmp170 = _tmp113 * _tmp15 + _tmp114 * _tmp33;
-  const Scalar _tmp171 = _tmp113 * _tmp24 + _tmp115 * _tmp47;
-  const Scalar _tmp172 = _tmp114 * _tmp31 + _tmp115 * _tmp49;
-  const Scalar _tmp173 = _tmp119 * _tmp31 + _tmp121 * _tmp49;
-  const Scalar _tmp174 = _tmp119 * _tmp33 + _tmp120 * _tmp15;
-  const Scalar _tmp175 = _tmp120 * _tmp24 + _tmp121 * _tmp47;
-  const Scalar _tmp176 = _tmp125 * _tmp15 + _tmp127 * _tmp33;
-  const Scalar _tmp177 = _tmp126 * _tmp49 + _tmp127 * _tmp31;
-  const Scalar _tmp178 = _tmp125 * _tmp24 + _tmp126 * _tmp47;
-  const Scalar _tmp179 = _tmp132 * _tmp15 + _tmp133 * _tmp33;
-  const Scalar _tmp180 = _tmp131 * _tmp49 + _tmp133 * _tmp31;
-  const Scalar _tmp181 = _tmp131 * _tmp47 + _tmp132 * _tmp24;
-  const Scalar _tmp182 = _tmp138 * _tmp33 + _tmp139 * _tmp15;
-  const Scalar _tmp183 = _tmp137 * _tmp47 + _tmp139 * _tmp24;
-  const Scalar _tmp184 = _tmp137 * _tmp49 + _tmp138 * _tmp31;
-  const Scalar _tmp185 = _tmp143 * _tmp47 + _tmp145 * _tmp24;
-  const Scalar _tmp186 = _tmp143 * _tmp49 + _tmp144 * _tmp31;
-  const Scalar _tmp187 = _tmp144 * _tmp33 + _tmp145 * _tmp15;
-  const Scalar _tmp188 = _tmp149 * _tmp47 + _tmp150 * _tmp24;
-  const Scalar _tmp189 = _tmp149 * _tmp49 + _tmp151 * _tmp31;
-  const Scalar _tmp190 = _tmp15 * _tmp150 + _tmp151 * _tmp33;
-  const Scalar _tmp191 = _tmp155 * _tmp24 + _tmp156 * _tmp47;
-  const Scalar _tmp192 = _tmp156 * _tmp49 + _tmp157 * _tmp31;
-  const Scalar _tmp193 = _tmp15 * _tmp155 + _tmp157 * _tmp33;
+  // Intermediate terms (47)
+  const Scalar _tmp0 = std::pow(states(1, 0), Scalar(2));
+  const Scalar _tmp1 = -2 * _tmp0;
+  const Scalar _tmp2 = std::pow(states(2, 0), Scalar(2));
+  const Scalar _tmp3 = -2 * _tmp2;
+  const Scalar _tmp4 = 2 * states(1, 0);
+  const Scalar _tmp5 = _tmp4 * states(0, 0);
+  const Scalar _tmp6 = 2 * states(2, 0);
+  const Scalar _tmp7 = _tmp6 * states(3, 0);
+  const Scalar _tmp8 = _tmp4 * states(3, 0);
+  const Scalar _tmp9 = -_tmp8;
+  const Scalar _tmp10 = _tmp6 * states(0, 0);
+  const Scalar _tmp11 = g(1, 0) * (_tmp5 + _tmp7) + g(2, 0) * (_tmp10 + _tmp9);
+  const Scalar _tmp12 = std::pow(states(0, 0), Scalar(2));
+  const Scalar _tmp13 = 1 - 2 * _tmp12;
+  const Scalar _tmp14 = -_tmp7;
+  const Scalar _tmp15 = 2 * states(0, 0) * states(3, 0);
+  const Scalar _tmp16 = _tmp4 * states(2, 0);
+  const Scalar _tmp17 = g(0, 0) * (_tmp14 + _tmp5) + g(2, 0) * (_tmp15 + _tmp16);
+  const Scalar _tmp18 = -_tmp15;
+  const Scalar _tmp19 = g(0, 0) * (_tmp10 + _tmp8) + g(1, 0) * (_tmp16 + _tmp18);
+  const Scalar _tmp20 = -_tmp10;
+  const Scalar _tmp21 = std::pow(states(3, 0), Scalar(2));
+  const Scalar _tmp22 = -_tmp21;
+  const Scalar _tmp23 = -_tmp2;
+  const Scalar _tmp24 = -_tmp16;
+  const Scalar _tmp25 = g(0, 0) * (_tmp20 + _tmp9) + g(1, 0) * (_tmp15 + _tmp24) +
+                        g(2, 0) * (_tmp0 + _tmp12 + _tmp22 + _tmp23);
+  const Scalar _tmp26 = -_tmp12;
+  const Scalar _tmp27 = _tmp0 + _tmp26;
+  const Scalar _tmp28 = _tmp21 + _tmp23;
+  const Scalar _tmp29 = _tmp17 + g(1, 0) * (_tmp27 + _tmp28);
+  const Scalar _tmp30 = _tmp25 * states_cov(1, 2) + _tmp29 * states_cov(2, 2) + states_cov(6, 2);
+  const Scalar _tmp31 = _tmp25 * states_cov(1, 1) + _tmp29 * states_cov(2, 1) + states_cov(6, 1);
+  const Scalar _tmp32 = -_tmp5;
+  const Scalar _tmp33 = _tmp2 + _tmp22;
+  const Scalar _tmp34 =
+      g(0, 0) * (_tmp27 + _tmp33) + g(1, 0) * (_tmp14 + _tmp32) + g(2, 0) * (_tmp20 + _tmp8);
+  const Scalar _tmp35 = -_tmp0;
+  const Scalar _tmp36 = _tmp19 + g(2, 0) * (_tmp2 + _tmp21 + _tmp26 + _tmp35);
+  const Scalar _tmp37 = _tmp34 * states_cov(2, 2) + _tmp36 * states_cov(0, 2) + states_cov(7, 2);
+  const Scalar _tmp38 = _tmp34 * states_cov(2, 1) + _tmp36 * states_cov(0, 1) + states_cov(7, 1);
+  const Scalar _tmp39 = _tmp12 + _tmp35;
+  const Scalar _tmp40 = _tmp11 + g(0, 0) * (_tmp28 + _tmp39);
+  const Scalar _tmp41 =
+      g(0, 0) * (_tmp32 + _tmp7) + g(1, 0) * (_tmp33 + _tmp39) + g(2, 0) * (_tmp18 + _tmp24);
+  const Scalar _tmp42 = _tmp40 * states_cov(1, 2) + _tmp41 * states_cov(0, 2) + states_cov(8, 2);
+  const Scalar _tmp43 = _tmp40 * states_cov(1, 1) + _tmp41 * states_cov(0, 1) + states_cov(8, 1);
+  const Scalar _tmp44 = _tmp25 * states_cov(1, 0) + _tmp29 * states_cov(2, 0) + states_cov(6, 0);
+  const Scalar _tmp45 = _tmp34 * states_cov(2, 0) + _tmp36 * states_cov(0, 0) + states_cov(7, 0);
+  const Scalar _tmp46 = _tmp40 * states_cov(1, 0) + _tmp41 * states_cov(0, 0) + states_cov(8, 0);
 
-  // Output terms (2)
-  if (next_states != nullptr) {
-    Eigen::Matrix<Scalar, 13, 1>& _next_states = (*next_states);
+  // Output terms (3)
+  if (innovation != nullptr) {
+    Eigen::Matrix<Scalar, 3, 1>& _innovation = (*innovation);
 
-    _next_states(0, 0) =
-        _tmp100 * _tmp88 + _tmp101 * states(0, 0) - _tmp102 * states(2, 0) + _tmp99 * states(1, 0);
-    _next_states(1, 0) =
-        _tmp100 * _tmp95 + _tmp101 * states(1, 0) + _tmp103 * states(2, 0) - _tmp99 * states(0, 0);
-    _next_states(2, 0) =
-        _tmp100 * _tmp81 + _tmp101 * states(2, 0) + _tmp102 * states(0, 0) - _tmp103 * states(1, 0);
-    _next_states(3, 0) = _tmp101 * states(3, 0) - _tmp102 * states(1, 0) - _tmp103 * states(0, 0) -
-                         _tmp99 * states(2, 0);
-    _next_states(4, 0) = _tmp107 * _tmp80 + _tmp108 * _tmp71 + _tmp109 * _tmp69 + states(4, 0);
-    _next_states(5, 0) = _tmp113 * _tmp69 + _tmp114 * _tmp71 + _tmp115 * _tmp80 + states(5, 0);
-    _next_states(6, 0) = _tmp119 * _tmp71 + _tmp120 * _tmp69 + _tmp121 * _tmp80 + states(6, 0);
-    _next_states(7, 0) = _tmp125 * _tmp69 + _tmp126 * _tmp80 + _tmp127 * _tmp71 + states(7, 0);
-    _next_states(8, 0) = _tmp131 * _tmp80 + _tmp132 * _tmp69 + _tmp133 * _tmp71 + states(8, 0);
-    _next_states(9, 0) = _tmp137 * _tmp80 + _tmp138 * _tmp71 + _tmp139 * _tmp69 + states(9, 0);
-    _next_states(10, 0) = _tmp143 * _tmp80 + _tmp144 * _tmp71 + _tmp145 * _tmp69 + states(10, 0);
-    _next_states(11, 0) = _tmp149 * _tmp80 + _tmp150 * _tmp69 + _tmp151 * _tmp71 + states(11, 0);
-    _next_states(12, 0) = _tmp155 * _tmp69 + _tmp156 * _tmp80 + _tmp157 * _tmp71 + states(12, 0);
+    _innovation(0, 0) = -_tmp11 + accel_body(0, 0) - g(0, 0) * (_tmp1 + _tmp3 + 1) - states(7, 0);
+    _innovation(1, 0) = -_tmp17 + accel_body(1, 0) - g(1, 0) * (_tmp13 + _tmp3) - states(8, 0);
+    _innovation(2, 0) = -_tmp19 + accel_body(2, 0) - g(2, 0) * (_tmp1 + _tmp13) - states(9, 0);
   }
 
-  if (next_states_cov != nullptr) {
-    Eigen::Matrix<Scalar, 12, 12>& _next_states_cov = (*next_states_cov);
+  if (innovation_cov != nullptr) {
+    Eigen::Matrix<Scalar, 3, 3>& _innovation_cov = (*innovation_cov);
 
-    _next_states_cov(0, 0) = -_tmp158 * states_cov(0, 0) - _tmp159 * states_cov(1, 0) -
-                             _tmp160 * states_cov(2, 0) - _tmp85 * states_cov(8, 0) -
-                             _tmp86 * states_cov(7, 0) - _tmp87 * states_cov(6, 0) +
-                             states_cov(0, 0);
-    _next_states_cov(1, 0) = -_tmp161 * states_cov(2, 0) - _tmp162 * states_cov(0, 0) -
-                             _tmp163 * states_cov(1, 0) - _tmp92 * states_cov(6, 0) -
-                             _tmp93 * states_cov(7, 0) - _tmp94 * states_cov(8, 0) +
-                             states_cov(1, 0);
-    _next_states_cov(2, 0) = -_tmp164 * states_cov(1, 0) - _tmp165 * states_cov(2, 0) -
-                             _tmp166 * states_cov(0, 0) - _tmp66 * states_cov(7, 0) -
-                             _tmp76 * states_cov(6, 0) - _tmp79 * states_cov(8, 0) +
-                             states_cov(2, 0);
-    _next_states_cov(3, 0) = -_tmp107 * states_cov(8, 0) - _tmp108 * states_cov(6, 0) -
-                             _tmp109 * states_cov(7, 0) - _tmp167 * states_cov(2, 0) -
-                             _tmp168 * states_cov(1, 0) - _tmp169 * states_cov(0, 0) +
-                             states_cov(3, 0);
-    _next_states_cov(4, 0) = -_tmp113 * states_cov(7, 0) - _tmp114 * states_cov(6, 0) -
-                             _tmp115 * states_cov(8, 0) - _tmp170 * states_cov(2, 0) -
-                             _tmp171 * states_cov(0, 0) - _tmp172 * states_cov(1, 0) +
-                             states_cov(4, 0);
-    _next_states_cov(5, 0) = -_tmp119 * states_cov(6, 0) - _tmp120 * states_cov(7, 0) -
-                             _tmp121 * states_cov(8, 0) - _tmp173 * states_cov(1, 0) -
-                             _tmp174 * states_cov(2, 0) - _tmp175 * states_cov(0, 0) +
-                             states_cov(5, 0);
-    _next_states_cov(6, 0) = -_tmp125 * states_cov(7, 0) - _tmp126 * states_cov(8, 0) -
-                             _tmp127 * states_cov(6, 0) - _tmp176 * states_cov(2, 0) -
-                             _tmp177 * states_cov(1, 0) - _tmp178 * states_cov(0, 0) +
-                             states_cov(6, 0);
-    _next_states_cov(7, 0) = -_tmp131 * states_cov(8, 0) - _tmp132 * states_cov(7, 0) -
-                             _tmp133 * states_cov(6, 0) - _tmp179 * states_cov(2, 0) -
-                             _tmp180 * states_cov(1, 0) - _tmp181 * states_cov(0, 0) +
-                             states_cov(7, 0);
-    _next_states_cov(8, 0) = -_tmp137 * states_cov(8, 0) - _tmp138 * states_cov(6, 0) -
-                             _tmp139 * states_cov(7, 0) - _tmp182 * states_cov(2, 0) -
-                             _tmp183 * states_cov(0, 0) - _tmp184 * states_cov(1, 0) +
-                             states_cov(8, 0);
-    _next_states_cov(9, 0) = -_tmp143 * states_cov(8, 0) - _tmp144 * states_cov(6, 0) -
-                             _tmp145 * states_cov(7, 0) - _tmp185 * states_cov(0, 0) -
-                             _tmp186 * states_cov(1, 0) - _tmp187 * states_cov(2, 0) +
-                             states_cov(9, 0);
-    _next_states_cov(10, 0) = -_tmp149 * states_cov(8, 0) - _tmp150 * states_cov(7, 0) -
-                              _tmp151 * states_cov(6, 0) - _tmp188 * states_cov(0, 0) -
-                              _tmp189 * states_cov(1, 0) - _tmp190 * states_cov(2, 0) +
-                              states_cov(10, 0);
-    _next_states_cov(11, 0) = -_tmp155 * states_cov(7, 0) - _tmp156 * states_cov(8, 0) -
-                              _tmp157 * states_cov(6, 0) - _tmp191 * states_cov(0, 0) -
-                              _tmp192 * states_cov(1, 0) - _tmp193 * states_cov(2, 0) +
-                              states_cov(11, 0);
-    _next_states_cov(0, 1) = -_tmp158 * states_cov(0, 1) - _tmp159 * states_cov(1, 1) -
-                             _tmp160 * states_cov(2, 1) - _tmp85 * states_cov(8, 1) -
-                             _tmp86 * states_cov(7, 1) - _tmp87 * states_cov(6, 1) +
-                             states_cov(0, 1);
-    _next_states_cov(1, 1) = -_tmp161 * states_cov(2, 1) - _tmp162 * states_cov(0, 1) -
-                             _tmp163 * states_cov(1, 1) - _tmp92 * states_cov(6, 1) -
-                             _tmp93 * states_cov(7, 1) - _tmp94 * states_cov(8, 1) +
-                             states_cov(1, 1);
-    _next_states_cov(2, 1) = -_tmp164 * states_cov(1, 1) - _tmp165 * states_cov(2, 1) -
-                             _tmp166 * states_cov(0, 1) - _tmp66 * states_cov(7, 1) -
-                             _tmp76 * states_cov(6, 1) - _tmp79 * states_cov(8, 1) +
-                             states_cov(2, 1);
-    _next_states_cov(3, 1) = -_tmp107 * states_cov(8, 1) - _tmp108 * states_cov(6, 1) -
-                             _tmp109 * states_cov(7, 1) - _tmp167 * states_cov(2, 1) -
-                             _tmp168 * states_cov(1, 1) - _tmp169 * states_cov(0, 1) +
-                             states_cov(3, 1);
-    _next_states_cov(4, 1) = -_tmp113 * states_cov(7, 1) - _tmp114 * states_cov(6, 1) -
-                             _tmp115 * states_cov(8, 1) - _tmp170 * states_cov(2, 1) -
-                             _tmp171 * states_cov(0, 1) - _tmp172 * states_cov(1, 1) +
-                             states_cov(4, 1);
-    _next_states_cov(5, 1) = -_tmp119 * states_cov(6, 1) - _tmp120 * states_cov(7, 1) -
-                             _tmp121 * states_cov(8, 1) - _tmp173 * states_cov(1, 1) -
-                             _tmp174 * states_cov(2, 1) - _tmp175 * states_cov(0, 1) +
-                             states_cov(5, 1);
-    _next_states_cov(6, 1) = -_tmp125 * states_cov(7, 1) - _tmp126 * states_cov(8, 1) -
-                             _tmp127 * states_cov(6, 1) - _tmp176 * states_cov(2, 1) -
-                             _tmp177 * states_cov(1, 1) - _tmp178 * states_cov(0, 1) +
-                             states_cov(6, 1);
-    _next_states_cov(7, 1) = -_tmp131 * states_cov(8, 1) - _tmp132 * states_cov(7, 1) -
-                             _tmp133 * states_cov(6, 1) - _tmp179 * states_cov(2, 1) -
-                             _tmp180 * states_cov(1, 1) - _tmp181 * states_cov(0, 1) +
-                             states_cov(7, 1);
-    _next_states_cov(8, 1) = -_tmp137 * states_cov(8, 1) - _tmp138 * states_cov(6, 1) -
-                             _tmp139 * states_cov(7, 1) - _tmp182 * states_cov(2, 1) -
-                             _tmp183 * states_cov(0, 1) - _tmp184 * states_cov(1, 1) +
-                             states_cov(8, 1);
-    _next_states_cov(9, 1) = -_tmp143 * states_cov(8, 1) - _tmp144 * states_cov(6, 1) -
-                             _tmp145 * states_cov(7, 1) - _tmp185 * states_cov(0, 1) -
-                             _tmp186 * states_cov(1, 1) - _tmp187 * states_cov(2, 1) +
-                             states_cov(9, 1);
-    _next_states_cov(10, 1) = -_tmp149 * states_cov(8, 1) - _tmp150 * states_cov(7, 1) -
-                              _tmp151 * states_cov(6, 1) - _tmp188 * states_cov(0, 1) -
-                              _tmp189 * states_cov(1, 1) - _tmp190 * states_cov(2, 1) +
-                              states_cov(10, 1);
-    _next_states_cov(11, 1) = -_tmp155 * states_cov(7, 1) - _tmp156 * states_cov(8, 1) -
-                              _tmp157 * states_cov(6, 1) - _tmp191 * states_cov(0, 1) -
-                              _tmp192 * states_cov(1, 1) - _tmp193 * states_cov(2, 1) +
-                              states_cov(11, 1);
-    _next_states_cov(0, 2) = -_tmp158 * states_cov(0, 2) - _tmp159 * states_cov(1, 2) -
-                             _tmp160 * states_cov(2, 2) - _tmp85 * states_cov(8, 2) -
-                             _tmp86 * states_cov(7, 2) - _tmp87 * states_cov(6, 2) +
-                             states_cov(0, 2);
-    _next_states_cov(1, 2) = -_tmp161 * states_cov(2, 2) - _tmp162 * states_cov(0, 2) -
-                             _tmp163 * states_cov(1, 2) - _tmp92 * states_cov(6, 2) -
-                             _tmp93 * states_cov(7, 2) - _tmp94 * states_cov(8, 2) +
-                             states_cov(1, 2);
-    _next_states_cov(2, 2) = -_tmp164 * states_cov(1, 2) - _tmp165 * states_cov(2, 2) -
-                             _tmp166 * states_cov(0, 2) - _tmp66 * states_cov(7, 2) -
-                             _tmp76 * states_cov(6, 2) - _tmp79 * states_cov(8, 2) +
-                             states_cov(2, 2);
-    _next_states_cov(3, 2) = -_tmp107 * states_cov(8, 2) - _tmp108 * states_cov(6, 2) -
-                             _tmp109 * states_cov(7, 2) - _tmp167 * states_cov(2, 2) -
-                             _tmp168 * states_cov(1, 2) - _tmp169 * states_cov(0, 2) +
-                             states_cov(3, 2);
-    _next_states_cov(4, 2) = -_tmp113 * states_cov(7, 2) - _tmp114 * states_cov(6, 2) -
-                             _tmp115 * states_cov(8, 2) - _tmp170 * states_cov(2, 2) -
-                             _tmp171 * states_cov(0, 2) - _tmp172 * states_cov(1, 2) +
-                             states_cov(4, 2);
-    _next_states_cov(5, 2) = -_tmp119 * states_cov(6, 2) - _tmp120 * states_cov(7, 2) -
-                             _tmp121 * states_cov(8, 2) - _tmp173 * states_cov(1, 2) -
-                             _tmp174 * states_cov(2, 2) - _tmp175 * states_cov(0, 2) +
-                             states_cov(5, 2);
-    _next_states_cov(6, 2) = -_tmp125 * states_cov(7, 2) - _tmp126 * states_cov(8, 2) -
-                             _tmp127 * states_cov(6, 2) - _tmp176 * states_cov(2, 2) -
-                             _tmp177 * states_cov(1, 2) - _tmp178 * states_cov(0, 2) +
-                             states_cov(6, 2);
-    _next_states_cov(7, 2) = -_tmp131 * states_cov(8, 2) - _tmp132 * states_cov(7, 2) -
-                             _tmp133 * states_cov(6, 2) - _tmp179 * states_cov(2, 2) -
-                             _tmp180 * states_cov(1, 2) - _tmp181 * states_cov(0, 2) +
-                             states_cov(7, 2);
-    _next_states_cov(8, 2) = -_tmp137 * states_cov(8, 2) - _tmp138 * states_cov(6, 2) -
-                             _tmp139 * states_cov(7, 2) - _tmp182 * states_cov(2, 2) -
-                             _tmp183 * states_cov(0, 2) - _tmp184 * states_cov(1, 2) +
-                             states_cov(8, 2);
-    _next_states_cov(9, 2) = -_tmp143 * states_cov(8, 2) - _tmp144 * states_cov(6, 2) -
-                             _tmp145 * states_cov(7, 2) - _tmp185 * states_cov(0, 2) -
-                             _tmp186 * states_cov(1, 2) - _tmp187 * states_cov(2, 2) +
-                             states_cov(9, 2);
-    _next_states_cov(10, 2) = -_tmp149 * states_cov(8, 2) - _tmp150 * states_cov(7, 2) -
-                              _tmp151 * states_cov(6, 2) - _tmp188 * states_cov(0, 2) -
-                              _tmp189 * states_cov(1, 2) - _tmp190 * states_cov(2, 2) +
-                              states_cov(10, 2);
-    _next_states_cov(11, 2) = -_tmp155 * states_cov(7, 2) - _tmp156 * states_cov(8, 2) -
-                              _tmp157 * states_cov(6, 2) - _tmp191 * states_cov(0, 2) -
-                              _tmp192 * states_cov(1, 2) - _tmp193 * states_cov(2, 2) +
-                              states_cov(11, 2);
-    _next_states_cov(0, 3) = -_tmp158 * states_cov(0, 3) - _tmp159 * states_cov(1, 3) -
-                             _tmp160 * states_cov(2, 3) - _tmp85 * states_cov(8, 3) -
-                             _tmp86 * states_cov(7, 3) - _tmp87 * states_cov(6, 3) +
-                             states_cov(0, 3);
-    _next_states_cov(1, 3) = -_tmp161 * states_cov(2, 3) - _tmp162 * states_cov(0, 3) -
-                             _tmp163 * states_cov(1, 3) - _tmp92 * states_cov(6, 3) -
-                             _tmp93 * states_cov(7, 3) - _tmp94 * states_cov(8, 3) +
-                             states_cov(1, 3);
-    _next_states_cov(2, 3) = -_tmp164 * states_cov(1, 3) - _tmp165 * states_cov(2, 3) -
-                             _tmp166 * states_cov(0, 3) - _tmp66 * states_cov(7, 3) -
-                             _tmp76 * states_cov(6, 3) - _tmp79 * states_cov(8, 3) +
-                             states_cov(2, 3);
-    _next_states_cov(3, 3) = -_tmp107 * states_cov(8, 3) - _tmp108 * states_cov(6, 3) -
-                             _tmp109 * states_cov(7, 3) - _tmp167 * states_cov(2, 3) -
-                             _tmp168 * states_cov(1, 3) - _tmp169 * states_cov(0, 3) +
-                             states_cov(3, 3);
-    _next_states_cov(4, 3) = -_tmp113 * states_cov(7, 3) - _tmp114 * states_cov(6, 3) -
-                             _tmp115 * states_cov(8, 3) - _tmp170 * states_cov(2, 3) -
-                             _tmp171 * states_cov(0, 3) - _tmp172 * states_cov(1, 3) +
-                             states_cov(4, 3);
-    _next_states_cov(5, 3) = -_tmp119 * states_cov(6, 3) - _tmp120 * states_cov(7, 3) -
-                             _tmp121 * states_cov(8, 3) - _tmp173 * states_cov(1, 3) -
-                             _tmp174 * states_cov(2, 3) - _tmp175 * states_cov(0, 3) +
-                             states_cov(5, 3);
-    _next_states_cov(6, 3) = -_tmp125 * states_cov(7, 3) - _tmp126 * states_cov(8, 3) -
-                             _tmp127 * states_cov(6, 3) - _tmp176 * states_cov(2, 3) -
-                             _tmp177 * states_cov(1, 3) - _tmp178 * states_cov(0, 3) +
-                             states_cov(6, 3);
-    _next_states_cov(7, 3) = -_tmp131 * states_cov(8, 3) - _tmp132 * states_cov(7, 3) -
-                             _tmp133 * states_cov(6, 3) - _tmp179 * states_cov(2, 3) -
-                             _tmp180 * states_cov(1, 3) - _tmp181 * states_cov(0, 3) +
-                             states_cov(7, 3);
-    _next_states_cov(8, 3) = -_tmp137 * states_cov(8, 3) - _tmp138 * states_cov(6, 3) -
-                             _tmp139 * states_cov(7, 3) - _tmp182 * states_cov(2, 3) -
-                             _tmp183 * states_cov(0, 3) - _tmp184 * states_cov(1, 3) +
-                             states_cov(8, 3);
-    _next_states_cov(9, 3) = -_tmp143 * states_cov(8, 3) - _tmp144 * states_cov(6, 3) -
-                             _tmp145 * states_cov(7, 3) - _tmp185 * states_cov(0, 3) -
-                             _tmp186 * states_cov(1, 3) - _tmp187 * states_cov(2, 3) +
-                             states_cov(9, 3);
-    _next_states_cov(10, 3) = -_tmp149 * states_cov(8, 3) - _tmp150 * states_cov(7, 3) -
-                              _tmp151 * states_cov(6, 3) - _tmp188 * states_cov(0, 3) -
-                              _tmp189 * states_cov(1, 3) - _tmp190 * states_cov(2, 3) +
-                              states_cov(10, 3);
-    _next_states_cov(11, 3) = -_tmp155 * states_cov(7, 3) - _tmp156 * states_cov(8, 3) -
-                              _tmp157 * states_cov(6, 3) - _tmp191 * states_cov(0, 3) -
-                              _tmp192 * states_cov(1, 3) - _tmp193 * states_cov(2, 3) +
-                              states_cov(11, 3);
-    _next_states_cov(0, 4) = -_tmp158 * states_cov(0, 4) - _tmp159 * states_cov(1, 4) -
-                             _tmp160 * states_cov(2, 4) - _tmp85 * states_cov(8, 4) -
-                             _tmp86 * states_cov(7, 4) - _tmp87 * states_cov(6, 4) +
-                             states_cov(0, 4);
-    _next_states_cov(1, 4) = -_tmp161 * states_cov(2, 4) - _tmp162 * states_cov(0, 4) -
-                             _tmp163 * states_cov(1, 4) - _tmp92 * states_cov(6, 4) -
-                             _tmp93 * states_cov(7, 4) - _tmp94 * states_cov(8, 4) +
-                             states_cov(1, 4);
-    _next_states_cov(2, 4) = -_tmp164 * states_cov(1, 4) - _tmp165 * states_cov(2, 4) -
-                             _tmp166 * states_cov(0, 4) - _tmp66 * states_cov(7, 4) -
-                             _tmp76 * states_cov(6, 4) - _tmp79 * states_cov(8, 4) +
-                             states_cov(2, 4);
-    _next_states_cov(3, 4) = -_tmp107 * states_cov(8, 4) - _tmp108 * states_cov(6, 4) -
-                             _tmp109 * states_cov(7, 4) - _tmp167 * states_cov(2, 4) -
-                             _tmp168 * states_cov(1, 4) - _tmp169 * states_cov(0, 4) +
-                             states_cov(3, 4);
-    _next_states_cov(4, 4) = -_tmp113 * states_cov(7, 4) - _tmp114 * states_cov(6, 4) -
-                             _tmp115 * states_cov(8, 4) - _tmp170 * states_cov(2, 4) -
-                             _tmp171 * states_cov(0, 4) - _tmp172 * states_cov(1, 4) +
-                             states_cov(4, 4);
-    _next_states_cov(5, 4) = -_tmp119 * states_cov(6, 4) - _tmp120 * states_cov(7, 4) -
-                             _tmp121 * states_cov(8, 4) - _tmp173 * states_cov(1, 4) -
-                             _tmp174 * states_cov(2, 4) - _tmp175 * states_cov(0, 4) +
-                             states_cov(5, 4);
-    _next_states_cov(6, 4) = -_tmp125 * states_cov(7, 4) - _tmp126 * states_cov(8, 4) -
-                             _tmp127 * states_cov(6, 4) - _tmp176 * states_cov(2, 4) -
-                             _tmp177 * states_cov(1, 4) - _tmp178 * states_cov(0, 4) +
-                             states_cov(6, 4);
-    _next_states_cov(7, 4) = -_tmp131 * states_cov(8, 4) - _tmp132 * states_cov(7, 4) -
-                             _tmp133 * states_cov(6, 4) - _tmp179 * states_cov(2, 4) -
-                             _tmp180 * states_cov(1, 4) - _tmp181 * states_cov(0, 4) +
-                             states_cov(7, 4);
-    _next_states_cov(8, 4) = -_tmp137 * states_cov(8, 4) - _tmp138 * states_cov(6, 4) -
-                             _tmp139 * states_cov(7, 4) - _tmp182 * states_cov(2, 4) -
-                             _tmp183 * states_cov(0, 4) - _tmp184 * states_cov(1, 4) +
-                             states_cov(8, 4);
-    _next_states_cov(9, 4) = -_tmp143 * states_cov(8, 4) - _tmp144 * states_cov(6, 4) -
-                             _tmp145 * states_cov(7, 4) - _tmp185 * states_cov(0, 4) -
-                             _tmp186 * states_cov(1, 4) - _tmp187 * states_cov(2, 4) +
-                             states_cov(9, 4);
-    _next_states_cov(10, 4) = -_tmp149 * states_cov(8, 4) - _tmp150 * states_cov(7, 4) -
-                              _tmp151 * states_cov(6, 4) - _tmp188 * states_cov(0, 4) -
-                              _tmp189 * states_cov(1, 4) - _tmp190 * states_cov(2, 4) +
-                              states_cov(10, 4);
-    _next_states_cov(11, 4) = -_tmp155 * states_cov(7, 4) - _tmp156 * states_cov(8, 4) -
-                              _tmp157 * states_cov(6, 4) - _tmp191 * states_cov(0, 4) -
-                              _tmp192 * states_cov(1, 4) - _tmp193 * states_cov(2, 4) +
-                              states_cov(11, 4);
-    _next_states_cov(0, 5) = -_tmp158 * states_cov(0, 5) - _tmp159 * states_cov(1, 5) -
-                             _tmp160 * states_cov(2, 5) - _tmp85 * states_cov(8, 5) -
-                             _tmp86 * states_cov(7, 5) - _tmp87 * states_cov(6, 5) +
-                             states_cov(0, 5);
-    _next_states_cov(1, 5) = -_tmp161 * states_cov(2, 5) - _tmp162 * states_cov(0, 5) -
-                             _tmp163 * states_cov(1, 5) - _tmp92 * states_cov(6, 5) -
-                             _tmp93 * states_cov(7, 5) - _tmp94 * states_cov(8, 5) +
-                             states_cov(1, 5);
-    _next_states_cov(2, 5) = -_tmp164 * states_cov(1, 5) - _tmp165 * states_cov(2, 5) -
-                             _tmp166 * states_cov(0, 5) - _tmp66 * states_cov(7, 5) -
-                             _tmp76 * states_cov(6, 5) - _tmp79 * states_cov(8, 5) +
-                             states_cov(2, 5);
-    _next_states_cov(3, 5) = -_tmp107 * states_cov(8, 5) - _tmp108 * states_cov(6, 5) -
-                             _tmp109 * states_cov(7, 5) - _tmp167 * states_cov(2, 5) -
-                             _tmp168 * states_cov(1, 5) - _tmp169 * states_cov(0, 5) +
-                             states_cov(3, 5);
-    _next_states_cov(4, 5) = -_tmp113 * states_cov(7, 5) - _tmp114 * states_cov(6, 5) -
-                             _tmp115 * states_cov(8, 5) - _tmp170 * states_cov(2, 5) -
-                             _tmp171 * states_cov(0, 5) - _tmp172 * states_cov(1, 5) +
-                             states_cov(4, 5);
-    _next_states_cov(5, 5) = -_tmp119 * states_cov(6, 5) - _tmp120 * states_cov(7, 5) -
-                             _tmp121 * states_cov(8, 5) - _tmp173 * states_cov(1, 5) -
-                             _tmp174 * states_cov(2, 5) - _tmp175 * states_cov(0, 5) +
-                             states_cov(5, 5);
-    _next_states_cov(6, 5) = -_tmp125 * states_cov(7, 5) - _tmp126 * states_cov(8, 5) -
-                             _tmp127 * states_cov(6, 5) - _tmp176 * states_cov(2, 5) -
-                             _tmp177 * states_cov(1, 5) - _tmp178 * states_cov(0, 5) +
-                             states_cov(6, 5);
-    _next_states_cov(7, 5) = -_tmp131 * states_cov(8, 5) - _tmp132 * states_cov(7, 5) -
-                             _tmp133 * states_cov(6, 5) - _tmp179 * states_cov(2, 5) -
-                             _tmp180 * states_cov(1, 5) - _tmp181 * states_cov(0, 5) +
-                             states_cov(7, 5);
-    _next_states_cov(8, 5) = -_tmp137 * states_cov(8, 5) - _tmp138 * states_cov(6, 5) -
-                             _tmp139 * states_cov(7, 5) - _tmp182 * states_cov(2, 5) -
-                             _tmp183 * states_cov(0, 5) - _tmp184 * states_cov(1, 5) +
-                             states_cov(8, 5);
-    _next_states_cov(9, 5) = -_tmp143 * states_cov(8, 5) - _tmp144 * states_cov(6, 5) -
-                             _tmp145 * states_cov(7, 5) - _tmp185 * states_cov(0, 5) -
-                             _tmp186 * states_cov(1, 5) - _tmp187 * states_cov(2, 5) +
-                             states_cov(9, 5);
-    _next_states_cov(10, 5) = -_tmp149 * states_cov(8, 5) - _tmp150 * states_cov(7, 5) -
-                              _tmp151 * states_cov(6, 5) - _tmp188 * states_cov(0, 5) -
-                              _tmp189 * states_cov(1, 5) - _tmp190 * states_cov(2, 5) +
-                              states_cov(10, 5);
-    _next_states_cov(11, 5) = -_tmp155 * states_cov(7, 5) - _tmp156 * states_cov(8, 5) -
-                              _tmp157 * states_cov(6, 5) - _tmp191 * states_cov(0, 5) -
-                              _tmp192 * states_cov(1, 5) - _tmp193 * states_cov(2, 5) +
-                              states_cov(11, 5);
-    _next_states_cov(0, 6) = -_tmp158 * states_cov(0, 6) - _tmp159 * states_cov(1, 6) -
-                             _tmp160 * states_cov(2, 6) - _tmp85 * states_cov(8, 6) -
-                             _tmp86 * states_cov(7, 6) - _tmp87 * states_cov(6, 6) +
-                             states_cov(0, 6);
-    _next_states_cov(1, 6) = -_tmp161 * states_cov(2, 6) - _tmp162 * states_cov(0, 6) -
-                             _tmp163 * states_cov(1, 6) - _tmp92 * states_cov(6, 6) -
-                             _tmp93 * states_cov(7, 6) - _tmp94 * states_cov(8, 6) +
-                             states_cov(1, 6);
-    _next_states_cov(2, 6) = -_tmp164 * states_cov(1, 6) - _tmp165 * states_cov(2, 6) -
-                             _tmp166 * states_cov(0, 6) - _tmp66 * states_cov(7, 6) -
-                             _tmp76 * states_cov(6, 6) - _tmp79 * states_cov(8, 6) +
-                             states_cov(2, 6);
-    _next_states_cov(3, 6) = -_tmp107 * states_cov(8, 6) - _tmp108 * states_cov(6, 6) -
-                             _tmp109 * states_cov(7, 6) - _tmp167 * states_cov(2, 6) -
-                             _tmp168 * states_cov(1, 6) - _tmp169 * states_cov(0, 6) +
-                             states_cov(3, 6);
-    _next_states_cov(4, 6) = -_tmp113 * states_cov(7, 6) - _tmp114 * states_cov(6, 6) -
-                             _tmp115 * states_cov(8, 6) - _tmp170 * states_cov(2, 6) -
-                             _tmp171 * states_cov(0, 6) - _tmp172 * states_cov(1, 6) +
-                             states_cov(4, 6);
-    _next_states_cov(5, 6) = -_tmp119 * states_cov(6, 6) - _tmp120 * states_cov(7, 6) -
-                             _tmp121 * states_cov(8, 6) - _tmp173 * states_cov(1, 6) -
-                             _tmp174 * states_cov(2, 6) - _tmp175 * states_cov(0, 6) +
-                             states_cov(5, 6);
-    _next_states_cov(6, 6) = -_tmp125 * states_cov(7, 6) - _tmp126 * states_cov(8, 6) -
-                             _tmp127 * states_cov(6, 6) - _tmp176 * states_cov(2, 6) -
-                             _tmp177 * states_cov(1, 6) - _tmp178 * states_cov(0, 6) +
-                             states_cov(6, 6);
-    _next_states_cov(7, 6) = -_tmp131 * states_cov(8, 6) - _tmp132 * states_cov(7, 6) -
-                             _tmp133 * states_cov(6, 6) - _tmp179 * states_cov(2, 6) -
-                             _tmp180 * states_cov(1, 6) - _tmp181 * states_cov(0, 6) +
-                             states_cov(7, 6);
-    _next_states_cov(8, 6) = -_tmp137 * states_cov(8, 6) - _tmp138 * states_cov(6, 6) -
-                             _tmp139 * states_cov(7, 6) - _tmp182 * states_cov(2, 6) -
-                             _tmp183 * states_cov(0, 6) - _tmp184 * states_cov(1, 6) +
-                             states_cov(8, 6);
-    _next_states_cov(9, 6) = -_tmp143 * states_cov(8, 6) - _tmp144 * states_cov(6, 6) -
-                             _tmp145 * states_cov(7, 6) - _tmp185 * states_cov(0, 6) -
-                             _tmp186 * states_cov(1, 6) - _tmp187 * states_cov(2, 6) +
-                             states_cov(9, 6);
-    _next_states_cov(10, 6) = -_tmp149 * states_cov(8, 6) - _tmp150 * states_cov(7, 6) -
-                              _tmp151 * states_cov(6, 6) - _tmp188 * states_cov(0, 6) -
-                              _tmp189 * states_cov(1, 6) - _tmp190 * states_cov(2, 6) +
-                              states_cov(10, 6);
-    _next_states_cov(11, 6) = -_tmp155 * states_cov(7, 6) - _tmp156 * states_cov(8, 6) -
-                              _tmp157 * states_cov(6, 6) - _tmp191 * states_cov(0, 6) -
-                              _tmp192 * states_cov(1, 6) - _tmp193 * states_cov(2, 6) +
-                              states_cov(11, 6);
-    _next_states_cov(0, 7) = -_tmp158 * states_cov(0, 7) - _tmp159 * states_cov(1, 7) -
-                             _tmp160 * states_cov(2, 7) - _tmp85 * states_cov(8, 7) -
-                             _tmp86 * states_cov(7, 7) - _tmp87 * states_cov(6, 7) +
-                             states_cov(0, 7);
-    _next_states_cov(1, 7) = -_tmp161 * states_cov(2, 7) - _tmp162 * states_cov(0, 7) -
-                             _tmp163 * states_cov(1, 7) - _tmp92 * states_cov(6, 7) -
-                             _tmp93 * states_cov(7, 7) - _tmp94 * states_cov(8, 7) +
-                             states_cov(1, 7);
-    _next_states_cov(2, 7) = -_tmp164 * states_cov(1, 7) - _tmp165 * states_cov(2, 7) -
-                             _tmp166 * states_cov(0, 7) - _tmp66 * states_cov(7, 7) -
-                             _tmp76 * states_cov(6, 7) - _tmp79 * states_cov(8, 7) +
-                             states_cov(2, 7);
-    _next_states_cov(3, 7) = -_tmp107 * states_cov(8, 7) - _tmp108 * states_cov(6, 7) -
-                             _tmp109 * states_cov(7, 7) - _tmp167 * states_cov(2, 7) -
-                             _tmp168 * states_cov(1, 7) - _tmp169 * states_cov(0, 7) +
-                             states_cov(3, 7);
-    _next_states_cov(4, 7) = -_tmp113 * states_cov(7, 7) - _tmp114 * states_cov(6, 7) -
-                             _tmp115 * states_cov(8, 7) - _tmp170 * states_cov(2, 7) -
-                             _tmp171 * states_cov(0, 7) - _tmp172 * states_cov(1, 7) +
-                             states_cov(4, 7);
-    _next_states_cov(5, 7) = -_tmp119 * states_cov(6, 7) - _tmp120 * states_cov(7, 7) -
-                             _tmp121 * states_cov(8, 7) - _tmp173 * states_cov(1, 7) -
-                             _tmp174 * states_cov(2, 7) - _tmp175 * states_cov(0, 7) +
-                             states_cov(5, 7);
-    _next_states_cov(6, 7) = -_tmp125 * states_cov(7, 7) - _tmp126 * states_cov(8, 7) -
-                             _tmp127 * states_cov(6, 7) - _tmp176 * states_cov(2, 7) -
-                             _tmp177 * states_cov(1, 7) - _tmp178 * states_cov(0, 7) +
-                             states_cov(6, 7);
-    _next_states_cov(7, 7) = -_tmp131 * states_cov(8, 7) - _tmp132 * states_cov(7, 7) -
-                             _tmp133 * states_cov(6, 7) - _tmp179 * states_cov(2, 7) -
-                             _tmp180 * states_cov(1, 7) - _tmp181 * states_cov(0, 7) +
-                             states_cov(7, 7);
-    _next_states_cov(8, 7) = -_tmp137 * states_cov(8, 7) - _tmp138 * states_cov(6, 7) -
-                             _tmp139 * states_cov(7, 7) - _tmp182 * states_cov(2, 7) -
-                             _tmp183 * states_cov(0, 7) - _tmp184 * states_cov(1, 7) +
-                             states_cov(8, 7);
-    _next_states_cov(9, 7) = -_tmp143 * states_cov(8, 7) - _tmp144 * states_cov(6, 7) -
-                             _tmp145 * states_cov(7, 7) - _tmp185 * states_cov(0, 7) -
-                             _tmp186 * states_cov(1, 7) - _tmp187 * states_cov(2, 7) +
-                             states_cov(9, 7);
-    _next_states_cov(10, 7) = -_tmp149 * states_cov(8, 7) - _tmp150 * states_cov(7, 7) -
-                              _tmp151 * states_cov(6, 7) - _tmp188 * states_cov(0, 7) -
-                              _tmp189 * states_cov(1, 7) - _tmp190 * states_cov(2, 7) +
-                              states_cov(10, 7);
-    _next_states_cov(11, 7) = -_tmp155 * states_cov(7, 7) - _tmp156 * states_cov(8, 7) -
-                              _tmp157 * states_cov(6, 7) - _tmp191 * states_cov(0, 7) -
-                              _tmp192 * states_cov(1, 7) - _tmp193 * states_cov(2, 7) +
-                              states_cov(11, 7);
-    _next_states_cov(0, 8) = -_tmp158 * states_cov(0, 8) - _tmp159 * states_cov(1, 8) -
-                             _tmp160 * states_cov(2, 8) - _tmp85 * states_cov(8, 8) -
-                             _tmp86 * states_cov(7, 8) - _tmp87 * states_cov(6, 8) +
-                             states_cov(0, 8);
-    _next_states_cov(1, 8) = -_tmp161 * states_cov(2, 8) - _tmp162 * states_cov(0, 8) -
-                             _tmp163 * states_cov(1, 8) - _tmp92 * states_cov(6, 8) -
-                             _tmp93 * states_cov(7, 8) - _tmp94 * states_cov(8, 8) +
-                             states_cov(1, 8);
-    _next_states_cov(2, 8) = -_tmp164 * states_cov(1, 8) - _tmp165 * states_cov(2, 8) -
-                             _tmp166 * states_cov(0, 8) - _tmp66 * states_cov(7, 8) -
-                             _tmp76 * states_cov(6, 8) - _tmp79 * states_cov(8, 8) +
-                             states_cov(2, 8);
-    _next_states_cov(3, 8) = -_tmp107 * states_cov(8, 8) - _tmp108 * states_cov(6, 8) -
-                             _tmp109 * states_cov(7, 8) - _tmp167 * states_cov(2, 8) -
-                             _tmp168 * states_cov(1, 8) - _tmp169 * states_cov(0, 8) +
-                             states_cov(3, 8);
-    _next_states_cov(4, 8) = -_tmp113 * states_cov(7, 8) - _tmp114 * states_cov(6, 8) -
-                             _tmp115 * states_cov(8, 8) - _tmp170 * states_cov(2, 8) -
-                             _tmp171 * states_cov(0, 8) - _tmp172 * states_cov(1, 8) +
-                             states_cov(4, 8);
-    _next_states_cov(5, 8) = -_tmp119 * states_cov(6, 8) - _tmp120 * states_cov(7, 8) -
-                             _tmp121 * states_cov(8, 8) - _tmp173 * states_cov(1, 8) -
-                             _tmp174 * states_cov(2, 8) - _tmp175 * states_cov(0, 8) +
-                             states_cov(5, 8);
-    _next_states_cov(6, 8) = -_tmp125 * states_cov(7, 8) - _tmp126 * states_cov(8, 8) -
-                             _tmp127 * states_cov(6, 8) - _tmp176 * states_cov(2, 8) -
-                             _tmp177 * states_cov(1, 8) - _tmp178 * states_cov(0, 8) +
-                             states_cov(6, 8);
-    _next_states_cov(7, 8) = -_tmp131 * states_cov(8, 8) - _tmp132 * states_cov(7, 8) -
-                             _tmp133 * states_cov(6, 8) - _tmp179 * states_cov(2, 8) -
-                             _tmp180 * states_cov(1, 8) - _tmp181 * states_cov(0, 8) +
-                             states_cov(7, 8);
-    _next_states_cov(8, 8) = -_tmp137 * states_cov(8, 8) - _tmp138 * states_cov(6, 8) -
-                             _tmp139 * states_cov(7, 8) - _tmp182 * states_cov(2, 8) -
-                             _tmp183 * states_cov(0, 8) - _tmp184 * states_cov(1, 8) +
-                             states_cov(8, 8);
-    _next_states_cov(9, 8) = -_tmp143 * states_cov(8, 8) - _tmp144 * states_cov(6, 8) -
-                             _tmp145 * states_cov(7, 8) - _tmp185 * states_cov(0, 8) -
-                             _tmp186 * states_cov(1, 8) - _tmp187 * states_cov(2, 8) +
-                             states_cov(9, 8);
-    _next_states_cov(10, 8) = -_tmp149 * states_cov(8, 8) - _tmp150 * states_cov(7, 8) -
-                              _tmp151 * states_cov(6, 8) - _tmp188 * states_cov(0, 8) -
-                              _tmp189 * states_cov(1, 8) - _tmp190 * states_cov(2, 8) +
-                              states_cov(10, 8);
-    _next_states_cov(11, 8) = -_tmp155 * states_cov(7, 8) - _tmp156 * states_cov(8, 8) -
-                              _tmp157 * states_cov(6, 8) - _tmp191 * states_cov(0, 8) -
-                              _tmp192 * states_cov(1, 8) - _tmp193 * states_cov(2, 8) +
-                              states_cov(11, 8);
-    _next_states_cov(0, 9) = -_tmp158 * states_cov(0, 9) - _tmp159 * states_cov(1, 9) -
-                             _tmp160 * states_cov(2, 9) - _tmp85 * states_cov(8, 9) -
-                             _tmp86 * states_cov(7, 9) - _tmp87 * states_cov(6, 9) +
-                             states_cov(0, 9);
-    _next_states_cov(1, 9) = -_tmp161 * states_cov(2, 9) - _tmp162 * states_cov(0, 9) -
-                             _tmp163 * states_cov(1, 9) - _tmp92 * states_cov(6, 9) -
-                             _tmp93 * states_cov(7, 9) - _tmp94 * states_cov(8, 9) +
-                             states_cov(1, 9);
-    _next_states_cov(2, 9) = -_tmp164 * states_cov(1, 9) - _tmp165 * states_cov(2, 9) -
-                             _tmp166 * states_cov(0, 9) - _tmp66 * states_cov(7, 9) -
-                             _tmp76 * states_cov(6, 9) - _tmp79 * states_cov(8, 9) +
-                             states_cov(2, 9);
-    _next_states_cov(3, 9) = -_tmp107 * states_cov(8, 9) - _tmp108 * states_cov(6, 9) -
-                             _tmp109 * states_cov(7, 9) - _tmp167 * states_cov(2, 9) -
-                             _tmp168 * states_cov(1, 9) - _tmp169 * states_cov(0, 9) +
-                             states_cov(3, 9);
-    _next_states_cov(4, 9) = -_tmp113 * states_cov(7, 9) - _tmp114 * states_cov(6, 9) -
-                             _tmp115 * states_cov(8, 9) - _tmp170 * states_cov(2, 9) -
-                             _tmp171 * states_cov(0, 9) - _tmp172 * states_cov(1, 9) +
-                             states_cov(4, 9);
-    _next_states_cov(5, 9) = -_tmp119 * states_cov(6, 9) - _tmp120 * states_cov(7, 9) -
-                             _tmp121 * states_cov(8, 9) - _tmp173 * states_cov(1, 9) -
-                             _tmp174 * states_cov(2, 9) - _tmp175 * states_cov(0, 9) +
-                             states_cov(5, 9);
-    _next_states_cov(6, 9) = -_tmp125 * states_cov(7, 9) - _tmp126 * states_cov(8, 9) -
-                             _tmp127 * states_cov(6, 9) - _tmp176 * states_cov(2, 9) -
-                             _tmp177 * states_cov(1, 9) - _tmp178 * states_cov(0, 9) +
-                             states_cov(6, 9);
-    _next_states_cov(7, 9) = -_tmp131 * states_cov(8, 9) - _tmp132 * states_cov(7, 9) -
-                             _tmp133 * states_cov(6, 9) - _tmp179 * states_cov(2, 9) -
-                             _tmp180 * states_cov(1, 9) - _tmp181 * states_cov(0, 9) +
-                             states_cov(7, 9);
-    _next_states_cov(8, 9) = -_tmp137 * states_cov(8, 9) - _tmp138 * states_cov(6, 9) -
-                             _tmp139 * states_cov(7, 9) - _tmp182 * states_cov(2, 9) -
-                             _tmp183 * states_cov(0, 9) - _tmp184 * states_cov(1, 9) +
-                             states_cov(8, 9);
-    _next_states_cov(9, 9) = -_tmp143 * states_cov(8, 9) - _tmp144 * states_cov(6, 9) -
-                             _tmp145 * states_cov(7, 9) - _tmp185 * states_cov(0, 9) -
-                             _tmp186 * states_cov(1, 9) - _tmp187 * states_cov(2, 9) +
-                             states_cov(9, 9);
-    _next_states_cov(10, 9) = -_tmp149 * states_cov(8, 9) - _tmp150 * states_cov(7, 9) -
-                              _tmp151 * states_cov(6, 9) - _tmp188 * states_cov(0, 9) -
-                              _tmp189 * states_cov(1, 9) - _tmp190 * states_cov(2, 9) +
-                              states_cov(10, 9);
-    _next_states_cov(11, 9) = -_tmp155 * states_cov(7, 9) - _tmp156 * states_cov(8, 9) -
-                              _tmp157 * states_cov(6, 9) - _tmp191 * states_cov(0, 9) -
-                              _tmp192 * states_cov(1, 9) - _tmp193 * states_cov(2, 9) +
-                              states_cov(11, 9);
-    _next_states_cov(0, 10) = -_tmp158 * states_cov(0, 10) - _tmp159 * states_cov(1, 10) -
-                              _tmp160 * states_cov(2, 10) - _tmp85 * states_cov(8, 10) -
-                              _tmp86 * states_cov(7, 10) - _tmp87 * states_cov(6, 10) +
-                              states_cov(0, 10);
-    _next_states_cov(1, 10) = -_tmp161 * states_cov(2, 10) - _tmp162 * states_cov(0, 10) -
-                              _tmp163 * states_cov(1, 10) - _tmp92 * states_cov(6, 10) -
-                              _tmp93 * states_cov(7, 10) - _tmp94 * states_cov(8, 10) +
-                              states_cov(1, 10);
-    _next_states_cov(2, 10) = -_tmp164 * states_cov(1, 10) - _tmp165 * states_cov(2, 10) -
-                              _tmp166 * states_cov(0, 10) - _tmp66 * states_cov(7, 10) -
-                              _tmp76 * states_cov(6, 10) - _tmp79 * states_cov(8, 10) +
-                              states_cov(2, 10);
-    _next_states_cov(3, 10) = -_tmp107 * states_cov(8, 10) - _tmp108 * states_cov(6, 10) -
-                              _tmp109 * states_cov(7, 10) - _tmp167 * states_cov(2, 10) -
-                              _tmp168 * states_cov(1, 10) - _tmp169 * states_cov(0, 10) +
-                              states_cov(3, 10);
-    _next_states_cov(4, 10) = -_tmp113 * states_cov(7, 10) - _tmp114 * states_cov(6, 10) -
-                              _tmp115 * states_cov(8, 10) - _tmp170 * states_cov(2, 10) -
-                              _tmp171 * states_cov(0, 10) - _tmp172 * states_cov(1, 10) +
-                              states_cov(4, 10);
-    _next_states_cov(5, 10) = -_tmp119 * states_cov(6, 10) - _tmp120 * states_cov(7, 10) -
-                              _tmp121 * states_cov(8, 10) - _tmp173 * states_cov(1, 10) -
-                              _tmp174 * states_cov(2, 10) - _tmp175 * states_cov(0, 10) +
-                              states_cov(5, 10);
-    _next_states_cov(6, 10) = -_tmp125 * states_cov(7, 10) - _tmp126 * states_cov(8, 10) -
-                              _tmp127 * states_cov(6, 10) - _tmp176 * states_cov(2, 10) -
-                              _tmp177 * states_cov(1, 10) - _tmp178 * states_cov(0, 10) +
-                              states_cov(6, 10);
-    _next_states_cov(7, 10) = -_tmp131 * states_cov(8, 10) - _tmp132 * states_cov(7, 10) -
-                              _tmp133 * states_cov(6, 10) - _tmp179 * states_cov(2, 10) -
-                              _tmp180 * states_cov(1, 10) - _tmp181 * states_cov(0, 10) +
-                              states_cov(7, 10);
-    _next_states_cov(8, 10) = -_tmp137 * states_cov(8, 10) - _tmp138 * states_cov(6, 10) -
-                              _tmp139 * states_cov(7, 10) - _tmp182 * states_cov(2, 10) -
-                              _tmp183 * states_cov(0, 10) - _tmp184 * states_cov(1, 10) +
-                              states_cov(8, 10);
-    _next_states_cov(9, 10) = -_tmp143 * states_cov(8, 10) - _tmp144 * states_cov(6, 10) -
-                              _tmp145 * states_cov(7, 10) - _tmp185 * states_cov(0, 10) -
-                              _tmp186 * states_cov(1, 10) - _tmp187 * states_cov(2, 10) +
-                              states_cov(9, 10);
-    _next_states_cov(10, 10) = -_tmp149 * states_cov(8, 10) - _tmp150 * states_cov(7, 10) -
-                               _tmp151 * states_cov(6, 10) - _tmp188 * states_cov(0, 10) -
-                               _tmp189 * states_cov(1, 10) - _tmp190 * states_cov(2, 10) +
-                               states_cov(10, 10);
-    _next_states_cov(11, 10) = -_tmp155 * states_cov(7, 10) - _tmp156 * states_cov(8, 10) -
-                               _tmp157 * states_cov(6, 10) - _tmp191 * states_cov(0, 10) -
-                               _tmp192 * states_cov(1, 10) - _tmp193 * states_cov(2, 10) +
-                               states_cov(11, 10);
-    _next_states_cov(0, 11) = -_tmp158 * states_cov(0, 11) - _tmp159 * states_cov(1, 11) -
-                              _tmp160 * states_cov(2, 11) - _tmp85 * states_cov(8, 11) -
-                              _tmp86 * states_cov(7, 11) - _tmp87 * states_cov(6, 11) +
-                              states_cov(0, 11);
-    _next_states_cov(1, 11) = -_tmp161 * states_cov(2, 11) - _tmp162 * states_cov(0, 11) -
-                              _tmp163 * states_cov(1, 11) - _tmp92 * states_cov(6, 11) -
-                              _tmp93 * states_cov(7, 11) - _tmp94 * states_cov(8, 11) +
-                              states_cov(1, 11);
-    _next_states_cov(2, 11) = -_tmp164 * states_cov(1, 11) - _tmp165 * states_cov(2, 11) -
-                              _tmp166 * states_cov(0, 11) - _tmp66 * states_cov(7, 11) -
-                              _tmp76 * states_cov(6, 11) - _tmp79 * states_cov(8, 11) +
-                              states_cov(2, 11);
-    _next_states_cov(3, 11) = -_tmp107 * states_cov(8, 11) - _tmp108 * states_cov(6, 11) -
-                              _tmp109 * states_cov(7, 11) - _tmp167 * states_cov(2, 11) -
-                              _tmp168 * states_cov(1, 11) - _tmp169 * states_cov(0, 11) +
-                              states_cov(3, 11);
-    _next_states_cov(4, 11) = -_tmp113 * states_cov(7, 11) - _tmp114 * states_cov(6, 11) -
-                              _tmp115 * states_cov(8, 11) - _tmp170 * states_cov(2, 11) -
-                              _tmp171 * states_cov(0, 11) - _tmp172 * states_cov(1, 11) +
-                              states_cov(4, 11);
-    _next_states_cov(5, 11) = -_tmp119 * states_cov(6, 11) - _tmp120 * states_cov(7, 11) -
-                              _tmp121 * states_cov(8, 11) - _tmp173 * states_cov(1, 11) -
-                              _tmp174 * states_cov(2, 11) - _tmp175 * states_cov(0, 11) +
-                              states_cov(5, 11);
-    _next_states_cov(6, 11) = -_tmp125 * states_cov(7, 11) - _tmp126 * states_cov(8, 11) -
-                              _tmp127 * states_cov(6, 11) - _tmp176 * states_cov(2, 11) -
-                              _tmp177 * states_cov(1, 11) - _tmp178 * states_cov(0, 11) +
-                              states_cov(6, 11);
-    _next_states_cov(7, 11) = -_tmp131 * states_cov(8, 11) - _tmp132 * states_cov(7, 11) -
-                              _tmp133 * states_cov(6, 11) - _tmp179 * states_cov(2, 11) -
-                              _tmp180 * states_cov(1, 11) - _tmp181 * states_cov(0, 11) +
-                              states_cov(7, 11);
-    _next_states_cov(8, 11) = -_tmp137 * states_cov(8, 11) - _tmp138 * states_cov(6, 11) -
-                              _tmp139 * states_cov(7, 11) - _tmp182 * states_cov(2, 11) -
-                              _tmp183 * states_cov(0, 11) - _tmp184 * states_cov(1, 11) +
-                              states_cov(8, 11);
-    _next_states_cov(9, 11) = -_tmp143 * states_cov(8, 11) - _tmp144 * states_cov(6, 11) -
-                              _tmp145 * states_cov(7, 11) - _tmp185 * states_cov(0, 11) -
-                              _tmp186 * states_cov(1, 11) - _tmp187 * states_cov(2, 11) +
-                              states_cov(9, 11);
-    _next_states_cov(10, 11) = -_tmp149 * states_cov(8, 11) - _tmp150 * states_cov(7, 11) -
-                               _tmp151 * states_cov(6, 11) - _tmp188 * states_cov(0, 11) -
-                               _tmp189 * states_cov(1, 11) - _tmp190 * states_cov(2, 11) +
-                               states_cov(10, 11);
-    _next_states_cov(11, 11) = -_tmp155 * states_cov(7, 11) - _tmp156 * states_cov(8, 11) -
-                               _tmp157 * states_cov(6, 11) - _tmp191 * states_cov(0, 11) -
-                               _tmp192 * states_cov(1, 11) - _tmp193 * states_cov(2, 11) +
-                               states_cov(11, 11);
+    _innovation_cov(0, 0) = _tmp25 * _tmp31 + _tmp25 * states_cov(1, 6) + _tmp29 * _tmp30 +
+                            _tmp29 * states_cov(2, 6) + accel_noise(0, 0) + states_cov(6, 6);
+    _innovation_cov(1, 0) = _tmp25 * _tmp38 + _tmp29 * _tmp37 + _tmp34 * states_cov(2, 6) +
+                            _tmp36 * states_cov(0, 6) + states_cov(7, 6);
+    _innovation_cov(2, 0) = _tmp25 * _tmp43 + _tmp29 * _tmp42 + _tmp40 * states_cov(1, 6) +
+                            _tmp41 * states_cov(0, 6) + states_cov(8, 6);
+    _innovation_cov(0, 1) = _tmp25 * states_cov(1, 7) + _tmp29 * states_cov(2, 7) +
+                            _tmp30 * _tmp34 + _tmp36 * _tmp44 + states_cov(6, 7);
+    _innovation_cov(1, 1) = _tmp34 * _tmp37 + _tmp34 * states_cov(2, 7) + _tmp36 * _tmp45 +
+                            _tmp36 * states_cov(0, 7) + accel_noise(1, 0) + states_cov(7, 7);
+    _innovation_cov(2, 1) = _tmp34 * _tmp42 + _tmp36 * _tmp46 + _tmp40 * states_cov(1, 7) +
+                            _tmp41 * states_cov(0, 7) + states_cov(8, 7);
+    _innovation_cov(0, 2) = _tmp25 * states_cov(1, 8) + _tmp29 * states_cov(2, 8) +
+                            _tmp31 * _tmp40 + _tmp41 * _tmp44 + states_cov(6, 8);
+    _innovation_cov(1, 2) = _tmp34 * states_cov(2, 8) + _tmp36 * states_cov(0, 8) +
+                            _tmp38 * _tmp40 + _tmp41 * _tmp45 + states_cov(7, 8);
+    _innovation_cov(2, 2) = _tmp40 * _tmp43 + _tmp40 * states_cov(1, 8) + _tmp41 * _tmp46 +
+                            _tmp41 * states_cov(0, 8) + accel_noise(2, 0) + states_cov(8, 8);
+  }
+
+  if (H != nullptr) {
+    Eigen::Matrix<Scalar, 3, 12>& _H = (*H);
+
+    _H.setZero();
+
+    _H(1, 0) = _tmp36;
+    _H(2, 0) = _tmp41;
+    _H(0, 1) = _tmp25;
+    _H(2, 1) = _tmp40;
+    _H(0, 2) = _tmp29;
+    _H(1, 2) = _tmp34;
+    _H(0, 6) = 1;
+    _H(1, 7) = 1;
+    _H(2, 8) = 1;
   }
 }  // NOLINT(readability/fn_size)
 
