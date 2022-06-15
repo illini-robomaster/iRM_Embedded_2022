@@ -22,73 +22,29 @@
 
 #include "controller.h"
 #include "motor.h"
-#include "power_limit.h"
-
-#define MAX_WHEEL_NUM 4
 
 namespace control {
 
-/**
- * @brief chassis models
- */
-typedef enum { CHASSIS_MECANUM_WHEEL } chassis_model_t;
-
-/**
- * @brief structure used when chassis instance is initialized
- */
 typedef struct {
-  MotorCANBase** motors; /* motor instances of all chassis motors */
-  chassis_model_t model; /* chassis model                         */
-} chassis_t;
+  float power_limit;
+  float WARNING_power;
+  float WARNING_power_buff;
+  float buffer_total_current_limit;
+  float power_total_current_limit;
+} power_limit_t;
 
-/**
- * @brief motor configs for four wheel vehicles
- */
-struct FourWheel {
-  enum { front_left, front_right, back_left, back_right, motor_num };
-};
-
-/**
- * @brief wrapper class for chassis
- */
-class Chassis {
+class PowerLimit {
  public:
-  /**
-   * @brief constructor for chassis
-   *
-   * @param chassis structure that used to initialize chassis, refer to type chassis_t
-   */
-  Chassis(const chassis_t chassis);
-
-  /**
-   * @brief destructor for chassis
-   */
-  ~Chassis();
-
-  /**
-   * @brief set the speed for chassis motors
-   *
-   * @param x_speed chassis speed on x-direction
-   * @param y_speed chassis speed on y-direction
-   * @param turn_speed chassis clockwise turning speed
-   */
-  void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
-
-  /**
-   * @brief calculate the output of the motors under current configuration
-   * @note does not command the motor immediately
-   */
-  void Update(float chassis_power, float chassis_power_buffer);
+  PowerLimit(int motor_num, power_limit_t* param);
+  void Output(float chassis_power, float chassis_power_buffer, float* PID_output, float* output);
 
  private:
-  // acquired from user
-  MotorCANBase** motors_;
-  chassis_model_t model_;
-
-  // pids and current speeds for each motor on the chassis
-  ConstrainedPID pids_[MAX_WHEEL_NUM];
-  PowerLimit* power_limit_;
-  float* speeds_;
+  int motor_num_;
+  float power_limit_;
+  float WARNING_power_;
+  float WARNING_power_buff_;
+  float buffer_total_current_limit_;
+  float power_total_current_limit_;
 };
 
 }  // namespace control
