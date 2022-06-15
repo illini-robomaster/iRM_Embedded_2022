@@ -229,8 +229,8 @@ void chassisTask(void* arg) {
 //=====================================================================================================
 
 void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
 
+  print_use_uart(&huart1);
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
   dbus = new remote::DBUS(&huart3);
