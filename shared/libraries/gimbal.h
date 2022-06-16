@@ -30,7 +30,7 @@ namespace control {
 /**
  * @brief gimbal models
  */
-typedef enum { GIMBAL_STANDARD_ZERO } gimbal_model_t;
+typedef enum { GIMBAL_STANDARD_ZERO, GIMBAL_STANDARD_2022_ALPHA } gimbal_model_t;
 
 /**
  * @brief offset, max, and proximity angles of different gimbals
@@ -42,8 +42,6 @@ typedef struct {
   float yaw_offset_;      /* yaw offset angle (angle when muzzle is at horizontal center) */
   float pitch_max_;       /* maximum pitch angle the gimbal can turn from center          */
   float yaw_max_;         /* maximum yaw angle the gimbal can turn from center            */
-  float pitch_proximity_; /* pitch angle diff from center to toggle pid modes             */
-  float yaw_proximity_;   /* yaw angle diff from center to toggle pid modes               */
 } gimbal_data_t;
 
 /**
@@ -77,7 +75,7 @@ class Gimbal {
    *
    * @return refer to gimbal_data_t
    */
-  gimbal_data_t GetData() const;
+  gimbal_data_t* GetData();
 
   /**
    * @brief calculate the output of the motors under current configuration
@@ -111,12 +109,14 @@ class Gimbal {
   gimbal_data_t data_;
 
   // pitch and yaw pid
-  float* pitch_move_pid_param_; /* pid param that used to control pitch motor when moving  */
-  float* pitch_hold_pid_param_; /* pid param that used to control pitch motor when holding */
-  float* yaw_move_pid_param_;   /* pid param that used to control yaw motor when moving    */
-  float* yaw_hold_pid_param_;   /* pid param that used to control yaw motor when holding   */
-  PIDController* pitch_pid_;    /* pitch pid                                               */
-  PIDController* yaw_pid_;      /* yaw pid                                                 */
+  float* pitch_theta_pid_param_; /* pid param that used to control pitch motor when moving  */
+  float* pitch_omega_pid_param_; /* pid param that used to control pitch motor when holding */
+  float* yaw_theta_pid_param_;   /* pid param that used to control yaw motor when moving    */
+  float* yaw_omega_pid_param_;   /* pid param that used to control yaw motor when holding   */
+  ConstrainedPID* pitch_theta_pid_; /* pitch theta pid */
+  ConstrainedPID* pitch_omega_pid_; /* pitch omega pid */
+  ConstrainedPID* yaw_theta_pid_;   /* yaw theta pid   */
+  ConstrainedPID* yaw_omega_pid_;   /* yaw omega pid   */
 
   // pitch and yaw angle
   float pitch_angle_; /* current gimbal pitch angle */

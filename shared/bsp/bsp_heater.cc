@@ -28,7 +28,7 @@ Heater::Heater(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, fl
   pwm_.Start();
   float* pid_param = new float[3]{160, 0.1, 0};
   pid_.Reinit(pid_param);
-  float heater_I_limit = 900;
+  float heater_I_limit = 800;
   float heater_output_limit = 500;
   pid_.ChangeMax(heater_I_limit, heater_output_limit);
 }
@@ -38,7 +38,7 @@ Heater::Heater(heater_init_t init) : pwm_(init.htim, init.channel, init.clock_fr
   pwm_.Start();
   float* pid_param = new float[3]{160, 0.1, 0};
   pid_.Reinit(pid_param);
-  float heater_I_limit = 900;
+  float heater_I_limit = 800;
   float heater_output_limit = 500;
   pid_.ChangeMax(heater_I_limit, heater_output_limit);
 }
