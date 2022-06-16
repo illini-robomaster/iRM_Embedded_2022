@@ -28,7 +28,7 @@ class RGB {
  public:
   RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
       uint32_t clock_freq);
-  void Show(uint32_t aRGB);
+  void Display(uint32_t aRGB);
   void Stop();
 
  private:

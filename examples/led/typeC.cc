@@ -65,8 +65,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
       aRGB = ((uint32_t)(alpha)) << 24 | ((uint32_t)(red)) << 16 | ((uint32_t)(green)) << 8 |
              ((uint32_t)(blue)) << 0;
-      led->Show(aRGB);
-      HAL_Delay(1);
+      led->Display(aRGB);
+      osDelay(1);
     }
     ++i;
     i = i % 3;

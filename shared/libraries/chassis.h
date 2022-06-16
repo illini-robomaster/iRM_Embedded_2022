@@ -78,7 +78,7 @@ class Chassis {
    * @brief calculate the output of the motors under current configuration
    * @note does not command the motor immediately
    */
-  void Update(float chassis_power, float chassis_power_buffer);
+  void Update(float power_limit, float chassis_power, float chassis_power_buffer);
 
  private:
   // acquired from user
@@ -89,6 +89,8 @@ class Chassis {
   ConstrainedPID pids_[MAX_WHEEL_NUM];
   PowerLimit* power_limit_;
   float* speeds_;
+
+  power_limit_t power_limit_info_;
 };
 
 }  // namespace control
