@@ -36,21 +36,21 @@
 #define GRAVITY_ACC 9.8f
 #define DEG2RAD(x) ((x) / 180 * M_PI)
 
-#define MAG_SEN 0.3f  // raw int16 data change to uT unit. 原始整型数据变成 单位ut
+#define MAG_SEN 0.3f  // raw int16 data change to uT unit.
 
 #define IST8310_WHO_AM_I 0x00        // ist8310 "who am I "
 #define IST8310_WHO_AM_I_VALUE 0x10  // device ID
 
 #define IST8310_WRITE_REG_NUM 4
 
-// the first column:the registers of IST8310. 第一列:IST8310的寄存器
-// the second column: the value to be writed to the registers.第二列:需要写入的寄存器值
-// the third column: return error value.第三列:返回的错误码
+// the first column:the registers of IST8310.
+// the second column: the value to be writed to the registers.
+// the third column: return error value.
 static const uint8_t ist8310_write_reg_data_error[IST8310_WRITE_REG_NUM][3] = {
-    {0x0B, 0x08, 0x01},  // enalbe interrupt  and low pin polarity.开启中断，并且设置低电平
-    {0x41, 0x09, 0x02},   // average 2 times.平均采样两次
-    {0x42, 0xC0, 0x03},   // must be 0xC0. 必须是0xC0
-    {0x0A, 0x0B, 0x04}};  // 200Hz output rate.200Hz输出频率
+    {0x0B, 0x08, 0x01},   // enalbe interrupt  and low pin polarity.
+    {0x41, 0x09, 0x02},   // average 2 times.
+    {0x42, 0xC0, 0x03},   // must be 0xC0.
+    {0x0A, 0x0B, 0x04}};  // 200Hz output rate.
 
 #define IST8310_IIC_ADDRESS 0x0E  // the I2C address of IST8310
 
@@ -706,7 +706,6 @@ void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
   __HAL_SPI_ENABLE(&hspi1);
 
   // disable DMA
-  //失效DMA
   __HAL_DMA_DISABLE(hdma_spi_rx_);
 
   while (hdma_spi_rx_->Instance->CR & DMA_SxCR_EN) {
@@ -717,16 +716,13 @@ void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
 
   hdma_spi_rx_->Instance->PAR = (uint32_t) & (SPI1->DR);
   // memory buffer 1
-  //内存缓冲区1
   hdma_spi_rx_->Instance->M0AR = (uint32_t)(rx_buf);
   // data length
-  //数据长度
   __HAL_DMA_SET_COUNTER(hdma_spi_rx_, num);
 
   __HAL_DMA_ENABLE_IT(hdma_spi_rx_, DMA_IT_TC);
 
   // disable DMA
-  //失效DMA
   __HAL_DMA_DISABLE(hdma_spi_tx_);
 
   while (hdma_spi_tx_->Instance->CR & DMA_SxCR_EN) {
@@ -737,16 +733,13 @@ void IMU_typeC::SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
 
   hdma_spi_tx_->Instance->PAR = (uint32_t) & (SPI1->DR);
   // memory buffer 1
-  //内存缓冲区1
   hdma_spi_tx_->Instance->M0AR = (uint32_t)(tx_buf);
   // data length
-  //数据长度
   __HAL_DMA_SET_COUNTER(hdma_spi_tx_, num);
 }
 
 void IMU_typeC::SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) {
   // disable DMA
-  //失效DMA
   __HAL_DMA_DISABLE(hdma_spi_rx_);
   __HAL_DMA_DISABLE(hdma_spi_tx_);
   while (hdma_spi_rx_->Instance->CR & DMA_SxCR_EN) {
@@ -756,7 +749,6 @@ void IMU_typeC::SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) 
     __HAL_DMA_DISABLE(hdma_spi_tx_);
   }
   // clear flag
-  //清除标志位
   __HAL_DMA_CLEAR_FLAG(hspi_->hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi_->hdmarx));
   __HAL_DMA_CLEAR_FLAG(hspi_->hdmarx, __HAL_DMA_GET_HT_FLAG_INDEX(hspi_->hdmarx));
   __HAL_DMA_CLEAR_FLAG(hspi_->hdmarx, __HAL_DMA_GET_TE_FLAG_INDEX(hspi_->hdmarx));
@@ -769,15 +761,12 @@ void IMU_typeC::SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) 
   __HAL_DMA_CLEAR_FLAG(hspi_->hdmatx, __HAL_DMA_GET_DME_FLAG_INDEX(hspi_->hdmatx));
   __HAL_DMA_CLEAR_FLAG(hspi_->hdmatx, __HAL_DMA_GET_FE_FLAG_INDEX(hspi_->hdmatx));
   // set memory address
-  //设置数据地址
   hdma_spi_rx_->Instance->M0AR = rx_buf;
   hdma_spi_tx_->Instance->M0AR = tx_buf;
   // set data length
-  //设置数据长度
   __HAL_DMA_SET_COUNTER(hdma_spi_rx_, ndtr);
   __HAL_DMA_SET_COUNTER(hdma_spi_tx_, ndtr);
   // enable DMA
-  //使能DMA
   __HAL_DMA_ENABLE(hdma_spi_rx_);
   __HAL_DMA_ENABLE(hdma_spi_tx_);
 }
@@ -786,7 +775,6 @@ void IMU_typeC::imu_cmd_spi_dma() {
   UBaseType_t uxSavedInterruptStatus;
   uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 
-  //开启陀螺仪的DMA传输
   if ((gyro_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
       !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)) &&
       !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))) {
@@ -798,7 +786,7 @@ void IMU_typeC::imu_cmd_spi_dma() {
     taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
     return;
   }
-  //开启加速度计的DMA传输
+
   if ((accel_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
       !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN) && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) &&
       !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))) {
@@ -834,7 +822,6 @@ void DMACallbackWrapper(SPI_HandleTypeDef* hspi) {
     if (!imu) return;
 
     // gyro read over
-    //陀螺仪读取完毕
     if (imu->gyro_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
@@ -842,7 +829,6 @@ void DMACallbackWrapper(SPI_HandleTypeDef* hspi) {
                         GPIO_PIN_SET);
     }
     // accel read over
-    //加速度计读取完毕
     if (imu->accel_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
@@ -850,7 +836,6 @@ void DMACallbackWrapper(SPI_HandleTypeDef* hspi) {
                         GPIO_PIN_SET);
     }
     // temperature read over
-    //温度读取完毕
     if (imu->accel_temp_update_flag & (1 << IMU_SPI_SHFITS)) {
       imu->accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
       imu->accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
