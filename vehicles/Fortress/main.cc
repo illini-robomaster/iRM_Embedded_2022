@@ -31,9 +31,9 @@
 #include "protocol.h"
 #include "shooter.h"
 
-// static const int SHOOTER_TASK_DELAY = 10;
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
+static const int SHOOTER_TASK_DELAY = 10;
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -99,7 +99,7 @@ static control::gimbal_data_t* gimbal_param = nullptr;
 void gimbalTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* gimbal_motors[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
 
   print("Wait for beginning signal...\r\n");
   laser->On();
@@ -113,7 +113,7 @@ void gimbalTask(void* arg) {
   while (i < 2000 || !imu->DataReady()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(1);
     ++i;
   }
@@ -122,13 +122,11 @@ void gimbalTask(void* arg) {
   laser->Off();
   imu->Calibrate();
 
-  i = 0;
   while (!imu->DataReady() || !imu->CaliDone()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(1);
-    ++i;
   }
 
   print("Gimbal Begin!\r\n");
@@ -149,7 +147,7 @@ void gimbalTask(void* arg) {
 
     pitch_ratio = -dbus->mouse.y / 32767.0;
     yaw_ratio = -dbus->mouse.x / 32767.0;
-    if (dbus->swr == remote::UP) {
+    if (dbus->swl == remote::UP) {
       pitch_ratio += -dbus->ch3 / 660.0 / 210.0;
       yaw_ratio += -dbus->ch2 / 660.0 / 210.0;
     }
@@ -169,7 +167,7 @@ void gimbalTask(void* arg) {
     gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 100);
 
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(GIMBAL_TASK_DELAY);
   }
 }
@@ -199,8 +197,8 @@ class RefereeUART : public bsp::UART {
   void RxCompleteCallback() final { osThreadFlagsSet(refereeTaskHandle, REFEREE_RX_SIGNAL); }
 };
 
-communication::Referee* referee = nullptr;
-RefereeUART* referee_uart = nullptr;
+static communication::Referee* referee = nullptr;
+static RefereeUART* referee_uart = nullptr;
 
 void refereeTask(void* arg) {
   UNUSED(arg);
@@ -250,7 +248,7 @@ void chassisTask(void* arg) {
       }
     }
 
-    if (dbus->swr == remote::MID)
+    if (dbus->swl == remote::MID)
       chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
     else
       chassis->SetSpeed(0, 0, 0);
@@ -258,6 +256,57 @@ void chassisTask(void* arg) {
                     referee->power_heat_data.chassis_power_buffer);
     control::MotorCANBase::TransmitOutput(motors, 4);
     osDelay(CHASSIS_TASK_DELAY);
+  }
+}
+
+//==================================================================================================
+// Shooter
+//==================================================================================================
+
+const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+
+osThreadId_t shooterTaskHandle;
+
+static control::MotorCANBase* sl_motor = nullptr;
+static control::MotorCANBase* sr_motor = nullptr;
+static control::MotorCANBase* ld_motor = nullptr;
+static control::Shooter* shooter = nullptr;
+
+void shooterTask(void* arg) {
+  UNUSED(arg);
+
+  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
+
+  while (!imu->CaliDone()) osDelay(100);
+
+  while (true) {
+    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
+      while (true) {
+        if (dbus->keyboard.bit.V) break;
+        osDelay(10);
+      }
+    }
+    if (referee->game_robot_status.mains_power_shooter_output &&
+        (dbus->mouse.l || dbus->swr == remote::UP)) {
+      shooter->LoadNext();
+    }
+    if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
+        dbus->swr == remote::DOWN) {
+      shooter->SetFlywheelSpeed(0);
+    } else {
+      shooter->SetFlywheelSpeed(450);
+    }
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+    osDelay(SHOOTER_TASK_DELAY);
   }
 }
 
@@ -327,6 +376,16 @@ void RM_RTOS_Init(void) {
   chassis_data.motors = motors;
   chassis_data.model = control::CHASSIS_MECANUM_WHEEL;
   chassis = new control::Chassis(chassis_data);
+
+  sl_motor = new control::Motor3508(can1, 0x201);
+  sr_motor = new control::Motor3508(can1, 0x202);
+  ld_motor = new control::Motor3508(can1, 0x203);
+  control::shooter_t shooter_data;
+  shooter_data.left_flywheel_motor = sl_motor;
+  shooter_data.right_flywheel_motor = sr_motor;
+  shooter_data.load_motor = ld_motor;
+  shooter_data.model = control::SHOOTER_STANDARD_2022;
+  shooter = new control::Shooter(shooter_data);
 }
 
 //==================================================================================================
@@ -338,6 +397,7 @@ void RM_RTOS_Threads_Init(void) {
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+  shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
 }
 
 //==================================================================================================
@@ -347,8 +407,9 @@ void RM_RTOS_Threads_Init(void) {
 void KillAll() {
   RM_EXPECT_TRUE(false, "Operation killed\r\n");
 
-  control::MotorCANBase* gimbal_motors[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
+  control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
   laser->Off();
   while (true) {
@@ -356,13 +417,19 @@ void KillAll() {
 
     pitch_motor->SetOutput(0);
     yaw_motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
 
     fl_motor->SetOutput(0);
     bl_motor->SetOutput(0);
     fr_motor->SetOutput(0);
     br_motor->SetOutput(0);
     control::MotorCANBase::TransmitOutput(motors_can2_chassis, 4);
+
+    sl_motor->SetOutput(0);
+    sr_motor->SetOutput(0);
+    ld_motor->SetOutput(0);
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+
     osDelay(10);
   }
 }

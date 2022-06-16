@@ -52,7 +52,7 @@ Shooter::Shooter(shooter_t shooter) {
 
     case SHOOTER_STANDARD_2022:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
-      servo_data.max_speed = 2 * PI;
+      servo_data.max_speed = 4 * PI;
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
