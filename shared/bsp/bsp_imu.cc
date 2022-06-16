@@ -596,13 +596,9 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init, bool useMag)
   imu_start_dma_flag = 1;
 }
 
-void IMU_typeC::Calibrate() {
-  calibrate_ = true;
-}
+void IMU_typeC::Calibrate() { calibrate_ = true; }
 
-bool IMU_typeC::CaliDone() {
-  return calidone_;
-}
+bool IMU_typeC::CaliDone() { return calidone_; }
 
 void IMU_typeC::Update() {
   if (gyro_update_flag & (1 << IMU_NOTIFY_SHFITS)) {
@@ -662,9 +658,7 @@ void IMU_typeC::Update() {
   }
 }
 
-bool IMU_typeC::DataReady() {
-    return Temp > heater_param_.temp - 2;
-}
+bool IMU_typeC::DataReady() { return Temp > heater_param_.temp - 2; }
 
 std::map<SPI_HandleTypeDef*, IMU_typeC*> IMU_typeC::spi_ptr_map;
 
