@@ -505,6 +505,7 @@ class IMU_typeC {
  public:
   IMU_typeC(IMU_typeC_init_t init, bool useMag = true);
   void Calibrate();
+  bool CaliDone();
   void Update();
   bool DataReady();
 
@@ -518,6 +519,8 @@ class IMU_typeC {
  private:
   bool useMag_;
   unsigned long count_ = 0;
+  bool calibrate_ = false;
+  bool calidone_ = false;
 
   unsigned zeroDriftTry = 1000;
   float zeroDrift[3] = {0, 0, 0};

@@ -596,6 +596,14 @@ IMU_typeC::IMU_typeC(IMU_typeC_init_t init, bool useMag)
   imu_start_dma_flag = 1;
 }
 
+void IMU_typeC::Calibrate() {
+  calibrate_ = true;
+}
+
+bool IMU_typeC::CaliDone() {
+  return calidone_;
+}
+
 void IMU_typeC::Update() {
   if (gyro_update_flag & (1 << IMU_NOTIFY_SHFITS)) {
     gyro_update_flag &= ~(1 << IMU_NOTIFY_SHFITS);
@@ -617,7 +625,7 @@ void IMU_typeC::Update() {
     TempControl(BMI088_real_data_.temp);
   }
 
-  if (Temp > heater_param_.temp - 2) {
+  if (calibrate_ && Temp > heater_param_.temp - 2) {
     if (!useMag_) {
       if (++count_ < zeroDriftTry) {
         for (int i = 0; i < 3; ++i) {
@@ -628,6 +636,7 @@ void IMU_typeC::Update() {
         for (int i = 0; i < 3; ++i) {
           zeroDrift[i] = zeroDriftTemp[i] / (float)zeroDriftTry;
         }
+        calidone_ = true;
         return;
       }
       for (int i = 0; i < 3; ++i) {
@@ -654,11 +663,7 @@ void IMU_typeC::Update() {
 }
 
 bool IMU_typeC::DataReady() {
-  if (useMag_) {
     return Temp > heater_param_.temp - 2;
-  } else {
-    return Temp > heater_param_.temp - 2 && count_ > zeroDriftTry;
-  }
 }
 
 std::map<SPI_HandleTypeDef*, IMU_typeC*> IMU_typeC::spi_ptr_map;

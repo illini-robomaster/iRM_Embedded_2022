@@ -70,6 +70,7 @@ void imuTask(void* arg) {
 static control::MotorCANBase* pitch_motor = nullptr;
 static control::MotorCANBase* yaw_motor = nullptr;
 static control::Gimbal* gimbal = nullptr;
+control::gimbal_data_t* gimbal_param = nullptr;
 
 const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .attr_bits = osThreadDetached,
@@ -97,11 +98,21 @@ void gimbalTask(void* arg) {
     osDelay(100);
   }
 
+  int i = 0;
+  while (i < 2000 || !imu->DataReady()) {
+    gimbal->TargetAbs(0, 0);
+    gimbal->Update();
+    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    osDelay(1);
+    ++i;
+  }
+
   print("Start Calibration.\r\n");
   laser->Off();
+  imu->Calibrate();
 
-  int i = 0;
-  while (i < 200 || !imu->DataReady()) {
+  i = 0;
+  while (!imu->DataReady() || !imu->CaliDone()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
@@ -112,10 +123,10 @@ void gimbalTask(void* arg) {
   print("Gimbal Begin!\r\n");
   laser->On();
 
-//  float pitch_ratio, yaw_ratio;
-//  float pitch_curr, yaw_curr;
-//  float pitch_target = 0, yaw_target = 0;
-//  float pitch_diff, yaw_diff;
+  float pitch_ratio, yaw_ratio;
+  float pitch_curr, yaw_curr;
+  float pitch_target = 0, yaw_target = 0;
+  float pitch_diff, yaw_diff;
 
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
@@ -129,19 +140,28 @@ void gimbalTask(void* arg) {
 
 //    gimbal->TargetAbs(0, 0);
 
-//    pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5;
-//    yaw_ratio = -dbus->mouse.x / 32767.0 * 7.5;
-//    pitch_ratio += dbus->ch3 / 18000.0;
-//    yaw_ratio += -dbus->ch2 / 18000.0;
-//    pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
-//    yaw_target = wrap<float>(yaw_target + yaw_ratio, -PI, PI);
-//
-//    pitch_curr = -imu->INS_angle[1];
-//    yaw_curr = imu->INS_angle[0];
-//
-//    pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
-//    yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
-//    gimbal->TargetRel(pitch_diff / 28, yaw_diff / 33);
+    pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5;
+    yaw_ratio = -dbus->mouse.x / 32767.0 * 7.5;
+    pitch_ratio += dbus->ch3 / 18000.0;
+    yaw_ratio += -dbus->ch2 / 18000.0;
+    pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
+    yaw_target = wrap<float>(yaw_target + yaw_ratio, -PI, PI);
+
+    pitch_curr = imu->INS_angle[1];
+    yaw_curr = imu->INS_angle[0];
+
+    pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
+    yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
+
+    if (-0.05 < pitch_diff && pitch_diff < 0.05) {
+      pitch_diff = 0;
+    }
+
+    if (-0.005 < yaw_diff && yaw_diff < 0.005) {
+      yaw_diff = 0;
+    }
+
+    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 60);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
@@ -190,6 +210,7 @@ void RM_RTOS_Init(void) {
  gimbal_data.yaw_motor = yaw_motor;
  gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
  gimbal = new control::Gimbal(gimbal_data);
+ gimbal_param = gimbal->GetData();
 }
 
 void RM_RTOS_Threads_Init(void) {
@@ -197,18 +218,36 @@ void RM_RTOS_Threads_Init(void) {
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
 }
 
+void KillAll() {
+  control::MotorCANBase* gimbal_motors[] = {pitch_motor, yaw_motor};
+
+  RM_EXPECT_TRUE(false, "Operation killed\r\n");
+  while (true) {
+    if (dbus->keyboard.bit.V) {
+      break;
+    }
+    pitch_motor->SetOutput(0);
+    yaw_motor->SetOutput(0);
+    control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
+    laser->Off();
+    osDelay(10);
+  }
+}
+
 void RM_RTOS_Default_Task(const void* arg) {
  UNUSED(arg);
 
  while (true) {
-//   set_cursor(0, 0);
-//   clear_screen();
-//
-//   print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
-//         imu->DataReady() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-//   print("Temp: %.2f\r\n", imu->Temp);
-//   print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
-//         imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+   if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
+     KillAll();
+   set_cursor(0, 0);
+   clear_screen();
+
+   print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+         imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+   print("Temp: %.2f\r\n", imu->Temp);
+   print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+         imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
 
    osDelay(100);
  }
