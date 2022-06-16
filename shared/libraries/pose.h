@@ -152,7 +152,12 @@ class AHRSFilter {
 
   void MeasureMag(const Eigen::Vector3f &mag_body, const uint32_t timestamp);
 
-  Eigen::Quaternionf GetLatestPose() const;
+  void GetLatestState(Eigen::Quaternionf* const pose,
+                      Eigen::Vector3f* const accel_bias,
+                      Eigen::Vector3f* const gyro_bias,
+                      Eigen::Vector3f* const mag_bias) const;
+
+  uint32_t GetLatestTime() const;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

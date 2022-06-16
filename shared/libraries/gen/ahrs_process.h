@@ -37,17 +37,17 @@ void AhrsProcess(const Eigen::Matrix<Scalar, 13, 1>& states,
                  const Eigen::Matrix<Scalar, 3, 1>& mag_bias_noise,
                  Eigen::Matrix<Scalar, 13, 1>* const next_states = nullptr,
                  Eigen::Matrix<Scalar, 12, 12>* const next_states_cov = nullptr) {
-  // Total ops: 1417
+  // Total ops: 1433
 
   // Input arrays
 
-  // Intermediate terms (219)
+  // Intermediate terms (225)
   const Scalar _tmp0 = std::pow(dt, Scalar(2));
-  const Scalar _tmp1 = gyro_body(0, 0) - states(4, 0);
+  const Scalar _tmp1 = gyro_body(0, 0) - states(7, 0);
   const Scalar _tmp2 = std::pow(_tmp1, Scalar(2));
-  const Scalar _tmp3 = gyro_body(2, 0) - states(6, 0);
+  const Scalar _tmp3 = gyro_body(2, 0) - states(9, 0);
   const Scalar _tmp4 = std::pow(_tmp3, Scalar(2));
-  const Scalar _tmp5 = gyro_body(1, 0) - states(5, 0);
+  const Scalar _tmp5 = gyro_body(1, 0) - states(8, 0);
   const Scalar _tmp6 = std::pow(_tmp5, Scalar(2));
   const Scalar _tmp7 =
       _tmp0 * _tmp2 + _tmp0 * _tmp4 + _tmp0 * _tmp6 + Scalar(9.9999999999999998e-17);
@@ -61,14 +61,14 @@ void AhrsProcess(const Eigen::Matrix<Scalar, 13, 1>& states,
   const Scalar _tmp15 = _tmp12 * _tmp14;
   const Scalar _tmp16 = _tmp15 * states(1, 0);
   const Scalar _tmp17 = _tmp16 * _tmp3;
-  const Scalar _tmp18 = _tmp12 * states(2, 0);
-  const Scalar _tmp19 = _tmp14 * _tmp18;
-  const Scalar _tmp20 = _tmp19 * _tmp5;
-  const Scalar _tmp21 = _tmp15 * states(3, 0);
+  const Scalar _tmp18 = _tmp15 * states(2, 0);
+  const Scalar _tmp19 = _tmp18 * _tmp5;
+  const Scalar _tmp20 = _tmp12 * states(3, 0);
+  const Scalar _tmp21 = _tmp14 * _tmp20;
   const Scalar _tmp22 = _tmp1 * _tmp21;
-  const Scalar _tmp23 = _tmp11 + _tmp17 - _tmp20 + _tmp22;
+  const Scalar _tmp23 = _tmp11 + _tmp17 - _tmp19 + _tmp22;
   const Scalar _tmp24 = _tmp10 * states(1, 0);
-  const Scalar _tmp25 = _tmp1 * _tmp19;
+  const Scalar _tmp25 = _tmp1 * _tmp18;
   const Scalar _tmp26 = _tmp15 * states(0, 0);
   const Scalar _tmp27 = _tmp26 * _tmp3;
   const Scalar _tmp28 = _tmp21 * _tmp5;
@@ -79,7 +79,7 @@ void AhrsProcess(const Eigen::Matrix<Scalar, 13, 1>& states,
   const Scalar _tmp33 = _tmp21 * _tmp3;
   const Scalar _tmp34 = _tmp30 - _tmp31 + _tmp32 + _tmp33;
   const Scalar _tmp35 = _tmp16 * _tmp5;
-  const Scalar _tmp36 = _tmp19 * _tmp3;
+  const Scalar _tmp36 = _tmp18 * _tmp3;
   const Scalar _tmp37 = _tmp1 * _tmp26;
   const Scalar _tmp38 = _tmp10 * states(3, 0);
   const Scalar _tmp39 = -_tmp35 - _tmp36 - _tmp37 + _tmp38;
@@ -89,230 +89,236 @@ void AhrsProcess(const Eigen::Matrix<Scalar, 13, 1>& states,
     return base * base * base;
   }();
   const Scalar _tmp42 = _tmp41 / _tmp7;
-  const Scalar _tmp43 = _tmp40 * _tmp42;
-  const Scalar _tmp44 = _tmp41 / (_tmp7 * std::sqrt(_tmp7));
-  const Scalar _tmp45 = _tmp12 * _tmp44;
-  const Scalar _tmp46 = _tmp45 * states(0, 0);
+  const Scalar _tmp43 = _tmp42 * _tmp6;
+  const Scalar _tmp44 = _tmp12 * states(0, 0);
+  const Scalar _tmp45 = _tmp41 / (_tmp7 * std::sqrt(_tmp7));
+  const Scalar _tmp46 = _tmp45 * _tmp6;
   const Scalar _tmp47 = (Scalar(1) / Scalar(2)) * _tmp0 * _tmp13;
-  const Scalar _tmp48 = _tmp18 * _tmp47;
-  const Scalar _tmp49 = _tmp45 * states(1, 0);
-  const Scalar _tmp50 = _tmp1 * _tmp5;
-  const Scalar _tmp51 = (Scalar(1) / Scalar(2)) * _tmp24;
-  const Scalar _tmp52 = _tmp42 * _tmp51;
-  const Scalar _tmp53 = -_tmp49 * _tmp50 + _tmp50 * _tmp52;
-  const Scalar _tmp54 = _tmp45 * states(3, 0);
-  const Scalar _tmp55 = _tmp3 * _tmp5;
-  const Scalar _tmp56 = (Scalar(1) / Scalar(2)) * _tmp38;
-  const Scalar _tmp57 = _tmp42 * _tmp56;
-  const Scalar _tmp58 = _tmp54 * _tmp55 - _tmp55 * _tmp57;
-  const Scalar _tmp59 =
-      -_tmp26 - _tmp43 * _tmp6 + _tmp46 * _tmp6 + _tmp48 * _tmp5 + _tmp53 + _tmp58;
-  const Scalar _tmp60 = 2 * _tmp29;
-  const Scalar _tmp61 = _tmp49 * _tmp55;
-  const Scalar _tmp62 = _tmp52 * _tmp55;
-  const Scalar _tmp63 = _tmp12 * _tmp47;
-  const Scalar _tmp64 = _tmp63 * states(0, 0);
-  const Scalar _tmp65 = (Scalar(1) / Scalar(2)) * _tmp30;
-  const Scalar _tmp66 = _tmp42 * _tmp65;
-  const Scalar _tmp67 = _tmp18 * _tmp44;
-  const Scalar _tmp68 = _tmp50 * _tmp54 - _tmp50 * _tmp57;
-  const Scalar _tmp69 =
-      _tmp19 + _tmp5 * _tmp64 + _tmp6 * _tmp66 - _tmp6 * _tmp67 + _tmp61 - _tmp62 + _tmp68;
-  const Scalar _tmp70 = 2 * _tmp39;
-  const Scalar _tmp71 = _tmp5 * _tmp67;
-  const Scalar _tmp72 = _tmp1 * _tmp71;
-  const Scalar _tmp73 = _tmp50 * _tmp66;
+  const Scalar _tmp48 = _tmp12 * states(2, 0);
+  const Scalar _tmp49 = _tmp48 * _tmp5;
+  const Scalar _tmp50 = _tmp12 * states(1, 0);
+  const Scalar _tmp51 = _tmp1 * _tmp45;
+  const Scalar _tmp52 = _tmp5 * _tmp51;
+  const Scalar _tmp53 = (Scalar(1) / Scalar(2)) * _tmp24;
+  const Scalar _tmp54 = _tmp42 * _tmp5;
+  const Scalar _tmp55 = _tmp1 * _tmp54;
+  const Scalar _tmp56 = -_tmp50 * _tmp52 + _tmp53 * _tmp55;
+  const Scalar _tmp57 = _tmp20 * _tmp3;
+  const Scalar _tmp58 = _tmp45 * _tmp5;
+  const Scalar _tmp59 = (Scalar(1) / Scalar(2)) * _tmp38;
+  const Scalar _tmp60 = _tmp3 * _tmp54;
+  const Scalar _tmp61 = _tmp57 * _tmp58 - _tmp59 * _tmp60;
+  const Scalar _tmp62 =
+      -_tmp26 - _tmp40 * _tmp43 + _tmp44 * _tmp46 + _tmp47 * _tmp49 + _tmp56 + _tmp61;
+  const Scalar _tmp63 = 2 * _tmp29;
+  const Scalar _tmp64 = _tmp3 * _tmp50;
+  const Scalar _tmp65 = _tmp58 * _tmp64;
+  const Scalar _tmp66 = _tmp53 * _tmp60;
+  const Scalar _tmp67 = _tmp44 * _tmp47;
+  const Scalar _tmp68 = (Scalar(1) / Scalar(2)) * _tmp30;
+  const Scalar _tmp69 = _tmp20 * _tmp52 - _tmp55 * _tmp59;
+  const Scalar _tmp70 =
+      _tmp18 + _tmp43 * _tmp68 - _tmp46 * _tmp48 + _tmp5 * _tmp67 + _tmp65 - _tmp66 + _tmp69;
+  const Scalar _tmp71 = 2 * _tmp39;
+  const Scalar _tmp72 = _tmp49 * _tmp51;
+  const Scalar _tmp73 = _tmp55 * _tmp68;
   const Scalar _tmp74 = -_tmp21;
-  const Scalar _tmp75 = _tmp43 * _tmp55;
-  const Scalar _tmp76 = _tmp46 * _tmp55;
-  const Scalar _tmp77 = _tmp63 * states(1, 0);
-  const Scalar _tmp78 =
-      _tmp5 * _tmp77 + _tmp54 * _tmp6 - _tmp57 * _tmp6 + _tmp72 - _tmp73 + _tmp74 + _tmp75 - _tmp76;
-  const Scalar _tmp79 = 2 * _tmp34;
-  const Scalar _tmp80 = _tmp46 * _tmp50;
-  const Scalar _tmp81 = _tmp43 * _tmp50;
-  const Scalar _tmp82 = _tmp63 * states(3, 0);
-  const Scalar _tmp83 = -_tmp3 * _tmp71 + _tmp55 * _tmp66;
-  const Scalar _tmp84 =
-      _tmp16 - _tmp49 * _tmp6 + _tmp5 * _tmp82 + _tmp52 * _tmp6 - _tmp80 + _tmp81 + _tmp83;
-  const Scalar _tmp85 = 2 * _tmp23;
-  const Scalar _tmp86 = -_tmp59 * _tmp60 + _tmp69 * _tmp70 + _tmp78 * _tmp79 - _tmp84 * _tmp85;
-  const Scalar _tmp87 = -_tmp40;
-  const Scalar _tmp88 = (Scalar(1) / Scalar(2)) * _tmp17;
-  const Scalar _tmp89 = -Scalar(1) / Scalar(2) * _tmp20;
-  const Scalar _tmp90 = (Scalar(1) / Scalar(2)) * _tmp22;
-  const Scalar _tmp91 = _tmp89 - _tmp90;
-  const Scalar _tmp92 = _tmp87 + _tmp88 + _tmp91;
-  const Scalar _tmp93 = (Scalar(1) / Scalar(2)) * _tmp32;
-  const Scalar _tmp94 = -_tmp93;
-  const Scalar _tmp95 = -Scalar(1) / Scalar(2) * _tmp31;
-  const Scalar _tmp96 = (Scalar(1) / Scalar(2)) * _tmp33;
-  const Scalar _tmp97 = _tmp95 - _tmp96;
-  const Scalar _tmp98 = _tmp65 + _tmp94 + _tmp97;
-  const Scalar _tmp99 = (Scalar(1) / Scalar(2)) * _tmp35;
-  const Scalar _tmp100 = (Scalar(1) / Scalar(2)) * _tmp36;
-  const Scalar _tmp101 = (Scalar(1) / Scalar(2)) * _tmp37;
-  const Scalar _tmp102 = _tmp100 - _tmp101 + _tmp56 + _tmp99;
-  const Scalar _tmp103 = -_tmp51;
-  const Scalar _tmp104 = (Scalar(1) / Scalar(2)) * _tmp28;
-  const Scalar _tmp105 = (Scalar(1) / Scalar(2)) * _tmp25;
-  const Scalar _tmp106 = -Scalar(1) / Scalar(2) * _tmp27;
-  const Scalar _tmp107 = -_tmp105 + _tmp106;
-  const Scalar _tmp108 = _tmp103 + _tmp104 + _tmp107;
-  const Scalar _tmp109 = _tmp102 * _tmp70 - _tmp108 * _tmp60 + _tmp79 * _tmp98 - _tmp85 * _tmp92;
-  const Scalar _tmp110 = _tmp1 * _tmp3;
-  const Scalar _tmp111 = _tmp110 * _tmp54 - _tmp110 * _tmp57;
-  const Scalar _tmp112 =
-      _tmp111 - _tmp16 + _tmp3 * _tmp64 + _tmp4 * _tmp49 - _tmp4 * _tmp52 + _tmp83;
-  const Scalar _tmp113 = _tmp110 * _tmp49;
-  const Scalar _tmp114 = _tmp110 * _tmp52;
-  const Scalar _tmp115 = -_tmp113 + _tmp114 + _tmp3 * _tmp48 + _tmp4 * _tmp54 - _tmp4 * _tmp57 +
-                         _tmp74 - _tmp75 + _tmp76;
-  const Scalar _tmp116 = _tmp110 * _tmp67;
-  const Scalar _tmp117 = _tmp110 * _tmp66;
-  const Scalar _tmp118 =
-      _tmp116 - _tmp117 + _tmp26 + _tmp3 * _tmp77 + _tmp4 * _tmp43 - _tmp4 * _tmp46 + _tmp58;
-  const Scalar _tmp119 = _tmp110 * _tmp43 - _tmp110 * _tmp46;
-  const Scalar _tmp120 =
-      _tmp119 + _tmp19 + _tmp3 * _tmp82 + _tmp4 * _tmp66 - _tmp4 * _tmp67 - _tmp61 + _tmp62;
-  const Scalar _tmp121 = _tmp112 * _tmp70 - _tmp115 * _tmp60 + _tmp118 * _tmp79 - _tmp120 * _tmp85;
-  const Scalar _tmp122 = _tmp121 * states_cov(5, 5);
-  const Scalar _tmp123 = -_tmp88;
-  const Scalar _tmp124 = _tmp123 + _tmp40 + _tmp91;
-  const Scalar _tmp125 = -_tmp104;
-  const Scalar _tmp126 = _tmp103 + _tmp105 + _tmp106 + _tmp125;
-  const Scalar _tmp127 = _tmp101 + _tmp56;
-  const Scalar _tmp128 = _tmp100 + _tmp127 - _tmp99;
-  const Scalar _tmp129 = -_tmp65;
-  const Scalar _tmp130 = _tmp129 + _tmp94 + _tmp95 + _tmp96;
-  const Scalar _tmp131 = -_tmp124 * _tmp60 - _tmp126 * _tmp85 + _tmp128 * _tmp79 + _tmp130 * _tmp70;
-  const Scalar _tmp132 = _tmp1 * _tmp64 + _tmp113 - _tmp114 + _tmp2 * _tmp54 - _tmp2 * _tmp57 -
+  const Scalar _tmp75 = _tmp40 * _tmp60;
+  const Scalar _tmp76 = _tmp3 * _tmp44;
+  const Scalar _tmp77 = _tmp58 * _tmp76;
+  const Scalar _tmp78 = _tmp47 * _tmp50;
+  const Scalar _tmp79 = _tmp20 * _tmp46 - _tmp43 * _tmp59 + _tmp5 * _tmp78 + _tmp72 - _tmp73 +
+                        _tmp74 + _tmp75 - _tmp77;
+  const Scalar _tmp80 = 2 * _tmp34;
+  const Scalar _tmp81 = _tmp44 * _tmp52;
+  const Scalar _tmp82 = _tmp1 * _tmp40;
+  const Scalar _tmp83 = _tmp54 * _tmp82;
+  const Scalar _tmp84 = _tmp20 * _tmp47;
+  const Scalar _tmp85 = -_tmp3 * _tmp45 * _tmp49 + _tmp60 * _tmp68;
+  const Scalar _tmp86 =
+      _tmp16 + _tmp43 * _tmp53 - _tmp46 * _tmp50 + _tmp5 * _tmp84 - _tmp81 + _tmp83 + _tmp85;
+  const Scalar _tmp87 = 2 * _tmp23;
+  const Scalar _tmp88 = -_tmp62 * _tmp63 + _tmp70 * _tmp71 + _tmp79 * _tmp80 - _tmp86 * _tmp87;
+  const Scalar _tmp89 = -_tmp40;
+  const Scalar _tmp90 = (Scalar(1) / Scalar(2)) * _tmp17;
+  const Scalar _tmp91 = -Scalar(1) / Scalar(2) * _tmp19;
+  const Scalar _tmp92 = (Scalar(1) / Scalar(2)) * _tmp22;
+  const Scalar _tmp93 = -_tmp92;
+  const Scalar _tmp94 = _tmp89 + _tmp90 + _tmp91 + _tmp93;
+  const Scalar _tmp95 = (Scalar(1) / Scalar(2)) * _tmp33;
+  const Scalar _tmp96 = -_tmp95;
+  const Scalar _tmp97 = -Scalar(1) / Scalar(2) * _tmp31;
+  const Scalar _tmp98 = (Scalar(1) / Scalar(2)) * _tmp32;
+  const Scalar _tmp99 = _tmp97 - _tmp98;
+  const Scalar _tmp100 = _tmp68 + _tmp96 + _tmp99;
+  const Scalar _tmp101 = (Scalar(1) / Scalar(2)) * _tmp36;
+  const Scalar _tmp102 = (Scalar(1) / Scalar(2)) * _tmp37;
+  const Scalar _tmp103 = (Scalar(1) / Scalar(2)) * _tmp35;
+  const Scalar _tmp104 = _tmp103 + _tmp59;
+  const Scalar _tmp105 = _tmp101 - _tmp102 + _tmp104;
+  const Scalar _tmp106 = -_tmp53;
+  const Scalar _tmp107 = (Scalar(1) / Scalar(2)) * _tmp28;
+  const Scalar _tmp108 = (Scalar(1) / Scalar(2)) * _tmp25;
+  const Scalar _tmp109 = -Scalar(1) / Scalar(2) * _tmp27;
+  const Scalar _tmp110 = -_tmp108 + _tmp109;
+  const Scalar _tmp111 = _tmp106 + _tmp107 + _tmp110;
+  const Scalar _tmp112 = _tmp100 * _tmp80 + _tmp105 * _tmp71 - _tmp111 * _tmp63 - _tmp87 * _tmp94;
+  const Scalar _tmp113 = _tmp3 * _tmp47;
+  const Scalar _tmp114 = _tmp4 * _tmp45;
+  const Scalar _tmp115 = _tmp4 * _tmp42;
+  const Scalar _tmp116 = _tmp3 * _tmp42;
+  const Scalar _tmp117 = _tmp1 * _tmp116;
+  const Scalar _tmp118 = -_tmp117 * _tmp59 + _tmp51 * _tmp57;
+  const Scalar _tmp119 =
+      _tmp113 * _tmp44 + _tmp114 * _tmp50 - _tmp115 * _tmp53 + _tmp118 - _tmp16 + _tmp85;
+  const Scalar _tmp120 = _tmp51 * _tmp64;
+  const Scalar _tmp121 = _tmp117 * _tmp53;
+  const Scalar _tmp122 = _tmp113 * _tmp48 + _tmp114 * _tmp20 - _tmp115 * _tmp59 - _tmp120 +
+                         _tmp121 + _tmp74 - _tmp75 + _tmp77;
+  const Scalar _tmp123 = _tmp3 * _tmp48 * _tmp51;
+  const Scalar _tmp124 = _tmp117 * _tmp68;
+  const Scalar _tmp125 =
+      -_tmp114 * _tmp44 + _tmp115 * _tmp40 + _tmp123 - _tmp124 + _tmp26 + _tmp47 * _tmp64 + _tmp61;
+  const Scalar _tmp126 = _tmp116 * _tmp82 - _tmp51 * _tmp76;
+  const Scalar _tmp127 =
+      _tmp113 * _tmp20 - _tmp114 * _tmp48 + _tmp115 * _tmp68 + _tmp126 + _tmp18 - _tmp65 + _tmp66;
+  const Scalar _tmp128 = _tmp119 * _tmp71 - _tmp122 * _tmp63 + _tmp125 * _tmp80 - _tmp127 * _tmp87;
+  const Scalar _tmp129 = -_tmp90 + _tmp91;
+  const Scalar _tmp130 = _tmp129 + _tmp40 + _tmp93;
+  const Scalar _tmp131 = -_tmp107;
+  const Scalar _tmp132 = _tmp106 + _tmp108 + _tmp109 + _tmp131;
+  const Scalar _tmp133 = _tmp101 + _tmp102 - _tmp103 + _tmp59;
+  const Scalar _tmp134 = -_tmp68;
+  const Scalar _tmp135 = _tmp134 + _tmp95 + _tmp99;
+  const Scalar _tmp136 = -_tmp130 * _tmp63 - _tmp132 * _tmp87 + _tmp133 * _tmp80 + _tmp135 * _tmp71;
+  const Scalar _tmp137 = _tmp2 * _tmp42;
+  const Scalar _tmp138 = _tmp2 * _tmp45;
+  const Scalar _tmp139 = _tmp1 * _tmp67 + _tmp120 - _tmp121 - _tmp137 * _tmp59 + _tmp138 * _tmp20 -
                          _tmp72 + _tmp73 + _tmp74;
-  const Scalar _tmp133 =
-      _tmp1 * _tmp77 + _tmp119 - _tmp19 - _tmp2 * _tmp66 + _tmp2 * _tmp67 + _tmp68;
-  const Scalar _tmp134 =
-      _tmp1 * _tmp48 + _tmp111 + _tmp16 - _tmp2 * _tmp49 + _tmp2 * _tmp52 + _tmp80 - _tmp81;
-  const Scalar _tmp135 =
-      _tmp1 * _tmp82 - _tmp116 + _tmp117 + _tmp2 * _tmp43 - _tmp2 * _tmp46 + _tmp26 + _tmp53;
-  const Scalar _tmp136 = _tmp132 * _tmp70 + _tmp133 * _tmp79 - _tmp134 * _tmp60 - _tmp135 * _tmp85;
-  const Scalar _tmp137 = _tmp129 + _tmp93 + _tmp97;
-  const Scalar _tmp138 = _tmp123 + _tmp87 + _tmp89 + _tmp90;
-  const Scalar _tmp139 = _tmp107 + _tmp125 + _tmp51;
-  const Scalar _tmp140 = -_tmp100 + _tmp127 + _tmp99;
-  const Scalar _tmp141 = -_tmp137 * _tmp85 + _tmp138 * _tmp79 + _tmp139 * _tmp70 - _tmp140 * _tmp60;
-  const Scalar _tmp142 = _tmp109 * states_cov(0, 5) + _tmp122 + _tmp131 * states_cov(1, 5) +
-                         _tmp136 * states_cov(3, 5) + _tmp141 * states_cov(2, 5) +
-                         _tmp86 * states_cov(4, 5);
-  const Scalar _tmp143 = _tmp109 * states_cov(0, 1) + _tmp121 * states_cov(5, 1) +
-                         _tmp131 * states_cov(1, 1) + _tmp136 * states_cov(3, 1) +
-                         _tmp141 * states_cov(2, 1) + _tmp86 * states_cov(4, 1);
-  const Scalar _tmp144 = _tmp109 * states_cov(0, 0) + _tmp121 * states_cov(5, 0) +
-                         _tmp131 * states_cov(1, 0) + _tmp136 * states_cov(3, 0) +
-                         _tmp141 * states_cov(2, 0) + _tmp86 * states_cov(4, 0);
-  const Scalar _tmp145 = _tmp86 * states_cov(4, 4);
-  const Scalar _tmp146 = _tmp109 * states_cov(0, 4) + _tmp121 * states_cov(5, 4) +
-                         _tmp131 * states_cov(1, 4) + _tmp136 * states_cov(3, 4) +
-                         _tmp141 * states_cov(2, 4) + _tmp145;
-  const Scalar _tmp147 = _tmp136 * states_cov(3, 3);
-  const Scalar _tmp148 = _tmp109 * states_cov(0, 3) + _tmp121 * states_cov(5, 3) +
-                         _tmp131 * states_cov(1, 3) + _tmp141 * states_cov(2, 3) + _tmp147 +
-                         _tmp86 * states_cov(4, 3);
-  const Scalar _tmp149 = _tmp109 * states_cov(0, 2) + _tmp121 * states_cov(5, 2) +
-                         _tmp131 * states_cov(1, 2) + _tmp136 * states_cov(3, 2) +
-                         _tmp141 * states_cov(2, 2) + _tmp86 * states_cov(4, 2);
-  const Scalar _tmp150 = -_tmp137 * _tmp60 + _tmp138 * _tmp70 - _tmp139 * _tmp79 + _tmp140 * _tmp85;
-  const Scalar _tmp151 = _tmp59 * _tmp85 - _tmp60 * _tmp84 - _tmp69 * _tmp79 + _tmp70 * _tmp78;
-  const Scalar _tmp152 = _tmp124 * _tmp85 - _tmp126 * _tmp60 + _tmp128 * _tmp70 - _tmp130 * _tmp79;
-  const Scalar _tmp153 = -_tmp132 * _tmp79 + _tmp133 * _tmp70 + _tmp134 * _tmp85 - _tmp135 * _tmp60;
-  const Scalar _tmp154 = _tmp153 * states_cov(3, 3);
-  const Scalar _tmp155 = -_tmp102 * _tmp79 + _tmp108 * _tmp85 - _tmp60 * _tmp92 + _tmp70 * _tmp98;
-  const Scalar _tmp156 = -_tmp112 * _tmp79 + _tmp115 * _tmp85 + _tmp118 * _tmp70 - _tmp120 * _tmp60;
-  const Scalar _tmp157 = _tmp150 * states_cov(2, 3) + _tmp151 * states_cov(4, 3) +
-                         _tmp152 * states_cov(1, 3) + _tmp154 + _tmp155 * states_cov(0, 3) +
-                         _tmp156 * states_cov(5, 3);
-  const Scalar _tmp158 = _tmp150 * states_cov(2, 1) + _tmp151 * states_cov(4, 1) +
-                         _tmp152 * states_cov(1, 1) + _tmp153 * states_cov(3, 1) +
-                         _tmp155 * states_cov(0, 1) + _tmp156 * states_cov(5, 1);
-  const Scalar _tmp159 = _tmp150 * states_cov(2, 0) + _tmp151 * states_cov(4, 0) +
-                         _tmp152 * states_cov(1, 0) + _tmp153 * states_cov(3, 0) +
-                         _tmp155 * states_cov(0, 0) + _tmp156 * states_cov(5, 0);
-  const Scalar _tmp160 = _tmp150 * states_cov(2, 2) + _tmp151 * states_cov(4, 2) +
-                         _tmp152 * states_cov(1, 2) + _tmp153 * states_cov(3, 2) +
-                         _tmp155 * states_cov(0, 2) + _tmp156 * states_cov(5, 2);
-  const Scalar _tmp161 = _tmp156 * states_cov(5, 5);
-  const Scalar _tmp162 = _tmp150 * states_cov(2, 5) + _tmp151 * states_cov(4, 5) +
-                         _tmp152 * states_cov(1, 5) + _tmp153 * states_cov(3, 5) +
-                         _tmp155 * states_cov(0, 5) + _tmp161;
-  const Scalar _tmp163 = _tmp151 * states_cov(4, 4);
-  const Scalar _tmp164 = _tmp150 * states_cov(2, 4) + _tmp152 * states_cov(1, 4) +
-                         _tmp153 * states_cov(3, 4) + _tmp155 * states_cov(0, 4) +
-                         _tmp156 * states_cov(5, 4) + _tmp163;
-  const Scalar _tmp165 = _tmp124 * _tmp70 - _tmp126 * _tmp79 - _tmp128 * _tmp85 + _tmp130 * _tmp60;
-  const Scalar _tmp166 = _tmp59 * _tmp70 + _tmp60 * _tmp69 - _tmp78 * _tmp85 - _tmp79 * _tmp84;
-  const Scalar _tmp167 = -_tmp137 * _tmp79 - _tmp138 * _tmp85 + _tmp139 * _tmp60 + _tmp140 * _tmp70;
-  const Scalar _tmp168 = _tmp132 * _tmp60 - _tmp133 * _tmp85 + _tmp134 * _tmp70 - _tmp135 * _tmp79;
-  const Scalar _tmp169 = _tmp112 * _tmp60 + _tmp115 * _tmp70 - _tmp118 * _tmp85 - _tmp120 * _tmp79;
-  const Scalar _tmp170 = _tmp102 * _tmp60 + _tmp108 * _tmp70 - _tmp79 * _tmp92 - _tmp85 * _tmp98;
-  const Scalar _tmp171 = _tmp165 * states_cov(1, 0) + _tmp166 * states_cov(4, 0) +
-                         _tmp167 * states_cov(2, 0) + _tmp168 * states_cov(3, 0) +
-                         _tmp169 * states_cov(5, 0) + _tmp170 * states_cov(0, 0);
-  const Scalar _tmp172 = _tmp166 * states_cov(4, 4);
-  const Scalar _tmp173 = _tmp165 * states_cov(1, 4) + _tmp167 * states_cov(2, 4) +
-                         _tmp168 * states_cov(3, 4) + _tmp169 * states_cov(5, 4) +
-                         _tmp170 * states_cov(0, 4) + _tmp172;
-  const Scalar _tmp174 = _tmp165 * states_cov(1, 1) + _tmp166 * states_cov(4, 1) +
-                         _tmp167 * states_cov(2, 1) + _tmp168 * states_cov(3, 1) +
-                         _tmp169 * states_cov(5, 1) + _tmp170 * states_cov(0, 1);
-  const Scalar _tmp175 = _tmp165 * states_cov(1, 2) + _tmp166 * states_cov(4, 2) +
-                         _tmp167 * states_cov(2, 2) + _tmp168 * states_cov(3, 2) +
-                         _tmp169 * states_cov(5, 2) + _tmp170 * states_cov(0, 2);
-  const Scalar _tmp176 = _tmp169 * states_cov(5, 5);
-  const Scalar _tmp177 = _tmp165 * states_cov(1, 5) + _tmp166 * states_cov(4, 5) +
-                         _tmp167 * states_cov(2, 5) + _tmp168 * states_cov(3, 5) +
-                         _tmp170 * states_cov(0, 5) + _tmp176;
-  const Scalar _tmp178 = _tmp168 * states_cov(3, 3);
-  const Scalar _tmp179 = _tmp165 * states_cov(1, 3) + _tmp166 * states_cov(4, 3) +
-                         _tmp167 * states_cov(2, 3) + _tmp169 * states_cov(5, 3) +
-                         _tmp170 * states_cov(0, 3) + _tmp178;
-  const Scalar _tmp180 = Scalar(0.90000000000000002) * states_cov(6, 4);
-  const Scalar _tmp181 = Scalar(0.90000000000000002) * _tmp109;
-  const Scalar _tmp182 = Scalar(0.90000000000000002) * states_cov(6, 5);
-  const Scalar _tmp183 = Scalar(0.90000000000000002) * _tmp131;
-  const Scalar _tmp184 = Scalar(0.90000000000000002) * states_cov(6, 3);
-  const Scalar _tmp185 = Scalar(0.90000000000000002) * _tmp141;
-  const Scalar _tmp186 = Scalar(0.90000000000000002) * states_cov(7, 4);
-  const Scalar _tmp187 = Scalar(0.90000000000000002) * states_cov(7, 5);
-  const Scalar _tmp188 = Scalar(0.90000000000000002) * states_cov(7, 3);
-  const Scalar _tmp189 = Scalar(0.90000000000000002) * states_cov(8, 4);
-  const Scalar _tmp190 = Scalar(0.90000000000000002) * states_cov(8, 5);
-  const Scalar _tmp191 = Scalar(0.90000000000000002) * states_cov(8, 3);
-  const Scalar _tmp192 = Scalar(0.98999999999999999) * states_cov(9, 4);
-  const Scalar _tmp193 = Scalar(0.98999999999999999) * states_cov(9, 0);
-  const Scalar _tmp194 = Scalar(0.98999999999999999) * states_cov(9, 5);
-  const Scalar _tmp195 = Scalar(0.98999999999999999) * states_cov(9, 1);
-  const Scalar _tmp196 = Scalar(0.98999999999999999) * states_cov(9, 3);
-  const Scalar _tmp197 = Scalar(0.98999999999999999) * states_cov(9, 2);
-  const Scalar _tmp198 = Scalar(0.98999999999999999) * states_cov(10, 5);
-  const Scalar _tmp199 = Scalar(0.98999999999999999) * _tmp109;
-  const Scalar _tmp200 = Scalar(0.98999999999999999) * _tmp141;
-  const Scalar _tmp201 = Scalar(0.98999999999999999) * states_cov(10, 3);
-  const Scalar _tmp202 = Scalar(0.98999999999999999) * states_cov(10, 4);
-  const Scalar _tmp203 = Scalar(0.98999999999999999) * _tmp131;
-  const Scalar _tmp204 = Scalar(0.98999999999999999) * states_cov(11, 5);
-  const Scalar _tmp205 = Scalar(0.98999999999999999) * states_cov(11, 3);
-  const Scalar _tmp206 = Scalar(0.98999999999999999) * states_cov(11, 4);
-  const Scalar _tmp207 = Scalar(0.90000000000000002) * _tmp150;
-  const Scalar _tmp208 = Scalar(0.90000000000000002) * _tmp152;
-  const Scalar _tmp209 = Scalar(0.90000000000000002) * _tmp155;
-  const Scalar _tmp210 = Scalar(0.98999999999999999) * _tmp152;
-  const Scalar _tmp211 = Scalar(0.98999999999999999) * _tmp150;
-  const Scalar _tmp212 = Scalar(0.98999999999999999) * _tmp155;
-  const Scalar _tmp213 = Scalar(0.90000000000000002) * _tmp165;
-  const Scalar _tmp214 = Scalar(0.90000000000000002) * _tmp167;
-  const Scalar _tmp215 = Scalar(0.90000000000000002) * _tmp170;
-  const Scalar _tmp216 = Scalar(0.98999999999999999) * _tmp167;
-  const Scalar _tmp217 = Scalar(0.98999999999999999) * _tmp165;
-  const Scalar _tmp218 = Scalar(0.98999999999999999) * _tmp170;
+  const Scalar _tmp140 =
+      _tmp1 * _tmp78 + _tmp126 - _tmp137 * _tmp68 + _tmp138 * _tmp48 - _tmp18 + _tmp69;
+  const Scalar _tmp141 = _tmp1 * _tmp47 * _tmp48 + _tmp118 + _tmp137 * _tmp53 - _tmp138 * _tmp50 +
+                         _tmp16 + _tmp81 - _tmp83;
+  const Scalar _tmp142 = 2 * _tmp1 * _tmp84 - 2 * _tmp123 + 2 * _tmp124 + 2 * _tmp137 * _tmp40 -
+                         2 * _tmp138 * _tmp44 + 2 * _tmp26 + 2 * _tmp56;
+  const Scalar _tmp143 = _tmp139 * _tmp71 + _tmp140 * _tmp80 - _tmp141 * _tmp63 - _tmp142 * _tmp23;
+  const Scalar _tmp144 = _tmp134 + _tmp96 + _tmp97 + _tmp98;
+  const Scalar _tmp145 = _tmp129 + _tmp89 + _tmp92;
+  const Scalar _tmp146 = _tmp110 + _tmp131 + _tmp53;
+  const Scalar _tmp147 = -_tmp101 + _tmp102 + _tmp104;
+  const Scalar _tmp148 = -_tmp144 * _tmp87 + _tmp145 * _tmp80 + _tmp146 * _tmp71 - _tmp147 * _tmp63;
+  const Scalar _tmp149 = _tmp112 * states_cov(0, 1) + _tmp128 * states_cov(8, 1) +
+                         _tmp136 * states_cov(1, 1) + _tmp143 * states_cov(6, 1) +
+                         _tmp148 * states_cov(2, 1) + _tmp88 * states_cov(7, 1);
+  const Scalar _tmp150 = _tmp143 * states_cov(6, 6);
+  const Scalar _tmp151 = _tmp112 * states_cov(0, 6) + _tmp128 * states_cov(8, 6) +
+                         _tmp136 * states_cov(1, 6) + _tmp148 * states_cov(2, 6) + _tmp150 +
+                         _tmp88 * states_cov(7, 6);
+  const Scalar _tmp152 = _tmp112 * states_cov(0, 2) + _tmp128 * states_cov(8, 2) +
+                         _tmp136 * states_cov(1, 2) + _tmp143 * states_cov(6, 2) +
+                         _tmp148 * states_cov(2, 2) + _tmp88 * states_cov(7, 2);
+  const Scalar _tmp153 = _tmp128 * states_cov(8, 8);
+  const Scalar _tmp154 = _tmp112 * states_cov(0, 8) + _tmp136 * states_cov(1, 8) +
+                         _tmp143 * states_cov(6, 8) + _tmp148 * states_cov(2, 8) + _tmp153 +
+                         _tmp88 * states_cov(7, 8);
+  const Scalar _tmp155 = _tmp88 * states_cov(7, 7);
+  const Scalar _tmp156 = _tmp112 * states_cov(0, 7) + _tmp128 * states_cov(8, 7) +
+                         _tmp136 * states_cov(1, 7) + _tmp143 * states_cov(6, 7) +
+                         _tmp148 * states_cov(2, 7) + _tmp155;
+  const Scalar _tmp157 = _tmp112 * states_cov(0, 0) + _tmp128 * states_cov(8, 0) +
+                         _tmp136 * states_cov(1, 0) + _tmp143 * states_cov(6, 0) +
+                         _tmp148 * states_cov(2, 0) + _tmp88 * states_cov(7, 0);
+  const Scalar _tmp158 = -_tmp144 * _tmp63 + _tmp145 * _tmp71 - _tmp146 * _tmp80 + _tmp147 * _tmp87;
+  const Scalar _tmp159 = _tmp62 * _tmp87 - _tmp63 * _tmp86 - _tmp70 * _tmp80 + _tmp71 * _tmp79;
+  const Scalar _tmp160 = _tmp130 * _tmp87 - _tmp132 * _tmp63 + _tmp133 * _tmp71 - _tmp135 * _tmp80;
+  const Scalar _tmp161 = -_tmp139 * _tmp80 + _tmp140 * _tmp71 + _tmp141 * _tmp87 - _tmp142 * _tmp29;
+  const Scalar _tmp162 = _tmp100 * _tmp71 - _tmp105 * _tmp80 + _tmp111 * _tmp87 - _tmp63 * _tmp94;
+  const Scalar _tmp163 = -_tmp119 * _tmp80 + _tmp122 * _tmp87 + _tmp125 * _tmp71 - _tmp127 * _tmp63;
+  const Scalar _tmp164 = _tmp158 * states_cov(2, 0) + _tmp159 * states_cov(7, 0) +
+                         _tmp160 * states_cov(1, 0) + _tmp161 * states_cov(6, 0) +
+                         _tmp162 * states_cov(0, 0) + _tmp163 * states_cov(8, 0);
+  const Scalar _tmp165 = _tmp161 * states_cov(6, 6);
+  const Scalar _tmp166 = _tmp158 * states_cov(2, 6) + _tmp159 * states_cov(7, 6) +
+                         _tmp160 * states_cov(1, 6) + _tmp162 * states_cov(0, 6) +
+                         _tmp163 * states_cov(8, 6) + _tmp165;
+  const Scalar _tmp167 = _tmp158 * states_cov(2, 1) + _tmp159 * states_cov(7, 1) +
+                         _tmp160 * states_cov(1, 1) + _tmp161 * states_cov(6, 1) +
+                         _tmp162 * states_cov(0, 1) + _tmp163 * states_cov(8, 1);
+  const Scalar _tmp168 = _tmp158 * states_cov(2, 2) + _tmp159 * states_cov(7, 2) +
+                         _tmp160 * states_cov(1, 2) + _tmp161 * states_cov(6, 2) +
+                         _tmp162 * states_cov(0, 2) + _tmp163 * states_cov(8, 2);
+  const Scalar _tmp169 = _tmp163 * states_cov(8, 8);
+  const Scalar _tmp170 = _tmp158 * states_cov(2, 8) + _tmp159 * states_cov(7, 8) +
+                         _tmp160 * states_cov(1, 8) + _tmp161 * states_cov(6, 8) +
+                         _tmp162 * states_cov(0, 8) + _tmp169;
+  const Scalar _tmp171 = _tmp159 * states_cov(7, 7);
+  const Scalar _tmp172 = _tmp158 * states_cov(2, 7) + _tmp160 * states_cov(1, 7) +
+                         _tmp161 * states_cov(6, 7) + _tmp162 * states_cov(0, 7) +
+                         _tmp163 * states_cov(8, 7) + _tmp171;
+  const Scalar _tmp173 = _tmp130 * _tmp71 - _tmp132 * _tmp80 - _tmp133 * _tmp87 + _tmp135 * _tmp63;
+  const Scalar _tmp174 = _tmp62 * _tmp71 + _tmp63 * _tmp70 - _tmp79 * _tmp87 - _tmp80 * _tmp86;
+  const Scalar _tmp175 = _tmp174 * states_cov(7, 7);
+  const Scalar _tmp176 = -_tmp144 * _tmp80 - _tmp145 * _tmp87 + _tmp146 * _tmp63 + _tmp147 * _tmp71;
+  const Scalar _tmp177 = _tmp139 * _tmp63 - _tmp140 * _tmp87 + _tmp141 * _tmp71 - _tmp142 * _tmp34;
+  const Scalar _tmp178 = _tmp119 * _tmp63 + _tmp122 * _tmp71 - _tmp125 * _tmp87 - _tmp127 * _tmp80;
+  const Scalar _tmp179 = -_tmp100 * _tmp87 + _tmp105 * _tmp63 + _tmp111 * _tmp71 - _tmp80 * _tmp94;
+  const Scalar _tmp180 = _tmp173 * states_cov(1, 7) + _tmp175 + _tmp176 * states_cov(2, 7) +
+                         _tmp177 * states_cov(6, 7) + _tmp178 * states_cov(8, 7) +
+                         _tmp179 * states_cov(0, 7);
+  const Scalar _tmp181 = _tmp173 * states_cov(1, 1) + _tmp174 * states_cov(7, 1) +
+                         _tmp176 * states_cov(2, 1) + _tmp177 * states_cov(6, 1) +
+                         _tmp178 * states_cov(8, 1) + _tmp179 * states_cov(0, 1);
+  const Scalar _tmp182 = _tmp177 * states_cov(6, 6);
+  const Scalar _tmp183 = _tmp173 * states_cov(1, 6) + _tmp174 * states_cov(7, 6) +
+                         _tmp176 * states_cov(2, 6) + _tmp178 * states_cov(8, 6) +
+                         _tmp179 * states_cov(0, 6) + _tmp182;
+  const Scalar _tmp184 = _tmp173 * states_cov(1, 2) + _tmp174 * states_cov(7, 2) +
+                         _tmp176 * states_cov(2, 2) + _tmp177 * states_cov(6, 2) +
+                         _tmp178 * states_cov(8, 2) + _tmp179 * states_cov(0, 2);
+  const Scalar _tmp185 = _tmp178 * states_cov(8, 8);
+  const Scalar _tmp186 = _tmp173 * states_cov(1, 8) + _tmp174 * states_cov(7, 8) +
+                         _tmp176 * states_cov(2, 8) + _tmp177 * states_cov(6, 8) +
+                         _tmp179 * states_cov(0, 8) + _tmp185;
+  const Scalar _tmp187 = _tmp173 * states_cov(1, 0) + _tmp174 * states_cov(7, 0) +
+                         _tmp176 * states_cov(2, 0) + _tmp177 * states_cov(6, 0) +
+                         _tmp178 * states_cov(8, 0) + _tmp179 * states_cov(0, 0);
+  const Scalar _tmp188 = Scalar(0.69999999999999996) * states_cov(3, 7);
+  const Scalar _tmp189 = Scalar(0.69999999999999996) * _tmp112;
+  const Scalar _tmp190 = Scalar(0.69999999999999996) * states_cov(3, 8);
+  const Scalar _tmp191 = Scalar(0.69999999999999996) * _tmp136;
+  const Scalar _tmp192 = Scalar(0.69999999999999996) * states_cov(3, 6);
+  const Scalar _tmp193 = Scalar(0.69999999999999996) * _tmp148;
+  const Scalar _tmp194 = Scalar(0.69999999999999996) * states_cov(4, 7);
+  const Scalar _tmp195 = Scalar(0.69999999999999996) * states_cov(4, 8);
+  const Scalar _tmp196 = Scalar(0.69999999999999996) * states_cov(4, 6);
+  const Scalar _tmp197 = Scalar(0.69999999999999996) * states_cov(5, 7);
+  const Scalar _tmp198 = Scalar(0.69999999999999996) * states_cov(5, 8);
+  const Scalar _tmp199 = Scalar(0.69999999999999996) * states_cov(5, 6);
+  const Scalar _tmp200 = Scalar(0.94999999999999996) * states_cov(9, 7);
+  const Scalar _tmp201 = Scalar(0.94999999999999996) * _tmp112;
+  const Scalar _tmp202 = Scalar(0.94999999999999996) * states_cov(9, 8);
+  const Scalar _tmp203 = Scalar(0.94999999999999996) * states_cov(9, 1);
+  const Scalar _tmp204 = Scalar(0.94999999999999996) * states_cov(9, 6);
+  const Scalar _tmp205 = Scalar(0.94999999999999996) * _tmp148;
+  const Scalar _tmp206 = Scalar(0.94999999999999996) * states_cov(10, 8);
+  const Scalar _tmp207 = Scalar(0.94999999999999996) * states_cov(10, 6);
+  const Scalar _tmp208 = Scalar(0.94999999999999996) * states_cov(10, 7);
+  const Scalar _tmp209 = Scalar(0.94999999999999996) * _tmp136;
+  const Scalar _tmp210 = Scalar(0.94999999999999996) * states_cov(11, 8);
+  const Scalar _tmp211 = Scalar(0.94999999999999996) * states_cov(11, 6);
+  const Scalar _tmp212 = Scalar(0.94999999999999996) * states_cov(11, 7);
+  const Scalar _tmp213 = Scalar(0.69999999999999996) * _tmp158;
+  const Scalar _tmp214 = Scalar(0.69999999999999996) * _tmp160;
+  const Scalar _tmp215 = Scalar(0.69999999999999996) * _tmp162;
+  const Scalar _tmp216 = Scalar(0.94999999999999996) * _tmp158;
+  const Scalar _tmp217 = Scalar(0.94999999999999996) * _tmp160;
+  const Scalar _tmp218 = Scalar(0.94999999999999996) * _tmp162;
+  const Scalar _tmp219 = Scalar(0.69999999999999996) * _tmp173;
+  const Scalar _tmp220 = Scalar(0.69999999999999996) * _tmp176;
+  const Scalar _tmp221 = Scalar(0.69999999999999996) * _tmp179;
+  const Scalar _tmp222 = Scalar(0.94999999999999996) * _tmp176;
+  const Scalar _tmp223 = Scalar(0.94999999999999996) * _tmp179;
+  const Scalar _tmp224 = Scalar(0.94999999999999996) * _tmp173;
 
   // Output terms (2)
   if (next_states != nullptr) {
@@ -322,323 +328,326 @@ void AhrsProcess(const Eigen::Matrix<Scalar, 13, 1>& states,
     _next_states(1, 0) = _tmp29;
     _next_states(2, 0) = _tmp34;
     _next_states(3, 0) = _tmp39;
-    _next_states(4, 0) = Scalar(0.90000000000000002) * states(7, 0);
-    _next_states(5, 0) = Scalar(0.90000000000000002) * states(8, 0);
-    _next_states(6, 0) = Scalar(0.90000000000000002) * states(9, 0);
-    _next_states(7, 0) = states(4, 0);
-    _next_states(8, 0) = states(5, 0);
-    _next_states(9, 0) = states(6, 0);
-    _next_states(10, 0) = Scalar(0.98999999999999999) * states(10, 0);
-    _next_states(11, 0) = Scalar(0.98999999999999999) * states(11, 0);
-    _next_states(12, 0) = Scalar(0.98999999999999999) * states(12, 0);
+    _next_states(4, 0) = Scalar(0.69999999999999996) * states(4, 0);
+    _next_states(5, 0) = Scalar(0.69999999999999996) * states(5, 0);
+    _next_states(6, 0) = Scalar(0.69999999999999996) * states(6, 0);
+    _next_states(7, 0) = states(7, 0);
+    _next_states(8, 0) = states(8, 0);
+    _next_states(9, 0) = states(9, 0);
+    _next_states(10, 0) = Scalar(0.94999999999999996) * states(10, 0);
+    _next_states(11, 0) = Scalar(0.94999999999999996) * states(11, 0);
+    _next_states(12, 0) = Scalar(0.94999999999999996) * states(12, 0);
   }
 
   if (next_states_cov != nullptr) {
     Eigen::Matrix<Scalar, 12, 12>& _next_states_cov = (*next_states_cov);
 
-    _next_states_cov(0, 0) = _tmp109 * _tmp144 + _tmp121 * _tmp142 + _tmp131 * _tmp143 +
-                             _tmp136 * _tmp148 + _tmp141 * _tmp149 + _tmp146 * _tmp86 +
+    _next_states_cov(0, 0) = _tmp112 * _tmp157 + _tmp128 * _tmp154 + _tmp136 * _tmp149 +
+                             _tmp143 * _tmp151 + _tmp148 * _tmp152 + _tmp156 * _tmp88 +
                              dt * gyro_noise(0, 0);
-    _next_states_cov(1, 0) = _tmp109 * _tmp159 + _tmp121 * _tmp162 + _tmp131 * _tmp158 +
-                             _tmp136 * _tmp157 + _tmp141 * _tmp160 + _tmp164 * _tmp86;
-    _next_states_cov(2, 0) = _tmp109 * _tmp171 + _tmp121 * _tmp177 + _tmp131 * _tmp174 +
-                             _tmp136 * _tmp179 + _tmp141 * _tmp175 + _tmp173 * _tmp86;
-    _next_states_cov(3, 0) = _tmp121 * _tmp182 + _tmp136 * _tmp184 + _tmp180 * _tmp86 +
-                             _tmp181 * states_cov(6, 0) + _tmp183 * states_cov(6, 1) +
-                             _tmp185 * states_cov(6, 2);
-    _next_states_cov(4, 0) = _tmp121 * _tmp187 + _tmp136 * _tmp188 + _tmp181 * states_cov(7, 0) +
-                             _tmp183 * states_cov(7, 1) + _tmp185 * states_cov(7, 2) +
-                             _tmp186 * _tmp86;
-    _next_states_cov(5, 0) = _tmp121 * _tmp190 + _tmp136 * _tmp191 + _tmp181 * states_cov(8, 0) +
-                             _tmp183 * states_cov(8, 1) + _tmp185 * states_cov(8, 2) +
-                             _tmp189 * _tmp86;
-    _next_states_cov(6, 0) = _tmp109 * states_cov(3, 0) + _tmp121 * states_cov(3, 5) +
-                             _tmp131 * states_cov(3, 1) + _tmp141 * states_cov(3, 2) + _tmp147 +
-                             _tmp86 * states_cov(3, 4);
-    _next_states_cov(7, 0) = _tmp109 * states_cov(4, 0) + _tmp121 * states_cov(4, 5) +
-                             _tmp131 * states_cov(4, 1) + _tmp136 * states_cov(4, 3) +
-                             _tmp141 * states_cov(4, 2) + _tmp145;
-    _next_states_cov(8, 0) = _tmp109 * states_cov(5, 0) + _tmp122 + _tmp131 * states_cov(5, 1) +
-                             _tmp136 * states_cov(5, 3) + _tmp141 * states_cov(5, 2) +
-                             _tmp86 * states_cov(5, 4);
-    _next_states_cov(9, 0) = _tmp109 * _tmp193 + _tmp121 * _tmp194 + _tmp131 * _tmp195 +
-                             _tmp136 * _tmp196 + _tmp141 * _tmp197 + _tmp192 * _tmp86;
-    _next_states_cov(10, 0) = _tmp121 * _tmp198 + _tmp136 * _tmp201 + _tmp199 * states_cov(10, 0) +
-                              _tmp200 * states_cov(10, 2) + _tmp202 * _tmp86 +
-                              _tmp203 * states_cov(10, 1);
-    _next_states_cov(11, 0) = _tmp121 * _tmp204 + _tmp136 * _tmp205 + _tmp199 * states_cov(11, 0) +
-                              _tmp200 * states_cov(11, 2) + _tmp203 * states_cov(11, 1) +
-                              _tmp206 * _tmp86;
-    _next_states_cov(0, 1) = _tmp142 * _tmp156 + _tmp143 * _tmp152 + _tmp144 * _tmp155 +
-                             _tmp146 * _tmp151 + _tmp148 * _tmp153 + _tmp149 * _tmp150;
-    _next_states_cov(1, 1) = _tmp150 * _tmp160 + _tmp151 * _tmp164 + _tmp152 * _tmp158 +
-                             _tmp153 * _tmp157 + _tmp155 * _tmp159 + _tmp156 * _tmp162 +
+    _next_states_cov(1, 0) = _tmp112 * _tmp164 + _tmp128 * _tmp170 + _tmp136 * _tmp167 +
+                             _tmp143 * _tmp166 + _tmp148 * _tmp168 + _tmp172 * _tmp88;
+    _next_states_cov(2, 0) = _tmp112 * _tmp187 + _tmp128 * _tmp186 + _tmp136 * _tmp181 +
+                             _tmp143 * _tmp183 + _tmp148 * _tmp184 + _tmp180 * _tmp88;
+    _next_states_cov(3, 0) = _tmp128 * _tmp190 + _tmp143 * _tmp192 + _tmp188 * _tmp88 +
+                             _tmp189 * states_cov(3, 0) + _tmp191 * states_cov(3, 1) +
+                             _tmp193 * states_cov(3, 2);
+    _next_states_cov(4, 0) = _tmp128 * _tmp195 + _tmp143 * _tmp196 + _tmp189 * states_cov(4, 0) +
+                             _tmp191 * states_cov(4, 1) + _tmp193 * states_cov(4, 2) +
+                             _tmp194 * _tmp88;
+    _next_states_cov(5, 0) = _tmp128 * _tmp198 + _tmp143 * _tmp199 + _tmp189 * states_cov(5, 0) +
+                             _tmp191 * states_cov(5, 1) + _tmp193 * states_cov(5, 2) +
+                             _tmp197 * _tmp88;
+    _next_states_cov(6, 0) = _tmp112 * states_cov(6, 0) + _tmp128 * states_cov(6, 8) +
+                             _tmp136 * states_cov(6, 1) + _tmp148 * states_cov(6, 2) + _tmp150 +
+                             _tmp88 * states_cov(6, 7);
+    _next_states_cov(7, 0) = _tmp112 * states_cov(7, 0) + _tmp128 * states_cov(7, 8) +
+                             _tmp136 * states_cov(7, 1) + _tmp143 * states_cov(7, 6) +
+                             _tmp148 * states_cov(7, 2) + _tmp155;
+    _next_states_cov(8, 0) = _tmp112 * states_cov(8, 0) + _tmp136 * states_cov(8, 1) +
+                             _tmp143 * states_cov(8, 6) + _tmp148 * states_cov(8, 2) + _tmp153 +
+                             _tmp88 * states_cov(8, 7);
+    _next_states_cov(9, 0) = _tmp128 * _tmp202 + _tmp136 * _tmp203 + _tmp143 * _tmp204 +
+                             _tmp200 * _tmp88 + _tmp201 * states_cov(9, 0) +
+                             _tmp205 * states_cov(9, 2);
+    _next_states_cov(10, 0) = _tmp128 * _tmp206 + _tmp143 * _tmp207 + _tmp201 * states_cov(10, 0) +
+                              _tmp205 * states_cov(10, 2) + _tmp208 * _tmp88 +
+                              _tmp209 * states_cov(10, 1);
+    _next_states_cov(11, 0) = _tmp128 * _tmp210 + _tmp143 * _tmp211 + _tmp201 * states_cov(11, 0) +
+                              _tmp205 * states_cov(11, 2) + _tmp209 * states_cov(11, 1) +
+                              _tmp212 * _tmp88;
+    _next_states_cov(0, 1) = _tmp149 * _tmp160 + _tmp151 * _tmp161 + _tmp152 * _tmp158 +
+                             _tmp154 * _tmp163 + _tmp156 * _tmp159 + _tmp157 * _tmp162;
+    _next_states_cov(1, 1) = _tmp158 * _tmp168 + _tmp159 * _tmp172 + _tmp160 * _tmp167 +
+                             _tmp161 * _tmp166 + _tmp162 * _tmp164 + _tmp163 * _tmp170 +
                              dt * gyro_noise(1, 0);
-    _next_states_cov(2, 1) = _tmp150 * _tmp175 + _tmp151 * _tmp173 + _tmp152 * _tmp174 +
-                             _tmp153 * _tmp179 + _tmp155 * _tmp171 + _tmp156 * _tmp177;
-    _next_states_cov(3, 1) = _tmp151 * _tmp180 + _tmp153 * _tmp184 + _tmp156 * _tmp182 +
-                             _tmp207 * states_cov(6, 2) + _tmp208 * states_cov(6, 1) +
-                             _tmp209 * states_cov(6, 0);
-    _next_states_cov(4, 1) = _tmp151 * _tmp186 + _tmp153 * _tmp188 + _tmp156 * _tmp187 +
-                             _tmp207 * states_cov(7, 2) + _tmp208 * states_cov(7, 1) +
-                             _tmp209 * states_cov(7, 0);
-    _next_states_cov(5, 1) = _tmp151 * _tmp189 + _tmp153 * _tmp191 + _tmp156 * _tmp190 +
-                             _tmp207 * states_cov(8, 2) + _tmp208 * states_cov(8, 1) +
-                             _tmp209 * states_cov(8, 0);
-    _next_states_cov(6, 1) = _tmp150 * states_cov(3, 2) + _tmp151 * states_cov(3, 4) +
-                             _tmp152 * states_cov(3, 1) + _tmp154 + _tmp155 * states_cov(3, 0) +
-                             _tmp156 * states_cov(3, 5);
-    _next_states_cov(7, 1) = _tmp150 * states_cov(4, 2) + _tmp152 * states_cov(4, 1) +
-                             _tmp153 * states_cov(4, 3) + _tmp155 * states_cov(4, 0) +
-                             _tmp156 * states_cov(4, 5) + _tmp163;
-    _next_states_cov(8, 1) = _tmp150 * states_cov(5, 2) + _tmp151 * states_cov(5, 4) +
-                             _tmp152 * states_cov(5, 1) + _tmp153 * states_cov(5, 3) +
-                             _tmp155 * states_cov(5, 0) + _tmp161;
-    _next_states_cov(9, 1) = _tmp150 * _tmp197 + _tmp151 * _tmp192 + _tmp152 * _tmp195 +
-                             _tmp153 * _tmp196 + _tmp155 * _tmp193 + _tmp156 * _tmp194;
-    _next_states_cov(10, 1) = _tmp151 * _tmp202 + _tmp153 * _tmp201 + _tmp156 * _tmp198 +
-                              _tmp210 * states_cov(10, 1) + _tmp211 * states_cov(10, 2) +
-                              _tmp212 * states_cov(10, 0);
-    _next_states_cov(11, 1) = _tmp151 * _tmp206 + _tmp153 * _tmp205 + _tmp156 * _tmp204 +
-                              _tmp210 * states_cov(11, 1) + _tmp211 * states_cov(11, 2) +
-                              _tmp212 * states_cov(11, 0);
-    _next_states_cov(0, 2) = _tmp142 * _tmp169 + _tmp143 * _tmp165 + _tmp144 * _tmp170 +
-                             _tmp146 * _tmp166 + _tmp148 * _tmp168 + _tmp149 * _tmp167;
-    _next_states_cov(1, 2) = _tmp157 * _tmp168 + _tmp158 * _tmp165 + _tmp159 * _tmp170 +
-                             _tmp160 * _tmp167 + _tmp162 * _tmp169 + _tmp164 * _tmp166;
-    _next_states_cov(2, 2) = _tmp165 * _tmp174 + _tmp166 * _tmp173 + _tmp167 * _tmp175 +
-                             _tmp168 * _tmp179 + _tmp169 * _tmp177 + _tmp170 * _tmp171 +
-                             dt * gyro_noise(2, 0);
-    _next_states_cov(3, 2) = _tmp166 * _tmp180 + _tmp168 * _tmp184 + _tmp169 * _tmp182 +
-                             _tmp213 * states_cov(6, 1) + _tmp214 * states_cov(6, 2) +
-                             _tmp215 * states_cov(6, 0);
-    _next_states_cov(4, 2) = _tmp166 * _tmp186 + _tmp168 * _tmp188 + _tmp169 * _tmp187 +
-                             _tmp213 * states_cov(7, 1) + _tmp214 * states_cov(7, 2) +
-                             _tmp215 * states_cov(7, 0);
-    _next_states_cov(5, 2) = _tmp166 * _tmp189 + _tmp168 * _tmp191 + _tmp169 * _tmp190 +
-                             _tmp213 * states_cov(8, 1) + _tmp214 * states_cov(8, 2) +
-                             _tmp215 * states_cov(8, 0);
-    _next_states_cov(6, 2) = _tmp165 * states_cov(3, 1) + _tmp166 * states_cov(3, 4) +
-                             _tmp167 * states_cov(3, 2) + _tmp169 * states_cov(3, 5) +
-                             _tmp170 * states_cov(3, 0) + _tmp178;
-    _next_states_cov(7, 2) = _tmp165 * states_cov(4, 1) + _tmp167 * states_cov(4, 2) +
-                             _tmp168 * states_cov(4, 3) + _tmp169 * states_cov(4, 5) +
-                             _tmp170 * states_cov(4, 0) + _tmp172;
-    _next_states_cov(8, 2) = _tmp165 * states_cov(5, 1) + _tmp166 * states_cov(5, 4) +
-                             _tmp167 * states_cov(5, 2) + _tmp168 * states_cov(5, 3) +
-                             _tmp170 * states_cov(5, 0) + _tmp176;
-    _next_states_cov(9, 2) = _tmp165 * _tmp195 + _tmp166 * _tmp192 + _tmp167 * _tmp197 +
-                             _tmp168 * _tmp196 + _tmp169 * _tmp194 + _tmp170 * _tmp193;
-    _next_states_cov(10, 2) = _tmp166 * _tmp202 + _tmp168 * _tmp201 + _tmp169 * _tmp198 +
+    _next_states_cov(2, 1) = _tmp158 * _tmp184 + _tmp159 * _tmp180 + _tmp160 * _tmp181 +
+                             _tmp161 * _tmp183 + _tmp162 * _tmp187 + _tmp163 * _tmp186;
+    _next_states_cov(3, 1) = _tmp159 * _tmp188 + _tmp161 * _tmp192 + _tmp163 * _tmp190 +
+                             _tmp213 * states_cov(3, 2) + _tmp214 * states_cov(3, 1) +
+                             _tmp215 * states_cov(3, 0);
+    _next_states_cov(4, 1) = _tmp159 * _tmp194 + _tmp161 * _tmp196 + _tmp163 * _tmp195 +
+                             _tmp213 * states_cov(4, 2) + _tmp214 * states_cov(4, 1) +
+                             _tmp215 * states_cov(4, 0);
+    _next_states_cov(5, 1) = _tmp159 * _tmp197 + _tmp161 * _tmp199 + _tmp163 * _tmp198 +
+                             _tmp213 * states_cov(5, 2) + _tmp214 * states_cov(5, 1) +
+                             _tmp215 * states_cov(5, 0);
+    _next_states_cov(6, 1) = _tmp158 * states_cov(6, 2) + _tmp159 * states_cov(6, 7) +
+                             _tmp160 * states_cov(6, 1) + _tmp162 * states_cov(6, 0) +
+                             _tmp163 * states_cov(6, 8) + _tmp165;
+    _next_states_cov(7, 1) = _tmp158 * states_cov(7, 2) + _tmp160 * states_cov(7, 1) +
+                             _tmp161 * states_cov(7, 6) + _tmp162 * states_cov(7, 0) +
+                             _tmp163 * states_cov(7, 8) + _tmp171;
+    _next_states_cov(8, 1) = _tmp158 * states_cov(8, 2) + _tmp159 * states_cov(8, 7) +
+                             _tmp160 * states_cov(8, 1) + _tmp161 * states_cov(8, 6) +
+                             _tmp162 * states_cov(8, 0) + _tmp169;
+    _next_states_cov(9, 1) = _tmp159 * _tmp200 + _tmp161 * _tmp204 + _tmp163 * _tmp202 +
+                             _tmp216 * states_cov(9, 2) + _tmp217 * states_cov(9, 1) +
+                             _tmp218 * states_cov(9, 0);
+    _next_states_cov(10, 1) = _tmp159 * _tmp208 + _tmp161 * _tmp207 + _tmp163 * _tmp206 +
                               _tmp216 * states_cov(10, 2) + _tmp217 * states_cov(10, 1) +
                               _tmp218 * states_cov(10, 0);
-    _next_states_cov(11, 2) = _tmp166 * _tmp206 + _tmp168 * _tmp205 + _tmp169 * _tmp204 +
+    _next_states_cov(11, 1) = _tmp159 * _tmp212 + _tmp161 * _tmp211 + _tmp163 * _tmp210 +
                               _tmp216 * states_cov(11, 2) + _tmp217 * states_cov(11, 1) +
                               _tmp218 * states_cov(11, 0);
-    _next_states_cov(0, 3) = Scalar(0.90000000000000002) * _tmp109 * states_cov(0, 6) +
-                             Scalar(0.90000000000000002) * _tmp121 * states_cov(5, 6) +
-                             Scalar(0.90000000000000002) * _tmp131 * states_cov(1, 6) +
-                             Scalar(0.90000000000000002) * _tmp136 * states_cov(3, 6) +
-                             Scalar(0.90000000000000002) * _tmp141 * states_cov(2, 6) +
-                             Scalar(0.90000000000000002) * _tmp86 * states_cov(4, 6);
-    _next_states_cov(1, 3) = Scalar(0.90000000000000002) * _tmp150 * states_cov(2, 6) +
-                             Scalar(0.90000000000000002) * _tmp151 * states_cov(4, 6) +
-                             Scalar(0.90000000000000002) * _tmp152 * states_cov(1, 6) +
-                             Scalar(0.90000000000000002) * _tmp153 * states_cov(3, 6) +
-                             Scalar(0.90000000000000002) * _tmp155 * states_cov(0, 6) +
-                             Scalar(0.90000000000000002) * _tmp156 * states_cov(5, 6);
-    _next_states_cov(2, 3) = Scalar(0.90000000000000002) * _tmp165 * states_cov(1, 6) +
-                             Scalar(0.90000000000000002) * _tmp166 * states_cov(4, 6) +
-                             Scalar(0.90000000000000002) * _tmp167 * states_cov(2, 6) +
-                             Scalar(0.90000000000000002) * _tmp168 * states_cov(3, 6) +
-                             Scalar(0.90000000000000002) * _tmp169 * states_cov(5, 6) +
-                             Scalar(0.90000000000000002) * _tmp170 * states_cov(0, 6);
+    _next_states_cov(0, 2) = _tmp149 * _tmp173 + _tmp151 * _tmp177 + _tmp152 * _tmp176 +
+                             _tmp154 * _tmp178 + _tmp156 * _tmp174 + _tmp157 * _tmp179;
+    _next_states_cov(1, 2) = _tmp164 * _tmp179 + _tmp166 * _tmp177 + _tmp167 * _tmp173 +
+                             _tmp168 * _tmp176 + _tmp170 * _tmp178 + _tmp172 * _tmp174;
+    _next_states_cov(2, 2) = _tmp173 * _tmp181 + _tmp174 * _tmp180 + _tmp176 * _tmp184 +
+                             _tmp177 * _tmp183 + _tmp178 * _tmp186 + _tmp179 * _tmp187 +
+                             dt * gyro_noise(2, 0);
+    _next_states_cov(3, 2) = _tmp174 * _tmp188 + _tmp177 * _tmp192 + _tmp178 * _tmp190 +
+                             _tmp219 * states_cov(3, 1) + _tmp220 * states_cov(3, 2) +
+                             _tmp221 * states_cov(3, 0);
+    _next_states_cov(4, 2) = _tmp174 * _tmp194 + _tmp177 * _tmp196 + _tmp178 * _tmp195 +
+                             _tmp219 * states_cov(4, 1) + _tmp220 * states_cov(4, 2) +
+                             _tmp221 * states_cov(4, 0);
+    _next_states_cov(5, 2) = _tmp174 * _tmp197 + _tmp177 * _tmp199 + _tmp178 * _tmp198 +
+                             _tmp219 * states_cov(5, 1) + _tmp220 * states_cov(5, 2) +
+                             _tmp221 * states_cov(5, 0);
+    _next_states_cov(6, 2) = _tmp173 * states_cov(6, 1) + _tmp174 * states_cov(6, 7) +
+                             _tmp176 * states_cov(6, 2) + _tmp178 * states_cov(6, 8) +
+                             _tmp179 * states_cov(6, 0) + _tmp182;
+    _next_states_cov(7, 2) = _tmp173 * states_cov(7, 1) + _tmp175 + _tmp176 * states_cov(7, 2) +
+                             _tmp177 * states_cov(7, 6) + _tmp178 * states_cov(7, 8) +
+                             _tmp179 * states_cov(7, 0);
+    _next_states_cov(8, 2) = _tmp173 * states_cov(8, 1) + _tmp174 * states_cov(8, 7) +
+                             _tmp176 * states_cov(8, 2) + _tmp177 * states_cov(8, 6) +
+                             _tmp179 * states_cov(8, 0) + _tmp185;
+    _next_states_cov(9, 2) = _tmp173 * _tmp203 + _tmp174 * _tmp200 + _tmp177 * _tmp204 +
+                             _tmp178 * _tmp202 + _tmp222 * states_cov(9, 2) +
+                             _tmp223 * states_cov(9, 0);
+    _next_states_cov(10, 2) = _tmp174 * _tmp208 + _tmp177 * _tmp207 + _tmp178 * _tmp206 +
+                              _tmp222 * states_cov(10, 2) + _tmp223 * states_cov(10, 0) +
+                              _tmp224 * states_cov(10, 1);
+    _next_states_cov(11, 2) = _tmp174 * _tmp212 + _tmp177 * _tmp211 + _tmp178 * _tmp210 +
+                              _tmp222 * states_cov(11, 2) + _tmp223 * states_cov(11, 0) +
+                              _tmp224 * states_cov(11, 1);
+    _next_states_cov(0, 3) = Scalar(0.69999999999999996) * _tmp112 * states_cov(0, 3) +
+                             Scalar(0.69999999999999996) * _tmp128 * states_cov(8, 3) +
+                             Scalar(0.69999999999999996) * _tmp136 * states_cov(1, 3) +
+                             Scalar(0.69999999999999996) * _tmp143 * states_cov(6, 3) +
+                             Scalar(0.69999999999999996) * _tmp148 * states_cov(2, 3) +
+                             Scalar(0.69999999999999996) * _tmp88 * states_cov(7, 3);
+    _next_states_cov(1, 3) = Scalar(0.69999999999999996) * _tmp158 * states_cov(2, 3) +
+                             Scalar(0.69999999999999996) * _tmp159 * states_cov(7, 3) +
+                             Scalar(0.69999999999999996) * _tmp160 * states_cov(1, 3) +
+                             Scalar(0.69999999999999996) * _tmp161 * states_cov(6, 3) +
+                             Scalar(0.69999999999999996) * _tmp162 * states_cov(0, 3) +
+                             Scalar(0.69999999999999996) * _tmp163 * states_cov(8, 3);
+    _next_states_cov(2, 3) = Scalar(0.69999999999999996) * _tmp173 * states_cov(1, 3) +
+                             Scalar(0.69999999999999996) * _tmp174 * states_cov(7, 3) +
+                             Scalar(0.69999999999999996) * _tmp176 * states_cov(2, 3) +
+                             Scalar(0.69999999999999996) * _tmp177 * states_cov(6, 3) +
+                             Scalar(0.69999999999999996) * _tmp178 * states_cov(8, 3) +
+                             Scalar(0.69999999999999996) * _tmp179 * states_cov(0, 3);
     _next_states_cov(3, 3) =
-        accel_bias_noise(0, 0) * dt + Scalar(0.81000000000000005) * states_cov(6, 6);
-    _next_states_cov(4, 3) = Scalar(0.81000000000000005) * states_cov(7, 6);
-    _next_states_cov(5, 3) = Scalar(0.81000000000000005) * states_cov(8, 6);
-    _next_states_cov(6, 3) = Scalar(0.90000000000000002) * states_cov(3, 6);
-    _next_states_cov(7, 3) = Scalar(0.90000000000000002) * states_cov(4, 6);
-    _next_states_cov(8, 3) = Scalar(0.90000000000000002) * states_cov(5, 6);
-    _next_states_cov(9, 3) = Scalar(0.89100000000000001) * states_cov(9, 6);
-    _next_states_cov(10, 3) = Scalar(0.89100000000000001) * states_cov(10, 6);
-    _next_states_cov(11, 3) = Scalar(0.89100000000000001) * states_cov(11, 6);
-    _next_states_cov(0, 4) = Scalar(0.90000000000000002) * _tmp109 * states_cov(0, 7) +
-                             Scalar(0.90000000000000002) * _tmp121 * states_cov(5, 7) +
-                             Scalar(0.90000000000000002) * _tmp131 * states_cov(1, 7) +
-                             Scalar(0.90000000000000002) * _tmp136 * states_cov(3, 7) +
-                             Scalar(0.90000000000000002) * _tmp141 * states_cov(2, 7) +
-                             Scalar(0.90000000000000002) * _tmp86 * states_cov(4, 7);
-    _next_states_cov(1, 4) = Scalar(0.90000000000000002) * _tmp150 * states_cov(2, 7) +
-                             Scalar(0.90000000000000002) * _tmp151 * states_cov(4, 7) +
-                             Scalar(0.90000000000000002) * _tmp152 * states_cov(1, 7) +
-                             Scalar(0.90000000000000002) * _tmp153 * states_cov(3, 7) +
-                             Scalar(0.90000000000000002) * _tmp155 * states_cov(0, 7) +
-                             Scalar(0.90000000000000002) * _tmp156 * states_cov(5, 7);
-    _next_states_cov(2, 4) = Scalar(0.90000000000000002) * _tmp165 * states_cov(1, 7) +
-                             Scalar(0.90000000000000002) * _tmp166 * states_cov(4, 7) +
-                             Scalar(0.90000000000000002) * _tmp167 * states_cov(2, 7) +
-                             Scalar(0.90000000000000002) * _tmp168 * states_cov(3, 7) +
-                             Scalar(0.90000000000000002) * _tmp169 * states_cov(5, 7) +
-                             Scalar(0.90000000000000002) * _tmp170 * states_cov(0, 7);
-    _next_states_cov(3, 4) = Scalar(0.81000000000000005) * states_cov(6, 7);
+        accel_bias_noise(0, 0) * dt + Scalar(0.48999999999999999) * states_cov(3, 3);
+    _next_states_cov(4, 3) = Scalar(0.48999999999999999) * states_cov(4, 3);
+    _next_states_cov(5, 3) = Scalar(0.48999999999999999) * states_cov(5, 3);
+    _next_states_cov(6, 3) = Scalar(0.69999999999999996) * states_cov(6, 3);
+    _next_states_cov(7, 3) = Scalar(0.69999999999999996) * states_cov(7, 3);
+    _next_states_cov(8, 3) = Scalar(0.69999999999999996) * states_cov(8, 3);
+    _next_states_cov(9, 3) = Scalar(0.66500000000000004) * states_cov(9, 3);
+    _next_states_cov(10, 3) = Scalar(0.66500000000000004) * states_cov(10, 3);
+    _next_states_cov(11, 3) = Scalar(0.66500000000000004) * states_cov(11, 3);
+    _next_states_cov(0, 4) = Scalar(0.69999999999999996) * _tmp112 * states_cov(0, 4) +
+                             Scalar(0.69999999999999996) * _tmp128 * states_cov(8, 4) +
+                             Scalar(0.69999999999999996) * _tmp136 * states_cov(1, 4) +
+                             Scalar(0.69999999999999996) * _tmp143 * states_cov(6, 4) +
+                             Scalar(0.69999999999999996) * _tmp148 * states_cov(2, 4) +
+                             Scalar(0.69999999999999996) * _tmp88 * states_cov(7, 4);
+    _next_states_cov(1, 4) = Scalar(0.69999999999999996) * _tmp158 * states_cov(2, 4) +
+                             Scalar(0.69999999999999996) * _tmp159 * states_cov(7, 4) +
+                             Scalar(0.69999999999999996) * _tmp160 * states_cov(1, 4) +
+                             Scalar(0.69999999999999996) * _tmp161 * states_cov(6, 4) +
+                             Scalar(0.69999999999999996) * _tmp162 * states_cov(0, 4) +
+                             Scalar(0.69999999999999996) * _tmp163 * states_cov(8, 4);
+    _next_states_cov(2, 4) = Scalar(0.69999999999999996) * _tmp173 * states_cov(1, 4) +
+                             Scalar(0.69999999999999996) * _tmp174 * states_cov(7, 4) +
+                             Scalar(0.69999999999999996) * _tmp176 * states_cov(2, 4) +
+                             Scalar(0.69999999999999996) * _tmp177 * states_cov(6, 4) +
+                             Scalar(0.69999999999999996) * _tmp178 * states_cov(8, 4) +
+                             Scalar(0.69999999999999996) * _tmp179 * states_cov(0, 4);
+    _next_states_cov(3, 4) = Scalar(0.48999999999999999) * states_cov(3, 4);
     _next_states_cov(4, 4) =
-        accel_bias_noise(1, 0) * dt + Scalar(0.81000000000000005) * states_cov(7, 7);
-    _next_states_cov(5, 4) = Scalar(0.81000000000000005) * states_cov(8, 7);
-    _next_states_cov(6, 4) = Scalar(0.90000000000000002) * states_cov(3, 7);
-    _next_states_cov(7, 4) = Scalar(0.90000000000000002) * states_cov(4, 7);
-    _next_states_cov(8, 4) = Scalar(0.90000000000000002) * states_cov(5, 7);
-    _next_states_cov(9, 4) = Scalar(0.89100000000000001) * states_cov(9, 7);
-    _next_states_cov(10, 4) = Scalar(0.89100000000000001) * states_cov(10, 7);
-    _next_states_cov(11, 4) = Scalar(0.89100000000000001) * states_cov(11, 7);
-    _next_states_cov(0, 5) = Scalar(0.90000000000000002) * _tmp109 * states_cov(0, 8) +
-                             Scalar(0.90000000000000002) * _tmp121 * states_cov(5, 8) +
-                             Scalar(0.90000000000000002) * _tmp131 * states_cov(1, 8) +
-                             Scalar(0.90000000000000002) * _tmp136 * states_cov(3, 8) +
-                             Scalar(0.90000000000000002) * _tmp141 * states_cov(2, 8) +
-                             Scalar(0.90000000000000002) * _tmp86 * states_cov(4, 8);
-    _next_states_cov(1, 5) = Scalar(0.90000000000000002) * _tmp150 * states_cov(2, 8) +
-                             Scalar(0.90000000000000002) * _tmp151 * states_cov(4, 8) +
-                             Scalar(0.90000000000000002) * _tmp152 * states_cov(1, 8) +
-                             Scalar(0.90000000000000002) * _tmp153 * states_cov(3, 8) +
-                             Scalar(0.90000000000000002) * _tmp155 * states_cov(0, 8) +
-                             Scalar(0.90000000000000002) * _tmp156 * states_cov(5, 8);
-    _next_states_cov(2, 5) = Scalar(0.90000000000000002) * _tmp165 * states_cov(1, 8) +
-                             Scalar(0.90000000000000002) * _tmp166 * states_cov(4, 8) +
-                             Scalar(0.90000000000000002) * _tmp167 * states_cov(2, 8) +
-                             Scalar(0.90000000000000002) * _tmp168 * states_cov(3, 8) +
-                             Scalar(0.90000000000000002) * _tmp169 * states_cov(5, 8) +
-                             Scalar(0.90000000000000002) * _tmp170 * states_cov(0, 8);
-    _next_states_cov(3, 5) = Scalar(0.81000000000000005) * states_cov(6, 8);
-    _next_states_cov(4, 5) = Scalar(0.81000000000000005) * states_cov(7, 8);
+        accel_bias_noise(1, 0) * dt + Scalar(0.48999999999999999) * states_cov(4, 4);
+    _next_states_cov(5, 4) = Scalar(0.48999999999999999) * states_cov(5, 4);
+    _next_states_cov(6, 4) = Scalar(0.69999999999999996) * states_cov(6, 4);
+    _next_states_cov(7, 4) = Scalar(0.69999999999999996) * states_cov(7, 4);
+    _next_states_cov(8, 4) = Scalar(0.69999999999999996) * states_cov(8, 4);
+    _next_states_cov(9, 4) = Scalar(0.66500000000000004) * states_cov(9, 4);
+    _next_states_cov(10, 4) = Scalar(0.66500000000000004) * states_cov(10, 4);
+    _next_states_cov(11, 4) = Scalar(0.66500000000000004) * states_cov(11, 4);
+    _next_states_cov(0, 5) = Scalar(0.69999999999999996) * _tmp112 * states_cov(0, 5) +
+                             Scalar(0.69999999999999996) * _tmp128 * states_cov(8, 5) +
+                             Scalar(0.69999999999999996) * _tmp136 * states_cov(1, 5) +
+                             Scalar(0.69999999999999996) * _tmp143 * states_cov(6, 5) +
+                             Scalar(0.69999999999999996) * _tmp148 * states_cov(2, 5) +
+                             Scalar(0.69999999999999996) * _tmp88 * states_cov(7, 5);
+    _next_states_cov(1, 5) = Scalar(0.69999999999999996) * _tmp158 * states_cov(2, 5) +
+                             Scalar(0.69999999999999996) * _tmp159 * states_cov(7, 5) +
+                             Scalar(0.69999999999999996) * _tmp160 * states_cov(1, 5) +
+                             Scalar(0.69999999999999996) * _tmp161 * states_cov(6, 5) +
+                             Scalar(0.69999999999999996) * _tmp162 * states_cov(0, 5) +
+                             Scalar(0.69999999999999996) * _tmp163 * states_cov(8, 5);
+    _next_states_cov(2, 5) = Scalar(0.69999999999999996) * _tmp173 * states_cov(1, 5) +
+                             Scalar(0.69999999999999996) * _tmp174 * states_cov(7, 5) +
+                             Scalar(0.69999999999999996) * _tmp176 * states_cov(2, 5) +
+                             Scalar(0.69999999999999996) * _tmp177 * states_cov(6, 5) +
+                             Scalar(0.69999999999999996) * _tmp178 * states_cov(8, 5) +
+                             Scalar(0.69999999999999996) * _tmp179 * states_cov(0, 5);
+    _next_states_cov(3, 5) = Scalar(0.48999999999999999) * states_cov(3, 5);
+    _next_states_cov(4, 5) = Scalar(0.48999999999999999) * states_cov(4, 5);
     _next_states_cov(5, 5) =
-        accel_bias_noise(2, 0) * dt + Scalar(0.81000000000000005) * states_cov(8, 8);
-    _next_states_cov(6, 5) = Scalar(0.90000000000000002) * states_cov(3, 8);
-    _next_states_cov(7, 5) = Scalar(0.90000000000000002) * states_cov(4, 8);
-    _next_states_cov(8, 5) = Scalar(0.90000000000000002) * states_cov(5, 8);
-    _next_states_cov(9, 5) = Scalar(0.89100000000000001) * states_cov(9, 8);
-    _next_states_cov(10, 5) = Scalar(0.89100000000000001) * states_cov(10, 8);
-    _next_states_cov(11, 5) = Scalar(0.89100000000000001) * states_cov(11, 8);
-    _next_states_cov(0, 6) = _tmp148;
-    _next_states_cov(1, 6) = _tmp157;
-    _next_states_cov(2, 6) = _tmp179;
-    _next_states_cov(3, 6) = _tmp184;
-    _next_states_cov(4, 6) = _tmp188;
-    _next_states_cov(5, 6) = _tmp191;
-    _next_states_cov(6, 6) = dt * gyro_bias_noise(0, 0) + states_cov(3, 3);
-    _next_states_cov(7, 6) = states_cov(4, 3);
-    _next_states_cov(8, 6) = states_cov(5, 3);
-    _next_states_cov(9, 6) = _tmp196;
-    _next_states_cov(10, 6) = _tmp201;
-    _next_states_cov(11, 6) = _tmp205;
-    _next_states_cov(0, 7) = _tmp146;
-    _next_states_cov(1, 7) = _tmp164;
-    _next_states_cov(2, 7) = _tmp173;
-    _next_states_cov(3, 7) = _tmp180;
-    _next_states_cov(4, 7) = _tmp186;
-    _next_states_cov(5, 7) = _tmp189;
-    _next_states_cov(6, 7) = states_cov(3, 4);
-    _next_states_cov(7, 7) = dt * gyro_bias_noise(1, 0) + states_cov(4, 4);
-    _next_states_cov(8, 7) = states_cov(5, 4);
-    _next_states_cov(9, 7) = _tmp192;
-    _next_states_cov(10, 7) = _tmp202;
-    _next_states_cov(11, 7) = _tmp206;
-    _next_states_cov(0, 8) = _tmp142;
-    _next_states_cov(1, 8) = _tmp162;
-    _next_states_cov(2, 8) = _tmp177;
-    _next_states_cov(3, 8) = _tmp182;
-    _next_states_cov(4, 8) = _tmp187;
-    _next_states_cov(5, 8) = _tmp190;
-    _next_states_cov(6, 8) = states_cov(3, 5);
-    _next_states_cov(7, 8) = states_cov(4, 5);
-    _next_states_cov(8, 8) = dt * gyro_bias_noise(2, 0) + states_cov(5, 5);
-    _next_states_cov(9, 8) = _tmp194;
-    _next_states_cov(10, 8) = _tmp198;
-    _next_states_cov(11, 8) = _tmp204;
-    _next_states_cov(0, 9) = Scalar(0.98999999999999999) * _tmp109 * states_cov(0, 9) +
-                             Scalar(0.98999999999999999) * _tmp121 * states_cov(5, 9) +
-                             Scalar(0.98999999999999999) * _tmp131 * states_cov(1, 9) +
-                             Scalar(0.98999999999999999) * _tmp136 * states_cov(3, 9) +
-                             Scalar(0.98999999999999999) * _tmp141 * states_cov(2, 9) +
-                             Scalar(0.98999999999999999) * _tmp86 * states_cov(4, 9);
-    _next_states_cov(1, 9) = Scalar(0.98999999999999999) * _tmp150 * states_cov(2, 9) +
-                             Scalar(0.98999999999999999) * _tmp151 * states_cov(4, 9) +
-                             Scalar(0.98999999999999999) * _tmp152 * states_cov(1, 9) +
-                             Scalar(0.98999999999999999) * _tmp153 * states_cov(3, 9) +
-                             Scalar(0.98999999999999999) * _tmp155 * states_cov(0, 9) +
-                             Scalar(0.98999999999999999) * _tmp156 * states_cov(5, 9);
-    _next_states_cov(2, 9) = Scalar(0.98999999999999999) * _tmp165 * states_cov(1, 9) +
-                             Scalar(0.98999999999999999) * _tmp166 * states_cov(4, 9) +
-                             Scalar(0.98999999999999999) * _tmp167 * states_cov(2, 9) +
-                             Scalar(0.98999999999999999) * _tmp168 * states_cov(3, 9) +
-                             Scalar(0.98999999999999999) * _tmp169 * states_cov(5, 9) +
-                             Scalar(0.98999999999999999) * _tmp170 * states_cov(0, 9);
-    _next_states_cov(3, 9) = Scalar(0.89100000000000001) * states_cov(6, 9);
-    _next_states_cov(4, 9) = Scalar(0.89100000000000001) * states_cov(7, 9);
-    _next_states_cov(5, 9) = Scalar(0.89100000000000001) * states_cov(8, 9);
-    _next_states_cov(6, 9) = Scalar(0.98999999999999999) * states_cov(3, 9);
-    _next_states_cov(7, 9) = Scalar(0.98999999999999999) * states_cov(4, 9);
-    _next_states_cov(8, 9) = Scalar(0.98999999999999999) * states_cov(5, 9);
+        accel_bias_noise(2, 0) * dt + Scalar(0.48999999999999999) * states_cov(5, 5);
+    _next_states_cov(6, 5) = Scalar(0.69999999999999996) * states_cov(6, 5);
+    _next_states_cov(7, 5) = Scalar(0.69999999999999996) * states_cov(7, 5);
+    _next_states_cov(8, 5) = Scalar(0.69999999999999996) * states_cov(8, 5);
+    _next_states_cov(9, 5) = Scalar(0.66500000000000004) * states_cov(9, 5);
+    _next_states_cov(10, 5) = Scalar(0.66500000000000004) * states_cov(10, 5);
+    _next_states_cov(11, 5) = Scalar(0.66500000000000004) * states_cov(11, 5);
+    _next_states_cov(0, 6) = _tmp151;
+    _next_states_cov(1, 6) = _tmp166;
+    _next_states_cov(2, 6) = _tmp183;
+    _next_states_cov(3, 6) = _tmp192;
+    _next_states_cov(4, 6) = _tmp196;
+    _next_states_cov(5, 6) = _tmp199;
+    _next_states_cov(6, 6) = dt * gyro_bias_noise(0, 0) + states_cov(6, 6);
+    _next_states_cov(7, 6) = states_cov(7, 6);
+    _next_states_cov(8, 6) = states_cov(8, 6);
+    _next_states_cov(9, 6) = _tmp204;
+    _next_states_cov(10, 6) = _tmp207;
+    _next_states_cov(11, 6) = _tmp211;
+    _next_states_cov(0, 7) = _tmp156;
+    _next_states_cov(1, 7) = _tmp172;
+    _next_states_cov(2, 7) = _tmp180;
+    _next_states_cov(3, 7) = _tmp188;
+    _next_states_cov(4, 7) = _tmp194;
+    _next_states_cov(5, 7) = _tmp197;
+    _next_states_cov(6, 7) = states_cov(6, 7);
+    _next_states_cov(7, 7) = dt * gyro_bias_noise(1, 0) + states_cov(7, 7);
+    _next_states_cov(8, 7) = states_cov(8, 7);
+    _next_states_cov(9, 7) = _tmp200;
+    _next_states_cov(10, 7) = _tmp208;
+    _next_states_cov(11, 7) = _tmp212;
+    _next_states_cov(0, 8) = _tmp154;
+    _next_states_cov(1, 8) = _tmp170;
+    _next_states_cov(2, 8) = _tmp186;
+    _next_states_cov(3, 8) = _tmp190;
+    _next_states_cov(4, 8) = _tmp195;
+    _next_states_cov(5, 8) = _tmp198;
+    _next_states_cov(6, 8) = states_cov(6, 8);
+    _next_states_cov(7, 8) = states_cov(7, 8);
+    _next_states_cov(8, 8) = dt * gyro_bias_noise(2, 0) + states_cov(8, 8);
+    _next_states_cov(9, 8) = _tmp202;
+    _next_states_cov(10, 8) = _tmp206;
+    _next_states_cov(11, 8) = _tmp210;
+    _next_states_cov(0, 9) = Scalar(0.94999999999999996) * _tmp112 * states_cov(0, 9) +
+                             Scalar(0.94999999999999996) * _tmp128 * states_cov(8, 9) +
+                             Scalar(0.94999999999999996) * _tmp136 * states_cov(1, 9) +
+                             Scalar(0.94999999999999996) * _tmp143 * states_cov(6, 9) +
+                             Scalar(0.94999999999999996) * _tmp148 * states_cov(2, 9) +
+                             Scalar(0.94999999999999996) * _tmp88 * states_cov(7, 9);
+    _next_states_cov(1, 9) = Scalar(0.94999999999999996) * _tmp158 * states_cov(2, 9) +
+                             Scalar(0.94999999999999996) * _tmp159 * states_cov(7, 9) +
+                             Scalar(0.94999999999999996) * _tmp160 * states_cov(1, 9) +
+                             Scalar(0.94999999999999996) * _tmp161 * states_cov(6, 9) +
+                             Scalar(0.94999999999999996) * _tmp162 * states_cov(0, 9) +
+                             Scalar(0.94999999999999996) * _tmp163 * states_cov(8, 9);
+    _next_states_cov(2, 9) = Scalar(0.94999999999999996) * _tmp173 * states_cov(1, 9) +
+                             Scalar(0.94999999999999996) * _tmp174 * states_cov(7, 9) +
+                             Scalar(0.94999999999999996) * _tmp176 * states_cov(2, 9) +
+                             Scalar(0.94999999999999996) * _tmp177 * states_cov(6, 9) +
+                             Scalar(0.94999999999999996) * _tmp178 * states_cov(8, 9) +
+                             Scalar(0.94999999999999996) * _tmp179 * states_cov(0, 9);
+    _next_states_cov(3, 9) = Scalar(0.66500000000000004) * states_cov(3, 9);
+    _next_states_cov(4, 9) = Scalar(0.66500000000000004) * states_cov(4, 9);
+    _next_states_cov(5, 9) = Scalar(0.66500000000000004) * states_cov(5, 9);
+    _next_states_cov(6, 9) = Scalar(0.94999999999999996) * states_cov(6, 9);
+    _next_states_cov(7, 9) = Scalar(0.94999999999999996) * states_cov(7, 9);
+    _next_states_cov(8, 9) = Scalar(0.94999999999999996) * states_cov(8, 9);
     _next_states_cov(9, 9) =
-        dt * mag_bias_noise(0, 0) + Scalar(0.98009999999999997) * states_cov(9, 9);
-    _next_states_cov(10, 9) = Scalar(0.98009999999999997) * states_cov(10, 9);
-    _next_states_cov(11, 9) = Scalar(0.98009999999999997) * states_cov(11, 9);
-    _next_states_cov(0, 10) = Scalar(0.98999999999999999) * _tmp109 * states_cov(0, 10) +
-                              Scalar(0.98999999999999999) * _tmp121 * states_cov(5, 10) +
-                              Scalar(0.98999999999999999) * _tmp131 * states_cov(1, 10) +
-                              Scalar(0.98999999999999999) * _tmp136 * states_cov(3, 10) +
-                              Scalar(0.98999999999999999) * _tmp141 * states_cov(2, 10) +
-                              Scalar(0.98999999999999999) * _tmp86 * states_cov(4, 10);
-    _next_states_cov(1, 10) = Scalar(0.98999999999999999) * _tmp150 * states_cov(2, 10) +
-                              Scalar(0.98999999999999999) * _tmp151 * states_cov(4, 10) +
-                              Scalar(0.98999999999999999) * _tmp152 * states_cov(1, 10) +
-                              Scalar(0.98999999999999999) * _tmp153 * states_cov(3, 10) +
-                              Scalar(0.98999999999999999) * _tmp155 * states_cov(0, 10) +
-                              Scalar(0.98999999999999999) * _tmp156 * states_cov(5, 10);
-    _next_states_cov(2, 10) = Scalar(0.98999999999999999) * _tmp165 * states_cov(1, 10) +
-                              Scalar(0.98999999999999999) * _tmp166 * states_cov(4, 10) +
-                              Scalar(0.98999999999999999) * _tmp167 * states_cov(2, 10) +
-                              Scalar(0.98999999999999999) * _tmp168 * states_cov(3, 10) +
-                              Scalar(0.98999999999999999) * _tmp169 * states_cov(5, 10) +
-                              Scalar(0.98999999999999999) * _tmp170 * states_cov(0, 10);
-    _next_states_cov(3, 10) = Scalar(0.89100000000000001) * states_cov(6, 10);
-    _next_states_cov(4, 10) = Scalar(0.89100000000000001) * states_cov(7, 10);
-    _next_states_cov(5, 10) = Scalar(0.89100000000000001) * states_cov(8, 10);
-    _next_states_cov(6, 10) = Scalar(0.98999999999999999) * states_cov(3, 10);
-    _next_states_cov(7, 10) = Scalar(0.98999999999999999) * states_cov(4, 10);
-    _next_states_cov(8, 10) = Scalar(0.98999999999999999) * states_cov(5, 10);
-    _next_states_cov(9, 10) = Scalar(0.98009999999999997) * states_cov(9, 10);
+        dt * mag_bias_noise(0, 0) + Scalar(0.90249999999999997) * states_cov(9, 9);
+    _next_states_cov(10, 9) = Scalar(0.90249999999999997) * states_cov(10, 9);
+    _next_states_cov(11, 9) = Scalar(0.90249999999999997) * states_cov(11, 9);
+    _next_states_cov(0, 10) = Scalar(0.94999999999999996) * _tmp112 * states_cov(0, 10) +
+                              Scalar(0.94999999999999996) * _tmp128 * states_cov(8, 10) +
+                              Scalar(0.94999999999999996) * _tmp136 * states_cov(1, 10) +
+                              Scalar(0.94999999999999996) * _tmp143 * states_cov(6, 10) +
+                              Scalar(0.94999999999999996) * _tmp148 * states_cov(2, 10) +
+                              Scalar(0.94999999999999996) * _tmp88 * states_cov(7, 10);
+    _next_states_cov(1, 10) = Scalar(0.94999999999999996) * _tmp158 * states_cov(2, 10) +
+                              Scalar(0.94999999999999996) * _tmp159 * states_cov(7, 10) +
+                              Scalar(0.94999999999999996) * _tmp160 * states_cov(1, 10) +
+                              Scalar(0.94999999999999996) * _tmp161 * states_cov(6, 10) +
+                              Scalar(0.94999999999999996) * _tmp162 * states_cov(0, 10) +
+                              Scalar(0.94999999999999996) * _tmp163 * states_cov(8, 10);
+    _next_states_cov(2, 10) = Scalar(0.94999999999999996) * _tmp173 * states_cov(1, 10) +
+                              Scalar(0.94999999999999996) * _tmp174 * states_cov(7, 10) +
+                              Scalar(0.94999999999999996) * _tmp176 * states_cov(2, 10) +
+                              Scalar(0.94999999999999996) * _tmp177 * states_cov(6, 10) +
+                              Scalar(0.94999999999999996) * _tmp178 * states_cov(8, 10) +
+                              Scalar(0.94999999999999996) * _tmp179 * states_cov(0, 10);
+    _next_states_cov(3, 10) = Scalar(0.66500000000000004) * states_cov(3, 10);
+    _next_states_cov(4, 10) = Scalar(0.66500000000000004) * states_cov(4, 10);
+    _next_states_cov(5, 10) = Scalar(0.66500000000000004) * states_cov(5, 10);
+    _next_states_cov(6, 10) = Scalar(0.94999999999999996) * states_cov(6, 10);
+    _next_states_cov(7, 10) = Scalar(0.94999999999999996) * states_cov(7, 10);
+    _next_states_cov(8, 10) = Scalar(0.94999999999999996) * states_cov(8, 10);
+    _next_states_cov(9, 10) = Scalar(0.90249999999999997) * states_cov(9, 10);
     _next_states_cov(10, 10) =
-        dt * mag_bias_noise(1, 0) + Scalar(0.98009999999999997) * states_cov(10, 10);
-    _next_states_cov(11, 10) = Scalar(0.98009999999999997) * states_cov(11, 10);
-    _next_states_cov(0, 11) = Scalar(0.98999999999999999) * _tmp109 * states_cov(0, 11) +
-                              Scalar(0.98999999999999999) * _tmp121 * states_cov(5, 11) +
-                              Scalar(0.98999999999999999) * _tmp131 * states_cov(1, 11) +
-                              Scalar(0.98999999999999999) * _tmp136 * states_cov(3, 11) +
-                              Scalar(0.98999999999999999) * _tmp141 * states_cov(2, 11) +
-                              Scalar(0.98999999999999999) * _tmp86 * states_cov(4, 11);
-    _next_states_cov(1, 11) = Scalar(0.98999999999999999) * _tmp150 * states_cov(2, 11) +
-                              Scalar(0.98999999999999999) * _tmp151 * states_cov(4, 11) +
-                              Scalar(0.98999999999999999) * _tmp152 * states_cov(1, 11) +
-                              Scalar(0.98999999999999999) * _tmp153 * states_cov(3, 11) +
-                              Scalar(0.98999999999999999) * _tmp155 * states_cov(0, 11) +
-                              Scalar(0.98999999999999999) * _tmp156 * states_cov(5, 11);
-    _next_states_cov(2, 11) = Scalar(0.98999999999999999) * _tmp165 * states_cov(1, 11) +
-                              Scalar(0.98999999999999999) * _tmp166 * states_cov(4, 11) +
-                              Scalar(0.98999999999999999) * _tmp167 * states_cov(2, 11) +
-                              Scalar(0.98999999999999999) * _tmp168 * states_cov(3, 11) +
-                              Scalar(0.98999999999999999) * _tmp169 * states_cov(5, 11) +
-                              Scalar(0.98999999999999999) * _tmp170 * states_cov(0, 11);
-    _next_states_cov(3, 11) = Scalar(0.89100000000000001) * states_cov(6, 11);
-    _next_states_cov(4, 11) = Scalar(0.89100000000000001) * states_cov(7, 11);
-    _next_states_cov(5, 11) = Scalar(0.89100000000000001) * states_cov(8, 11);
-    _next_states_cov(6, 11) = Scalar(0.98999999999999999) * states_cov(3, 11);
-    _next_states_cov(7, 11) = Scalar(0.98999999999999999) * states_cov(4, 11);
-    _next_states_cov(8, 11) = Scalar(0.98999999999999999) * states_cov(5, 11);
-    _next_states_cov(9, 11) = Scalar(0.98009999999999997) * states_cov(9, 11);
-    _next_states_cov(10, 11) = Scalar(0.98009999999999997) * states_cov(10, 11);
+        dt * mag_bias_noise(1, 0) + Scalar(0.90249999999999997) * states_cov(10, 10);
+    _next_states_cov(11, 10) = Scalar(0.90249999999999997) * states_cov(11, 10);
+    _next_states_cov(0, 11) = Scalar(0.94999999999999996) * _tmp112 * states_cov(0, 11) +
+                              Scalar(0.94999999999999996) * _tmp128 * states_cov(8, 11) +
+                              Scalar(0.94999999999999996) * _tmp136 * states_cov(1, 11) +
+                              Scalar(0.94999999999999996) * _tmp143 * states_cov(6, 11) +
+                              Scalar(0.94999999999999996) * _tmp148 * states_cov(2, 11) +
+                              Scalar(0.94999999999999996) * _tmp88 * states_cov(7, 11);
+    _next_states_cov(1, 11) = Scalar(0.94999999999999996) * _tmp158 * states_cov(2, 11) +
+                              Scalar(0.94999999999999996) * _tmp159 * states_cov(7, 11) +
+                              Scalar(0.94999999999999996) * _tmp160 * states_cov(1, 11) +
+                              Scalar(0.94999999999999996) * _tmp161 * states_cov(6, 11) +
+                              Scalar(0.94999999999999996) * _tmp162 * states_cov(0, 11) +
+                              Scalar(0.94999999999999996) * _tmp163 * states_cov(8, 11);
+    _next_states_cov(2, 11) = Scalar(0.94999999999999996) * _tmp173 * states_cov(1, 11) +
+                              Scalar(0.94999999999999996) * _tmp174 * states_cov(7, 11) +
+                              Scalar(0.94999999999999996) * _tmp176 * states_cov(2, 11) +
+                              Scalar(0.94999999999999996) * _tmp177 * states_cov(6, 11) +
+                              Scalar(0.94999999999999996) * _tmp178 * states_cov(8, 11) +
+                              Scalar(0.94999999999999996) * _tmp179 * states_cov(0, 11);
+    _next_states_cov(3, 11) = Scalar(0.66500000000000004) * states_cov(3, 11);
+    _next_states_cov(4, 11) = Scalar(0.66500000000000004) * states_cov(4, 11);
+    _next_states_cov(5, 11) = Scalar(0.66500000000000004) * states_cov(5, 11);
+    _next_states_cov(6, 11) = Scalar(0.94999999999999996) * states_cov(6, 11);
+    _next_states_cov(7, 11) = Scalar(0.94999999999999996) * states_cov(7, 11);
+    _next_states_cov(8, 11) = Scalar(0.94999999999999996) * states_cov(8, 11);
+    _next_states_cov(9, 11) = Scalar(0.90249999999999997) * states_cov(9, 11);
+    _next_states_cov(10, 11) = Scalar(0.90249999999999997) * states_cov(10, 11);
     _next_states_cov(11, 11) =
-        dt * mag_bias_noise(2, 0) + Scalar(0.98009999999999997) * states_cov(11, 11);
+        dt * mag_bias_noise(2, 0) + Scalar(0.90249999999999997) * states_cov(11, 11);
   }
 }  // NOLINT(readability/fn_size)
 

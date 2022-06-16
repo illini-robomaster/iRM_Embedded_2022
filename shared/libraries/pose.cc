@@ -31,6 +31,7 @@
 #include "gen/ahrs_process.h"
 #include "gen/ahrs_update_accel.h"
 #include "gen/ahrs_update_mag.h"
+#include "gen/ahrs_update_retract.h"
 
 // Factor from us to s
 static const float USEC_TO_SEC = 1000000.0;
@@ -202,11 +203,16 @@ void AHRSFilter::Initialize(const Eigen::Quaternionf &pose,
 void AHRSFilter::Predict(const uint32_t timestamp,
                          Eigen::Matrix<float, 13, 1>* const proc_states,
                          Eigen::Matrix<float, 12, 12>* const proc_states_cov) const {
-  const float dt = (timestamp - latest_time_) * 1e-6;
-
-  sym::AhrsProcess<float>(states_, states_cov_, latest_gyro_, dt,
-                          gyro_noise_, accel_bias_noise_, gyro_bias_noise_, mag_bias_noise_,
-                          proc_states, proc_states_cov);
+  // update only when dt > 0
+  if (timestamp > latest_time_) {
+    const float dt = (timestamp - latest_time_) * 1e-6;
+    sym::AhrsProcess<float>(states_, states_cov_, latest_gyro_, dt,
+                            gyro_noise_, accel_bias_noise_, gyro_bias_noise_, mag_bias_noise_,
+                            proc_states, proc_states_cov);
+  } else {
+    *proc_states = states_;
+    *proc_states_cov = states_cov_;
+  }
 }
 
 void AHRSFilter::MeasureGyro(const Eigen::Vector3f &gyro_body, const uint32_t timestamp) {
@@ -216,46 +222,72 @@ void AHRSFilter::MeasureGyro(const Eigen::Vector3f &gyro_body, const uint32_t ti
 
   osMutexAcquire(lock_, osWaitForever);
   states_ = next_states;
-  states_cov_ = next_states_cov;
+  states_cov_ = .5 * (next_states_cov.transpose() + next_states_cov);
   latest_gyro_ = gyro_body;
   latest_time_ = timestamp;
   osMutexRelease(lock_);
 }
 
 void AHRSFilter::MeasureAccel(const Eigen::Vector3f &accel_body, const uint32_t timestamp) {
-  Eigen::Matrix<float, 13, 1> proc_states;
-  Eigen::Matrix<float, 12, 12> proc_states_cov;
-  Predict(timestamp, &proc_states, &proc_states_cov);
+  Eigen::Matrix<float, 13, 1> x;
+  Eigen::Matrix<float, 12, 12> P;
+  Predict(timestamp, &x, &P);
+
+  Eigen::Vector3f y;
+  Eigen::Matrix3f S;
+  Eigen::Matrix<float, 3, 12> H;
+  sym::AhrsUpdateAccel<float>(x, P,
+                              accel_body, accel_noise_, g_,
+                              &y, &S, &H);
+
+  // compute kalman update
+  const Eigen::Matrix<float, 12, 3> K = S.llt().solve(H * P).transpose();
+  const Eigen::Matrix<float, 12, 1> delta = K * y;
 
   osMutexAcquire(lock_, osWaitForever);
   latest_time_ = timestamp;
-  sym::AhrsUpdateAccel<float>(proc_states, proc_states_cov,
-                              accel_body, accel_noise_, g_,
-                              &states_, &states_cov_);
+  sym::AhrsUpdateRetract<float>(x, delta, &states_);
+  states_cov_ = P - K * H * P;
+  states_cov_ = .5 * (states_cov_.transpose() + states_cov_).eval();
   osMutexRelease(lock_);
 }
 
 void AHRSFilter::MeasureMag(const Eigen::Vector3f &mag_body, const uint32_t timestamp) {
-  Eigen::Matrix<float, 13, 1> proc_states;
-  Eigen::Matrix<float, 12, 12> proc_states_cov;
-  Predict(timestamp, &proc_states, &proc_states_cov);
+  Eigen::Matrix<float, 13, 1> x;
+  Eigen::Matrix<float, 12, 12> P;
+  Predict(timestamp, &x, &P);
+
+  Eigen::Vector3f y;
+  Eigen::Matrix3f S;
+  Eigen::Matrix<float, 3, 12> H;
+  sym::AhrsUpdateMag<float>(x, P,
+                            mag_body, mag_noise_, m_,
+                            &y, &S, &H);
+
+  // compute kalman update
+  const Eigen::Matrix<float, 12, 3> K = S.llt().solve(H * P).transpose();
+  const Eigen::Matrix<float, 12, 1> delta = K * y;
 
   osMutexAcquire(lock_, osWaitForever);
   latest_time_ = timestamp;
-  sym::AhrsUpdateMag<float>(proc_states, proc_states_cov,
-                            mag_body, mag_noise_, g_,
-                            &states_, &states_cov_);
+  sym::AhrsUpdateRetract<float>(x, delta, &states_);
+  states_cov_ = P - K * H * P;
+  states_cov_ = .5 * (states_cov_.transpose() + states_cov_).eval();
   osMutexRelease(lock_);
 }
 
-Eigen::Quaternionf AHRSFilter::GetLatestPose() const {
-  Eigen::Quaternionf pose;
-
+void AHRSFilter::GetLatestState(Eigen::Quaternionf* const pose,
+                                Eigen::Vector3f* const accel_bias,
+                                Eigen::Vector3f* const gyro_bias,
+                                Eigen::Vector3f* const mag_bias) const {
   osMutexAcquire(lock_, osWaitForever);
-  pose.coeffs() = states_.segment<4>(0);
+  if (pose) pose->coeffs() = states_.segment<4>(0);
+  if (accel_bias) *accel_bias = states_.segment<3>(4);
+  if (gyro_bias) *gyro_bias = states_.segment<3>(7);
+  if (mag_bias) *mag_bias = states_.segment<3>(10);
   osMutexRelease(lock_);
-
-  return pose;
 }
+
+uint32_t AHRSFilter::GetLatestTime() const { return latest_time_; }
 
 }  // namespace control

@@ -70,56 +70,56 @@ void AhrsUpdateAccel(const Eigen::Matrix<Scalar, 13, 1>& states,
   const Scalar _tmp27 = _tmp0 + _tmp26;
   const Scalar _tmp28 = _tmp21 + _tmp23;
   const Scalar _tmp29 = _tmp17 + g(1, 0) * (_tmp27 + _tmp28);
-  const Scalar _tmp30 = _tmp25 * states_cov(1, 2) + _tmp29 * states_cov(2, 2) + states_cov(6, 2);
-  const Scalar _tmp31 = _tmp25 * states_cov(1, 1) + _tmp29 * states_cov(2, 1) + states_cov(6, 1);
+  const Scalar _tmp30 = _tmp25 * states_cov(1, 2) + _tmp29 * states_cov(2, 2) + states_cov(3, 2);
+  const Scalar _tmp31 = _tmp25 * states_cov(1, 1) + _tmp29 * states_cov(2, 1) + states_cov(3, 1);
   const Scalar _tmp32 = -_tmp5;
   const Scalar _tmp33 = _tmp2 + _tmp22;
   const Scalar _tmp34 =
       g(0, 0) * (_tmp27 + _tmp33) + g(1, 0) * (_tmp14 + _tmp32) + g(2, 0) * (_tmp20 + _tmp8);
   const Scalar _tmp35 = -_tmp0;
   const Scalar _tmp36 = _tmp19 + g(2, 0) * (_tmp2 + _tmp21 + _tmp26 + _tmp35);
-  const Scalar _tmp37 = _tmp34 * states_cov(2, 2) + _tmp36 * states_cov(0, 2) + states_cov(7, 2);
-  const Scalar _tmp38 = _tmp34 * states_cov(2, 1) + _tmp36 * states_cov(0, 1) + states_cov(7, 1);
+  const Scalar _tmp37 = _tmp34 * states_cov(2, 2) + _tmp36 * states_cov(0, 2) + states_cov(4, 2);
+  const Scalar _tmp38 = _tmp34 * states_cov(2, 1) + _tmp36 * states_cov(0, 1) + states_cov(4, 1);
   const Scalar _tmp39 = _tmp12 + _tmp35;
   const Scalar _tmp40 = _tmp11 + g(0, 0) * (_tmp28 + _tmp39);
   const Scalar _tmp41 =
       g(0, 0) * (_tmp32 + _tmp7) + g(1, 0) * (_tmp33 + _tmp39) + g(2, 0) * (_tmp18 + _tmp24);
-  const Scalar _tmp42 = _tmp40 * states_cov(1, 2) + _tmp41 * states_cov(0, 2) + states_cov(8, 2);
-  const Scalar _tmp43 = _tmp40 * states_cov(1, 1) + _tmp41 * states_cov(0, 1) + states_cov(8, 1);
-  const Scalar _tmp44 = _tmp25 * states_cov(1, 0) + _tmp29 * states_cov(2, 0) + states_cov(6, 0);
-  const Scalar _tmp45 = _tmp34 * states_cov(2, 0) + _tmp36 * states_cov(0, 0) + states_cov(7, 0);
-  const Scalar _tmp46 = _tmp40 * states_cov(1, 0) + _tmp41 * states_cov(0, 0) + states_cov(8, 0);
+  const Scalar _tmp42 = _tmp40 * states_cov(1, 2) + _tmp41 * states_cov(0, 2) + states_cov(5, 2);
+  const Scalar _tmp43 = _tmp40 * states_cov(1, 1) + _tmp41 * states_cov(0, 1) + states_cov(5, 1);
+  const Scalar _tmp44 = _tmp25 * states_cov(1, 0) + _tmp29 * states_cov(2, 0) + states_cov(3, 0);
+  const Scalar _tmp45 = _tmp34 * states_cov(2, 0) + _tmp36 * states_cov(0, 0) + states_cov(4, 0);
+  const Scalar _tmp46 = _tmp40 * states_cov(1, 0) + _tmp41 * states_cov(0, 0) + states_cov(5, 0);
 
   // Output terms (3)
   if (innovation != nullptr) {
     Eigen::Matrix<Scalar, 3, 1>& _innovation = (*innovation);
 
-    _innovation(0, 0) = -_tmp11 + accel_body(0, 0) - g(0, 0) * (_tmp1 + _tmp3 + 1) - states(7, 0);
-    _innovation(1, 0) = -_tmp17 + accel_body(1, 0) - g(1, 0) * (_tmp13 + _tmp3) - states(8, 0);
-    _innovation(2, 0) = -_tmp19 + accel_body(2, 0) - g(2, 0) * (_tmp1 + _tmp13) - states(9, 0);
+    _innovation(0, 0) = -_tmp11 + accel_body(0, 0) - g(0, 0) * (_tmp1 + _tmp3 + 1) - states(4, 0);
+    _innovation(1, 0) = -_tmp17 + accel_body(1, 0) - g(1, 0) * (_tmp13 + _tmp3) - states(5, 0);
+    _innovation(2, 0) = -_tmp19 + accel_body(2, 0) - g(2, 0) * (_tmp1 + _tmp13) - states(6, 0);
   }
 
   if (innovation_cov != nullptr) {
     Eigen::Matrix<Scalar, 3, 3>& _innovation_cov = (*innovation_cov);
 
-    _innovation_cov(0, 0) = _tmp25 * _tmp31 + _tmp25 * states_cov(1, 6) + _tmp29 * _tmp30 +
-                            _tmp29 * states_cov(2, 6) + accel_noise(0, 0) + states_cov(6, 6);
-    _innovation_cov(1, 0) = _tmp25 * _tmp38 + _tmp29 * _tmp37 + _tmp34 * states_cov(2, 6) +
-                            _tmp36 * states_cov(0, 6) + states_cov(7, 6);
-    _innovation_cov(2, 0) = _tmp25 * _tmp43 + _tmp29 * _tmp42 + _tmp40 * states_cov(1, 6) +
-                            _tmp41 * states_cov(0, 6) + states_cov(8, 6);
-    _innovation_cov(0, 1) = _tmp25 * states_cov(1, 7) + _tmp29 * states_cov(2, 7) +
-                            _tmp30 * _tmp34 + _tmp36 * _tmp44 + states_cov(6, 7);
-    _innovation_cov(1, 1) = _tmp34 * _tmp37 + _tmp34 * states_cov(2, 7) + _tmp36 * _tmp45 +
-                            _tmp36 * states_cov(0, 7) + accel_noise(1, 0) + states_cov(7, 7);
-    _innovation_cov(2, 1) = _tmp34 * _tmp42 + _tmp36 * _tmp46 + _tmp40 * states_cov(1, 7) +
-                            _tmp41 * states_cov(0, 7) + states_cov(8, 7);
-    _innovation_cov(0, 2) = _tmp25 * states_cov(1, 8) + _tmp29 * states_cov(2, 8) +
-                            _tmp31 * _tmp40 + _tmp41 * _tmp44 + states_cov(6, 8);
-    _innovation_cov(1, 2) = _tmp34 * states_cov(2, 8) + _tmp36 * states_cov(0, 8) +
-                            _tmp38 * _tmp40 + _tmp41 * _tmp45 + states_cov(7, 8);
-    _innovation_cov(2, 2) = _tmp40 * _tmp43 + _tmp40 * states_cov(1, 8) + _tmp41 * _tmp46 +
-                            _tmp41 * states_cov(0, 8) + accel_noise(2, 0) + states_cov(8, 8);
+    _innovation_cov(0, 0) = _tmp25 * _tmp31 + _tmp25 * states_cov(1, 3) + _tmp29 * _tmp30 +
+                            _tmp29 * states_cov(2, 3) + accel_noise(0, 0) + states_cov(3, 3);
+    _innovation_cov(1, 0) = _tmp25 * _tmp38 + _tmp29 * _tmp37 + _tmp34 * states_cov(2, 3) +
+                            _tmp36 * states_cov(0, 3) + states_cov(4, 3);
+    _innovation_cov(2, 0) = _tmp25 * _tmp43 + _tmp29 * _tmp42 + _tmp40 * states_cov(1, 3) +
+                            _tmp41 * states_cov(0, 3) + states_cov(5, 3);
+    _innovation_cov(0, 1) = _tmp25 * states_cov(1, 4) + _tmp29 * states_cov(2, 4) +
+                            _tmp30 * _tmp34 + _tmp36 * _tmp44 + states_cov(3, 4);
+    _innovation_cov(1, 1) = _tmp34 * _tmp37 + _tmp34 * states_cov(2, 4) + _tmp36 * _tmp45 +
+                            _tmp36 * states_cov(0, 4) + accel_noise(1, 0) + states_cov(4, 4);
+    _innovation_cov(2, 1) = _tmp34 * _tmp42 + _tmp36 * _tmp46 + _tmp40 * states_cov(1, 4) +
+                            _tmp41 * states_cov(0, 4) + states_cov(5, 4);
+    _innovation_cov(0, 2) = _tmp25 * states_cov(1, 5) + _tmp29 * states_cov(2, 5) +
+                            _tmp31 * _tmp40 + _tmp41 * _tmp44 + states_cov(3, 5);
+    _innovation_cov(1, 2) = _tmp34 * states_cov(2, 5) + _tmp36 * states_cov(0, 5) +
+                            _tmp38 * _tmp40 + _tmp41 * _tmp45 + states_cov(4, 5);
+    _innovation_cov(2, 2) = _tmp40 * _tmp43 + _tmp40 * states_cov(1, 5) + _tmp41 * _tmp46 +
+                            _tmp41 * states_cov(0, 5) + accel_noise(2, 0) + states_cov(5, 5);
   }
 
   if (H != nullptr) {
@@ -133,9 +133,9 @@ void AhrsUpdateAccel(const Eigen::Matrix<Scalar, 13, 1>& states,
     _H(2, 1) = _tmp40;
     _H(0, 2) = _tmp29;
     _H(1, 2) = _tmp34;
-    _H(0, 6) = 1;
-    _H(1, 7) = 1;
-    _H(2, 8) = 1;
+    _H(0, 3) = 1;
+    _H(1, 4) = 1;
+    _H(2, 5) = 1;
   }
 }  // NOLINT(readability/fn_size)
 
