@@ -20,9 +20,9 @@
 
 project(example_servo ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_typeC
+irm_add_arm_executable(${PROJECT_NAME}_test
     TARGET DJI_Board_TypeC
-    SOURCES typeC.cc)
+    SOURCES test.cc)
 
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeC
