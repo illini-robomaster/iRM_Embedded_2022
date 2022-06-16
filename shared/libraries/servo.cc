@@ -19,38 +19,36 @@
  ****************************************************************************/
 
 #include "servo.h"
-#include "cmsis_os.h"
-#include "bsp_pwm.h"
-#include "utils.h"
 
+#include "bsp_pwm.h"
+#include "cmsis_os.h"
+#include "utils.h"
 
 namespace control {
 
-  Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel) {
-    servo = new bsp::PWM(htim, channel, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, INIT_PULSE_WIDTH); 
-  }
-
-  Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq, uint32_t pulse_width) : pulse_width(pulse_width) {
-    servo = new bsp::PWM(htim, channel, clock_freq, output_freq, pulse_width);
-  }
-
-  Servo::~Servo() {
-    delete servo;
-    servo = nullptr;
-  }
-  void Servo::Start() {
-    servo->Start();
-  }
-
-  void Servo::Stop() {
-    servo->Stop();
-  }
-
-  void Servo::SetAngle(double _angle) {
-    _angle = clip<double>(_angle, MIN_ANGLE, MAX_ANGLE);
-    uint32_t p_width = static_cast<uint32_t>(_angle * ANGLE_TO_WIDTH);
-    p_width += BASE_WIDTH;
-    servo->SetPulseWidth(p_width);
-  }
-
+Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel) {
+  servo = new bsp::PWM(htim, channel, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, INIT_PULSE_WIDTH);
 }
+
+Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq,
+             uint32_t pulse_width)
+    : pulse_width(pulse_width) {
+  servo = new bsp::PWM(htim, channel, clock_freq, output_freq, pulse_width);
+}
+
+Servo::~Servo() {
+  delete servo;
+  servo = nullptr;
+}
+void Servo::Start() { servo->Start(); }
+
+void Servo::Stop() { servo->Stop(); }
+
+void Servo::SetAngle(double _angle) {
+  _angle = clip<double>(_angle, MIN_ANGLE, MAX_ANGLE);
+  uint32_t p_width = static_cast<uint32_t>(_angle * ANGLE_TO_WIDTH);
+  p_width += BASE_WIDTH;
+  servo->SetPulseWidth(p_width);
+}
+
+}  // namespace control

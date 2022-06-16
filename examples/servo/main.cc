@@ -18,25 +18,23 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "cmsis_os.h"
 #include "main.h"
-#include "bsp_pwm.h"
-#include "servo.h"
 
+#include "bsp_pwm.h"
+#include "cmsis_os.h"
+#include "servo.h"
 
 #define PWM_CHANNEL 2
 
 control::Servo* servo;
 
-void RM_RTOS_Init(void) {  
-  servo = new control::Servo(&htim1, PWM_CHANNEL);
-}
+void RM_RTOS_Init(void) { servo = new control::Servo(&htim1, PWM_CHANNEL); }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   servo->Start();
   while (1) {
-    servo->SetAngle(0.0); 
+    servo->SetAngle(0.0);
     osDelay(1000);
     servo->SetAngle(30.0);
     osDelay(1000);
@@ -47,4 +45,4 @@ void RM_RTOS_Default_Task(const void* args) {
     servo->SetAngle(120.0);
     osDelay(1000);
   }
-}  
+}
