@@ -60,6 +60,7 @@ package_t Protocol::Transmit(int cmd_id) {
   if (DATA_LENGTH < 0) return package_t{nullptr, 0};
   bufferTx[1] = (uint8_t)((uint32_t)DATA_LENGTH & 0xFF);
   bufferTx[2] = (uint8_t)((uint32_t)DATA_LENGTH >> BYTE);
+  bufferTx[3] = (uint32_t)seq++;
   AppendHeader(bufferTx, FRAME_HEADER_LEN);
   bufferTx[5] = (uint8_t)((uint32_t)cmd_id & 0xFF);
   bufferTx[6] = (uint8_t)((uint32_t)cmd_id >> BYTE);
@@ -139,12 +140,51 @@ bool Referee::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
 }
 
 int Referee::ProcessDataTx(int cmd_id, uint8_t* data) {
-  UNUSED(cmd_id);
-  UNUSED(data);
+  int data_len;
+  switch (cmd_id) {
+    case STUDENT_INTERACTIVE: {
+      switch (graph_content_) {
+        case NO_GRAPH:
+          data_len = -1;
+          break;
+        case DELETE_GRAPH:
+          data_len = sizeof(graphic_delete_t);
+          memcpy(data, &graphic_delete, data_len);
+          break;
+        case SINGLE_GRAPH:
+          data_len = sizeof(graphic_single_t);
+          memcpy(data, &graphic_single, data_len);
+          break;
+        case DOUBLE_GRAPH:
+          data_len = sizeof(graphic_double_t);
+          memcpy(data, &graphic_double, data_len);
+          break;
+        case FIVE_GRAPH:
+          data_len = sizeof(graphic_five_t);
+          memcpy(data, &graphic_five, data_len);
+          break;
+        case SEVEN_GRAPH:
+          data_len = sizeof(graphic_seven_t);
+          memcpy(data, &graphic_seven, data_len);
+          break;
+        case CHAR_GRAPH:
+          data_len = sizeof(graphic_character_t);
+          memcpy(data, &graphic_character, data_len);
+          break;
+        default:
+          data_len = -1;
+      }
+      graph_content_ = NO_GRAPH;
+      break;
+    }
+    default:
+      data_len = -1;
+  }
+  return data_len;
+}
 
-  /* TODO(neo): if we need to send message to referee in the future, please add handling code here
-   */
-  return -1;
+void Referee::PrepareUIContent(content graph_content) {
+  graph_content_ = graph_content;
 }
 
 bool Host::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
