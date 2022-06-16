@@ -18,8 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(Infantry ASM C CXX)
+project(Fortress ASM C CXX)
 
-irm_add_arm_executable(Infantry
-    TARGET DJI_Board_TypeA
-    SOURCES rm_rtos.cc gimbal.cc)
+irm_add_arm_executable(Fortress
+    TARGET DJI_Board_TypeC
+    SOURCES main.cc)

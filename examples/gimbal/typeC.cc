@@ -69,7 +69,7 @@ void imuTask(void* arg) {
 static control::MotorCANBase* pitch_motor = nullptr;
 static control::MotorCANBase* yaw_motor = nullptr;
 static control::Gimbal* gimbal = nullptr;
-control::gimbal_data_t* gimbal_param = nullptr;
+static control::gimbal_data_t* gimbal_param = nullptr;
 
 const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .attr_bits = osThreadDetached,
