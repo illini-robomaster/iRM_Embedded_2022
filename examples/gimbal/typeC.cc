@@ -138,12 +138,10 @@ void gimbalTask(void* arg) {
       }
     }
 
-//    gimbal->TargetAbs(0, 0);
-
-    pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5;
-    yaw_ratio = -dbus->mouse.x / 32767.0 * 7.5;
-    pitch_ratio += dbus->ch3 / 18000.0;
-    yaw_ratio += -dbus->ch2 / 18000.0;
+    pitch_ratio = -dbus->mouse.y / 32767.0 * 7.5 / 7.0;
+    yaw_ratio = -dbus->mouse.x / 32767.0 * 7.5 / 7.0;
+    pitch_ratio += -dbus->ch3 / 18000.0 / 7.0;
+    yaw_ratio += -dbus->ch2 / 18000.0 / 7.0;
     pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_, gimbal_param->pitch_max_);
     yaw_target = wrap<float>(yaw_target + yaw_ratio, -PI, PI);
 
@@ -153,15 +151,11 @@ void gimbalTask(void* arg) {
     pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
     yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
 
-    if (-0.05 < pitch_diff && pitch_diff < 0.05) {
+    if (-0.005 < pitch_diff && pitch_diff < 0.005) {
       pitch_diff = 0;
     }
 
-    if (-0.005 < yaw_diff && yaw_diff < 0.005) {
-      yaw_diff = 0;
-    }
-
-    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 60);
+    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 100);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(gimbal_motors, 2);
@@ -240,6 +234,7 @@ void RM_RTOS_Default_Task(const void* arg) {
  while (true) {
    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN)
      KillAll();
+
    set_cursor(0, 0);
    clear_screen();
 
@@ -248,6 +243,11 @@ void RM_RTOS_Default_Task(const void* arg) {
    print("Temp: %.2f\r\n", imu->Temp);
    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
          imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+
+   print("\r\n");
+
+   print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+   print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
 
    osDelay(100);
  }
