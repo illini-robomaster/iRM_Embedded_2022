@@ -18,32 +18,33 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#pragma once
 
-#include "bsp_laser.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
+#include "controller.h"
+#include "motor.h"
 
-static bsp::Laser* laser;
+namespace control {
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
-}
+typedef struct {
+  float power_limit;
+  float WARNING_power;
+  float WARNING_power_buff;
+  float buffer_total_current_limit;
+  float power_total_current_limit;
+} power_limit_t;
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+class PowerLimit {
+ public:
+  PowerLimit(int motor_num, power_limit_t* param);
+  void Output(float chassis_power, float chassis_power_buffer, float* PID_output, float* output);
 
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
-  }
-}
+ private:
+  int motor_num_;
+  float power_limit_;
+  float WARNING_power_;
+  float WARNING_power_buff_;
+  float buffer_total_current_limit_;
+  float power_total_current_limit_;
+};
+
+}  // namespace control

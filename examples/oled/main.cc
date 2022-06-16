@@ -20,30 +20,29 @@
 
 #include "main.h"
 
-#include "bsp_laser.h"
 #include "bsp_print.h"
+#include "bsp_uart.h"
 #include "cmsis_os.h"
+#include "oled.h"
 
-static bsp::Laser* laser;
+static display::OLED* OLED = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+  OLED = new display::OLED(&hi2c2, 0x3C);
 }
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+void RM_RTOS_Default_Task(const void* argument) {
+  UNUSED(argument);
+
+  OLED->ShowRMLOGO();
+  osDelay(2000);
+
+  OLED->ShowIlliniRMLOGO();
+  osDelay(2000);
 
   while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
+    OLED->DrawCat();
+    osDelay(1);
   }
 }

@@ -158,13 +158,14 @@ class ConstrainedPID {
 
   void ChangeMax(float max_iout, float max_out);
 
- private:
   float kp_;
   float ki_;
   float kd_;
 
-  float last_err_;
   float cumulated_err_;
+
+ private:
+  float last_err_;
 
   float max_iout_;
   float max_out_;
