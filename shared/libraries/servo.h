@@ -25,13 +25,18 @@
 
 constexpr double MIN_ANGLE = 0.0;
 constexpr double MAX_ANGLE = 120.0;
-constexpr uint32_t BASE_WIDTH = 900;
-constexpr double ANGLE_TO_WIDTH = 1.0 / 120 * 1200;
+constexpr uint32_t BASE_WIDTH = 600;
+// control pulse width = 600 - 2100.
+constexpr double ANGLE_TO_WIDTH = 1.0 / 120 * 1500;
+constexpr uint32_t TIM_CLOCK_FREQ = 1000000;
+constexpr uint32_t MOTOR_OUT_FREQ = 50;
+constexpr uint32_t INIT_PULSE_WIDTH = 600;
 
 namespace control {
 
   class Servo {
   public: 
+    Servo(TIM_HandleTypeDef* htim, uint8_t channel);
     Servo(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq, uint32_t pulse_width);
     ~Servo();
     void Start();

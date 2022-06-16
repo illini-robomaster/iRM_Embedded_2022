@@ -23,7 +23,12 @@
 #include "bsp_pwm.h"
 #include "utils.h"
 
+
 namespace control {
+
+  Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel) {
+    servo = new bsp::PWM(htim, channel, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, INIT_PULSE_WIDTH); 
+  }
 
   Servo::Servo(TIM_HandleTypeDef* htim, uint8_t channel, uint32_t clock_freq, uint32_t output_freq, uint32_t pulse_width) : pulse_width(pulse_width) {
     servo = new bsp::PWM(htim, channel, clock_freq, output_freq, pulse_width);

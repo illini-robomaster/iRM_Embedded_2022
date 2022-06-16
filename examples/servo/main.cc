@@ -23,15 +23,13 @@
 #include "bsp_pwm.h"
 #include "servo.h"
 
-#define PWM_CHANNEL 1
-#define TIM_CLOCK_FREQ 1000000
-#define MOTOR_OUT_FREQ 50
-#define SNAIL_IDLE_THROTTLE 900
+
+#define PWM_CHANNEL 2
 
 control::Servo* servo;
 
 void RM_RTOS_Init(void) {  
-  servo = new control::Servo(&htim1, PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, SNAIL_IDLE_THROTTLE);
+  servo = new control::Servo(&htim1, PWM_CHANNEL);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -49,5 +47,4 @@ void RM_RTOS_Default_Task(const void* args) {
     servo->SetAngle(120.0);
     osDelay(1000);
   }
-  servo->Stop();
 }  

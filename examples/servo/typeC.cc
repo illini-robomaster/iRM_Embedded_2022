@@ -22,33 +22,41 @@
 #include "main.h"
 #include "bsp_pwm.h"
 
-#define PWM_CHANNEL 1
+#define PWM_CHANNEL 2
 #define TIM_CLOCK_FREQ 1000000
 #define MOTOR_OUT_FREQ 50
-#define INIT_PULSE_WIDTH 900
+#define INIT_PULSE_WIDTH 600
 
 uint32_t pulse_width = INIT_PULSE_WIDTH;
 
 bsp::PWM* motor1;
+bsp::PWM* motor2;
 
 void RM_RTOS_Init(void) {
 
   motor1 = new bsp::PWM(&htim1, PWM_CHANNEL, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, INIT_PULSE_WIDTH);
+  motor2 = new bsp::PWM(&htim1, PWM_CHANNEL + 1, TIM_CLOCK_FREQ, MOTOR_OUT_FREQ, INIT_PULSE_WIDTH);
 
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   motor1->Start();
+  motor2->Start();
   while (1) {
-    motor1->SetPulseWidth(pulse_width);
-    osDelay(500);
-    if (pulse_width == INIT_PULSE_WIDTH) {
-      osDelay(1000);
-    }
-    pulse_width += 100;
-    if (pulse_width > 2100) {
-      pulse_width = INIT_PULSE_WIDTH;
-    }
+    //motor1->SetPulseWidth(pulse_width);
+    //motor2->SetPulseWidth(pulse_width);
+    //osDelay(500);
+    //if (pulse_width == INIT_PULSE_WIDTH) {
+    //  osDelay(1000);
+    //}
+    //pulse_width += 100;
+    //if (pulse_width > 2400) {
+    //  pulse_width = INIT_PULSE_WIDTH;
+    //}
+    motor2->SetPulseWidth(600);
+    osDelay(1500);
+    motor2->SetPulseWidth(2100);
+    osDelay(1500); 
   }
 }  
