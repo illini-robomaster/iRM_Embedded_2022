@@ -36,12 +36,12 @@ void RM_RTOS_Init(void) {
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  unsigned speed = 2600;
-  int length = 1800;
+  unsigned speed = 1000;
+  int length = 1000;
   bool direction = false;
   while (true) {
     if (!key->Read()) {
-      direction = !direction;
+      //direction = !direction;
       if (!direction) {
         stepper->Move(control::FORWARD, speed);
       } else {
@@ -55,3 +55,11 @@ void RM_RTOS_Default_Task(const void* arguments) {
     osDelay(100);
   }
 }
+
+/*
+ * A4988 步进电机驱动 接线说明
+ * 1B Black
+ * 1A Green
+ * 2A Red
+ * 2B Blue
+ */
