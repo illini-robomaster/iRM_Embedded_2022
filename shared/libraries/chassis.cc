@@ -38,16 +38,17 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       motors_[FourWheel::back_right] = chassis.motors[FourWheel::back_right];
 
       {
-        float* pid_param = new float[3]{30, 3, 0};  // {20, 0.01, 0.1}
+        float* pid_param = new float[3]{40, 0.1, 0};  // {20, 0.01, 0.1}
         pids_[FourWheel::front_left].Reinit(pid_param);
         pids_[FourWheel::front_right].Reinit(pid_param);
         pids_[FourWheel::back_left].Reinit(pid_param);
         pids_[FourWheel::back_right].Reinit(pid_param);
-        float motor_I_limit = 2000;
-        pids_[FourWheel::front_left].ChangeMax(motor_I_limit, motor_range);
-        pids_[FourWheel::front_right].ChangeMax(motor_I_limit, motor_range);
-        pids_[FourWheel::back_left].ChangeMax(motor_I_limit, motor_range);
-        pids_[FourWheel::back_right].ChangeMax(motor_I_limit, motor_range);
+        float motor_max_iout = 2000;
+        float motor_max_out = 20000;
+        pids_[FourWheel::front_left].ChangeMax(motor_max_iout, motor_max_out);
+        pids_[FourWheel::front_right].ChangeMax(motor_max_iout, motor_max_out);
+        pids_[FourWheel::back_left].ChangeMax(motor_max_iout, motor_max_out);
+        pids_[FourWheel::back_right].ChangeMax(motor_max_iout, motor_max_out);
       }
 
       power_limit_ = new PowerLimit(FourWheel::motor_num);

@@ -178,9 +178,10 @@ void gimbalTask(void* arg) {
     pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
     yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
 
-    if (-0.005 < pitch_diff && pitch_diff < 0.005) pitch_diff = 0;
+    constexpr float DEAD_ANGLE = 0.005;
+    if (-DEAD_ANGLE < pitch_diff && pitch_diff < DEAD_ANGLE) pitch_diff = 0;
 
-    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 100);
+    gimbal->TargetRel(-pitch_diff, yaw_diff);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
@@ -239,7 +240,7 @@ const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 256 * 4,
                                              .priority = (osPriority_t)osPriorityNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -331,7 +332,7 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 256 * 4,
                                              .priority = (osPriority_t)osPriorityBelowNormal,
                                              .tz_module = 0,
                                              .reserved = 0};

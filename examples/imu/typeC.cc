@@ -96,7 +96,7 @@ void RM_RTOS_Threads_Init(void) {
 
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
-
+  imu->Calibrate();
   while (true) {
     set_cursor(0, 0);
     clear_screen();
