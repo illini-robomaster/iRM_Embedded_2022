@@ -86,32 +86,8 @@ void RM_RTOS_Default_Task(const void* args) {
   float target = NOTCH;
 
   while (true) {
-    print("%d %d", dbus->ch3, dbus->ch2);
-#ifdef WITH_CONTROLLER
-    // joystick input range from -660 to 660
-    joystick_detector_abv.input(dbus->ch3 > 500);
-    joystick_detector_rgt.input(dbus->ch2 < -500);
-    joystick_detector_btm.input(dbus->ch3 < -500);
-    joystick_detector_lft.input(dbus->ch2 > 500);
-    if (joystick_detector_abv.posEdge()) {
-      target = 0;
-      servo->SetTarget(target);
-    } else if (joystick_detector_rgt.posEdge()) {
-      target = PI / 2;
-      servo->SetTarget(target);
-    } else if (joystick_detector_btm.posEdge()) {
-      target = PI;
-      servo->SetTarget(target);
-    } else if (joystick_detector_lft.posEdge()) {
-      target = -PI / 2;
-      servo->SetTarget(target);
-    }
-#else
-    key_detector.input(key.Read());
-    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, -PI, PI);
-    }
-#endif
+    target = 0;
+    servo->SetTarget(target);
     servo->CalcOutput();
     servo->PrintData();
     control::MotorCANBase::TransmitOutput(motors, 1);
