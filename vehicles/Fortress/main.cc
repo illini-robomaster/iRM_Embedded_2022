@@ -62,7 +62,7 @@ const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .cb_size = 0,
                                          .stack_mem = nullptr,
                                          .stack_size = 256 * 4,
-                                         .priority = (osPriority_t)osPriorityNormal,
+                                         .priority = (osPriority_t)osPriorityRealtime,
                                          .tz_module = 0,
                                          .reserved = 0};
 osThreadId_t imuTaskHandle;
@@ -96,7 +96,7 @@ const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
                                             .stack_size = 256 * 4,
-                                            .priority = (osPriority_t)osPriorityNormal,
+                                            .priority = (osPriority_t)osPriorityHigh,
                                             .tz_module = 0,
                                             .reserved = 0};
 osThreadId_t gimbalTaskHandle;
@@ -154,17 +154,18 @@ void gimbalTask(void* arg) {
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
       while (true) {
-        if (dbus->keyboard.bit.V) break;
+        if (dbus->keyboard.bit.V) {
+          break;
+        }
         osDelay(10);
       }
     }
 
     pitch_ratio = -dbus->mouse.y / 32767.0;
     yaw_ratio = -dbus->mouse.x / 32767.0;
-    if (dbus->swl == remote::UP) {
-      pitch_ratio += -dbus->ch3 / 660.0 / 210.0;
-      yaw_ratio += -dbus->ch2 / 660.0 / 210.0;
-    }
+
+    pitch_ratio += -dbus->ch3 / 660.0 / 210.0;
+    yaw_ratio += -dbus->ch2 / 660.0 / 210.0;
 
     pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_,
                                gimbal_param->pitch_max_);
@@ -198,7 +199,7 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
                                              .stack_size = 128 * 4,
-                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .priority = (osPriority_t)osPriorityAboveNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
 osThreadId_t refereeTaskHandle;
@@ -249,10 +250,30 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
+const float CHASSIS_DEADZONE = 0.08;
+
 void chassisTask(void* arg) {
   UNUSED(arg);
 
   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
+
+  float sin_yaw, cos_yaw;
+  float vx = 0, vy = 0;
+  float vx_remote = 0, vy_remote = 0;
+  float vx_set, vy_set, wz_set;
+  float relative_angle;
+
+  float spin_speed = 600;
+  float follow_speed = 400;
+
+  bool follow_mode = true;
+  int mode_change_delay = 1000 / CHASSIS_TASK_DELAY;
+  int mode_change_count = 0;
+
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    osDelay(100);
+  }
 
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
@@ -262,8 +283,33 @@ void chassisTask(void* arg) {
       }
     }
 
+    vx_remote = dbus->ch0;
+    vy_remote = dbus->ch1;
+    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+
+    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP) {
+      if (mode_change_count > mode_change_delay) {
+        mode_change_count = 0;
+        follow_mode = !follow_mode;
+      }
+    }
+    ++mode_change_count;
+
+    if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE) relative_angle = 0;
+
+    sin_yaw = arm_sin_f32(relative_angle);
+    cos_yaw = arm_cos_f32(relative_angle);
+    vx_set = cos_yaw * (vx + vx_remote) + sin_yaw * (vy + vy_remote);
+    vy_set = -sin_yaw * (vx + vx_remote) + cos_yaw * (vy + vy_remote);
+    if (!follow_mode) {
+      wz_set = spin_speed;
+    } else {
+      wz_set = follow_speed * relative_angle;
+      wz_set = clip<float>(wz_set, -290, 290);
+    }
+
     if (dbus->swl == remote::MID)
-      chassis->SetSpeed(dbus->ch0, dbus->ch1, dbus->ch2);
+      chassis->SetSpeed(vx_set, vy_set, wz_set);
     else
       chassis->SetSpeed(0, 0, 0);
 
@@ -285,7 +331,7 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
                                              .stack_size = 128 * 4,
-                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .priority = (osPriority_t)osPriorityBelowNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
 
@@ -300,6 +346,11 @@ void shooterTask(void* arg) {
   UNUSED(arg);
 
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
+
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    osDelay(100);
+  }
 
   while (!imu->CaliDone()) osDelay(100);
 
@@ -336,7 +387,7 @@ const osThreadAttr_t selfTestTaskAttribute = {.name = "selfTestTask",
                                               .cb_size = 0,
                                               .stack_mem = nullptr,
                                               .stack_size = 128 * 4,
-                                              .priority = (osPriority_t)osPriorityNormal,
+                                              .priority = (osPriority_t)osPriorityBelowNormal,
                                               .tz_module = 0,
                                               .reserved = 0};
 
@@ -497,7 +548,7 @@ void RM_RTOS_Threads_Init(void) {
 //==================================================================================================
 
 void KillAll() {
-  RM_EXPECT_TRUE(false, "Operation killed\r\n");
+  RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
 
   control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
@@ -506,7 +557,11 @@ void KillAll() {
   RGB->Display(color_blue);
   laser->Off();
   while (true) {
-    if (dbus->keyboard.bit.V) break;
+    if (dbus->keyboard.bit.V) {
+      RGB->Display(color_green);
+      laser->On();
+      break;
+    }
 
     pitch_motor->SetOutput(0);
     yaw_motor->SetOutput(0);

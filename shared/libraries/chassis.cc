@@ -56,7 +56,7 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;
       break;
     default:
-      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode\r\n");
   }
 }
 
@@ -74,7 +74,7 @@ Chassis::~Chassis() {
       speeds_ = nullptr;
       break;
     default:
-      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode\r\n");
   }
 }
 
@@ -92,7 +92,7 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
       break;
     }
     default:
-      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode\r\n");
   }
 }
 
@@ -130,7 +130,7 @@ void Chassis::Update(float power_limit, float chassis_power, float chassis_power
           control::ClipMotorRange(output[FourWheel::back_right]));
       break;
     default:
-      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode\r\n");
   }
 }
 
