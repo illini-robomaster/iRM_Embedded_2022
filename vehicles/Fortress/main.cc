@@ -37,6 +37,7 @@
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
+static const int SELFTEST_TASK_DELAY = 100;
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -431,7 +432,7 @@ void selfTestTask(void* arg) {
     fr_motor->connection_flag_ = false;
     bl_motor->connection_flag_ = false;
     br_motor->connection_flag_ = false;
-    osDelay(100);
+    osDelay(SELFTEST_TASK_DELAY);
 
     OLED->ShowBlock(0, 2, pitch_motor->connection_flag_);
     OLED->ShowBlock(0, 7, yaw_motor->connection_flag_);
