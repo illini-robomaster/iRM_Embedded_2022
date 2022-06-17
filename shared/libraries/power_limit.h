@@ -35,16 +35,12 @@ typedef struct {
 
 class PowerLimit {
  public:
-  PowerLimit(int motor_num, power_limit_t* param);
-  void Output(float chassis_power, float chassis_power_buffer, float* PID_output, float* output);
+  PowerLimit(int motor_num);
+  void Output(power_limit_t power_limit_info, float chassis_power, float chassis_power_buffer,
+              float* PID_output, float* output);
 
  private:
   int motor_num_;
-  float power_limit_;
-  float WARNING_power_;
-  float WARNING_power_buff_;
-  float buffer_total_current_limit_;
-  float power_total_current_limit_;
 };
 
 }  // namespace control

@@ -71,7 +71,7 @@ static bsp::BuzzerNoteDelayed War_Cant_of_Mars[] = {
 };
 
 void RM_RTOS_Init(void) {
-  bsp::Buzzer buzzer(&htim12, 1, 1000000);
+  bsp::Buzzer buzzer(&htim4, 3, 1000000);
   buzzer.SingSong(Mario);
   buzzer.SingSong(War_Cant_of_Mars);
 }

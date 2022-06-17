@@ -35,7 +35,7 @@ RGB::RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t ch
   B_.SetFrequency(3921);
 }
 
-void RGB::Show(uint32_t aRGB) {
+void RGB::Display(uint32_t aRGB) {
   volatile uint8_t alpha;
   volatile uint16_t red, green, blue;
 

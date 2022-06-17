@@ -42,7 +42,6 @@ int16_t ClipMotorRange(float output) {
  */
 static void can_motor_callback(const uint8_t data[], void* args) {
   MotorCANBase* motor = reinterpret_cast<MotorCANBase*>(args);
-  motor->connection_flag_ = true;
   motor->UpdateData(data);
 }
 
@@ -111,6 +110,8 @@ void Motor3508::UpdateData(const uint8_t data[]) {
   constexpr float OMEGA_SCALE = 2 * PI / 60;    // rpm -> rad / sec
   theta_ = raw_theta * THETA_SCALE;
   omega_ = raw_omega * OMEGA_SCALE;
+
+  connection_flag_ = true;
 }
 
 void Motor3508::PrintData() const {
@@ -143,6 +144,8 @@ void Motor6020::UpdateData(const uint8_t data[]) {
   constexpr float OMEGA_SCALE = 2 * PI / 60;    // rpm -> rad / sec
   theta_ = raw_theta * THETA_SCALE;
   omega_ = raw_omega * OMEGA_SCALE;
+
+  connection_flag_ = true;
 }
 
 void Motor6020::PrintData() const {
@@ -172,6 +175,8 @@ void Motor6623::UpdateData(const uint8_t data[]) {
 
   constexpr float THETA_SCALE = 2 * PI / 8192;
   theta_ = raw_theta * THETA_SCALE;
+
+  connection_flag_ = true;
 }
 
 void Motor6623::PrintData() const {
@@ -209,6 +214,8 @@ void Motor2006::UpdateData(const uint8_t data[]) {
   constexpr float OMEGA_SCALE = 2 * PI / 60;    // rpm -> rad / sec
   theta_ = raw_theta * THETA_SCALE;
   omega_ = raw_omega * OMEGA_SCALE;
+
+  connection_flag_ = true;
 }
 
 void Motor2006::PrintData() const {

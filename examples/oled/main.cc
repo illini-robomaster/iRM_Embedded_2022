@@ -32,8 +32,8 @@ void RM_RTOS_Init(void) {
   OLED = new display::OLED(&hi2c2, 0x3C);
 }
 
-void RM_RTOS_Default_Task(const void* argument) {
-  UNUSED(argument);
+void RM_RTOS_Default_Task(const void* arg) {
+  UNUSED(arg);
 
   OLED->ShowRMLOGO();
   osDelay(2000);

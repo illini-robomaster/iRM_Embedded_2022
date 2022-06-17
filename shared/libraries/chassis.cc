@@ -50,23 +50,13 @@ Chassis::Chassis(const chassis_t chassis) : pids_() {
         pids_[FourWheel::back_right].ChangeMax(motor_I_limit, motor_range);
       }
 
-      {
-        power_limit_t power_limit_param;
-        power_limit_param.power_limit = 120;
-        power_limit_param.WARNING_power = 105;
-        power_limit_param.WARNING_power_buff = 50;
-        power_limit_param.buffer_total_current_limit = 16000;
-        power_limit_param.power_total_current_limit =
-            power_limit_param.power_limit * (20000 / 80.0);
-
-        power_limit_ = new PowerLimit(FourWheel::motor_num, &power_limit_param);
-      }
+      power_limit_ = new PowerLimit(FourWheel::motor_num);
 
       speeds_ = new float[FourWheel::motor_num];
       for (int i = 0; i < FourWheel::motor_num; i++) speeds_[i] = 0;
       break;
     default:
-      RM_ASSERT_TRUE(false, "No chassis type specified");
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
   }
 }
 
@@ -83,12 +73,14 @@ Chassis::~Chassis() {
       delete[] speeds_;
       speeds_ = nullptr;
       break;
+    default:
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
   }
 }
 
 void Chassis::SetSpeed(const float x_speed, const float y_speed, const float turn_speed) {
   switch (model_) {
-    case CHASSIS_MECANUM_WHEEL:
+    case CHASSIS_MECANUM_WHEEL: {
       constexpr int MAX_ABS_CURRENT = 12288;  // refer to MotorM3508 for details
       float move_sum = fabs(x_speed) + fabs(y_speed) + fabs(turn_speed);
       float scale = move_sum >= MAX_ABS_CURRENT ? MAX_ABS_CURRENT / move_sum : 1;
@@ -98,10 +90,19 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
       speeds_[FourWheel::front_right] = -scale * (y_speed - x_speed - turn_speed);
       speeds_[FourWheel::back_right] = -scale * (y_speed + x_speed - turn_speed);
       break;
+    }
+    default:
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
   }
 }
 
-void Chassis::Update(float chassis_power, float chassis_power_buffer) {
+void Chassis::Update(float power_limit, float chassis_power, float chassis_power_buffer) {
+  power_limit_info_.power_limit = power_limit;
+  power_limit_info_.WARNING_power = power_limit * 0.9;
+  power_limit_info_.WARNING_power_buff = 50;
+  power_limit_info_.buffer_total_current_limit = 3500 * FourWheel::motor_num;
+  power_limit_info_.power_total_current_limit = 5000 * FourWheel::motor_num / 80.0 * power_limit;
+
   switch (model_) {
     case CHASSIS_MECANUM_WHEEL:
       float PID_output[FourWheel::motor_num];
@@ -116,7 +117,8 @@ void Chassis::Update(float chassis_power, float chassis_power_buffer) {
       PID_output[FourWheel::back_right] = pids_[FourWheel::back_right].ComputeOutput(
           motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right]));
 
-      power_limit_->Output(chassis_power, chassis_power_buffer, PID_output, output);
+      power_limit_->Output(power_limit_info_, chassis_power, chassis_power_buffer, PID_output,
+                           output);
 
       motors_[FourWheel::front_left]->SetOutput(
           control::ClipMotorRange(output[FourWheel::front_left]));
@@ -126,8 +128,9 @@ void Chassis::Update(float chassis_power, float chassis_power_buffer) {
           control::ClipMotorRange(output[FourWheel::front_right]));
       motors_[FourWheel::back_right]->SetOutput(
           control::ClipMotorRange(output[FourWheel::back_right]));
-
       break;
+    default:
+      RM_ASSERT_TRUE(false, "Not Supported Chassis Mode");
   }
 }
 
