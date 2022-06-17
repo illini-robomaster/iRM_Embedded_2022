@@ -558,6 +558,7 @@ void KillAll() {
   laser->Off();
   while (true) {
     if (dbus->keyboard.bit.V) {
+      RGB->Display(color_green);
       laser->On();
       break;
     }
