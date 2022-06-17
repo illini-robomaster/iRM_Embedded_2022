@@ -33,6 +33,7 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "user_interface.h"
 
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
@@ -450,6 +451,155 @@ void selfTestTask(void* arg) {
 }
 
 //==================================================================================================
+// UI
+//==================================================================================================
+
+const osThreadAttr_t UITaskAttribute = {.name = "UITask",
+                                             .attr_bits = osThreadDetached,
+                                             .cb_mem = nullptr,
+                                             .cb_size = 0,
+                                             .stack_mem = nullptr,
+                                             .stack_size = 128 * 4,
+                                             .priority = (osPriority_t)osPriorityBelowNormal,
+                                             .tz_module = 0,
+                                             .reserved = 0};
+
+osThreadId_t UITaskHandle;
+
+static communication::UserInterface* UI = nullptr;
+
+void UITask(void* arg) {
+    UNUSED(arg);
+
+    communication::package_t frame;
+    communication::graphic_data_t graphGimbal;
+    communication::graphic_data_t graphChassis;
+    communication::graphic_data_t graphArrow;
+    communication::graphic_data_t graphEmpty1;
+    communication::graphic_data_t graphEmpty2;
+    communication::graphic_data_t graphCrosshair1;
+    communication::graphic_data_t graphCrosshair2;
+    communication::graphic_data_t graphCrosshair3;
+    communication::graphic_data_t graphCrosshair4;
+    communication::graphic_data_t graphCrosshair5;
+    communication::graphic_data_t graphCrosshair6;
+    communication::graphic_data_t graphCrosshair7;
+    communication::graphic_data_t graphBarFrame;
+    communication::graphic_data_t graphBar;
+    communication::graphic_data_t graphPercent;
+    communication::graphic_data_t graphDiag;
+    communication::graphic_data_t graphMode;
+
+    UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal, graphEmpty1, graphEmpty2);
+    referee->PrepareUIContent(communication::FIVE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4, &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2, graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6, graphCrosshair7);
+    referee->PrepareUIContent(communication::SEVEN_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    UI->CapGUIInit(&graphBarFrame, &graphBar);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
+    referee->PrepareUIContent(communication::DOUBLE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    UI->CapGUICharInit(&graphPercent);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(), UI->getPercentLen());
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    char diagStr[30] = " ";
+    UI->DiagGUIInit(&graphDiag, 30);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    char msgBuffer[30] = "Error_one";
+    UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    char msgBuffer2[30] = "Error_two";
+    UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    char msgBuffer3[30] = "Error_three";
+    UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    char str[] = "NORMAL MODE";
+    UI->ModeGUIInit(&graphMode, sizeof str - 1);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, str, sizeof str);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    osDelay(2000);
+    char modeStr[] = "SPIN MODE";     // mode name
+    UI->ModeGuiUpdate(&graphMode, sizeof modeStr - 1);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(100);
+
+    //  osDelay(2000);
+    ////   clear diagnosis messages
+    //  for (int i = 1; i <= UI->getMessageCount(); ++i){
+    //    UI->DiagGUIClear(UI, referee, &graphDiag, i);
+    //    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    //    referee_uart->Write(frame.data, frame.length);
+    //    osDelay(50);
+    //  }
+
+    float i = 0;
+    float j = 1.0;
+    while (true){
+        UI->ChassisGUIUpdate(i);
+        UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal, graphEmpty1, graphEmpty2);
+        referee->PrepareUIContent(communication::FIVE_GRAPH);
+        frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+        referee_uart->Write(frame.data, frame.length);
+        i+=0.1;
+
+        UI->CapGUIUpdate(std::abs(sin(j)));
+        UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
+        referee->PrepareUIContent(communication::SINGLE_GRAPH);
+        frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+        referee_uart->Write(frame.data, frame.length);
+        j+=0.1;
+
+        UI->CapGUICharUpdate();
+        UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(), UI->getPercentLen());
+        referee->PrepareUIContent(communication::CHAR_GRAPH);
+        frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+        referee_uart->Write(frame.data, frame.length);
+        osDelay(100);
+    }
+}
+
+//==================================================================================================
 // RM Init
 //==================================================================================================
 
@@ -529,6 +679,8 @@ void RM_RTOS_Init(void) {
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
   RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
+
+  UI = new communication::UserInterface(UI_Data_RobotID_RStandard3, UI_Data_CilentID_RStandard3);
 }
 
 //==================================================================================================
@@ -542,6 +694,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
+  UITaskHandle = osThreadNew(selfTestTask, nullptr, &UITaskAttribute);
 }
 
 //==================================================================================================

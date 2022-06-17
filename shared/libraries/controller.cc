@@ -91,6 +91,7 @@ float ConstrainedPID::ComputeOutput(float error) {
   cumulated_err_ += error;
   last_err_ = error;
   cumulated_err_ = clip<float>(cumulated_err_, -max_iout_, max_iout_);
+  print("%8.4f\r\n", cumulated_err_);
   float out = kp_ * error + ki_ * cumulated_err_ + kd_ * (error - last_err_);
   out = clip<float>(out, -max_out_, max_out_);
   return out;
