@@ -38,6 +38,7 @@ static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
+static const int KILLALL_DELAY = 100;
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -155,9 +156,8 @@ void gimbalTask(void* arg) {
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
       while (true) {
-        if (dbus->keyboard.bit.V) {
+        if (dbus->keyboard.bit.V)
           break;
-        }
         osDelay(10);
       }
     }
@@ -557,6 +557,8 @@ void KillAll() {
 
   RGB->Display(color_blue);
   laser->Off();
+
+  reviveDelay = 1000 / ;
   while (true) {
     if (dbus->keyboard.bit.V) {
       RGB->Display(color_green);
@@ -579,7 +581,7 @@ void KillAll() {
     ld_motor->SetOutput(0);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
 
-    osDelay(10);
+    osDelay(KILLALL_DELAY);
   }
 }
 
