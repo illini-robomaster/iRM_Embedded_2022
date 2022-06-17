@@ -295,8 +295,7 @@ void chassisTask(void* arg) {
     }
     ++mode_change_count;
 
-    if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE)
-      relative_angle = 0;
+    if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE) relative_angle = 0;
 
     sin_yaw = arm_sin_f32(relative_angle);
     cos_yaw = arm_cos_f32(relative_angle);
