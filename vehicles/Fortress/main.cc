@@ -169,17 +169,17 @@ void gimbalTask(void* arg) {
 
     pitch_target = clip<float>(pitch_target + pitch_ratio, -gimbal_param->pitch_max_,
                                gimbal_param->pitch_max_);
-    yaw_target = wrap<float>(yaw_target + yaw_ratio, -PI, PI);
+    yaw_target = clip<float>(yaw_target + yaw_ratio, -PI, PI);
 
     pitch_curr = imu->INS_angle[1];
     yaw_curr = imu->INS_angle[0];
 
     pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
-    yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
+    yaw_diff = clip<float>(yaw_target - yaw_curr, -PI, PI);
 
     if (-0.005 < pitch_diff && pitch_diff < 0.005) pitch_diff = 0;
 
-    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 100);
+    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 80);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
@@ -408,7 +408,7 @@ void selfTestTask(void* arg) {
   UNUSED(arg);
 
   OLED->ShowIlliniRMLOGO();
-  buzzer->SingSong(Mario);
+  buzzer->SingSong(Mario, [](uint32_t milli) { osDelay(milli); });
   OLED->OperateGram(display::PEN_CLEAR);
 
   OLED->ShowString(0, 0, (uint8_t*)"GP");
