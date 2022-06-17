@@ -279,7 +279,6 @@ void chassisTask(void* arg) {
     vy_remote = dbus->ch1;
 
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-    if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) relative_angle = 0;
 
     sin_yaw = arm_sin_f32(relative_angle);
     cos_yaw = arm_cos_f32(relative_angle);
@@ -293,6 +292,7 @@ void chassisTask(void* arg) {
       wz_set = spin_speed;
     } else {
       wz_set = follow_speed * relative_angle;
+      if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
     }
 
     chassis->SetSpeed(vx_set, vy_set, wz_set);
@@ -342,13 +342,19 @@ void shooterTask(void* arg) {
     while (Dead) osDelay(100);
 
     if (referee->game_robot_status.mains_power_shooter_output &&
+        referee->power_heat_data.shooter_id1_17mm_cooling_heat <
+            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 10 &&
         (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
     if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
         dbus->swr == remote::DOWN)
       shooter->SetFlywheelSpeed(0);
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
+      shooter->SetFlywheelSpeed(490);
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18)
+      shooter->SetFlywheelSpeed(560);
     else
-      shooter->SetFlywheelSpeed(450);
+      shooter->SetFlywheelSpeed(0);
 
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
@@ -568,6 +574,8 @@ void KillAll() {
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
 
+  bool pass = true;
+
   while (true) {
     FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
     if (FakeDeath.posEdge()) {
@@ -604,9 +612,15 @@ void RM_RTOS_Default_Task(const void* arg) {
 
     print("\r\n");
 
-    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
+    print("Shooter Heat: %hu / %d\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat,
+          referee->game_robot_status.shooter_id1_17mm_cooling_limit);
+    print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
+          referee->game_robot_status.shooter_id1_17mm_speed_limit);
     print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
+
+    if (referee->shoot_data.bullet_speed > referee->game_robot_status.shooter_id1_17mm_speed_limit)
+      pass = false;
+    print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
 
     osDelay(DEFAULT_TASK_DELAY);
   }
