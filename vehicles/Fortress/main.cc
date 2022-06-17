@@ -33,12 +33,14 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "utils.h"
 
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
 static const int KILLALL_DELAY = 100;
+static const int DEFAULT_TASK_DELAY = 100;
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -51,6 +53,13 @@ static const uint32_t color_blue = 0xFF0000FF;
 static const uint32_t color_yellow = 0xFFFFFF00;
 static const uint32_t color_cyan = 0xFF00FFFF;
 static const uint32_t color_magenta = 0xFFFF00FF;
+
+static BoolEdgeDetector FakeDeath(false);
+static volatile bool Dead = false;
+static BoolEdgeDetector ChangeMode(false);
+static volatile bool SpinMode = false;
+
+static volatile float relative_angle = 0;
 
 //==================================================================================================
 // IMU
@@ -154,12 +163,7 @@ void gimbalTask(void* arg) {
   float pitch_diff, yaw_diff;
 
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
-      while (true) {
-        if (dbus->keyboard.bit.V) break;
-        osDelay(10);
-      }
-    }
+    while (Dead) osDelay(100);
 
     pitch_ratio = -dbus->mouse.y / 32767.0;
     yaw_ratio = -dbus->mouse.x / 32767.0;
@@ -176,9 +180,6 @@ void gimbalTask(void* arg) {
 
     pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
     yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
-
-    constexpr float DEAD_ANGLE = 0.005;
-    if (-DEAD_ANGLE < pitch_diff && pitch_diff < DEAD_ANGLE) pitch_diff = 0;
 
     gimbal->TargetRel(-pitch_diff, yaw_diff);
 
@@ -251,7 +252,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.08;
+const float CHASSIS_DEADZONE = 0.8;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -259,17 +260,12 @@ void chassisTask(void* arg) {
   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
 
   float sin_yaw, cos_yaw;
-  float vx = 0, vy = 0;
-  float vx_remote = 0, vy_remote = 0;
+  float vx_keyboard = 0, vy_keyboard = 0;
+  float vx_remote, vy_remote;
   float vx_set, vy_set, wz_set;
-  float relative_angle;
 
   float spin_speed = 600;
-  float follow_speed = 600;
-
-  bool follow_mode = true;
-  int mode_change_delay = 1000 / CHASSIS_TASK_DELAY;
-  int mode_change_count = 0;
+  float follow_speed = 400;
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
@@ -277,42 +273,29 @@ void chassisTask(void* arg) {
   }
 
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
-      while (true) {
-        if (dbus->keyboard.bit.V) break;
-        osDelay(10);
-      }
-    }
+    while (Dead) osDelay(100);
 
     vx_remote = dbus->ch0;
     vy_remote = dbus->ch1;
+
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-
-    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP) {
-      if (mode_change_count > mode_change_delay) {
-        mode_change_count = 0;
-        follow_mode = !follow_mode;
-      }
-    }
-    ++mode_change_count;
-
-    if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE) relative_angle = 0;
 
     sin_yaw = arm_sin_f32(relative_angle);
     cos_yaw = arm_cos_f32(relative_angle);
-    vx_set = cos_yaw * (vx + vx_remote) + sin_yaw * (vy + vy_remote);
-    vy_set = -sin_yaw * (vx + vx_remote) + cos_yaw * (vy + vy_remote);
-    if (!follow_mode) {
+    vx_set = cos_yaw * (vx_keyboard + vx_remote) + sin_yaw * (vy_keyboard + vy_remote);
+    vy_set = -sin_yaw * (vx_keyboard + vx_remote) + cos_yaw * (vy_keyboard + vy_remote);
+
+    ChangeMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
+    if (ChangeMode.posEdge()) SpinMode = !SpinMode;
+
+    if (SpinMode) {
       wz_set = spin_speed;
     } else {
       wz_set = follow_speed * relative_angle;
-      wz_set = clip<float>(wz_set, -290, 290);
+      if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
     }
 
-    if (dbus->swl == remote::MID)
-      chassis->SetSpeed(vx_set, vy_set, wz_set);
-    else
-      chassis->SetSpeed(0, 0, 0);
+    chassis->SetSpeed(vx_set, vy_set, wz_set);
 
     chassis->Update((float)referee->game_robot_status.chassis_power_limit,
                     referee->power_heat_data.chassis_power,
@@ -356,22 +339,23 @@ void shooterTask(void* arg) {
   while (!imu->CaliDone()) osDelay(100);
 
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
-      while (true) {
-        if (dbus->keyboard.bit.V) break;
-        osDelay(10);
-      }
-    }
+    while (Dead) osDelay(100);
+
     if (referee->game_robot_status.mains_power_shooter_output &&
-        (dbus->mouse.l || dbus->swr == remote::UP)) {
+        referee->power_heat_data.shooter_id1_17mm_cooling_heat <
+            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 10 &&
+        (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
-    }
     if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
-        dbus->swr == remote::DOWN) {
+        dbus->swr == remote::DOWN)
       shooter->SetFlywheelSpeed(0);
-    } else {
-      shooter->SetFlywheelSpeed(450);
-    }
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
+      shooter->SetFlywheelSpeed(490);
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18)
+      shooter->SetFlywheelSpeed(560);
+    else
+      shooter->SetFlywheelSpeed(0);
+
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);
@@ -559,7 +543,10 @@ void KillAll() {
   laser->Off();
 
   while (true) {
-    if (dbus->keyboard.bit.V) {
+    FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
+    if (FakeDeath.posEdge()) {
+      SpinMode = false;
+      Dead = false;
       RGB->Display(color_green);
       laser->On();
       break;
@@ -587,8 +574,14 @@ void KillAll() {
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
 
+  bool pass = true;
+
   while (true) {
-    if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) KillAll();
+    FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
+    if (FakeDeath.posEdge()) {
+      Dead = true;
+      KillAll();
+    }
 
     set_cursor(0, 0);
     clear_screen();
@@ -619,11 +612,17 @@ void RM_RTOS_Default_Task(const void* arg) {
 
     print("\r\n");
 
-    print("Shooter Cooling Heat: %hu\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat);
+    print("Shooter Heat: %hu / %d\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat,
+          referee->game_robot_status.shooter_id1_17mm_cooling_limit);
+    print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
+          referee->game_robot_status.shooter_id1_17mm_speed_limit);
     print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-    print("Bullet Speed: %.3f\r\n", referee->shoot_data.bullet_speed);
 
-    osDelay(100);
+    if (referee->shoot_data.bullet_speed > referee->game_robot_status.shooter_id1_17mm_speed_limit)
+      pass = false;
+    print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
+
+    osDelay(DEFAULT_TASK_DELAY);
   }
 }
 
