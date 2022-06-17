@@ -183,9 +183,7 @@ int Referee::ProcessDataTx(int cmd_id, uint8_t* data) {
   return data_len;
 }
 
-void Referee::PrepareUIContent(content graph_content) {
-  graph_content_ = graph_content;
-}
+void Referee::PrepareUIContent(content graph_content) { graph_content_ = graph_content; }
 
 bool Host::ProcessDataRx(int cmd_id, const uint8_t* data, int length) {
   switch (cmd_id) {

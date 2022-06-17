@@ -1,22 +1,22 @@
 /****************************************************************************
-*                                                                          *
-*  Copyright (C) 2022 RoboMaster.                                          *
-*  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
-*                                                                          *
-*  This program is free software: you can redistribute it and/or modify    *
-*  it under the terms of the GNU General Public License as published by    *
-*  the Free Software Foundation, either version 3 of the License, or       *
-*  (at your option) any later version.                                     *
-*                                                                          *
-*  This program is distributed in the hope that it will be useful,         *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
-*  GNU General Public License for more details.                            *
-*                                                                          *
-*  You should have received a copy of the GNU General Public License       *
-*  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
-*                                                                          *
-****************************************************************************/
+ *                                                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
+ *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+ *                                                                          *
+ *  This program is free software: you can redistribute it and/or modify    *
+ *  it under the terms of the GNU General Public License as published by    *
+ *  the Free Software Foundation, either version 3 of the License, or       *
+ *  (at your option) any later version.                                     *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                          *
+ ****************************************************************************/
 
 #pragma once
 
@@ -94,51 +94,68 @@ namespace communication {
 class UserInterface {
  public:
   UserInterface(int Robot_ID, int Client_ID);
-  void LineDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
-  void RectangleDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
-  void CircleDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t graph_radius);
-  void EllipseDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t x_length, uint32_t y_length);
-  void ArcDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_startAngle, uint32_t graph_endAngle, uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t x_length, uint32_t y_length);
-  void FloatDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t graph_digit, uint32_t graph_width, uint32_t start_x, uint32_t start_y, float graph_float);
-  void IntDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t graph_width, uint32_t start_x, uint32_t start_y, int graph_int);
-  void CharDraw(graphic_data_t *image, const char name[3], uint32_t graph_operate, uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size, uint32_t char_length, uint32_t graph_width, uint32_t start_x, uint32_t start_y);
+  void LineDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x,
+                uint32_t start_y, uint32_t end_x, uint32_t end_y);
+  void RectangleDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                     uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                     uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
+  void CircleDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                  uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                  uint32_t start_x, uint32_t start_y, uint32_t graph_radius);
+  void EllipseDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                   uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width,
+                   uint32_t start_x, uint32_t start_y, uint32_t x_length, uint32_t y_length);
+  void ArcDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+               uint32_t graph_layer, uint32_t graph_color, uint32_t graph_startAngle,
+               uint32_t graph_endAngle, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+               uint32_t x_length, uint32_t y_length);
+  void FloatDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                 uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size,
+                 uint32_t graph_digit, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                 float graph_float);
+  void IntDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+               uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size,
+               uint32_t graph_width, uint32_t start_x, uint32_t start_y, int graph_int);
+  void CharDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
+                uint32_t graph_layer, uint32_t graph_color, uint32_t graph_size,
+                uint32_t char_length, uint32_t graph_width, uint32_t start_x, uint32_t start_y);
 
   int UIDelete(uint8_t* data_buffer, uint8_t del_operate, uint8_t del_layer);
   int GraphRefresh(uint8_t* data_buffer, int cnt, ...);
   int CharRefresh(uint8_t* data_buffer, graphic_data_t image, char* theString, int len);
 
-  void ChassisGUIInit(graphic_data_t *chassis, graphic_data_t *arrow, graphic_data_t *gimbal, graphic_data_t *empty1, graphic_data_t *empty2);
+  void ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arrow, graphic_data_t* gimbal,
+                      graphic_data_t* empty1, graphic_data_t* empty2);
   void ChassisGUIUpdate(float relative);
-  void CrosshairGUI(graphic_data_t *crosshair1, graphic_data_t *crosshair2, graphic_data_t *crosshair3, graphic_data_t *crosshair4, graphic_data_t *crosshair5, graphic_data_t *crosshair6, graphic_data_t *crosshair7);
-  void CapGUIInit(graphic_data_t *barFrame, graphic_data_t *bar);
-  void CapGUIUpdate(float cap);    // cap 0 - 1
-  void CapGUICharInit(graphic_data_t *percent);
+  void CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                    graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                    graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                    graphic_data_t* crosshair7);
+  void CapGUIInit(graphic_data_t* barFrame, graphic_data_t* bar);
+  void CapGUIUpdate(float cap);  // cap 0 - 1
+  void CapGUICharInit(graphic_data_t* percent);
   void CapGUICharUpdate();
-  void DiagGUIInit(graphic_data_t *message, int len);
+  void DiagGUIInit(graphic_data_t* message, int len);
   void DiagGUIUpdate(int len);
-  void DiagGUIClear(UserInterface *UI, Referee *referee, graphic_data_t *graph, int currCount);
-  void AddMessage(char *messageStr, int len, UserInterface *UI, Referee *referee, graphic_data_t *graph);
-  void ModeGUIInit(graphic_data_t *modeGraph, int len);
-  void ModeGuiUpdate(graphic_data_t *modeGraph, uint32_t color, int len);
+  void DiagGUIClear(UserInterface* UI, Referee* referee, graphic_data_t* graph, int currCount);
+  void AddMessage(char* messageStr, int len, UserInterface* UI, Referee* referee,
+                  graphic_data_t* graph);
+  void ModeGUIInit(graphic_data_t* modeGraph, int len);
+  void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color, int len);
 
-  char* getPercentStr(){
-      return percentStr_;
-  }
-  int getPercentLen(){
-      return percentLen_;
-  }
-  int getMessageCount(){
-      return messageCount_;
-  }
+  char* getPercentStr() { return percentStr_; }
+  int getPercentLen() { return percentLen_; }
+  int getMessageCount() { return messageCount_; }
 
  private:
-  graphic_data_t *gimbal_;
-  graphic_data_t *chassis_;
-  graphic_data_t *arrow_;
-  graphic_data_t *crosshair_;
-  graphic_data_t *bar_;
-  graphic_data_t *percent_;
-  graphic_data_t *diag_;
+  graphic_data_t* gimbal_;
+  graphic_data_t* chassis_;
+  graphic_data_t* arrow_;
+  graphic_data_t* crosshair_;
+  graphic_data_t* bar_;
+  graphic_data_t* percent_;
+  graphic_data_t* diag_;
   int Robot_ID_;
   int Client_ID_;
   int centerX_ = 960;
@@ -153,10 +170,10 @@ class UserInterface {
   int percentLen_;
   float cap_;
   int diagStartX_ = 1470;
-  int diagStartY_ = 910; // 420 - 910
+  int diagStartY_ = 910;  // 420 - 910
   int messageCount_ = 0;
   int modeStartX_ = 1220;
   int modeStartY_ = 45;
 };
 
-}
+}  // namespace communication
