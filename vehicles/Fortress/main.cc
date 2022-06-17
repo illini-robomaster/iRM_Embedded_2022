@@ -26,6 +26,7 @@
 #include "bsp_print.h"
 #include "chassis.h"
 #include "cmsis_os.h"
+#include "utils.h"
 #include "dbus.h"
 #include "gimbal.h"
 #include "i2c.h"
@@ -253,6 +254,8 @@ static control::Chassis* chassis = nullptr;
 
 const float CHASSIS_DEADZONE = 0.08;
 
+static BoolEdgeDetector changeMode(false);
+
 void chassisTask(void* arg) {
   UNUSED(arg);
 
@@ -266,10 +269,6 @@ void chassisTask(void* arg) {
 
   float spin_speed = 600;
   float follow_speed = 600;
-
-  bool follow_mode = true;
-  int mode_change_delay = 1000 / CHASSIS_TASK_DELAY;
-  int mode_change_count = 0;
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
@@ -288,13 +287,7 @@ void chassisTask(void* arg) {
     vy_remote = dbus->ch1;
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
 
-    if (dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP) {
-      if (mode_change_count > mode_change_delay) {
-        mode_change_count = 0;
-        follow_mode = !follow_mode;
-      }
-    }
-    ++mode_change_count;
+    changeMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
 
     if (relative_angle < CHASSIS_DEADZONE && relative_angle > -CHASSIS_DEADZONE) relative_angle = 0;
 
