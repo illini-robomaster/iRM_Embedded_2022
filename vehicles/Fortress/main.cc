@@ -156,8 +156,7 @@ void gimbalTask(void* arg) {
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
       while (true) {
-        if (dbus->keyboard.bit.V)
-          break;
+        if (dbus->keyboard.bit.V) break;
         osDelay(10);
       }
     }
@@ -266,7 +265,7 @@ void chassisTask(void* arg) {
   float relative_angle;
 
   float spin_speed = 600;
-  float follow_speed = 400;
+  float follow_speed = 600;
 
   bool follow_mode = true;
   int mode_change_delay = 1000 / CHASSIS_TASK_DELAY;
@@ -332,7 +331,7 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 256 * 4,
+                                             .stack_size = 128 * 4,
                                              .priority = (osPriority_t)osPriorityBelowNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
