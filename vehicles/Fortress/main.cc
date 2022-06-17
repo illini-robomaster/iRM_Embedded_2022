@@ -62,7 +62,7 @@ const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .cb_size = 0,
                                          .stack_mem = nullptr,
                                          .stack_size = 256 * 4,
-                                         .priority = (osPriority_t)osPriorityAboveNormal,
+                                         .priority = (osPriority_t)osPriorityRealtime,
                                          .tz_module = 0,
                                          .reserved = 0};
 osThreadId_t imuTaskHandle;
@@ -96,7 +96,7 @@ const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
                                             .stack_size = 256 * 4,
-                                            .priority = (osPriority_t)osPriorityAboveNormal,
+                                            .priority = (osPriority_t)osPriorityHigh,
                                             .tz_module = 0,
                                             .reserved = 0};
 osThreadId_t gimbalTaskHandle;
@@ -199,7 +199,7 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
                                              .stack_size = 128 * 4,
-                                             .priority = (osPriority_t)osPriorityNormal,
+                                             .priority = (osPriority_t)osPriorityAboveNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
 osThreadId_t refereeTaskHandle;
