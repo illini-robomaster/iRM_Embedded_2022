@@ -558,7 +558,6 @@ void KillAll() {
   RGB->Display(color_blue);
   laser->Off();
 
-  reviveDelay = 1000 / ;
   while (true) {
     if (dbus->keyboard.bit.V) {
       RGB->Display(color_green);
