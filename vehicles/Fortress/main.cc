@@ -37,6 +37,8 @@
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
+static const int SELFTEST_TASK_DELAY = 100;
+static const int KILLALL_DELAY = 100;
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -154,9 +156,7 @@ void gimbalTask(void* arg) {
   while (true) {
     if (dbus->keyboard.bit.B || dbus->swl == remote::DOWN) {
       while (true) {
-        if (dbus->keyboard.bit.V) {
-          break;
-        }
+        if (dbus->keyboard.bit.V) break;
         osDelay(10);
       }
     }
@@ -177,9 +177,10 @@ void gimbalTask(void* arg) {
     pitch_diff = clip<float>(pitch_target - pitch_curr, -PI, PI);
     yaw_diff = wrap<float>(yaw_target - yaw_curr, -PI, PI);
 
-    if (-0.005 < pitch_diff && pitch_diff < 0.005) pitch_diff = 0;
+    constexpr float DEAD_ANGLE = 0.005;
+    if (-DEAD_ANGLE < pitch_diff && pitch_diff < DEAD_ANGLE) pitch_diff = 0;
 
-    gimbal->TargetRel(-pitch_diff / 60, yaw_diff / 100);
+    gimbal->TargetRel(-pitch_diff, yaw_diff);
 
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
@@ -238,7 +239,7 @@ const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 256 * 4,
                                              .priority = (osPriority_t)osPriorityNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -264,7 +265,7 @@ void chassisTask(void* arg) {
   float relative_angle;
 
   float spin_speed = 600;
-  float follow_speed = 400;
+  float follow_speed = 600;
 
   bool follow_mode = true;
   int mode_change_delay = 1000 / CHASSIS_TASK_DELAY;
@@ -431,7 +432,7 @@ void selfTestTask(void* arg) {
     fr_motor->connection_flag_ = false;
     bl_motor->connection_flag_ = false;
     br_motor->connection_flag_ = false;
-    osDelay(100);
+    osDelay(SELFTEST_TASK_DELAY);
 
     OLED->ShowBlock(0, 2, pitch_motor->connection_flag_);
     OLED->ShowBlock(0, 7, yaw_motor->connection_flag_);
@@ -556,6 +557,7 @@ void KillAll() {
 
   RGB->Display(color_blue);
   laser->Off();
+
   while (true) {
     if (dbus->keyboard.bit.V) {
       RGB->Display(color_green);
@@ -578,7 +580,7 @@ void KillAll() {
     ld_motor->SetOutput(0);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
 
-    osDelay(10);
+    osDelay(KILLALL_DELAY);
   }
 }
 
