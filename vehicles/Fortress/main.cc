@@ -33,12 +33,14 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "user_interface.h"
 #include "utils.h"
 
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
+static const int UI_TASK_DELAY = 50;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -389,6 +391,16 @@ static bsp::BuzzerNoteDelayed Mario[] = {
 static bsp::Buzzer* buzzer = nullptr;
 static display::OLED* OLED = nullptr;
 
+static bool volatile pitch_motor_flag = false;
+static bool volatile yaw_motor_flag = false;
+static bool volatile sl_motor_flag = false;
+static bool volatile sr_motor_flag = false;
+static bool volatile ld_motor_flag = false;
+static bool volatile fl_motor_flag = false;
+static bool volatile fr_motor_flag = false;
+static bool volatile bl_motor_flag = false;
+static bool volatile br_motor_flag = false;
+
 void selfTestTask(void* arg) {
   UNUSED(arg);
 
@@ -417,19 +429,173 @@ void selfTestTask(void* arg) {
     bl_motor->connection_flag_ = false;
     br_motor->connection_flag_ = false;
     osDelay(SELFTEST_TASK_DELAY);
+    pitch_motor_flag = pitch_motor->connection_flag_;
+    yaw_motor_flag = yaw_motor->connection_flag_;
+    sl_motor_flag = sl_motor->connection_flag_;
+    sr_motor_flag = sr_motor->connection_flag_;
+    ld_motor_flag = ld_motor->connection_flag_;
+    fl_motor_flag = fl_motor->connection_flag_;
+    fr_motor_flag = fr_motor->connection_flag_;
+    bl_motor_flag = bl_motor->connection_flag_;
+    br_motor_flag = br_motor->connection_flag_;
 
-    OLED->ShowBlock(0, 2, pitch_motor->connection_flag_);
-    OLED->ShowBlock(0, 7, yaw_motor->connection_flag_);
-    OLED->ShowBlock(1, 2, sl_motor->connection_flag_);
-    OLED->ShowBlock(1, 7, sr_motor->connection_flag_);
-    OLED->ShowBlock(1, 12, ld_motor->connection_flag_);
-    OLED->ShowBlock(2, 2, fl_motor->connection_flag_);
-    OLED->ShowBlock(2, 7, fr_motor->connection_flag_);
-    OLED->ShowBlock(3, 2, bl_motor->connection_flag_);
-    OLED->ShowBlock(3, 7, br_motor->connection_flag_);
+    OLED->ShowBlock(0, 2, pitch_motor_flag);
+    OLED->ShowBlock(0, 7, yaw_motor_flag);
+    OLED->ShowBlock(1, 2, sl_motor_flag);
+    OLED->ShowBlock(1, 7, sr_motor_flag);
+    OLED->ShowBlock(1, 12, ld_motor_flag);
+    OLED->ShowBlock(2, 2, fl_motor_flag);
+    OLED->ShowBlock(2, 7, fr_motor_flag);
+    OLED->ShowBlock(3, 2, bl_motor_flag);
+    OLED->ShowBlock(3, 7, br_motor_flag);
     OLED->ShowBlock(4, 11, imu->CaliDone());
 
     OLED->RefreshGram();
+  }
+}
+
+//==================================================================================================
+// UI
+//==================================================================================================
+
+const osThreadAttr_t UITaskAttribute = {.name = "UITask",
+                                        .attr_bits = osThreadDetached,
+                                        .cb_mem = nullptr,
+                                        .cb_size = 0,
+                                        .stack_mem = nullptr,
+                                        .stack_size = 512 * 4,
+                                        .priority = (osPriority_t)osPriorityLow,
+                                        .tz_module = 0,
+                                        .reserved = 0};
+
+osThreadId_t UITaskHandle;
+
+static communication::UserInterface* UI = nullptr;
+
+void UITask(void* arg) {
+  UNUSED(arg);
+
+  communication::package_t frame;
+  communication::graphic_data_t graphGimbal;
+  communication::graphic_data_t graphChassis;
+  communication::graphic_data_t graphArrow;
+  communication::graphic_data_t graphEmpty1;
+  communication::graphic_data_t graphEmpty2;
+  communication::graphic_data_t graphCrosshair1;
+  communication::graphic_data_t graphCrosshair2;
+  communication::graphic_data_t graphCrosshair3;
+  communication::graphic_data_t graphCrosshair4;
+  communication::graphic_data_t graphCrosshair5;
+  communication::graphic_data_t graphCrosshair6;
+  communication::graphic_data_t graphCrosshair7;
+  communication::graphic_data_t graphBarFrame;
+  communication::graphic_data_t graphBar;
+  communication::graphic_data_t graphPercent;
+  communication::graphic_data_t graphDiag;
+  communication::graphic_data_t graphMode;
+
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
+                   graphEmpty1, graphEmpty2);
+  referee->PrepareUIContent(communication::FIVE_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+
+  UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                   &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
+                   graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
+                   graphCrosshair7);
+  referee->PrepareUIContent(communication::SEVEN_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+
+  UI->CapGUIInit(&graphBarFrame, &graphBar);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
+  referee->PrepareUIContent(communication::DOUBLE_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+
+  UI->CapGUICharInit(&graphPercent);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
+                  UI->getPercentLen());
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+
+  char diagStr[30] = "";
+  UI->DiagGUIInit(&graphDiag, 30);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+
+  char msgBuffer[30] = "Error_one";
+  UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  char msgBuffer2[30] = "Error_two";
+  UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  char msgBuffer3[30] = "Error_three";
+  UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  char followModeStr[15] = "FOLLOW MODE";
+  char spinModeStr[15] = "SPIN MODE";
+  uint32_t modeColor = UI_Color_Orange;
+
+  UI->ModeGUIInit(&graphMode, sizeof followModeStr - 1);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
+                  sizeof followModeStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  float j = 1;
+  while (true) {
+    UI->ChassisGUIUpdate(relative_angle);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
+                     graphEmpty1, graphEmpty2);
+    referee->PrepareUIContent(communication::FIVE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+
+    UI->CapGUIUpdate(std::abs(sin(j)));
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
+    referee->PrepareUIContent(communication::SINGLE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    j += 0.1;
+
+    UI->CapGUICharUpdate();
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
+                    UI->getPercentLen());
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+
+    char* modeStr = SpinMode ? spinModeStr : followModeStr;
+    modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
+    UI->ModeGuiUpdate(&graphMode, modeColor, 15);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    osDelay(UI_TASK_DELAY);
   }
 }
 
@@ -443,6 +609,7 @@ void RM_RTOS_Init(void) {
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
   dbus = new remote::DBUS(&huart3);
+  RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
 
   bsp::IST8310_init_t IST8310_init;
   IST8310_init.hi2c = &hi2c3;
@@ -512,7 +679,8 @@ void RM_RTOS_Init(void) {
 
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
-  RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
+
+  UI = new communication::UserInterface(UI_Data_RobotID_BStandard3, UI_Data_CilentID_BStandard3);
 }
 
 //==================================================================================================
@@ -526,6 +694,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
+  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
 
 //==================================================================================================
@@ -571,10 +740,11 @@ void KillAll() {
   }
 }
 
+static bool debug = false;
+static bool pass = true;
+
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
-
-  bool pass = true;
 
   while (true) {
     FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
@@ -583,44 +753,47 @@ void RM_RTOS_Default_Task(const void* arg) {
       KillAll();
     }
 
-    set_cursor(0, 0);
-    clear_screen();
+    if (debug) {
+      set_cursor(0, 0);
+      clear_screen();
 
-    print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
-          imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-    print("Temp: %.2f\r\n", imu->Temp);
-    print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
-          imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+      print("Temp: %.2f\r\n", imu->Temp);
+      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
 
-    print("\r\n");
+      print("\r\n");
 
-    print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
-    print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
+      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+      print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
 
-    print("\r\n");
+      print("\r\n");
 
-    print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
-          referee->game_robot_status.max_HP);
+      print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
+            referee->game_robot_status.max_HP);
 
-    print("\r\n");
+      print("\r\n");
 
-    print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-    print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-    print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
-          referee->game_robot_status.chassis_power_limit);
-    print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
+      print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+      print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+      print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
+            referee->game_robot_status.chassis_power_limit);
+      print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
 
-    print("\r\n");
+      print("\r\n");
 
-    print("Shooter Heat: %hu / %d\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat,
-          referee->game_robot_status.shooter_id1_17mm_cooling_limit);
-    print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
-          referee->game_robot_status.shooter_id1_17mm_speed_limit);
-    print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
+      print("Shooter Heat: %hu / %d\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat,
+            referee->game_robot_status.shooter_id1_17mm_cooling_limit);
+      print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
+            referee->game_robot_status.shooter_id1_17mm_speed_limit);
+      print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
 
-    if (referee->shoot_data.bullet_speed > referee->game_robot_status.shooter_id1_17mm_speed_limit)
-      pass = false;
-    print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
+      if (referee->shoot_data.bullet_speed >
+          referee->game_robot_status.shooter_id1_17mm_speed_limit)
+        pass = false;
+      print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
+    }
 
     osDelay(DEFAULT_TASK_DELAY);
   }
