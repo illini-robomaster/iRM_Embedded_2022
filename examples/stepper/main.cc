@@ -25,35 +25,67 @@
 #include "cmsis_os.h"
 #include "stepper.h"
 
-bsp::GPIO *key = nullptr, *dir = nullptr;
+bsp::GPIO *key = nullptr, *dir = nullptr, *test_dir = nullptr;
 control::Stepper* stepper = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
   key = new bsp::GPIO(KEY_GPIO_Port, KEY_Pin);
-  stepper = new control::Stepper(&htim1, 1, 1000000, STEPPER_DIR_GPIO_Port, STEPPER_DIR_Pin);
+  stepper = new control::Stepper(&htim1, 1, 1000000, DIR_GPIO_Port, DIR_Pin,ENABLE_GPIO_Port, ENABLE_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  unsigned speed = 1000;
+  //unsigned speed = 2000; // Empty Weight Max 2100
   int length = 1000;
-  bool direction = false;
-  while (true) {
-    if (!key->Read()) {
-      //direction = !direction;
-      if (!direction) {
-        stepper->Move(control::FORWARD, speed);
-      } else {
-        stepper->Move(control::BACKWARD, speed);
-      }
-      osDelay(length);
-      stepper->Stop();
-    } else {
-      stepper->Stop();
+  //bool direction = false;
+    while (true) {
+      if (!key->Read()) {
+          stepper->Enable();
+          osDelay(2000);
+        } else {
+          stepper->Disable();
+          osDelay(2000);
+        }
+        osDelay(length);
+        stepper->Stop();
+      osDelay(100);
     }
-    osDelay(100);
-  }
+
+
+//  while (true) {
+//    if (!key->Read()) {
+//      direction = !direction;
+//      if (!direction) {
+//        test_dir->High();
+//        stepper->Move(control::FORWARD, speed);
+//      } else {
+//        test_dir->Low();
+//        stepper->Move(control::BACKWARD, speed);
+//      }
+//      osDelay(length);
+//      stepper->Stop();
+//    } else {
+//      stepper->Stop();
+//    }
+//    osDelay(100);
+//  }
+
+
+//  while (true && i > 0) {
+//    direction = !direction;
+//    if (!direction) {
+//      //test_dir->High();
+//      stepper->Move(control::FORWARD, speed);
+//    } else {
+//      //test_dir->Low();
+//      stepper->Move(control::BACKWARD, speed);
+//    }
+//    osDelay(length);
+//    stepper->Stop();
+//    osDelay(100);
+//    i--;
+//  }
 }
 
 /*

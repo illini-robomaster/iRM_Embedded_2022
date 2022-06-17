@@ -29,12 +29,15 @@ enum dir {FORWARD, BACKWARD};
 
 class Stepper {
  public:
-  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq, GPIO_TypeDef* dir_group, uint16_t dir_pin);
+  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq, GPIO_TypeDef* dir_group, uint16_t dir_pin, GPIO_TypeDef* enable_group, uint16_t enable_pin);
   void Move(dir direction, unsigned speed);
   void Stop();
+  void Enable();
+  void Disable();
  private:
   bsp::PWM stepper_;
   bsp::GPIO dir_;
+  bsp::GPIO enable_;
 };
 
 

@@ -23,8 +23,10 @@
 namespace control {
 
 Stepper::Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq,
-                 GPIO_TypeDef* dir_group, uint16_t dir_pin)
-    : stepper_(htim, channel, clock_freq, 0, 0), dir_(dir_group, dir_pin) {
+                 GPIO_TypeDef* dir_group, uint16_t dir_pin, GPIO_TypeDef* enable_group, uint16_t enable_pin)
+    : stepper_(htim, channel, clock_freq, 0, 0), dir_(dir_group, dir_pin),
+      enable_(enable_group, enable_pin) {
+  enable_.Low();
   stepper_.Start();
 }
 
@@ -45,6 +47,14 @@ void Stepper::Move(dir direction, unsigned int speed) {
 void Stepper::Stop() {
   stepper_.SetFrequency(0);
   stepper_.SetPulseWidth(0);
+}
+
+void Stepper::Enable() {
+  enable_.High();
+}
+
+void Stepper::Disable() {
+  enable_.Low();
 }
 
 }  // namespace control
