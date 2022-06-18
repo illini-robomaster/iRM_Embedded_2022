@@ -106,8 +106,8 @@ void ImuTask(void* argument) {
   //g = g / cnt;
   //m = m / cnt;
 
-  filter = new control::AHRSFilter({1e-5, 1e-5, 1e-5},
-                                   {1.6e-5, 1.7e-5, 1.9e-5},
+  filter = new control::AHRSFilter(Eigen::Vector3f::Constant(1e-5),
+                                   Eigen::Vector3f::Constant(3e-5),
                                    {0.07, 0.13, 0.9},
                                    {1e-7, 1e-7, 1e-7},
                                    {9, 9, 9},

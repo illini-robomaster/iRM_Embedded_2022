@@ -18,5 +18,20 @@
 %                                                                          %
 %--------------------------------------------------------------------------%
 
-magData = squeeze(out.mag);
-[A,b,exp] = magcal(magData');
+magData = squeeze(out.mag)';
+[A,b,exp] = magcal(magData, "auto");
+
+figure;
+plot3(magData(:, 1), magData(:, 2), magData(:, 3), Marker='X', LineStyle='none');
+hold on;
+
+C = (magData - b)*A;
+plot3(C(:, 1), C(:, 2), C(:, 3), LineStyle='none', Marker='o');
+axis equal;
+hold off;
+
+figure;
+hold on;
+plot(vecnorm(magData'));
+plot(vecnorm(C'));
+hold off;

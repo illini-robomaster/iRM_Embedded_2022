@@ -219,7 +219,7 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
   // the second column: the value to be writed to the registers.
   const uint8_t init_data[init_len][2] = {
       {IST8310_CNTL2, IST8310_DREN},  // enable interrupt and low pin polarity.
-      {IST8310_AVGCNTL, IST8310_Y_AVG_2 | IST8310_XZ_AVG_2},  // average 2 times.
+      {IST8310_AVGCNTL, IST8310_Y_AVG_16 | IST8310_XZ_AVG_16},  // average 16 times for low noise.
       {IST8310_PDCNTL, IST8310_PD_NORMAL},  // normal pulse duration (required by documentation)
       {IST8310_CNTL1, 0x0B},                // 200Hz output rate TODO(alvin): this is undocumented.
   };

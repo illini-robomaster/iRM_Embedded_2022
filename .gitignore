@@ -157,3 +157,8 @@ compile_commands.json
 
 # Vim YCM config
 .ycm_extra_conf.py
+
+# Matlab
+slprj/
+*.slxc
+*.original
