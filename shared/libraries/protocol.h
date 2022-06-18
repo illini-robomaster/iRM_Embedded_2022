@@ -50,6 +50,8 @@ class Protocol {
    */
   package_t Transmit(int cmd_id);
 
+  volatile bool connection_flag_ = false;
+
  private:
   int seq = 0;
 
