@@ -173,11 +173,11 @@ void IST8310I2cRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   IST8310* sensor = IST8310::ist8310;
 
   // copy magnetic data from raw buffer
-  // also convert from left-handed NEU coordinate to right-handed NED coordinate
+  // also convert from left-handed NWD coordinate to right-handed NED coordinate
   UBaseType_t isrflags = taskENTER_CRITICAL_FROM_ISR();
   sensor->mag.x() = IST8310_MAG_SEN * ((int16_t)(sensor->buf_[1] << 8) | sensor->buf_[0]);
-  sensor->mag.y() = IST8310_MAG_SEN * ((int16_t)(sensor->buf_[3] << 8) | sensor->buf_[2]);
-  sensor->mag.z() = -IST8310_MAG_SEN * ((int16_t)(sensor->buf_[5] << 8) | sensor->buf_[4]);
+  sensor->mag.y() = -IST8310_MAG_SEN * ((int16_t)(sensor->buf_[3] << 8) | sensor->buf_[2]);
+  sensor->mag.z() = IST8310_MAG_SEN * ((int16_t)(sensor->buf_[5] << 8) | sensor->buf_[4]);
   taskEXIT_CRITICAL_FROM_ISR(isrflags);
 
   // call user callback
@@ -219,7 +219,7 @@ IST8310::IST8310(I2C_HandleTypeDef* hi2c, uint16_t int_pin, const GPIO& reset)
   // the second column: the value to be writed to the registers.
   const uint8_t init_data[init_len][2] = {
       {IST8310_CNTL2, IST8310_DREN},  // enable interrupt and low pin polarity.
-      {IST8310_AVGCNTL, IST8310_Y_AVG_2 | IST8310_XZ_AVG_2},  // average 2 times.
+      {IST8310_AVGCNTL, IST8310_Y_AVG_16 | IST8310_XZ_AVG_16},  // average 16 times for low noise.
       {IST8310_PDCNTL, IST8310_PD_NORMAL},  // normal pulse duration (required by documentation)
       {IST8310_CNTL1, 0x0B},                // 200Hz output rate TODO(alvin): this is undocumented.
   };
@@ -291,10 +291,11 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef* hspi) {
     bmi088->accel_cs_.High();
 
     // copy accel data
+    // NWU -> NED
     const uint8_t* buf = bmi088->accel_buf_ + BMI088_TX_SIZE + 1;
     bmi088->accel.x() = BMI088_ACCEL_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
-    bmi088->accel.y() = BMI088_ACCEL_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
-    bmi088->accel.z() = BMI088_ACCEL_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
+    bmi088->accel.y() = -BMI088_ACCEL_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
+    bmi088->accel.z() = -BMI088_ACCEL_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
 
     // copy temperature data
     const uint8_t* tbuf = buf + BMI088_TEMP_BUF_OFFSET;
@@ -313,11 +314,12 @@ void BMI088SpiTxRxCpltCallback(SPI_HandleTypeDef* hspi) {
   } else if (bmi088->gyro_cs_.Read() == 0) {  // handle gyro data
     bmi088->gyro_cs_.High();
 
-    // copy data
+    // copy gyro data
+    // NWU -> NED
     const uint8_t* buf = bmi088->gyro_buf_ + BMI088_TX_SIZE;
     bmi088->gyro.x() = BMI088_GYRO_SEN * ((int16_t)(buf[1] << 8) | buf[0]);
-    bmi088->gyro.y() = BMI088_GYRO_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
-    bmi088->gyro.z() = BMI088_GYRO_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
+    bmi088->gyro.y() = -BMI088_GYRO_SEN * ((int16_t)(buf[3] << 8) | buf[2]);
+    bmi088->gyro.z() = -BMI088_GYRO_SEN * ((int16_t)(buf[5] << 8) | buf[4]);
 
     if (bmi088->accel_pending_) {
       bmi088->accel_pending_ = false;
@@ -393,7 +395,7 @@ void BMI088::GyroIntCallback() {
 void BMI088::GyroRead() {
   gyro_cs_.Low();
   gyro_buf_[0] = BMI088_GYRO_X_L | 0x80;
-  HAL_SPI_TransmitReceive_DMA(hspi_, gyro_buf_, gyro_buf_, BMI088_GYRO_SIZE);
+  HAL_SPI_TransmitReceive_DMA(hspi_, gyro_buf_, gyro_buf_, BMI088_GYRO_BUF_SIZE);
 }
 
 uint8_t BMI088::AccelReadReg(uint8_t reg) {

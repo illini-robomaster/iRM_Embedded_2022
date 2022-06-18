@@ -22,7 +22,7 @@
 
 #include "bsp_print.h"
 
-#define BSP_DEBUG print("[DEBUG] %s:%d ", __FUNCTION__, __LINE__)
+#define RM_DEBUG(msg...) bsp_debug_print(__FUNCTION__, __LINE__, msg)
 
 // non-fatal assertions (does not hang)
 #define RM_EXPECT_TRUE(cond, msg...)                             \
@@ -70,6 +70,13 @@
 template <class... Args>
 void bsp_error_handler(const char* func, int line, const char* msg, Args... args) {
   print("[Error at %s:%d] ", func, line);
+  print(msg, args...);
+  print("\r\n");
+}
+
+template <class... Args>
+void bsp_debug_print(const char*func, int line, const char* msg, Args... args) {
+  print("[Debug at %s:%d] ", func, line);
   print(msg, args...);
   print("\r\n");
 }
