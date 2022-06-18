@@ -740,7 +740,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
-//  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
+  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
 
 //==================================================================================================
