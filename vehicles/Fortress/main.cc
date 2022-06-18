@@ -422,6 +422,8 @@ static bool volatile fr_motor_flag = false;
 static bool volatile bl_motor_flag = false;
 static bool volatile br_motor_flag = false;
 static bool volatile calibration_flag = false;
+static bool volatile referee_flag = false;
+static bool volatile dbus_flag = false;
 
 void selfTestTask(void* arg) {
   UNUSED(arg);
@@ -437,9 +439,11 @@ void selfTestTask(void* arg) {
   OLED->ShowString(1, 10, (uint8_t*)"LD");
   OLED->ShowString(2, 0, (uint8_t*)"FL");
   OLED->ShowString(2, 5, (uint8_t*)"FR");
-  OLED->ShowString(3, 0, (uint8_t*)"BL");
-  OLED->ShowString(3, 5, (uint8_t*)"BR");
-  OLED->ShowString(4, 0, (uint8_t*)"Calibration");
+  OLED->ShowString(2, 10, (uint8_t*)"BL");
+  OLED->ShowString(2, 15, (uint8_t*)"BR");
+  OLED->ShowString(3, 0, (uint8_t*)"Calibration");
+  OLED->ShowString(4, 0, (uint8_t*)"Ref");
+  OLED->ShowString(4, 7, (uint8_t*)"Dbus")
   while (true) {
     pitch_motor->connection_flag_ = false;
     yaw_motor->connection_flag_ = false;
@@ -450,6 +454,8 @@ void selfTestTask(void* arg) {
     fr_motor->connection_flag_ = false;
     bl_motor->connection_flag_ = false;
     br_motor->connection_flag_ = false;
+    referee->connection_flag_ = false;
+    dbus->connection_flag_ = false;
     osDelay(SELFTEST_TASK_DELAY);
     pitch_motor_flag = pitch_motor->connection_flag_;
     yaw_motor_flag = yaw_motor->connection_flag_;
@@ -461,6 +467,8 @@ void selfTestTask(void* arg) {
     bl_motor_flag = bl_motor->connection_flag_;
     br_motor_flag = br_motor->connection_flag_;
     calibration_flag = imu->CaliDone();
+    referee_flag = referee->connection_flag_;
+    dbus_flag = dbus->connection_flag_;
 
     OLED->ShowBlock(0, 2, pitch_motor_flag);
     OLED->ShowBlock(0, 7, yaw_motor_flag);
@@ -469,9 +477,11 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(1, 12, ld_motor_flag);
     OLED->ShowBlock(2, 2, fl_motor_flag);
     OLED->ShowBlock(2, 7, fr_motor_flag);
-    OLED->ShowBlock(3, 2, bl_motor_flag);
-    OLED->ShowBlock(3, 7, br_motor_flag);
-    OLED->ShowBlock(4, 11, imu->CaliDone());
+    OLED->ShowBlock(2, 12, bl_motor_flag);
+    OLED->ShowBlock(2, 17, br_motor_flag);
+    OLED->ShowBlock(3, 11, imu->CaliDone());
+    OLED->ShowBlock(4, 4, referee_flag);
+    OLED->ShowBlock(4, 11, dbus_flag);
 
     OLED->RefreshGram();
   }
