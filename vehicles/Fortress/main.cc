@@ -282,10 +282,8 @@ void chassisTask(void* arg) {
     if (dbus->keyboard.bit.W) vy_keyboard += 15;
     if (dbus->keyboard.bit.S) vy_keyboard -= 15;
 
-    if (-35 <= vx_keyboard && vx_keyboard <= 35)
-      vx_keyboard = 0;
-    if (-35 <= vy_keyboard && vy_keyboard <= 35)
-      vy_keyboard = 0;
+    if (-35 <= vx_keyboard && vx_keyboard <= 35) vx_keyboard = 0;
+    if (-35 <= vy_keyboard && vy_keyboard <= 35) vy_keyboard = 0;
 
     if (vx_keyboard > 0)
       vx_keyboard -= 60;
