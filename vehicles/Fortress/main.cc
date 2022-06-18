@@ -443,7 +443,7 @@ void selfTestTask(void* arg) {
   OLED->ShowString(2, 15, (uint8_t*)"BR");
   OLED->ShowString(3, 0, (uint8_t*)"Calibration");
   OLED->ShowString(4, 0, (uint8_t*)"Ref");
-  OLED->ShowString(4, 7, (uint8_t*)"Dbus")
+  OLED->ShowString(4, 6, (uint8_t*)"Dbus");
   while (true) {
     pitch_motor->connection_flag_ = false;
     yaw_motor->connection_flag_ = false;
@@ -480,8 +480,8 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(2, 12, bl_motor_flag);
     OLED->ShowBlock(2, 17, br_motor_flag);
     OLED->ShowBlock(3, 11, imu->CaliDone());
-    OLED->ShowBlock(4, 4, referee_flag);
-    OLED->ShowBlock(4, 11, dbus_flag);
+    OLED->ShowBlock(4, 3, referee_flag);
+    OLED->ShowBlock(4, 10, dbus_flag);
 
     OLED->RefreshGram();
   }
