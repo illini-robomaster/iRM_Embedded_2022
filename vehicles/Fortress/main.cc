@@ -254,7 +254,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.35;
+const float CHASSIS_DEADZONE = 0.04;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
