@@ -374,7 +374,7 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
       shooter->SetFlywheelSpeed(490);
-    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18)
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18)
       shooter->SetFlywheelSpeed(560);
     else
       shooter->SetFlywheelSpeed(0);
