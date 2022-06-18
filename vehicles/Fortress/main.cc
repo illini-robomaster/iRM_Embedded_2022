@@ -40,7 +40,7 @@ static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
-static const int UI_TASK_DELAY = 50;
+static const int UI_TASK_DELAY = 20;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -167,7 +167,7 @@ void gimbalTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    pitch_ratio = -dbus->mouse.y / 32767.0;
+    pitch_ratio = dbus->mouse.y / 32767.0;
     yaw_ratio = -dbus->mouse.x / 32767.0;
 
     pitch_ratio += -dbus->ch3 / 660.0 / 210.0;
@@ -254,7 +254,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.8;
+const float CHASSIS_DEADZONE = 0.35;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -277,10 +277,10 @@ void chassisTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    if (dbus->keyboard.bit.A) vx_keyboard -= 15;
-    if (dbus->keyboard.bit.D) vx_keyboard += 15;
-    if (dbus->keyboard.bit.W) vy_keyboard += 15;
-    if (dbus->keyboard.bit.S) vy_keyboard -= 15;
+    if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
+    if (dbus->keyboard.bit.D) vx_keyboard += 61.5;
+    if (dbus->keyboard.bit.W) vy_keyboard += 61.5;
+    if (dbus->keyboard.bit.S) vy_keyboard -= 61.5;
 
     if (-35 <= vx_keyboard && vx_keyboard <= 35) vx_keyboard = 0;
     if (-35 <= vy_keyboard && vy_keyboard <= 35) vy_keyboard = 0;
@@ -314,7 +314,7 @@ void chassisTask(void* arg) {
     if (SpinMode) {
       wz_set = spin_speed;
     } else {
-      wz_set = follow_speed * relative_angle;
+      wz_set = std::min(follow_speed, follow_speed * relative_angle);
       if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
     }
 
@@ -421,6 +421,7 @@ static bool volatile fl_motor_flag = false;
 static bool volatile fr_motor_flag = false;
 static bool volatile bl_motor_flag = false;
 static bool volatile br_motor_flag = false;
+static bool volatile calibration_flag = false;
 
 void selfTestTask(void* arg) {
   UNUSED(arg);
@@ -459,6 +460,7 @@ void selfTestTask(void* arg) {
     fr_motor_flag = fr_motor->connection_flag_;
     bl_motor_flag = bl_motor->connection_flag_;
     br_motor_flag = br_motor->connection_flag_;
+    calibration_flag = imu->CaliDone();
 
     OLED->ShowBlock(0, 2, pitch_motor_flag);
     OLED->ShowBlock(0, 7, yaw_motor_flag);

@@ -409,7 +409,7 @@ void UserInterface::CapGUIUpdate(float cap) {
   int color;
   uint32_t x_end = x + (uint32_t)offset;
   if (cap >= 0 && cap <= 0.3)
-    color = UI_Color_Main;
+    color = UI_Color_Purplish_red;
   else if (cap > 0.2 && cap < 0.95)
     color = UI_Color_Orange;
   else
