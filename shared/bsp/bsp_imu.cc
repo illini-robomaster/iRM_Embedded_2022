@@ -618,7 +618,7 @@ void IMU_typeC::Update() {
     BMI088_.temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET,
                                   &BMI088_real_data_.temp);
     Temp = BMI088_real_data_.temp;
-    TempControl(BMI088_real_data_.temp);
+    TempPWM = TempControl(BMI088_real_data_.temp);
   }
 
   if (calibrate_ && Temp > heater_param_.temp - 2) {
