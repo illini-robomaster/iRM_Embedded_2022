@@ -20,6 +20,8 @@
 
 #include "main.h"
 
+#include <cstdio>
+
 #include "bsp_buzzer.h"
 #include "bsp_imu.h"
 #include "bsp_laser.h"
@@ -74,7 +76,7 @@ const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .cb_mem = nullptr,
                                          .cb_size = 0,
                                          .stack_mem = nullptr,
-                                         .stack_size = 256 * 4,
+                                         .stack_size = 512 * 4,
                                          .priority = (osPriority_t)osPriorityRealtime,
                                          .tz_module = 0,
                                          .reserved = 0};
@@ -108,7 +110,7 @@ const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .cb_mem = nullptr,
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
-                                            .stack_size = 256 * 4,
+                                            .stack_size = 512 * 4,
                                             .priority = (osPriority_t)osPriorityHigh,
                                             .tz_module = 0,
                                             .reserved = 0};
@@ -202,7 +204,7 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 512 * 4,
                                              .priority = (osPriority_t)osPriorityAboveNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -254,7 +256,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.35;
+const float CHASSIS_DEADZONE = 0.04;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -337,7 +339,7 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 256 * 4,
                                              .priority = (osPriority_t)osPriorityBelowNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -394,7 +396,7 @@ const osThreadAttr_t selfTestTaskAttribute = {.name = "selfTestTask",
                                               .cb_mem = nullptr,
                                               .cb_size = 0,
                                               .stack_mem = nullptr,
-                                              .stack_size = 128 * 4,
+                                              .stack_size = 256 * 4,
                                               .priority = (osPriority_t)osPriorityBelowNormal,
                                               .tz_module = 0,
                                               .reserved = 0};
@@ -441,9 +443,12 @@ void selfTestTask(void* arg) {
   OLED->ShowString(2, 5, (uint8_t*)"FR");
   OLED->ShowString(2, 10, (uint8_t*)"BL");
   OLED->ShowString(2, 15, (uint8_t*)"BR");
-  OLED->ShowString(3, 0, (uint8_t*)"Calibration");
+  OLED->ShowString(3, 0, (uint8_t*)"Cali");
+  OLED->ShowString(3, 7, (uint8_t*)"Temp:");
   OLED->ShowString(4, 0, (uint8_t*)"Ref");
   OLED->ShowString(4, 6, (uint8_t*)"Dbus");
+
+  char temp[3] = "";
   while (true) {
     pitch_motor->connection_flag_ = false;
     yaw_motor->connection_flag_ = false;
@@ -479,7 +484,9 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(2, 7, fr_motor_flag);
     OLED->ShowBlock(2, 12, bl_motor_flag);
     OLED->ShowBlock(2, 17, br_motor_flag);
-    OLED->ShowBlock(3, 11, imu->CaliDone());
+    OLED->ShowBlock(3, 4, imu->CaliDone());
+    snprintf(temp, 3, "%d", (int)imu->Temp);
+    OLED->ShowString(3, 12, (uint8_t*)temp);
     OLED->ShowBlock(4, 3, referee_flag);
     OLED->ShowBlock(4, 10, dbus_flag);
 
@@ -496,7 +503,7 @@ const osThreadAttr_t UITaskAttribute = {.name = "UITask",
                                         .cb_mem = nullptr,
                                         .cb_size = 0,
                                         .stack_mem = nullptr,
-                                        .stack_size = 512 * 4,
+                                        .stack_size = 1024 * 4,
                                         .priority = (osPriority_t)osPriorityLow,
                                         .tz_module = 0,
                                         .reserved = 0};
@@ -512,7 +519,7 @@ void UITask(void* arg) {
   communication::graphic_data_t graphGimbal;
   communication::graphic_data_t graphChassis;
   communication::graphic_data_t graphArrow;
-  communication::graphic_data_t graphEmpty1;
+  communication::graphic_data_t graphCali;
   communication::graphic_data_t graphEmpty2;
   communication::graphic_data_t graphCrosshair1;
   communication::graphic_data_t graphCrosshair2;
@@ -527,12 +534,13 @@ void UITask(void* arg) {
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
 
-  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                   graphEmpty1, graphEmpty2);
+                   graphCali, graphEmpty2);
   referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
@@ -542,12 +550,14 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUICharInit(&graphPercent);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -555,6 +565,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char diagStr[30] = "";
   UI->DiagGUIInit(&graphDiag, 30);
@@ -562,6 +573,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char msgBuffer[30] = "Error_one";
   UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
@@ -588,7 +600,7 @@ void UITask(void* arg) {
   char spinModeStr[15] = "SPIN MODE";
   uint32_t modeColor = UI_Color_Orange;
 
-  UI->ModeGUIInit(&graphMode, sizeof followModeStr - 1);
+  UI->ModeGUIInit(&graphMode);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
                   sizeof followModeStr);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
@@ -598,12 +610,13 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    UI->ChassisGUIUpdate(relative_angle);
+    UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                     graphEmpty1, graphEmpty2);
+                     graphCali, graphEmpty2);
     referee->PrepareUIContent(communication::FIVE_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUIUpdate(std::abs(sin(j)));
     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
@@ -611,6 +624,7 @@ void UITask(void* arg) {
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     j += 0.1;
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUICharUpdate();
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -618,16 +632,15 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
-    UI->ModeGuiUpdate(&graphMode, modeColor, 15);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+    UI->ModeGuiUpdate(&graphMode, modeColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 30);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
-
     osDelay(UI_TASK_DELAY);
   }
 }
