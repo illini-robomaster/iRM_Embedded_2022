@@ -105,8 +105,8 @@ void ConstrainedPID::Reinit(float kp, float ki, float kd, float max_iout, float 
   ChangeMax(max_iout, max_out);
 }
 
-void ConstrainedPID::Reinit(float* param, float max_iout, float max_out) { 
-  Reinit(param[0], param[1], param[2], max_iout, max_out); 
+void ConstrainedPID::Reinit(float* param, float max_iout, float max_out) {
+  Reinit(param[0], param[1], param[2], max_iout, max_out);
 }
 
 void ConstrainedPID::Reset() {

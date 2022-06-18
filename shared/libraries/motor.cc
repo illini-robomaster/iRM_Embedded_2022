@@ -21,8 +21,8 @@
 #include "motor.h"
 
 #include "arm_math.h"
-#include "bsp_os.h"
 #include "bsp_error_handler.h"
+#include "bsp_os.h"
 #include "utils.h"
 
 using namespace bsp;
@@ -253,7 +253,7 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out, float align_angle) {
+ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, float proximity_out) {
   motor_ = data.motor;
   max_speed_ = data.transmission_ratio * data.max_speed;
   max_acceleration_ = data.transmission_ratio * data.max_acceleration;
@@ -273,7 +273,6 @@ ServoMotor::ServoMotor(servo_t data, float proximity_in, float proximity_out, fl
   hold_detector_ = new BoolEdgeDetector(false);
 
   omega_pid_.Reinit(data.omega_pid_param, data.max_iout, data.max_out);
-  theta_pid_.Reinit(7000, 0, 8000, 500, 10000);
 
   // override origianal motor rx callback with servomotor callback
   data.motor->can_->RegisterRxCallback(data.motor->rx_id_, servomotor_callback, this);
@@ -311,31 +310,25 @@ void ServoMotor::SetMaxAcceleration(const float max_acceleration) {
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->posEdge()) {
+  if (hold_detector_->edge()) {
     omega_pid_.Reset();
   }
   if (hold_detector_->negEdge()) {
     start_time_ = GetHighresTickMicroSec();
-    theta_pid_.Reset();
   }
 
   // calculate desired output with pid
   int16_t command;
   float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
-  if (hold_) {
-    command = theta_pid_.ComputeConstrainedOutput(target_diff);
-  } else {
-    // v = sqrt(2 * a * d)
-    uint32_t current_time = GetHighresTickMicroSec();
-    float speed_max_start = (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
-    float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
-    float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
-    current_speed = clip<float>(current_speed, 0, max_speed_);
-    command = omega_pid_.ComputeConstrainedOutput(
-        motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
-  }
-  // constexpr float dead_zone = 0;
-  // if (command < dead_zone && command > -dead_zone) command = 0;
+  // v = sqrt(2 * a * d)
+  uint32_t current_time = GetHighresTickMicroSec();
+  float speed_max_start =
+      (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
+  float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
+  float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
+  current_speed = clip<float>(current_speed, 0, max_speed_);
+  command = omega_pid_.ComputeConstrainedOutput(
+      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed) / transmission_ratio_);
   motor_->SetOutput(command);
 
   // jam detection mechanism
@@ -392,9 +385,7 @@ void ServoMotor::PrintData() const {
 
 float ServoMotor::GetTheta() const { return servo_angle_ + cumulated_angle_; }
 
-float ServoMotor::GetThetaDelta(const float target) const {
-  return target - GetTheta();
-}
+float ServoMotor::GetThetaDelta(const float target) const { return target - GetTheta(); }
 
 float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
 
@@ -448,13 +439,9 @@ SteeringMotor::SteeringMotor(steering_t data) {
   align_detector = new BoolEdgeDetector(false);
 }
 
-float SteeringMotor::GetRawTheta() const {
-  return servo_->GetTheta();
-}
+float SteeringMotor::GetRawTheta() const { return servo_->GetTheta(); }
 
-void SteeringMotor::PrintData() const {
-  servo_->PrintData();
-}
+void SteeringMotor::PrintData() const { servo_->PrintData(); }
 
 void SteeringMotor::TurnRelative(float angle) {
   servo_->SetTarget(servo_->GetTarget() + angle, true);
@@ -478,7 +465,7 @@ bool SteeringMotor::AlignUpdate() {
     align_detector->input(align_detect_func());
     first = true;
   }
-  
+
   align_detector->input(align_detect_func());
   if (align_detector->posEdge()) {
     pos_align_angle = servo_->GetTheta();
@@ -494,8 +481,6 @@ bool SteeringMotor::AlignUpdate() {
   return false;
 }
 
-void SteeringMotor::Update() {
-  servo_->CalcOutput();
-}
+void SteeringMotor::Update() { servo_->CalcOutput(); }
 
 } /* namespace control */

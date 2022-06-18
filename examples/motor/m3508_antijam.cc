@@ -21,8 +21,8 @@
 // #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
-#include "bsp_print.h"
 #include "bsp_os.h"
+#include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
 #include "main.h"

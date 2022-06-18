@@ -332,7 +332,8 @@ class ServoMotor {
    *
    * @note proximity_out should be greater than proximity_in
    */
-  ServoMotor(servo_t data, float proximity_in = 0.05, float proximity_out = 0.15, float align_angle = -1);
+  ServoMotor(servo_t data, float align_angle = -1, float proximity_in = 0.05,
+             float proximity_out = 0.15);
 
   /**
    * @brief set next target for servomotor, will have no effect if last set target has not been
@@ -459,14 +460,14 @@ class ServoMotor {
   float proximity_out_;
 
   // angle control
-  bool hold_;          /* true if motor is holding now, otherwise moving now                      */
+  bool hold_; /* true if motor is holding now, otherwise moving now                      */
   uint32_t start_time_;
   float target_angle_; /* desired target angle, range between [0, 2PI] in [rad]                   */
   float align_angle_;  /* motor angle when a instance of this class is created with that motor    */
   float motor_angle_;  /* current motor angle in [rad], with align_angle subtracted               */
   float offset_angle_; /* cumulative offset angle of motor shaft, range between [0, 2PI] in [rad] */
   float servo_angle_;  /* current angle of motor shaft, range between [0, 2PI] in [rad]           */
-  float cumulated_angle_; 
+  float cumulated_angle_;
 
   // jam detection
   jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed */
@@ -478,13 +479,12 @@ class ServoMotor {
 
   // pid controllers
   ConstrainedPID omega_pid_; /* pid for controlling speed of motor */
-  ConstrainedPID theta_pid_;
 
   // edge detectors
-  FloatEdgeDetector* inner_wrap_detector_; /* detect motor motion across encoder boarder               */
-  FloatEdgeDetector* outer_wrap_detector_; /* detect motor motion across encoder boarder               */
-  BoolEdgeDetector* hold_detector_;  /* detect motor is in mode toggling, reset pid accordingly  */
-  BoolEdgeDetector* jam_detector_;   /* detect motor jam toggling, call jam callback accordingly */
+  FloatEdgeDetector* inner_wrap_detector_; /* detect motor motion across encoder boarder */
+  FloatEdgeDetector* outer_wrap_detector_; /* detect motor motion across encoder boarder */
+  BoolEdgeDetector* hold_detector_; /* detect motor is in mode toggling, reset pid accordingly  */
+  BoolEdgeDetector* jam_detector_;  /* detect motor jam toggling, call jam callback accordingly */
 };
 
 typedef bool (*align_detect_t)(void);
@@ -493,13 +493,13 @@ typedef bool (*align_detect_t)(void);
  * @brief structure used when steering motor instance is initialized
  */
 typedef struct {
-  MotorCANBase* motor;      /* motor instance to be wrapped as a servomotor      */
-  float max_speed;          /* desired turning speed of motor shaft, in [rad/s]  */
+  MotorCANBase* motor; /* motor instance to be wrapped as a servomotor      */
+  float max_speed;     /* desired turning speed of motor shaft, in [rad/s]  */
   float test_speed;
   float max_acceleration;   /* desired acceleration of motor shaft, in [rad/s^2] */
   float transmission_ratio; /* transmission ratio of motor                       */
   float offset_angle;
-  float* omega_pid_param;   /* pid parameter used to control speed of motor      */
+  float* omega_pid_param; /* pid parameter used to control speed of motor      */
   float max_iout;
   float max_out;
   align_detect_t align_detect_func;
@@ -516,6 +516,7 @@ class SteeringMotor {
   void TurnRelative(float angle);
   bool AlignUpdate();
   void Update();
+
  private:
   ServoMotor* servo_;
 

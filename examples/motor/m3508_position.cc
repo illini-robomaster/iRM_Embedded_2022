@@ -21,8 +21,8 @@
 #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
-#include "bsp_print.h"
 #include "bsp_os.h"
+#include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
 #include "main.h"
@@ -39,7 +39,7 @@
 
 #define NOTCH (2 * PI / 4)
 #define SPEED 50
-#define ACCELERATION (20 * PI)
+#define ACCELERATION (30 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -62,9 +62,9 @@ void RM_RTOS_Init() {
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{40, 0.1, 50};
-  servo_data.max_iout = 1000;
-  servo_data.max_out = 10000;
+  servo_data.omega_pid_param = new float[3]{450, 2.5, 135};
+  servo_data.max_iout = 900;
+  servo_data.max_out = 12000;
   servo = new control::ServoMotor(servo_data);
 
 #ifdef WITH_CONTROLLER
@@ -98,6 +98,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
     static int i = 0;
     if (i > 10) {
+      print("%10.2f %10.2f %10.2f %10.2f ", dbus->ch0, dbus->ch0, dbus->ch0, dbus->ch0);
       servo->PrintData();
       i = 0;
     } else {
