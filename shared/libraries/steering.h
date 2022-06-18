@@ -1,0 +1,78 @@
+/****************************************************************************
+ *                                                                          *
+ *  Copyright (C) 2022 RoboMaster.                                          *
+ *  Illini RoboMaster @ University of Illinois at Urbana-Champaign          *
+ *                                                                          *
+ *  This program is free software: you can redistribute it and/or modify    *
+ *  it under the terms of the GNU General Public License as published by    *
+ *  the Free Software Foundation, either version 3 of the License, or       *
+ *  (at your option) any later version.                                     *
+ *                                                                          *
+ *  This program is distributed in the hope that it will be useful,         *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *  GNU General Public License for more details.                            *
+ *                                                                          *
+ *  You should have received a copy of the GNU General Public License       *
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                          *
+ ****************************************************************************/
+
+#pragma once
+
+#include "motor.h"
+
+namespace control {
+
+typedef struct {
+  control::ServoMotor* fl_steer_motor = nullptr;
+  control::ServoMotor* fr_steer_motor = nullptr;
+  control::ServoMotor* bl_steer_motor = nullptr;
+  control::ServoMotor* br_steer_motor = nullptr;
+
+  control::MotorCANBase* fl_wheel_motor = nullptr;
+  control::MotorCANBase* fr_wheel_motor = nullptr;
+  control::MotorCANBase* bl_wheel_motor = nullptr;
+  control::MotorCANBase* br_wheel_motor = nullptr;
+
+  double radius = 1.0;
+
+} steering_chassis_t;
+
+
+class SteeringChassis {
+  public:
+  SteeringChassis(const steering_chassis_t* chassis);
+
+  ~SteeringChassis();
+
+  // right -> positive, left -> negative
+  void SetXSpeed(double _vx);
+
+  // front -> positive, back -> negative
+  void SetYSpeed(double _vy);
+
+  // counterclockwise -> positive
+  void SetWSpeed(double _vw);
+
+  void Update();
+  
+  private:
+
+  double vx;
+  double vy;
+  double vw;
+
+  double radius;  
+
+  double theta1;
+  double theta2;
+  double theta3;
+  double theta4;
+
+
+  steering_chassis_t chassis*;
+
+} // class SteeringChassis ends
+
+} //ns control
