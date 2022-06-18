@@ -461,13 +461,12 @@ void UserInterface::DiagGUIClear(UserInterface* UI, Referee* referee, graphic_da
   referee->PrepareUIContent(communication::CHAR_GRAPH);
 }
 
-void UserInterface::ModeGUIInit(graphic_data_t* modeGraph, int len) {
-  CharDraw(modeGraph, "MG", UI_Graph_Add, 0, UI_Color_Yellow, 15, 30, 2, chassisX_ - len * 15 / 2,
-           modeStartY_);
-}
+void UserInterface::ModeGUIInit(graphic_data_t* modeGraph) {
+  CharDraw(modeGraph, "MG", UI_Graph_Add, 0, UI_Color_Yellow, 15, 30, 2, chassisX_ - 60,
+           modeStartY_);}
 
-void UserInterface::ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color, int len) {
-  CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - len * 15 / 2,
+void UserInterface::ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color) {
+  CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - 60,
            modeStartY_);
 }
 

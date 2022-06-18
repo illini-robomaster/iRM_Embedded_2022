@@ -40,7 +40,7 @@ static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
-static const int UI_TASK_DELAY = 50;
+static const int UI_TASK_DELAY = 10;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -130,7 +130,7 @@ void gimbalTask(void* arg) {
   laser->On();
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -270,7 +270,7 @@ void chassisTask(void* arg) {
   float follow_speed = 400;
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -355,7 +355,7 @@ void shooterTask(void* arg) {
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -583,7 +583,7 @@ void UITask(void* arg) {
   char spinModeStr[15] = "SPIN MODE";
   uint32_t modeColor = UI_Color_Orange;
 
-  UI->ModeGUIInit(&graphMode, sizeof followModeStr - 1);
+  UI->ModeGUIInit(&graphMode);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
                   sizeof followModeStr);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
@@ -599,6 +599,7 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::FIVE_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUIUpdate(std::abs(sin(j)));
     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
@@ -606,6 +607,7 @@ void UITask(void* arg) {
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     j += 0.1;
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUICharUpdate();
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -613,16 +615,15 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
-    UI->ModeGuiUpdate(&graphMode, modeColor, 15);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+    UI->ModeGuiUpdate(&graphMode, modeColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 30);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
-
     osDelay(UI_TASK_DELAY);
   }
 }

@@ -141,8 +141,8 @@ class UserInterface {
   void DiagGUIClear(UserInterface* UI, Referee* referee, graphic_data_t* graph, int currCount);
   void AddMessage(char* messageStr, int len, UserInterface* UI, Referee* referee,
                   graphic_data_t* graph);
-  void ModeGUIInit(graphic_data_t* modeGraph, int len);
-  void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color, int len);
+  void ModeGUIInit(graphic_data_t* modeGraph);
+  void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color);
 
   char* getPercentStr() { return percentStr_; }
   int getPercentLen() { return percentLen_; }
