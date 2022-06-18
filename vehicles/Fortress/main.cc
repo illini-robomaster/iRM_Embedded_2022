@@ -40,7 +40,7 @@ static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
-static const int UI_TASK_DELAY = 20;
+static const int UI_TASK_DELAY = 50;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -523,6 +523,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
@@ -532,12 +533,14 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUICharInit(&graphPercent);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -545,6 +548,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char diagStr[30] = "";
   UI->DiagGUIInit(&graphDiag, 30);
@@ -552,6 +556,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char msgBuffer[30] = "Error_one";
   UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
