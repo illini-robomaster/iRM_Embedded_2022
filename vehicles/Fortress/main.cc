@@ -374,7 +374,7 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
       shooter->SetFlywheelSpeed(490);
-    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18)
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18)
       shooter->SetFlywheelSpeed(560);
     else
       shooter->SetFlywheelSpeed(0);
@@ -773,7 +773,7 @@ void KillAll() {
   }
 }
 
-static bool debug = false;
+static bool debug = true;
 static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
@@ -792,7 +792,7 @@ void RM_RTOS_Default_Task(const void* arg) {
 
       print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
             imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-      print("Temp: %.2f\r\n", imu->Temp);
+      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
       print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
             imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
 

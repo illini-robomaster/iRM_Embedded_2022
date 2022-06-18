@@ -512,6 +512,7 @@ class IMU_typeC {
   float INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float INS_angle[3] = {0.0f, 0.0f, 0.0f};
   float Temp = 0;
+  float TempPWM = 0;
 
  protected:
   virtual void RxCompleteCallback();
