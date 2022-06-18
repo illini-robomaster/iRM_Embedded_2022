@@ -163,12 +163,12 @@ class AHRSFilter {
 
  private:
   void Predict(const uint32_t timestamp,
-               Eigen::Matrix<float, 13, 1>* const proc_states,
-               Eigen::Matrix<float, 12, 12>* const proc_states_cov) const;
+               Eigen::Matrix<float, 17, 1>* const proc_states,
+               Eigen::Matrix<float, 15, 15>* const proc_states_cov) const;
 
   // filter states
-  Eigen::Matrix<float, 13, 1> states_;
-  Eigen::Matrix<float, 12, 12> states_cov_;
+  Eigen::Matrix<float, 17, 1> states_;
+  Eigen::Matrix<float, 15, 15> states_cov_;
   Eigen::Vector3f latest_gyro_;
   uint32_t latest_time_; // in [us]
 

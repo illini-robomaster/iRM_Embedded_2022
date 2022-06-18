@@ -122,10 +122,10 @@ void ImuTask(void* argument) {
                      Eigen::Vector3f::Zero(),
                      Eigen::Vector3f::Zero(),
                      Eigen::Vector3f::Zero(),
-                     Eigen::Vector3f::Ones() * 0.1,
-                     Eigen::Vector3f::Ones() * 4e-4,
-                     Eigen::Vector3f::Ones() * 3e-4,
-                     Eigen::Vector3f::Ones() * 1e3,
+                     Eigen::Vector3f::Constant(M_PI),
+                     Eigen::Vector3f::Constant(4e-3),
+                     Eigen::Vector3f::Constant(3e-4),
+                     Eigen::Vector3f::Constant(1e3),
                      bmi088->gyro,
                      bmi088->gyro_timestamp);
   bmi088->RegisterAccelCallback(AccelCallback);

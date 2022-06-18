@@ -186,12 +186,14 @@ void AHRSFilter::Initialize(const Eigen::Quaternionf &pose,
   states_.segment<3>(4) = accel_bias;
   states_.segment<3>(7) = gyro_bias;
   states_.segment<3>(10) = mag_bias;
+  states_.segment<4>(13) = Eigen::Quaternionf::Identity().coeffs();
 
   // set covariance
   states_cov_.diagonal().segment<3>(0) = pose_prior;
   states_cov_.diagonal().segment<3>(3) = accel_bias_prior;
   states_cov_.diagonal().segment<3>(6) = gyro_bias_prior;
   states_cov_.diagonal().segment<3>(9) = mag_bias_prior;
+  states_cov_.diagonal().segment<3>(12).setConstant(1/2 * M_PI);
 
   // set one gyro measurement
   latest_gyro_ = gyro_body;
@@ -201,8 +203,8 @@ void AHRSFilter::Initialize(const Eigen::Quaternionf &pose,
 }
 
 void AHRSFilter::Predict(const uint32_t timestamp,
-                         Eigen::Matrix<float, 13, 1>* const proc_states,
-                         Eigen::Matrix<float, 12, 12>* const proc_states_cov) const {
+                         Eigen::Matrix<float, 17, 1>* const proc_states,
+                         Eigen::Matrix<float, 15, 15>* const proc_states_cov) const {
   // update only when dt > 0
   if (timestamp > latest_time_) {
     const float dt = (timestamp - latest_time_) * 1e-6;
@@ -216,8 +218,8 @@ void AHRSFilter::Predict(const uint32_t timestamp,
 }
 
 void AHRSFilter::MeasureGyro(const Eigen::Vector3f &gyro_body, const uint32_t timestamp) {
-  Eigen::Matrix<float, 13, 1> next_states;
-  Eigen::Matrix<float, 12, 12> next_states_cov;
+  Eigen::Matrix<float, 17, 1> next_states;
+  Eigen::Matrix<float, 15, 15> next_states_cov;
   Predict(timestamp, &next_states, &next_states_cov);
 
   osMutexAcquire(lock_, osWaitForever);
@@ -229,20 +231,20 @@ void AHRSFilter::MeasureGyro(const Eigen::Vector3f &gyro_body, const uint32_t ti
 }
 
 void AHRSFilter::MeasureAccel(const Eigen::Vector3f &accel_body, const uint32_t timestamp) {
-  Eigen::Matrix<float, 13, 1> x;
-  Eigen::Matrix<float, 12, 12> P;
+  Eigen::Matrix<float, 17, 1> x;
+  Eigen::Matrix<float, 15, 15> P;
   Predict(timestamp, &x, &P);
 
   Eigen::Vector3f y;
   Eigen::Matrix3f S;
-  Eigen::Matrix<float, 3, 12> H;
+  Eigen::Matrix<float, 3, 15> H;
   sym::AhrsUpdateAccel<float>(x, P,
                               accel_body, accel_noise_, g_,
                               &y, &S, &H);
 
   // compute kalman update
-  const Eigen::Matrix<float, 12, 3> K = S.llt().solve(H * P).transpose();
-  const Eigen::Matrix<float, 12, 1> delta = K * y;
+  const Eigen::Matrix<float, 15, 3> K = S.llt().solve(H * P).transpose();
+  const Eigen::Matrix<float, 15, 1> delta = K * y;
 
   osMutexAcquire(lock_, osWaitForever);
   latest_time_ = timestamp;
@@ -253,20 +255,20 @@ void AHRSFilter::MeasureAccel(const Eigen::Vector3f &accel_body, const uint32_t 
 }
 
 void AHRSFilter::MeasureMag(const Eigen::Vector3f &mag_body, const uint32_t timestamp) {
-  Eigen::Matrix<float, 13, 1> x;
-  Eigen::Matrix<float, 12, 12> P;
+  Eigen::Matrix<float, 17, 1> x;
+  Eigen::Matrix<float, 15, 15> P;
   Predict(timestamp, &x, &P);
 
   Eigen::Vector3f y;
   Eigen::Matrix3f S;
-  Eigen::Matrix<float, 3, 12> H;
+  Eigen::Matrix<float, 3, 15> H;
   sym::AhrsUpdateMag<float>(x, P,
                             mag_body, mag_noise_, m_,
                             &y, &S, &H);
 
   // compute kalman update
-  const Eigen::Matrix<float, 12, 3> K = S.llt().solve(H * P).transpose();
-  const Eigen::Matrix<float, 12, 1> delta = K * y;
+  const Eigen::Matrix<float, 15, 3> K = S.llt().solve(H * P).transpose();
+  const Eigen::Matrix<float, 15, 1> delta = K * y;
 
   osMutexAcquire(lock_, osWaitForever);
   latest_time_ = timestamp;
