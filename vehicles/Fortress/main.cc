@@ -597,7 +597,7 @@ void UITask(void* arg) {
   osDelay(UI_TASK_DELAY);
 
   char followModeStr[15] = "FOLLOW MODE";
-  char spinModeStr[15] = "SPIN MODE";
+  char spinModeStr[15] = "SPIN   MODE";
   uint32_t modeColor = UI_Color_Orange;
 
   UI->ModeGUIInit(&graphMode);
