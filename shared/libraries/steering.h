@@ -21,6 +21,10 @@
 #pragma once
 
 #include "motor.h"
+#include "controller.h"
+#include "power_limit.h"
+
+constexpr uint16_t MOTOR_NUM = 4;
 
 namespace control {
 
@@ -55,24 +59,33 @@ class SteeringChassis {
   // counterclockwise -> positive
   void SetWSpeed(double _vw);
 
-  void Update();
+  void Update(float power_limit, float chassis_power, float chassis_power_buffer);
   
   private:
-
+  // current velocity
+  // right -> positive, left -> negative
+  // front -> positive, back -> negative
+  // counterclockwise -> positive
   double vx;
   double vy;
   double vw;
 
+  // radius of the vehicle from the center to the wheels
   double radius;  
 
+  // current steering pos of the 4 wheels
+  double theta0;
   double theta1;
   double theta2;
   double theta3;
-  double theta4;
+
+  ConstrainedPID pids[4];
+  PowerLimit* power_limit;
+  power_limit_t power_limit_info;
+
+  const steering_chassis_t* chassis;
 
 
-  steering_chassis_t chassis*;
-
-} // class SteeringChassis ends
+}; // class SteeringChassis ends
 
 } //ns control
