@@ -59,6 +59,8 @@ void RM_RTOS_Default_Task(const void* argument) {
 
   auto miniPCreceiver = communication::MiniPCProtocol();
 
+  uint32_t buffer[2] = {0};
+
   while (true) {
     /* wait until rx data is available */
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
@@ -66,12 +68,15 @@ void RM_RTOS_Default_Task(const void* argument) {
       /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
       length = uart->Read(&data);
 
-      // if read anything, flash red
-      gpio_red->High();
-
       miniPCreceiver.Receive(data, length);
-      if (miniPCreceiver.get() == 1) {
-        gpio_green->High();
+      if (miniPCreceiver.GetFlag() == 1) {
+        // if read packet, flash red
+        gpio_red->High();
+        miniPCreceiver.GetPayLoad(buffer);
+        if (buffer[0] >= 100) {
+          // if read payload 0 > 100, flash green
+          gpio_green->High();
+        }
       }
       osDelay(200);
       gpio_green->Low();

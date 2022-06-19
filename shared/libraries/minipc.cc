@@ -62,9 +62,15 @@ void MiniPCProtocol::Receive(const uint8_t* data, uint8_t length) {
 
 void MiniPCProtocol::handle(void) { flag = 1; }
 
-uint8_t MiniPCProtocol::get(void) {
+uint8_t MiniPCProtocol::GetFlag(void) {
   uint8_t temp = flag;
   flag = 0;
   return temp;
 }
+
+void MiniPCProtocol::GetPayLoad(uint32_t * buf) {
+  buf[0] = static_cast<uint32_t> (host_command[6]);
+  buf[1] = static_cast<uint32_t> (host_command[10]);
+}
+
 }  // namespace communication
