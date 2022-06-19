@@ -352,9 +352,9 @@ void UserInterface::ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arro
            chassisY_ + chassisLen_ / 2 - 7, chassisX_ + 7, chassisY_ + chassisLen_ / 2 + 7);
   LineDraw(gimbal, "g", UI_Graph_Add, 0, UI_Color_White, 7, chassisX_, chassisY_, chassisX_,
            chassisY_ + gimbalLen_);
-  LineDraw(cali, "e1", UI_Graph_Add, 0, UI_Color_Pink, 20, centerX_, centerY_ + 30, centerX_,
-           centerY_ + 40);
-  //  CircleDraw(cali, "cal", UI_Graph_Add, 0, UI_Color_Pink, 10, centerX_, centerY_ + 100, 5);
+//  LineDraw(cali, "e1", UI_Graph_Add, 0, UI_Color_Pink, 20, centerX_, centerY_ + 30, centerX_,
+//           centerY_ + 40);
+  CircleDraw(cali, "cal", UI_Graph_Add, 0, UI_Color_Pink, 14, centerX_ + 925, centerY_ + 330, 7);
   LineDraw(empty2, "e2", UI_Graph_Add, 0, UI_Color_Yellow, 20, centerX_, centerY_ + 60, centerX_,
            centerY_ + 60);
 }
@@ -365,7 +365,7 @@ void UserInterface::ChassisGUIUpdate(float relative, bool flag) {
   float y_end = chassisY_ + chassisLen_ / 2.0 * cosf(relative);
   float x_start = chassisX_ + chassisLen_ / 2.0 * sinf(relative);
   float y_start = chassisY_ - chassisLen_ / 2.0 * cosf(relative);
-  //  int color = flag ? UI_Color_Green : UI_Color_Pink;
+  int color = flag ? UI_Color_Green : UI_Color_Pink;
   LineDraw(chassis_, "c", UI_Graph_Change, 1, UI_Color_Yellow, 60, (uint32_t)x_start,
            (uint32_t)y_start, (uint32_t)x_end, (uint32_t)y_end);
   LineDraw(arrow_, "a", UI_Graph_Change, 1, UI_Color_Yellow, 20,
@@ -375,7 +375,7 @@ void UserInterface::ChassisGUIUpdate(float relative, bool flag) {
            (uint32_t)(y_end + 10 * cosf(relative + M_PI / 4)));
   LineDraw(gimbal_, "g", UI_Graph_Change, 0, UI_Color_White, 7, chassisX_, chassisY_, chassisX_,
            chassisY_ + gimbalLen_);
-  //  CircleDraw(cali_, "cal", UI_Graph_Change, 0, color, 10, centerX_, centerY_ + 100, 5);
+  CircleDraw(cali_, "cal", UI_Graph_Change, 0, color, 14, centerX_ + 925, centerY_ + 330, 7);
 }
 
 void UserInterface::CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
@@ -437,20 +437,20 @@ void UserInterface::CapGUICharUpdate() {
 
 void UserInterface::DiagGUIInit(graphic_data_t* message, int len) {
   diag_ = message;
-  CharDraw(message, "M0", UI_Graph_Add, 2, UI_Color_Main, 10, len, 2, diagStartX_, diagStartY_);
+  CharDraw(message, "M0", UI_Graph_Add, 2, UI_Color_Pink, 10, len, 2, diagStartX_, diagStartY_);
 }
 
 void UserInterface::DiagGUIUpdate(int len) {
   int currY = diagStartY_ - messageCount_ * 20;
   char name[10];
   snprintf(name, 10, "M%d", messageCount_);
-  CharDraw(diag_, name, UI_Graph_Add, 2, UI_Color_Main, 10, len, 2, diagStartX_, currY);
+  CharDraw(diag_, name, UI_Graph_Add, 2, UI_Color_Pink, 10, len, 2, diagStartX_, currY);
 }
 
 void UserInterface::AddMessage(char* messageStr, int len, UserInterface* UI, Referee* referee,
                                graphic_data_t* graph) {
   messageCount_++;
-  if (messageCount_ > 15) return;
+  if (messageCount_ > 25) return;
   UI->DiagGUIUpdate(len);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), *graph, messageStr, len);
 }
@@ -460,19 +460,19 @@ void UserInterface::DiagGUIClear(UserInterface* UI, Referee* referee, graphic_da
   char str[] = " ";
   char name[10];
   snprintf(name, 10, "M%d", currCount);
-  UI->CharDraw(diag_, name, UI_Graph_Change, 2, UI_Color_Main, 10, 30, 2, diagStartX_,
+  UI->CharDraw(diag_, name, UI_Graph_Change, 2, UI_Color_Pink, 10, 30, 2, diagStartX_,
                diagStartY_ - currCount * 20);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), *graph, str, 1);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
 }
 
 void UserInterface::ModeGUIInit(graphic_data_t* modeGraph) {
-  CharDraw(modeGraph, "MG", UI_Graph_Add, 0, UI_Color_Yellow, 15, 30, 2, chassisX_ - 60,
+  CharDraw(modeGraph, "MG", UI_Graph_Add, 0, UI_Color_Yellow, 15, 30, 2, chassisX_ - 70,
            modeStartY_);
 }
 
 void UserInterface::ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color) {
-  CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - 60, modeStartY_);
+  CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - 70, modeStartY_);
 }
 
 }  // namespace communication

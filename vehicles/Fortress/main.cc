@@ -534,6 +534,26 @@ void UITask(void* arg) {
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
 
+  char msgBuffer1[30] = "PITCH MOTOR UNCONNECTED";
+  char msgBuffer2[30] = "YAW MOTOR UNCONNECTED";
+  char msgBuffer3[30] = "L SHOOTER MOTOR UNCONNECTED";
+  char msgBuffer4[30] = "R SHOOTER MOTOR UNCONNECTED";
+  char msgBuffer5[30] = "LOAD MOTOR UNCONNECTED";
+  char msgBuffer6[30] = "FRONT L MOTOR UNCONNECTED";
+  char msgBuffer7[30] = "FRONT R MOTOR UNCONNECTED";
+  char msgBuffer8[30] = "BACK L MOTOR UNCONNECTED";
+  char msgBuffer9[30] = "BACK R MOTOR UNCONNECTED";
+
+  bool pitch_motor_flag_ui = pitch_motor_flag;
+  bool yaw_motor_flag_ui = yaw_motor_flag;
+  bool sl_motor_flag_ui = sl_motor_flag;
+  bool sr_motor_flag_ui = sr_motor_flag;
+  bool ld_motor_flag_ui = ld_motor_flag;
+  bool fl_motor_flag_ui = fl_motor_flag;
+  bool fr_motor_flag_ui = fr_motor_flag;
+  bool bl_motor_flag_ui = bl_motor_flag;
+  bool br_motor_flag_ui = br_motor_flag;
+
   UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
                    graphCali, graphEmpty2);
@@ -575,29 +595,8 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
-  char msgBuffer[30] = "Error_one";
-  UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
-  referee->PrepareUIContent(communication::CHAR_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(UI_TASK_DELAY);
-
-  char msgBuffer2[30] = "Error_two";
-  UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
-  referee->PrepareUIContent(communication::CHAR_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(UI_TASK_DELAY);
-
-  char msgBuffer3[30] = "Error_three";
-  UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
-  referee->PrepareUIContent(communication::CHAR_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(UI_TASK_DELAY);
-
   char followModeStr[15] = "FOLLOW MODE";
-  char spinModeStr[15] = "SPIN   MODE";
+  char spinModeStr[15] = "SPIN  MODE";
   uint32_t modeColor = UI_Color_Orange;
 
   UI->ModeGUIInit(&graphMode);
@@ -637,11 +636,102 @@ void UITask(void* arg) {
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
     UI->ModeGuiUpdate(&graphMode, modeColor);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 30);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 15);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
+
+    if (!pitch_motor_flag_ui && !pitch_motor_flag){
+      UI->AddMessage(msgBuffer1, sizeof msgBuffer1, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      pitch_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!yaw_motor_flag_ui && !yaw_motor_flag) {
+      UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      yaw_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!sl_motor_flag_ui && !sl_motor_flag) {
+      UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      sl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!sr_motor_flag_ui && !sr_motor_flag) {
+      UI->AddMessage(msgBuffer4, sizeof msgBuffer4, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      sr_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!ld_motor_flag_ui && !ld_motor_flag) {
+      UI->AddMessage(msgBuffer5, sizeof msgBuffer5, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      ld_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!fl_motor_flag_ui && !fl_motor_flag) {
+      UI->AddMessage(msgBuffer6, sizeof msgBuffer6, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      fl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!fr_motor_flag_ui && !fr_motor_flag) {
+      UI->AddMessage(msgBuffer7, sizeof msgBuffer7, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      fr_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!bl_motor_flag_ui && !bl_motor_flag) {
+      UI->AddMessage(msgBuffer8, sizeof msgBuffer8, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      bl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!br_motor_flag_ui && !br_motor_flag) {
+      UI->AddMessage(msgBuffer9, sizeof msgBuffer9, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      br_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+  //   clear diagnosis messages
+    if (dbus->keyboard.bit.C) {
+      for (int i = 1; i <= UI->getMessageCount(); ++i) {
+        UI->DiagGUIClear(UI, referee, &graphDiag, i);
+        frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+        referee_uart->Write(frame.data, frame.length);
+        osDelay(UI_TASK_DELAY);
+      }
+    }
   }
 }
 
