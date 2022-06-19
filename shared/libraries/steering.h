@@ -79,10 +79,10 @@ class SteeringChassis {
   double theta2;
   double theta3;
 
+  // same as class Chassis
   ConstrainedPID pids[4];
   PowerLimit* power_limit;
   power_limit_t power_limit_info;
-
   const steering_chassis_t* chassis;
 
 
