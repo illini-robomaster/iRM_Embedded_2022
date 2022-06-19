@@ -68,6 +68,7 @@ void RM_RTOS_Init() {
   servo_data.omega_pid_param = new float[3]{60, 0.5, 100};
   servo_data.max_iout = 1000;
   servo_data.max_out = 10000;
+  servo_data.shaft_dead_angle = 0.01;
   servo = new control::ServoMotor(servo_data);
 
   servo->RegisterJamCallback(jam_callback, 0.6);

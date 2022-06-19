@@ -18,7 +18,7 @@
  *                                                                          *
  ****************************************************************************/
 
-#define WITH_CONTROLLER
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_os.h"
@@ -38,7 +38,7 @@
 #endif
 
 #define NOTCH (2 * PI / 4)
-#define SPEED 50
+#define SPEED 80
 #define ACCELERATION (30 * PI)
 
 bsp::CAN* can1 = nullptr;
@@ -50,22 +50,42 @@ remote::DBUS* dbus = nullptr;
 BoolEdgeDetector key_detector(false);
 #endif
 
+// #define USING_M3508
+#define USING_M2006
+
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
   bsp::SetHighresClockTimer(&htim2);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
 
+#ifdef USING_3508
+  motor = new control::Motor3508(can1, 0x201);
   control::servo_t servo_data;
   servo_data.motor = motor;
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{450, 2.5, 135};
-  servo_data.max_iout = 900;
-  servo_data.max_out = 12000;
+  servo_data.omega_pid_param = new float[3]{45, 0.2, 120};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo_data.shaft_dead_angle = 0.01;
   servo = new control::ServoMotor(servo_data);
+#endif
+
+#ifdef USING_M2006
+  motor = new control::Motor2006(can1, 0x202);
+  control::servo_t servo_data;
+  servo_data.motor = motor;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = M2006P36_RATIO;
+  servo_data.omega_pid_param = new float[3]{40, 0.2, 120};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo_data.shaft_dead_angle = 0.01;
+  servo = new control::ServoMotor(servo_data);
+#endif
 
 #ifdef WITH_CONTROLLER
   dbus = new remote::DBUS(&huart1);
@@ -82,6 +102,20 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
 
   float target = 0;
+
+  // while (true) {
+  //   motor->SetOutput(32768);
+  //   control::MotorCANBase::TransmitOutput(motors, 1);
+  //   static int j = 0;
+  //   if (j > 10) {
+  //     motor->PrintData();
+  //     j = 0;
+  //   } else {
+  //     j = 0;
+  //   }
+  //   osDelay(2);
+  // }
+
   while (true) {
 #ifdef WITH_CONTROLLER
     target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
@@ -98,7 +132,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
     static int i = 0;
     if (i > 10) {
-      print("%10.2f %10.2f %10.2f %10.2f ", dbus->ch0, dbus->ch0, dbus->ch0, dbus->ch0);
+      // print("%10.2f %10.2f %10.2f %10.2f ", dbus->ch0, dbus->ch0, dbus->ch0, dbus->ch0);
       servo->PrintData();
       i = 0;
     } else {

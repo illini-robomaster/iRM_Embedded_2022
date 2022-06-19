@@ -260,6 +260,7 @@ ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, floa
   transmission_ratio_ = data.transmission_ratio;
   proximity_in_ = proximity_in;
   proximity_out_ = proximity_out;
+  shaft_dead_angle_ = data.shaft_dead_angle;
 
   hold_ = true;
   target_angle_ = 0;
@@ -310,16 +311,13 @@ void ServoMotor::SetMaxAcceleration(const float max_acceleration) {
 void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
-  if (hold_detector_->edge()) {
-    omega_pid_.Reset();
-  }
-  if (hold_detector_->negEdge()) {
-    start_time_ = GetHighresTickMicroSec();
-  }
+  if (hold_detector_->edge()) omega_pid_.Reset();
+  if (hold_detector_->negEdge()) start_time_ = GetHighresTickMicroSec();
 
   // calculate desired output with pid
   int16_t command;
   float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
+  if (target_diff < shaft_dead_angle_ && target_diff > -shaft_dead_angle_) target_diff = 0;
   // v = sqrt(2 * a * d)
   uint32_t current_time = GetHighresTickMicroSec();
   float speed_max_start =
@@ -328,7 +326,7 @@ void ServoMotor::CalcOutput() {
   float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
   current_speed = clip<float>(current_speed, 0, max_speed_);
   command = omega_pid_.ComputeConstrainedOutput(
-      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed) / transmission_ratio_);
+      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
   motor_->SetOutput(command);
 
   // jam detection mechanism
@@ -431,6 +429,7 @@ SteeringMotor::SteeringMotor(steering_t data) {
   servo_data.omega_pid_param = data.omega_pid_param;
   servo_data.max_iout = data.max_iout;
   servo_data.max_out = data.max_out;
+  servo_data.shaft_dead_angle = data.shaft_dead_angle;
   servo_ = new ServoMotor(servo_data);
 
   test_speed_ = data.test_speed;
@@ -446,6 +445,8 @@ void SteeringMotor::PrintData() const { servo_->PrintData(); }
 void SteeringMotor::TurnRelative(float angle) {
   servo_->SetTarget(servo_->GetTarget() + angle, true);
 }
+
+void SteeringMotor::TurnAbsolute(float angle) { servo_->SetTarget(angle); }
 
 bool SteeringMotor::AlignUpdate() {
   static bool pos_align_complete = false;
