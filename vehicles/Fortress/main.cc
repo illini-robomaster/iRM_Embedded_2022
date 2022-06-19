@@ -130,7 +130,7 @@ void gimbalTask(void* arg) {
   laser->On();
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -254,7 +254,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.35;
+const float CHASSIS_DEADZONE = 0.04;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -270,7 +270,7 @@ void chassisTask(void* arg) {
   float follow_speed = 400;
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -355,7 +355,7 @@ void shooterTask(void* arg) {
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    if (dbus->keyboard.bit.B || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
@@ -533,6 +533,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
@@ -542,12 +543,14 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUICharInit(&graphPercent);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -555,6 +558,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char diagStr[30] = "";
   UI->DiagGUIInit(&graphDiag, 30);
@@ -562,6 +566,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char msgBuffer[30] = "Error_one";
   UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
@@ -604,6 +609,7 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::FIVE_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUIUpdate(std::abs(sin(j)));
     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
@@ -611,6 +617,7 @@ void UITask(void* arg) {
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     j += 0.1;
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUICharUpdate();
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -618,6 +625,7 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
@@ -626,8 +634,6 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
-
     osDelay(UI_TASK_DELAY);
   }
 }
