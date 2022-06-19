@@ -98,13 +98,13 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
-  control::gimbal_data_t* gimbal_data = gimbal->GetData();
+//  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
+//  control::gimbal_data_t* gimbal_data = gimbal->GetData();
   bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
   laser.High();
 
-  bool load = false;
-  bool abs_mode = true;
+//  bool load = false;
+//  bool abs_mode = true;
 
   osDelay(500);  // DBUS initialization needs time
 
@@ -117,45 +117,50 @@ void RM_RTOS_Default_Task(const void* args) {
     // Toggle gimbal control absolute or relative mode
     //
     //    To toggle push right joystick left or right to the end
-    abs_detector.input(dbus->ch0 <= -JOYSTICK_THRESHOLD || dbus->ch0 >= JOYSTICK_THRESHOLD);
-    if (abs_detector.posEdge()) {
-      abs_mode = !abs_mode;
-    }
-    float pitch_ratio = float(-dbus->ch3) / remote::DBUS::ROCKER_MAX;
-    float yaw_ratio = float(-dbus->ch2) / remote::DBUS::ROCKER_MAX;
-    if (abs_mode) {
-      gimbal->TargetAbs(pitch_ratio * gimbal_data->pitch_max_, yaw_ratio * gimbal_data->yaw_max_);
-    } else {
-      // divide by 100 since osDelay is 10
-      gimbal->TargetRel(pitch_ratio * GIMBAL_SPEED / 100, yaw_ratio * GIMBAL_SPEED / 100);
-    }
+//    abs_detector.input(dbus->ch0 <= -JOYSTICK_THRESHOLD || dbus->ch0 >= JOYSTICK_THRESHOLD);
+//    if (abs_detector.posEdge()) {
+//      abs_mode = !abs_mode;
+//    }
+//    float pitch_ratio = float(-dbus->ch3) / remote::DBUS::ROCKER_MAX;
+//    float yaw_ratio = float(-dbus->ch2) / remote::DBUS::ROCKER_MAX;
+//    if (abs_mode) {
+//      gimbal->TargetAbs(pitch_ratio * gimbal_data->pitch_max_, yaw_ratio * gimbal_data->yaw_max_);
+//    } else {
+//      // divide by 100 since osDelay is 10
+//      gimbal->TargetRel(pitch_ratio * GIMBAL_SPEED / 100, yaw_ratio * GIMBAL_SPEED / 100);
+//    }
 
     // Toggle load control contigious or single shot on right switch
     //    Up for contiguous load
     //    Mid for load per right joystick pushed up
-    bool load_trigger = dbus->ch1 >= JOYSTICK_THRESHOLD;
-    load_detector.input(load_trigger);
-    if (dbus->swr == remote::UP) {
-      load = load_trigger;
-    } else if (dbus->swr == remote::MID) {
-      load = load_detector.posEdge();
-    }
-    if (load) shooter->LoadNext();
+//    bool load_trigger = dbus->ch1 >= JOYSTICK_THRESHOLD;
+//    load_detector.input(load_trigger);
+//    if (dbus->swr == remote::UP) {
+//      load = load_trigger;
+//    } else if (dbus->swr == remote::MID) {
+//      load = load_detector.posEdge();
+//    }
+//    if (load) shooter->LoadNext();
 
     // Toggle shoot status on or off on left switch
     //    Up for shoot motor start
     //    Mid for shoot motor stop
-    shoot_detector.input(dbus->swl == remote::UP);
+    shoot_detector.input(dbus->swr == remote::UP);
     if (shoot_detector.posEdge()) {
       shooter->SetFlywheelSpeed(150);
     } else if (shoot_detector.negEdge()) {
       shooter->SetFlywheelSpeed(0);
     }
 
+//    if (dbus->swl == remote::UP)
+//        shooter->SetFlywheelSpeed(150);
+//    else
+//        shooter->SetFlywheelSpeed(0);
+
     // Update and send command
-    gimbal->Update();
-    shooter->Update();
-    control::MotorCANBase::TransmitOutput(motors, 3);
+    // gimbal->Update();
+    // shooter->Update();
+    // control::MotorCANBase::TransmitOutput(motors, 3);
     osDelay(10);
   }
 }

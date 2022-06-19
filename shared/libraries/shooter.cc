@@ -42,8 +42,8 @@ Shooter::Shooter(shooter_t shooter) {
   switch (shooter.model) {
     case SHOOTER_SENTRY:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
-      servo_data.max_speed = 2 * PI;
-      servo_data.max_acceleration = 8 * PI;
+      servo_data.max_speed = 32 * PI;
+      servo_data.max_acceleration = 20 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
 
@@ -65,7 +65,7 @@ Shooter::Shooter(shooter_t shooter) {
       break;
 
     default:
-      RM_ASSERT_TRUE(false, "No shooter type specified");
+      RM_ASSERT_TRUE(false, "Not Supported Shooter Mode\r\n");
   }
   // Initialize servomotor instance using data provided and register default jam callback
   load_servo_ = new control::ServoMotor(servo_data);
@@ -90,6 +90,9 @@ Shooter::~Shooter() {
       right_pid_ = nullptr;
       delete flywheel_turning_detector_;
       flywheel_turning_detector_ = nullptr;
+      break;
+      default:
+          RM_ASSERT_TRUE(false, "Not Supported Shooter Mode\r\n");
   }
 }
 
