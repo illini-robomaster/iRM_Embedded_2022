@@ -22,6 +22,7 @@
 
 #include "arm_math.h"
 #include "bsp_error_handler.h"
+#include "bsp_os.h"
 #include "utils.h"
 
 using namespace bsp;
@@ -259,30 +260,29 @@ static void servomotor_callback(const uint8_t data[], void* args) {
   servo->UpdateData(data);
 }
 
-ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
-    : omega_pid_(PIDController(servo.omega_pid_param)) {
-  motor_ = servo.motor;
-  mode_ = servo.mode;
-  max_speed_ = servo.transmission_ratio * servo.max_speed;
-  max_acceleration_ = servo.transmission_ratio * servo.max_acceleration;
-  transmission_ratio_ = servo.transmission_ratio;
+ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, float proximity_out) {
+  motor_ = data.motor;
+  max_speed_ = data.transmission_ratio * data.max_speed;
+  max_acceleration_ = data.transmission_ratio * data.max_acceleration;
+  transmission_ratio_ = data.transmission_ratio;
   proximity_in_ = proximity_in;
   proximity_out_ = proximity_out;
 
   hold_ = true;
-  target_ = 0;
-  align_angle_ = -1;  // Wait for Update to initialize
+  target_angle_ = 0;
+  align_angle_ = align_angle;  // Wait for Update to initialize
   motor_angle_ = 0;
   offset_angle_ = 0;
   servo_angle_ = 0;
-  wrap_detector_ = new FloatEdgeDetector(align_angle_, PI);
+  cumulated_angle_ = 0;
+  inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
+  outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
 
-  // dir_ is initialized here
-  SetDirUsingMode_(servo.mode);
+  omega_pid_.Reinit(data.omega_pid_param, data.max_iout, data.max_out);
 
   // override origianal motor rx callback with servomotor callback
-  servo.motor->can_->RegisterRxCallback(servo.motor->rx_id_, servomotor_callback, this);
+  data.motor->can_->RegisterRxCallback(data.motor->rx_id_, servomotor_callback, this);
 
   // Initially jam detection is not enabled, it is enabled only if user calls
   // RegisterJamCallback in the future.
@@ -294,14 +294,10 @@ ServoMotor::ServoMotor(servo_t servo, float proximity_in, float proximity_out)
 }
 
 servo_status_t ServoMotor::SetTarget(const float target, bool override) {
-  return SetTarget(target, mode_, override);
-}
-
-servo_status_t ServoMotor::SetTarget(const float target, const servo_mode_t mode, bool override) {
   if (!hold_ && !override) return INPUT_REJECT;
-  target_ = wrap<float>(target, 0, 2 * PI);
-  SetDirUsingMode_(mode);
-  return dir_;
+  servo_status_t dir = target < target_angle_ ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
+  target_angle_ = target;
+  return dir;
 }
 
 void ServoMotor::SetMaxSpeed(const float max_speed) {
@@ -322,23 +318,28 @@ void ServoMotor::CalcOutput() {
   // if holding status toggle, reseting corresponding pid to avoid error building up
   hold_detector_->input(hold_);
   if (hold_detector_->edge()) omega_pid_.Reset();
+  if (hold_detector_->negEdge()) start_time_ = GetHighresTickMicroSec();
 
   // calculate desired output with pid
   int16_t command;
+  float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
   // v = sqrt(2 * a * d)
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI) * transmission_ratio_;
-  float current_speed_ = clip<float>(sqrt(2 * max_acceleration_ * abs(diff_angle)), 0, max_speed_);
-  if (hold_) {
-    // holding, allow turning in both directions
+  uint32_t current_time = GetHighresTickMicroSec();
+  if (!hold_) {
+    float speed_max_start =
+        (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
+    float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
+    float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
+    current_speed = clip<float>(current_speed, 0, max_speed_);
     command = omega_pid_.ComputeConstrainedOutput(
-        motor_->GetOmegaDelta(sign<float>(diff_angle, 0) * current_speed_));
+        motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
   } else {
-    // moving, only allow turn in specified direction(s)
-    command = omega_pid_.ComputeConstrainedOutput(motor_->GetOmegaDelta(dir_ * current_speed_));
+    command = omega_pid_.ComputeConstrainedOutput(
+        motor_->GetOmegaDelta(target_diff * 50));
   }
   motor_->SetOutput(command);
 
-  // jam detection machenism
+  // jam detection mechanism
   if (detect_buf_ != nullptr) {
     // update rolling sum and circular buffer
     detect_total_ += command - detect_buf_[detect_head_];
@@ -349,8 +350,6 @@ void ServoMotor::CalcOutput() {
     jam_detector_->input(abs(detect_total_) >= jam_threshold_);
     if (jam_detector_->posEdge()) {
       servo_jam_t data;
-      data.mode = mode_;
-      data.dir = dir_;
       data.speed = max_speed_ / transmission_ratio_;
       jam_callback_(this, data);
     }
@@ -359,14 +358,14 @@ void ServoMotor::CalcOutput() {
 
 bool ServoMotor::Holding() const { return hold_; }
 
-float ServoMotor::GetTarget() const { return target_; }
+float ServoMotor::GetTarget() const { return target_angle_; }
 
 void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_threshold,
                                      uint8_t detect_period) {
   constexpr int maximum_command = 32768;  // maximum command that a CAN motor can accept
   RM_ASSERT_TRUE(effort_threshold > 0 && effort_threshold <= 1,
                  "Effort threshold should between 0 and 1");
-  // storing funcion pointer for future invocation
+  // storing function pointer for future invocation
   jam_callback_ = callback;
 
   // create and initialize circular buffer
@@ -383,20 +382,19 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
-  print("theta: % .4f ", servo_angle_);
-  print("omega: % .4f ", GetOmega());
-  print("target: % .4f ", target_);
+  print("theta: % 9.4f ", GetTheta());
+  print("omega: % 9.4f ", GetOmega());
+  print("target: % 9.4f ", target_angle_);
   if (hold_)
-    print("status: holding\r\n");
+    print("status: holding ");
   else
-    print("status: moving\r\n");
+    print("status: moving  ");
+  motor_->PrintData();
 }
 
-float ServoMotor::GetTheta() const { return servo_angle_; }
+float ServoMotor::GetTheta() const { return servo_angle_ + cumulated_angle_; }
 
-float ServoMotor::GetThetaDelta(const float target) const {
-  return wrap<float>(target - servo_angle_, -PI, PI);
-}
+float ServoMotor::GetThetaDelta(const float target) const { return target - GetTheta(); }
 
 float ServoMotor::GetOmega() const { return motor_->omega_ / transmission_ratio_; }
 
@@ -409,44 +407,76 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
 
   // TODO: change the align angle calibration method
   // This is a dumb method to get the align angle
-  if (align_angle_ == -1) align_angle_ = motor_->theta_;
+  if (align_angle_ < 0) align_angle_ = motor_->theta_;
 
   motor_angle_ = motor_->theta_ - align_angle_;
   // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
   // edge, which means that the motor is turning in positive direction when crossing encoder
   // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
-  wrap_detector_->input(motor_angle_);
-  if (wrap_detector_->negEdge())
+  inner_wrap_detector_->input(motor_angle_);
+  if (inner_wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
-  else if (wrap_detector_->posEdge())
+  else if (inner_wrap_detector_->posEdge())
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
+  outer_wrap_detector_->input(servo_angle_);
+  if (outer_wrap_detector_->negEdge())
+    cumulated_angle_ += 2 * PI;
+  else if (outer_wrap_detector_->posEdge())
+    cumulated_angle_ -= 2 * PI;
 
   // determine if the motor should be in hold state
-  float diff = abs(GetThetaDelta(target_));
+  float diff = abs(GetThetaDelta(target_angle_));
   if (!hold_ && diff < proximity_in_) hold_ = true;
   if (hold_ && diff > proximity_out_) hold_ = false;
 }
 
-void ServoMotor::NearestModeSetDir_() {
-  float diff_angle = wrap<float>(target_ - servo_angle_, -PI, PI);
-  dir_ = diff_angle > 0 ? TURNING_ANTICLOCKWISE : TURNING_CLOCKWISE;
+SteeringMotor::SteeringMotor(steering_t data) {
+  servo_t servo_data;
+  servo_data.motor = data.motor;
+  servo_data.max_speed = data.max_speed;
+  servo_data.max_acceleration = data.max_acceleration;
+  servo_data.transmission_ratio = data.transmission_ratio;
+  servo_data.omega_pid_param = data.omega_pid_param;
+  servo_data.max_iout = data.max_iout;
+  servo_data.max_out = data.max_out;
+  servo_ = new ServoMotor(servo_data, data.offset_angle);
+
+  test_speed_ = data.test_speed;
+  align_detect_func = data.align_detect_func;
+  align_angle_ = 0;
+  align_detector = new BoolEdgeDetector(false);
 }
 
-void ServoMotor::SetDirUsingMode_(servo_mode_t mode) {
-  switch (mode) {
-    case SERVO_ANTICLOCKWISE:
-      dir_ = TURNING_ANTICLOCKWISE;
-      return;
-    case SERVO_NEAREST:
-      NearestModeSetDir_();
-      return;
-    case SERVO_CLOCKWISE:
-      dir_ = TURNING_CLOCKWISE;
-      return;
-    default:
-      RM_ASSERT_TRUE(false, "Invalid servo turining mode");
-  }
+float SteeringMotor::GetRawTheta() const { return servo_->GetTheta(); }
+
+void SteeringMotor::PrintData() const { servo_->PrintData(); }
+
+void SteeringMotor::TurnRelative(float angle) {
+  servo_->SetTarget(servo_->GetTarget() + angle, true);
 }
+
+void SteeringMotor::TurnAbsolute(float angle) { servo_->SetTarget(angle); }
+
+bool SteeringMotor::AlignUpdate() {
+  static bool align_complete = false;
+
+  if (align_complete) {
+    servo_->SetTarget(align_angle_, true);
+    servo_->CalcOutput();
+    return true;
+  } else if (align_detect_func()) {
+    servo_->servo_angle_ = 0;
+    servo_->cumulated_angle_ = 0;
+    align_complete = true;
+    return true;
+  } else {
+    servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(
+        servo_->motor_->GetOmegaDelta(test_speed_ * servo_->transmission_ratio_)));
+  }
+  return false;
+}
+
+void SteeringMotor::Update() { servo_->CalcOutput(); }
 
 } /* namespace control */
