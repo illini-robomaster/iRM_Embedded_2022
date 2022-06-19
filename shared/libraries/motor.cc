@@ -334,8 +334,7 @@ void ServoMotor::CalcOutput() {
     command = omega_pid_.ComputeConstrainedOutput(
         motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
   } else {
-    command = omega_pid_.ComputeConstrainedOutput(
-        motor_->GetOmegaDelta(target_diff * 50));
+    command = omega_pid_.ComputeConstrainedOutput(motor_->GetOmegaDelta(target_diff * 50));
   }
   motor_->SetOutput(command);
 
