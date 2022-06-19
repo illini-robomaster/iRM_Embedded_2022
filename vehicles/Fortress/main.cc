@@ -690,7 +690,7 @@ void RM_RTOS_Init(void) {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
+  gimbal_data.model = control::GIMBAL_FORTRESS;
   gimbal = new control::Gimbal(gimbal_data);
   gimbal_param = gimbal->GetData();
 
