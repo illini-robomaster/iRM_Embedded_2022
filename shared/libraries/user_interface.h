@@ -127,7 +127,7 @@ class UserInterface {
 
   void ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arrow, graphic_data_t* gimbal,
                       graphic_data_t* empty1, graphic_data_t* empty2);
-  void ChassisGUIUpdate(float relative);
+  void ChassisGUIUpdate(float relative, bool flag);
   void CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
@@ -141,8 +141,8 @@ class UserInterface {
   void DiagGUIClear(UserInterface* UI, Referee* referee, graphic_data_t* graph, int currCount);
   void AddMessage(char* messageStr, int len, UserInterface* UI, Referee* referee,
                   graphic_data_t* graph);
-  void ModeGUIInit(graphic_data_t* modeGraph, int len);
-  void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color, int len);
+  void ModeGUIInit(graphic_data_t* modeGraph);
+  void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color);
 
   char* getPercentStr() { return percentStr_; }
   int getPercentLen() { return percentLen_; }
@@ -156,6 +156,7 @@ class UserInterface {
   graphic_data_t* bar_;
   graphic_data_t* percent_;
   graphic_data_t* diag_;
+  graphic_data_t* cali_;
   int Robot_ID_;
   int Client_ID_;
   int centerX_ = 960;
