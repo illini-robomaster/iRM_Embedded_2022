@@ -44,7 +44,7 @@ void RM_RTOS_Init() {
   can = new bsp::CAN(&hcan1, 0x201);
   left_flywheel_motor = new control::Motor3508(can, 0x201);
   right_flywheel_motor = new control::Motor3508(can, 0x202);
-  load_motor = new control::Motor3508(can, 0x203);
+  load_motor = new control::Motor2006(can, 0x203);
 
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_flywheel_motor;

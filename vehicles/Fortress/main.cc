@@ -720,7 +720,7 @@ void RM_RTOS_Init(void) {
   shooter_data.left_flywheel_motor = sl_motor;
   shooter_data.right_flywheel_motor = sr_motor;
   shooter_data.load_motor = ld_motor;
-  shooter_data.model = control::SHOOTER_STANDARD_2022;
+  shooter_data.model = control::SHOOTER_STANDARD;
   shooter = new control::Shooter(shooter_data);
 
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);

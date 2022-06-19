@@ -65,8 +65,6 @@ BoolEdgeDetector shoot_detector(false);
 BoolEdgeDetector load_detector(false);
 BoolEdgeDetector abs_detector(false);
 
-control::ServoMotor* load_servo = nullptr;
-
 control::Gimbal* gimbal = nullptr;
 control::Shooter* shooter = nullptr;
 remote::DBUS* dbus = nullptr;
@@ -85,14 +83,14 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = control::GIMBAL_STANDARD_ZERO;
+  gimbal_data.model = control::GIMBAL_SENTRY;
   gimbal = new control::Gimbal(gimbal_data);
 
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_fly_motor;
   shooter_data.right_flywheel_motor = right_fly_motor;
   shooter_data.load_motor = load_motor;
-  shooter_data.model = control::SHOOTER_STANDARD_ZERO;
+  shooter_data.model = control::SHOOTER_SENTRY;
   shooter = new control::Shooter(shooter_data);
 
   dbus = new remote::DBUS(&huart1);

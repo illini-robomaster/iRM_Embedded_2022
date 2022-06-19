@@ -40,23 +40,10 @@ bool status = false;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-
-  gimbal_init_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
-  switch (gimbal_init_data.model) {
-    case control::GIMBAL_STANDARD_ZERO:
-      can1 = new bsp::CAN(&hcan1, 0x201);
-      pitch_motor = new control::Motor6020(can1, 0x205);
-      yaw_motor = new control::Motor6020(can1, 0x206);
-      break;
-    case control::GIMBAL_STANDARD_2022_ALPHA:
       can1 = new bsp::CAN(&hcan1, 0x201, true);
       can2 = new bsp::CAN(&hcan2, 0x201, false);
       pitch_motor = new control::Motor6020(can1, 0x205);
       yaw_motor = new control::Motor6020(can2, 0x206);
-      break;
-    default:
-      RM_ASSERT_TRUE(false, "Invalid gimbal type");
-  }
   gimbal_init_data.pitch_motor = pitch_motor;
   gimbal_init_data.yaw_motor = yaw_motor;
   gimbal = new control::Gimbal(gimbal_init_data);
@@ -72,15 +59,8 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors_can1[2];
   control::MotorCANBase* motors_can2[2];
   UNUSED(motors_can2);
-  switch (gimbal_init_data.model) {
-    case control::GIMBAL_STANDARD_ZERO:
-      motors_can1[0] = yaw_motor;
-      break;
-    case control::GIMBAL_STANDARD_2022_ALPHA:
       motors_can1[0] = pitch_motor;
       motors_can2[0] = yaw_motor;
-      break;
-  }
   control::gimbal_data_t* gimbal_data = gimbal->GetData();
 
   while (true) {
@@ -98,15 +78,8 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 
     gimbal->Update();
-    switch (gimbal_init_data.model) {
-      case control::GIMBAL_STANDARD_ZERO:
-        control::MotorCANBase::TransmitOutput(motors_can1, 1);
-        break;
-      case control::GIMBAL_STANDARD_2022_ALPHA:
         control::MotorCANBase::TransmitOutput(motors_can1, 1);
         control::MotorCANBase::TransmitOutput(motors_can2, 1);
-        break;
-    }
     osDelay(10);
   }
 }

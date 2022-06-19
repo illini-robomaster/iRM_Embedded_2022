@@ -40,7 +40,7 @@ Shooter::Shooter(shooter_t shooter) {
   servo_data.motor = shooter.load_motor;
 
   switch (shooter.model) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
       servo_data.max_speed = 2 * PI;
       servo_data.max_acceleration = 8 * PI;
@@ -50,7 +50,7 @@ Shooter::Shooter(shooter_t shooter) {
       load_step_angle_ = 2 * PI / 8;
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       servo_data.mode = control::SERVO_ANTICLOCKWISE;
       servo_data.max_speed = 32 * PI;
       servo_data.max_acceleration = 20 * PI;
@@ -81,9 +81,9 @@ Shooter::~Shooter() {
   load_servo_ = nullptr;
 
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       break;
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       delete left_pid_;
       left_pid_ = nullptr;
       delete right_pid_;
@@ -95,12 +95,12 @@ Shooter::~Shooter() {
 
 void Shooter::SetFlywheelSpeed(float speed) {
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       left_flywheel_motor_->SetOutput(speed);
       right_flywheel_motor_->SetOutput(speed);
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       speed_ = speed;
       break;
   }
@@ -112,11 +112,11 @@ int Shooter::LoadNext() {
 
 void Shooter::Update() {
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       load_servo_->CalcOutput();
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       flywheel_turning_detector_->input(speed_ == 0);
       float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
       float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
