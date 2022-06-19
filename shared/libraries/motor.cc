@@ -260,7 +260,6 @@ ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, floa
   transmission_ratio_ = data.transmission_ratio;
   proximity_in_ = proximity_in;
   proximity_out_ = proximity_out;
-  shaft_dead_angle_ = data.shaft_dead_angle;
 
   hold_ = true;
   target_angle_ = 0;
@@ -317,16 +316,20 @@ void ServoMotor::CalcOutput() {
   // calculate desired output with pid
   int16_t command;
   float target_diff = (target_angle_ - servo_angle_ - cumulated_angle_) * transmission_ratio_;
-  if (target_diff < shaft_dead_angle_ && target_diff > -shaft_dead_angle_) target_diff = 0;
   // v = sqrt(2 * a * d)
   uint32_t current_time = GetHighresTickMicroSec();
-  float speed_max_start =
-      (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
-  float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
-  float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
-  current_speed = clip<float>(current_speed, 0, max_speed_);
-  command = omega_pid_.ComputeConstrainedOutput(
-      motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
+  if (!hold_) {
+    float speed_max_start =
+        (current_time - start_time_) / 10e6 * max_acceleration_ * transmission_ratio_;
+    float speed_max_target = sqrt(2 * max_acceleration_ * abs(target_diff));
+    float current_speed = speed_max_start > speed_max_target ? speed_max_target : speed_max_start;
+    current_speed = clip<float>(current_speed, 0, max_speed_);
+    command = omega_pid_.ComputeConstrainedOutput(
+        motor_->GetOmegaDelta(sign<float>(target_diff, 0) * current_speed));
+  } else {
+    command = omega_pid_.ComputeConstrainedOutput(
+        motor_->GetOmegaDelta(target_diff * 50));
+  }
   motor_->SetOutput(command);
 
   // jam detection mechanism
@@ -429,8 +432,7 @@ SteeringMotor::SteeringMotor(steering_t data) {
   servo_data.omega_pid_param = data.omega_pid_param;
   servo_data.max_iout = data.max_iout;
   servo_data.max_out = data.max_out;
-  servo_data.shaft_dead_angle = data.shaft_dead_angle;
-  servo_ = new ServoMotor(servo_data);
+  servo_ = new ServoMotor(servo_data, data.offset_angle);
 
   test_speed_ = data.test_speed;
   align_detect_func = data.align_detect_func;
@@ -449,36 +451,20 @@ void SteeringMotor::TurnRelative(float angle) {
 void SteeringMotor::TurnAbsolute(float angle) { servo_->SetTarget(angle); }
 
 bool SteeringMotor::AlignUpdate() {
-  static bool pos_align_complete = false;
-  static bool neg_align_complete = false;
-  static float pos_align_angle = 0;
-  static float neg_align_angle = 0;
+  static bool align_complete = false;
 
-  if (pos_align_complete && neg_align_complete) {
-    align_angle_ = (pos_align_angle + neg_align_angle) / 2;
+  if (align_complete) {
     servo_->SetTarget(align_angle_, true);
     servo_->CalcOutput();
     return true;
+  } else if (align_detect_func()) {
+    servo_->cumulated_angle_ = 0;
+    align_complete = true;
+    return true;
+  } else {
+    servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(
+        servo_->motor_->GetOmegaDelta(test_speed_ * servo_->transmission_ratio_)));
   }
-
-  static bool first = false;
-  if (!first) {
-    align_detector->input(align_detect_func());
-    first = true;
-  }
-
-  align_detector->input(align_detect_func());
-  if (align_detector->posEdge()) {
-    pos_align_angle = servo_->GetTheta();
-    print("pos: %8.4f\r\n", pos_align_angle);
-    pos_align_complete = true;
-  } else if (align_detector->negEdge()) {
-    neg_align_angle = servo_->GetTheta();
-    print("neg: %8.4f\r\n", neg_align_angle);
-    neg_align_complete = true;
-  }
-  servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(
-      servo_->motor_->GetOmegaDelta(test_speed_ * servo_->transmission_ratio_)));
   return false;
 }
 

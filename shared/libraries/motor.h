@@ -313,7 +313,6 @@ typedef struct {
   float* omega_pid_param;   /* pid parameter used to control speed of motor      */
   float max_iout;
   float max_out;
-  float shaft_dead_angle;
 } servo_t;
 
 /**
@@ -459,7 +458,6 @@ class ServoMotor {
   float transmission_ratio_;
   float proximity_in_;
   float proximity_out_;
-  float shaft_dead_angle_;
 
   // angle control
   bool hold_; /* true if motor is holding now, otherwise moving now                      */
@@ -504,7 +502,6 @@ typedef struct {
   float* omega_pid_param; /* pid parameter used to control speed of motor      */
   float max_iout;
   float max_out;
-  float shaft_dead_angle;
   align_detect_t align_detect_func;
 } steering_t;
 

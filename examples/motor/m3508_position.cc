@@ -38,8 +38,8 @@
 #endif
 
 #define NOTCH (2 * PI / 4)
-#define SPEED 80
-#define ACCELERATION (30 * PI)
+#define SPEED 200
+#define ACCELERATION (80 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -51,7 +51,8 @@ BoolEdgeDetector key_detector(false);
 #endif
 
 // #define USING_M3508
-#define USING_M2006
+// #define USING_M2006
+#define USING_M3508_STEERING
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
@@ -59,17 +60,16 @@ void RM_RTOS_Init() {
 
   can1 = new bsp::CAN(&hcan1, 0x201);
 
-#ifdef USING_3508
+#ifdef USING_M3508
   motor = new control::Motor3508(can1, 0x201);
   control::servo_t servo_data;
   servo_data.motor = motor;
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{45, 0.2, 120};
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
   servo_data.max_iout = 1000;
   servo_data.max_out = 13000;
-  servo_data.shaft_dead_angle = 0.01;
   servo = new control::ServoMotor(servo_data);
 #endif
 
@@ -80,10 +80,22 @@ void RM_RTOS_Init() {
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M2006P36_RATIO;
-  servo_data.omega_pid_param = new float[3]{40, 0.2, 120};
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
   servo_data.max_iout = 1000;
   servo_data.max_out = 13000;
-  servo_data.shaft_dead_angle = 0.01;
+  servo = new control::ServoMotor(servo_data);
+#endif
+
+#ifdef USING_M3508_STEERING
+  motor = new control::Motor3508(can1, 0x201);
+  control::servo_t servo_data;
+  servo_data.motor = motor;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = 8;
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
   servo = new control::ServoMotor(servo_data);
 #endif
 
@@ -122,7 +134,7 @@ void RM_RTOS_Default_Task(const void* args) {
     servo->SetTarget(target, true);
 #else
     key_detector.input(key.Read());
-    constexpr float desired_target = 10 * 2 * PI;
+    constexpr float desired_target = 0.5 * 2 * PI;
     if (key_detector.posEdge() && servo->SetTarget(desired_target - target) != 0) {
       target = desired_target - target;
     }

@@ -48,7 +48,6 @@ Shooter::Shooter(shooter_t shooter) {
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
       servo_data.max_iout = 1000;
       servo_data.max_out = 10000;
-      servo_data.shaft_dead_angle = 0.01;
 
       load_step_angle_ = 2 * PI / 8;
       break;
@@ -60,7 +59,6 @@ Shooter::Shooter(shooter_t shooter) {
       servo_data.omega_pid_param = new float[3]{10, 0, 1};
       servo_data.max_iout = 9000;
       servo_data.max_out = 20000;
-      servo_data.shaft_dead_angle = 0.01;
 
       left_pid_ = new PIDController(80, 3, 0.1);
       right_pid_ = new PIDController(80, 3, 0.1);
