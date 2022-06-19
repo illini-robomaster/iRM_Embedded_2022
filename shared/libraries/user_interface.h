@@ -127,7 +127,7 @@ class UserInterface {
 
   void ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arrow, graphic_data_t* gimbal,
                       graphic_data_t* empty1, graphic_data_t* empty2);
-  void ChassisGUIUpdate(float relative);
+  void ChassisGUIUpdate(float relative, bool flag);
   void CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
@@ -156,6 +156,7 @@ class UserInterface {
   graphic_data_t* bar_;
   graphic_data_t* percent_;
   graphic_data_t* diag_;
+  graphic_data_t* cali_;
   int Robot_ID_;
   int Client_ID_;
   int centerX_ = 960;

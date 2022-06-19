@@ -512,7 +512,7 @@ void UITask(void* arg) {
   communication::graphic_data_t graphGimbal;
   communication::graphic_data_t graphChassis;
   communication::graphic_data_t graphArrow;
-  communication::graphic_data_t graphEmpty1;
+  communication::graphic_data_t graphCali;
   communication::graphic_data_t graphEmpty2;
   communication::graphic_data_t graphCrosshair1;
   communication::graphic_data_t graphCrosshair2;
@@ -527,9 +527,9 @@ void UITask(void* arg) {
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
 
-  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                   graphEmpty1, graphEmpty2);
+                   graphCali, graphEmpty2);
   referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
@@ -603,9 +603,9 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    UI->ChassisGUIUpdate(relative_angle);
+    UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                     graphEmpty1, graphEmpty2);
+                     graphCali, graphEmpty2);
     referee->PrepareUIContent(communication::FIVE_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);

@@ -338,11 +338,12 @@ int UserInterface::CharRefresh(uint8_t* data_buffer, graphic_data_t image, char*
 }
 
 void UserInterface::ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arrow,
-                                   graphic_data_t* gimbal, graphic_data_t* empty1,
+                                   graphic_data_t* gimbal, graphic_data_t* cali,
                                    graphic_data_t* empty2) {
   chassis_ = chassis;
   arrow_ = arrow;
   gimbal_ = gimbal;
+  cali_ = cali;
   gimbalLen_ = 90;
   chassisLen_ = 90;
   LineDraw(chassis, "c", UI_Graph_Add, 1, UI_Color_Yellow, 60, chassisX_,
@@ -351,17 +352,20 @@ void UserInterface::ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arro
            chassisY_ + chassisLen_ / 2 - 7, chassisX_ + 7, chassisY_ + chassisLen_ / 2 + 7);
   LineDraw(gimbal, "g", UI_Graph_Add, 0, UI_Color_White, 7, chassisX_, chassisY_, chassisX_,
            chassisY_ + gimbalLen_);
-  LineDraw(empty1, "e1", UI_Graph_Add, 0, UI_Color_Yellow, 20, centerX_, centerY_ + 30, centerX_,
+  LineDraw(cali, "e1", UI_Graph_Add, 0, UI_Color_Pink, 20, centerX_, centerY_ + 30, centerX_,
            centerY_ + 40);
-  LineDraw(empty2, "e2", UI_Graph_Add, 0, UI_Color_Yellow, 20, centerX_, centerY_ + 50, centerX_,
+//  CircleDraw(cali, "cal", UI_Graph_Add, 0, UI_Color_Pink, 10, centerX_, centerY_ + 100, 5);
+  LineDraw(empty2, "e2", UI_Graph_Add, 0, UI_Color_Yellow, 20, centerX_, centerY_ + 60, centerX_,
            centerY_ + 60);
 }
 
-void UserInterface::ChassisGUIUpdate(float relative) {
+void UserInterface::ChassisGUIUpdate(float relative, bool flag) {
+  UNUSED(flag);
   float x_end = chassisX_ - chassisLen_ / 2.0 * sinf(relative);
   float y_end = chassisY_ + chassisLen_ / 2.0 * cosf(relative);
   float x_start = chassisX_ + chassisLen_ / 2.0 * sinf(relative);
   float y_start = chassisY_ - chassisLen_ / 2.0 * cosf(relative);
+//  int color = flag ? UI_Color_Green : UI_Color_Pink;
   LineDraw(chassis_, "c", UI_Graph_Change, 1, UI_Color_Yellow, 60, (uint32_t)x_start,
            (uint32_t)y_start, (uint32_t)x_end, (uint32_t)y_end);
   LineDraw(arrow_, "a", UI_Graph_Change, 1, UI_Color_Yellow, 20,
@@ -371,6 +375,8 @@ void UserInterface::ChassisGUIUpdate(float relative) {
            (uint32_t)(y_end + 10 * cosf(relative + M_PI / 4)));
   LineDraw(gimbal_, "g", UI_Graph_Change, 0, UI_Color_White, 7, chassisX_, chassisY_, chassisX_,
            chassisY_ + gimbalLen_);
+//  CircleDraw(cali_, "cal", UI_Graph_Change, 0, color, 10, centerX_, centerY_ + 100, 5);
+
 }
 
 void UserInterface::CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
