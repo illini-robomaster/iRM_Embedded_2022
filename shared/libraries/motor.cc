@@ -379,9 +379,10 @@ void ServoMotor::PrintData() const {
   print("omega: % 9.4f ", GetOmega());
   print("target: % 9.4f ", target_angle_);
   if (hold_)
-    print("status: holding\r\n");
+    print("status: holding ");
   else
-    print("status: moving\r\n");
+    print("status: moving  ");
+  motor_->PrintData();
 }
 
 float ServoMotor::GetTheta() const { return servo_angle_ + cumulated_angle_; }
@@ -458,6 +459,7 @@ bool SteeringMotor::AlignUpdate() {
     servo_->CalcOutput();
     return true;
   } else if (align_detect_func()) {
+    servo_->servo_angle_ = 0;
     servo_->cumulated_angle_ = 0;
     align_complete = true;
     return true;

@@ -93,7 +93,7 @@ void RM_RTOS_Init() {
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = 8;
-  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
+  servo_data.omega_pid_param = new float[3]{140, 1.2, 25};
   servo_data.max_iout = 1000;
   servo_data.max_out = 13000;
   servo = new control::ServoMotor(servo_data);
@@ -111,22 +111,9 @@ void RM_RTOS_Default_Task(const void* args) {
 #else
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
 #endif
-  control::MotorCANBase* motors[] = {motor};
+  // control::MotorCANBase* motors[] = {motor};
 
   float target = 0;
-
-  // while (true) {
-  //   motor->SetOutput(32768);
-  //   control::MotorCANBase::TransmitOutput(motors, 1);
-  //   static int j = 0;
-  //   if (j > 10) {
-  //     motor->PrintData();
-  //     j = 0;
-  //   } else {
-  //     j = 0;
-  //   }
-  //   osDelay(2);
-  // }
 
   while (true) {
 #ifdef WITH_CONTROLLER
@@ -140,7 +127,7 @@ void RM_RTOS_Default_Task(const void* args) {
     }
 #endif
     servo->CalcOutput();
-    control::MotorCANBase::TransmitOutput(motors, 1);
+    // control::MotorCANBase::TransmitOutput(motors, 1);
 
     static int i = 0;
     if (i > 10) {

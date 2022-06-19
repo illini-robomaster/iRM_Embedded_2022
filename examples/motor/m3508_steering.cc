@@ -62,9 +62,9 @@ void RM_RTOS_Init() {
   steering_data.max_acceleration = ACCELERATION;
   steering_data.transmission_ratio = 8;
   steering_data.offset_angle = 5.96;
-  steering_data.omega_pid_param = new float[3]{100, 1.8, 200};
+  steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
   steering_data.max_iout = 1000;
-  steering_data.max_out = 10000;
+  steering_data.max_out = 13000;
   steering_data.align_detect_func = steering_align_detect;
   steering = new control::SteeringMotor(steering_data);
 
@@ -80,8 +80,14 @@ void RM_RTOS_Default_Task(const void* args) {
 
   print("Alignment Begin\r\n");
   while (!steering->AlignUpdate()) {
-    steering->AlignUpdate();
     control::MotorCANBase::TransmitOutput(motors, 1);
+    static int i = 0;
+    if (i > 10) {
+      steering->PrintData();
+      i = 0;
+    } else {
+      i++;
+    }
     osDelay(2);
   }
   print("\r\nAlignment End\r\n");
@@ -92,7 +98,7 @@ void RM_RTOS_Default_Task(const void* args) {
     control::MotorCANBase::TransmitOutput(motors, 1);
 
     static int i = 0;
-    if (i > 100) {
+    if (i > 10) {
       steering->PrintData();
       i = 0;
     } else {
