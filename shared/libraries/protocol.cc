@@ -33,6 +33,7 @@ static const int BYTE = 8;
 namespace communication {
 
 bool Protocol::Receive(package_t package) {
+  connection_flag_ = true;
   memcpy(bufferRx, package.data, package.length);
   int start_idx;
   int end_idx = 0;

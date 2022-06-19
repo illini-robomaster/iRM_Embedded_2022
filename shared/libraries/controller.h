@@ -141,7 +141,7 @@ class ConstrainedPID {
    * @param ki new integral gain
    * @param kd new derivative gain
    */
-  void Reinit(float kp, float ki, float kd);
+  void Reinit(float kp, float ki, float kd, float max_iout, float max_out);
 
   /**
    * @brief reinitialize the pid instance using another set of gains, but does not clear
@@ -149,7 +149,7 @@ class ConstrainedPID {
    *
    * @param param gains of PID controller, formated as [kp, ki, kd]
    */
-  void Reinit(float* param);
+  void Reinit(float* param, float max_iout, float max_out);
 
   /**
    * @brief clear the remembered states of the controller

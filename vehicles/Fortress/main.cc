@@ -20,6 +20,8 @@
 
 #include "main.h"
 
+#include <cstdio>
+
 #include "bsp_buzzer.h"
 #include "bsp_imu.h"
 #include "bsp_laser.h"
@@ -40,7 +42,7 @@ static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
-static const int UI_TASK_DELAY = 50;
+static const int UI_TASK_DELAY = 20;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -74,7 +76,7 @@ const osThreadAttr_t imuTaskAttribute = {.name = "imuTask",
                                          .cb_mem = nullptr,
                                          .cb_size = 0,
                                          .stack_mem = nullptr,
-                                         .stack_size = 256 * 4,
+                                         .stack_size = 512 * 4,
                                          .priority = (osPriority_t)osPriorityRealtime,
                                          .tz_module = 0,
                                          .reserved = 0};
@@ -108,7 +110,7 @@ const osThreadAttr_t gimbalTaskAttribute = {.name = "gimbalTask",
                                             .cb_mem = nullptr,
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
-                                            .stack_size = 256 * 4,
+                                            .stack_size = 512 * 4,
                                             .priority = (osPriority_t)osPriorityHigh,
                                             .tz_module = 0,
                                             .reserved = 0};
@@ -167,7 +169,7 @@ void gimbalTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    pitch_ratio = -dbus->mouse.y / 32767.0;
+    pitch_ratio = dbus->mouse.y / 32767.0;
     yaw_ratio = -dbus->mouse.x / 32767.0;
 
     pitch_ratio += -dbus->ch3 / 660.0 / 210.0;
@@ -202,7 +204,7 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
+                                             .stack_size = 1024 * 4,
                                              .priority = (osPriority_t)osPriorityAboveNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -254,7 +256,7 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.8;
+const float CHASSIS_DEADZONE = 0.04;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -277,6 +279,27 @@ void chassisTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
+    if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
+    if (dbus->keyboard.bit.D) vx_keyboard += 61.5;
+    if (dbus->keyboard.bit.W) vy_keyboard += 61.5;
+    if (dbus->keyboard.bit.S) vy_keyboard -= 61.5;
+
+    if (-35 <= vx_keyboard && vx_keyboard <= 35) vx_keyboard = 0;
+    if (-35 <= vy_keyboard && vy_keyboard <= 35) vy_keyboard = 0;
+
+    if (vx_keyboard > 0)
+      vx_keyboard -= 60;
+    else if (vx_keyboard < 0)
+      vx_keyboard += 60;
+
+    if (vy_keyboard > 0)
+      vy_keyboard -= 60;
+    else if (vy_keyboard < 0)
+      vy_keyboard += 60;
+
+    vx_keyboard = clip<float>(vx_keyboard, -1200, 1200);
+    vy_keyboard = clip<float>(vy_keyboard, -1200, 1200);
+
     vx_remote = dbus->ch0;
     vy_remote = dbus->ch1;
 
@@ -293,7 +316,7 @@ void chassisTask(void* arg) {
     if (SpinMode) {
       wz_set = spin_speed;
     } else {
-      wz_set = follow_speed * relative_angle;
+      wz_set = std::min(follow_speed, follow_speed * relative_angle);
       if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
     }
 
@@ -316,8 +339,8 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 128 * 4,
-                                             .priority = (osPriority_t)osPriorityBelowNormal,
+                                             .stack_size = 256 * 4,
+                                             .priority = (osPriority_t)osPriorityNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
 
@@ -353,7 +376,7 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
       shooter->SetFlywheelSpeed(490);
-    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18)
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18)
       shooter->SetFlywheelSpeed(560);
     else
       shooter->SetFlywheelSpeed(0);
@@ -373,7 +396,7 @@ const osThreadAttr_t selfTestTaskAttribute = {.name = "selfTestTask",
                                               .cb_mem = nullptr,
                                               .cb_size = 0,
                                               .stack_mem = nullptr,
-                                              .stack_size = 128 * 4,
+                                              .stack_size = 256 * 4,
                                               .priority = (osPriority_t)osPriorityBelowNormal,
                                               .tz_module = 0,
                                               .reserved = 0};
@@ -400,12 +423,15 @@ static bool volatile fl_motor_flag = false;
 static bool volatile fr_motor_flag = false;
 static bool volatile bl_motor_flag = false;
 static bool volatile br_motor_flag = false;
+static bool volatile calibration_flag = false;
+static bool volatile referee_flag = false;
+static bool volatile dbus_flag = false;
 
 void selfTestTask(void* arg) {
   UNUSED(arg);
 
   OLED->ShowIlliniRMLOGO();
-  buzzer->SingSong(Mario);
+  buzzer->SingSong(Mario, [](uint32_t milli) { osDelay(milli); });
   OLED->OperateGram(display::PEN_CLEAR);
 
   OLED->ShowString(0, 0, (uint8_t*)"GP");
@@ -415,9 +441,14 @@ void selfTestTask(void* arg) {
   OLED->ShowString(1, 10, (uint8_t*)"LD");
   OLED->ShowString(2, 0, (uint8_t*)"FL");
   OLED->ShowString(2, 5, (uint8_t*)"FR");
-  OLED->ShowString(3, 0, (uint8_t*)"BL");
-  OLED->ShowString(3, 5, (uint8_t*)"BR");
-  OLED->ShowString(4, 0, (uint8_t*)"Calibration");
+  OLED->ShowString(2, 10, (uint8_t*)"BL");
+  OLED->ShowString(2, 15, (uint8_t*)"BR");
+  OLED->ShowString(3, 0, (uint8_t*)"Cali");
+  OLED->ShowString(3, 7, (uint8_t*)"Temp:");
+  OLED->ShowString(4, 0, (uint8_t*)"Ref");
+  OLED->ShowString(4, 6, (uint8_t*)"Dbus");
+
+  char temp[6] = "";
   while (true) {
     pitch_motor->connection_flag_ = false;
     yaw_motor->connection_flag_ = false;
@@ -428,6 +459,8 @@ void selfTestTask(void* arg) {
     fr_motor->connection_flag_ = false;
     bl_motor->connection_flag_ = false;
     br_motor->connection_flag_ = false;
+    referee->connection_flag_ = false;
+    dbus->connection_flag_ = false;
     osDelay(SELFTEST_TASK_DELAY);
     pitch_motor_flag = pitch_motor->connection_flag_;
     yaw_motor_flag = yaw_motor->connection_flag_;
@@ -438,6 +471,9 @@ void selfTestTask(void* arg) {
     fr_motor_flag = fr_motor->connection_flag_;
     bl_motor_flag = bl_motor->connection_flag_;
     br_motor_flag = br_motor->connection_flag_;
+    calibration_flag = imu->CaliDone();
+    referee_flag = referee->connection_flag_;
+    dbus_flag = dbus->connection_flag_;
 
     OLED->ShowBlock(0, 2, pitch_motor_flag);
     OLED->ShowBlock(0, 7, yaw_motor_flag);
@@ -446,9 +482,13 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(1, 12, ld_motor_flag);
     OLED->ShowBlock(2, 2, fl_motor_flag);
     OLED->ShowBlock(2, 7, fr_motor_flag);
-    OLED->ShowBlock(3, 2, bl_motor_flag);
-    OLED->ShowBlock(3, 7, br_motor_flag);
-    OLED->ShowBlock(4, 11, imu->CaliDone());
+    OLED->ShowBlock(2, 12, bl_motor_flag);
+    OLED->ShowBlock(2, 17, br_motor_flag);
+    OLED->ShowBlock(3, 4, imu->CaliDone());
+    snprintf(temp, 6, "%.2f", imu->Temp);
+    OLED->ShowString(3, 12, (uint8_t*)temp);
+    OLED->ShowBlock(4, 3, referee_flag);
+    OLED->ShowBlock(4, 10, dbus_flag);
 
     OLED->RefreshGram();
   }
@@ -463,8 +503,8 @@ const osThreadAttr_t UITaskAttribute = {.name = "UITask",
                                         .cb_mem = nullptr,
                                         .cb_size = 0,
                                         .stack_mem = nullptr,
-                                        .stack_size = 512 * 4,
-                                        .priority = (osPriority_t)osPriorityLow,
+                                        .stack_size = 1024 * 4,
+                                        .priority = (osPriority_t)osPriorityBelowNormal,
                                         .tz_module = 0,
                                         .reserved = 0};
 
@@ -479,7 +519,7 @@ void UITask(void* arg) {
   communication::graphic_data_t graphGimbal;
   communication::graphic_data_t graphChassis;
   communication::graphic_data_t graphArrow;
-  communication::graphic_data_t graphEmpty1;
+  communication::graphic_data_t graphCali;
   communication::graphic_data_t graphEmpty2;
   communication::graphic_data_t graphCrosshair1;
   communication::graphic_data_t graphCrosshair2;
@@ -494,12 +534,13 @@ void UITask(void* arg) {
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
 
-  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphEmpty1, &graphEmpty2);
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                   graphEmpty1, graphEmpty2);
+                   graphCali, graphEmpty2);
   referee->PrepareUIContent(communication::FIVE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
@@ -509,12 +550,14 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   UI->CapGUICharInit(&graphPercent);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -522,6 +565,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char diagStr[30] = "";
   UI->DiagGUIInit(&graphDiag, 30);
@@ -529,6 +573,7 @@ void UITask(void* arg) {
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
   char msgBuffer[30] = "Error_one";
   UI->AddMessage(msgBuffer, sizeof msgBuffer, UI, referee, &graphDiag);
@@ -552,10 +597,10 @@ void UITask(void* arg) {
   osDelay(UI_TASK_DELAY);
 
   char followModeStr[15] = "FOLLOW MODE";
-  char spinModeStr[15] = "SPIN MODE";
+  char spinModeStr[15] = "SPIN   MODE";
   uint32_t modeColor = UI_Color_Orange;
 
-  UI->ModeGUIInit(&graphMode, sizeof followModeStr - 1);
+  UI->ModeGUIInit(&graphMode);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
                   sizeof followModeStr);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
@@ -565,12 +610,13 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    UI->ChassisGUIUpdate(relative_angle);
+    UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-                     graphEmpty1, graphEmpty2);
+                     graphCali, graphEmpty2);
     referee->PrepareUIContent(communication::FIVE_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUIUpdate(std::abs(sin(j)));
     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
@@ -578,6 +624,7 @@ void UITask(void* arg) {
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     j += 0.1;
+    osDelay(UI_TASK_DELAY);
 
     UI->CapGUICharUpdate();
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
@@ -585,16 +632,15 @@ void UITask(void* arg) {
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
-    UI->ModeGuiUpdate(&graphMode, modeColor, 15);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, sizeof modeStr);
+    UI->ModeGuiUpdate(&graphMode, modeColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 30);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
-
     osDelay(UI_TASK_DELAY);
   }
 }
@@ -740,7 +786,7 @@ void KillAll() {
   }
 }
 
-static bool debug = false;
+static bool debug = true;
 static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
@@ -759,7 +805,7 @@ void RM_RTOS_Default_Task(const void* arg) {
 
       print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
             imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-      print("Temp: %.2f\r\n", imu->Temp);
+      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
       print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
             imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
 

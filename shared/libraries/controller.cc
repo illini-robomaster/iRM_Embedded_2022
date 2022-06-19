@@ -76,15 +76,13 @@ ConstrainedPID::ConstrainedPID() {
 }
 
 ConstrainedPID::ConstrainedPID(float kp, float ki, float kd, float max_iout, float max_out) {
-  Reinit(kp, ki, kd);
+  Reinit(kp, ki, kd, max_iout, max_out);
   Reset();
-  ChangeMax(max_iout, max_out);
 }
 
 ConstrainedPID::ConstrainedPID(float* param, float max_iout, float max_out) {
-  Reinit(param[0], param[1], param[2]);
+  Reinit(param[0], param[1], param[2], max_iout, max_out);
   Reset();
-  ChangeMax(max_iout, max_out);
 }
 
 float ConstrainedPID::ComputeOutput(float error) {
@@ -100,13 +98,16 @@ int16_t ConstrainedPID::ComputeConstrainedOutput(float error) {
   return control::ClipMotorRange(ComputeOutput(error));
 }
 
-void ConstrainedPID::Reinit(float kp, float ki, float kd) {
+void ConstrainedPID::Reinit(float kp, float ki, float kd, float max_iout, float max_out) {
   kp_ = kp;
   ki_ = ki;
   kd_ = kd;
+  ChangeMax(max_iout, max_out);
 }
 
-void ConstrainedPID::Reinit(float* param) { Reinit(param[0], param[1], param[2]); }
+void ConstrainedPID::Reinit(float* param, float max_iout, float max_out) {
+  Reinit(param[0], param[1], param[2], max_iout, max_out);
+}
 
 void ConstrainedPID::Reset() {
   cumulated_err_ = 0;
