@@ -47,44 +47,44 @@
 #include "main.h"
 #include "shooter.h"
 
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
-
-#define NOTCH (2 * PI / 8)
-#define SERVO_SPEED (2 * PI)
-#define GIMBAL_SPEED PI
-#define JOYSTICK_THRESHOLD (remote::DBUS::ROCKER_MAX * 4 / 5)
+//#define KEY_GPIO_GROUP GPIOB
+//#define KEY_GPIO_PIN GPIO_PIN_2
+//
+//#define NOTCH (2 * PI / 8)
+//#define SERVO_SPEED (2 * PI)
+//#define GIMBAL_SPEED PI
+//#define JOYSTICK_THRESHOLD (remote::DBUS::ROCKER_MAX * 4 / 5)
 
 bsp::CAN* can = nullptr;
-control::MotorCANBase* pitch_motor = nullptr;
-control::MotorCANBase* yaw_motor = nullptr;
+//control::MotorCANBase* pitch_motor = nullptr;
+//control::MotorCANBase* yaw_motor = nullptr;
 control::MotorPWMBase* left_fly_motor = nullptr;
 control::MotorPWMBase* right_fly_motor = nullptr;
 control::MotorCANBase* load_motor = nullptr;
 BoolEdgeDetector shoot_detector(false);
-BoolEdgeDetector load_detector(false);
-BoolEdgeDetector abs_detector(false);
+//BoolEdgeDetector load_detector(false);
+//BoolEdgeDetector abs_detector(false);
 
-control::Gimbal* gimbal = nullptr;
+//control::Gimbal* gimbal = nullptr;
 control::Shooter* shooter = nullptr;
 remote::DBUS* dbus = nullptr;
-bool status = false;
+//bool status = false;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
   can = new bsp::CAN(&hcan1, 0x205);
-  pitch_motor = new control::Motor6020(can, 0x205);
-  yaw_motor = new control::Motor6020(can, 0x206);
+//  pitch_motor = new control::Motor6020(can, 0x205);
+//  yaw_motor = new control::Motor6020(can, 0x206);
   // See pwm example
-  left_fly_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
-  right_fly_motor = new control::MotorPWMBase(&htim1, 4, 1000000, 500, 1080);
+  left_fly_motor = new control::MotorPWMBase(&htim4, 1, 1000000, 500, 1080);
+  right_fly_motor = new control::MotorPWMBase(&htim4, 2, 1000000, 500, 1080);
   load_motor = new control::Motor2006(can, 0x207);
 
-  control::gimbal_t gimbal_data;
-  gimbal_data.pitch_motor = pitch_motor;
-  gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = control::GIMBAL_SENTRY;
-  gimbal = new control::Gimbal(gimbal_data);
+//  control::gimbal_t gimbal_data;
+//  gimbal_data.pitch_motor = pitch_motor;
+//  gimbal_data.yaw_motor = yaw_motor;
+//  gimbal_data.model = control::GIMBAL_SENTRY;
+//  gimbal = new control::Gimbal(gimbal_data);
 
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_fly_motor;
@@ -100,13 +100,16 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 //  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor, load_motor};
 //  control::gimbal_data_t* gimbal_data = gimbal->GetData();
-  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
-  laser.High();
+//  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
+//  laser.High();
 
 //  bool load = false;
 //  bool abs_mode = true;
 
-  osDelay(500);  // DBUS initialization needs time
+//  shooter->SetFlywheelSpeed(920 - 1);
+//  osDelay(2000);
+//  shooter->SetFlywheelSpeed(0);
+//  osDelay(1000);
 
   while (true) {
     // Kill switch for safety measure
@@ -145,6 +148,7 @@ void RM_RTOS_Default_Task(const void* args) {
     // Toggle shoot status on or off on left switch
     //    Up for shoot motor start
     //    Mid for shoot motor stop
+
     shoot_detector.input(dbus->swr == remote::UP);
     if (shoot_detector.posEdge()) {
       shooter->SetFlywheelSpeed(150);

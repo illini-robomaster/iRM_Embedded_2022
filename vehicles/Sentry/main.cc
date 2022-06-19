@@ -353,7 +353,7 @@ BoolEdgeDetector shoot_detector(false);
 void shooterTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can1_shooter[] = {ld_motor};
+//  control::MotorCANBase* motors_can1_shooter[] = {ld_motorcccc
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
@@ -378,18 +378,17 @@ void shooterTask(void* arg) {
 //    else
 //      shooter->SetFlywheelSpeed(0);
 
-    if (dbus->mouse.l || dbus->swr == remote::UP)
-      shooter->LoadNext();
+//    if (dbus->mouse.l || dbus->swr == remote::UP)
+//      shooter->LoadNext();
     shoot_detector.input(dbus->keyboard.bit.Q || dbus->swr == remote::DOWN);
-//    if (shoot_detector.posEdge()) {
-//      shooter->SetFlywheelSpeed(0);
-//    } else if (shoot_detector.negEdge()) {
-//      shooter->SetFlywheelSpeed(150);
-//    }
-    shooter->SetFlywheelSpeed(150);
+    if (shoot_detector.posEdge()) {
+      shooter->SetFlywheelSpeed(0);
+    } else if (shoot_detector.negEdge()) {
+      shooter->SetFlywheelSpeed(150);
+    }
 
-    shooter->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 1);
+//    shooter->Update();
+//    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 1);
     osDelay(SHOOTER_TASK_DELAY);
   }
 }
@@ -462,8 +461,8 @@ void RM_RTOS_Init(void) {
 //  chassis_data.model = control::CHASSIS_MECANUM_WHEEL;
 //  chassis = new control::Chassis(chassis_data);
 
-  sl_motor = new control::MotorPWMBase(&htim8, 2, 1000000, 500, 1080);
-  sr_motor = new control::MotorPWMBase(&htim8, 3, 1000000, 500, 1080);
+  sl_motor = new control::MotorPWMBase(&htim1, 1, 1000000, 500, 1080);
+  sr_motor = new control::MotorPWMBase(&htim1, 2, 1000000, 500, 1080);
   ld_motor = new control::Motor2006(can1, 0x204);
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = sl_motor;
