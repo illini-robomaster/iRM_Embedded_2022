@@ -27,8 +27,9 @@ namespace control {
 static auto step_angles_ = std::unordered_map<ServoMotor*, float>();
 
 void jam_callback(ServoMotor* servo, const servo_jam_t data) {
+  UNUSED(data);
   float prev_target = wrap<float>(servo->GetTarget() - step_angles_[servo], 0, 2 * PI);
-  servo->SetTarget(prev_target, static_cast<servo_mode_t>(-data.dir), true);
+  servo->SetTarget(prev_target, true);
 }
 
 Shooter::Shooter(shooter_t shooter) {
@@ -41,21 +42,23 @@ Shooter::Shooter(shooter_t shooter) {
 
   switch (shooter.model) {
     case SHOOTER_STANDARD_ZERO:
-      servo_data.mode = control::SERVO_ANTICLOCKWISE;
       servo_data.max_speed = 2 * PI;
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{25, 5, 22};
+      servo_data.max_iout = 1000;
+      servo_data.max_out = 10000;
 
       load_step_angle_ = 2 * PI / 8;
       break;
 
     case SHOOTER_STANDARD_2022:
-      servo_data.mode = control::SERVO_ANTICLOCKWISE;
-      servo_data.max_speed = 32 * PI;
+      servo_data.max_speed = 40 * PI;
       servo_data.max_acceleration = 20 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
-      servo_data.omega_pid_param = new float[3]{25, 5, 22};
+      servo_data.omega_pid_param = new float[3]{10, 0, 1};
+      servo_data.max_iout = 9000;
+      servo_data.max_out = 20000;
 
       left_pid_ = new PIDController(80, 3, 0.1);
       right_pid_ = new PIDController(80, 3, 0.1);
@@ -69,7 +72,7 @@ Shooter::Shooter(shooter_t shooter) {
   }
   // Initialize servomotor instance using data provided and register default jam callback
   load_servo_ = new control::ServoMotor(servo_data);
-  load_servo_->RegisterJamCallback(jam_callback, 0.6);
+  // load_servo_->RegisterJamCallback(jam_callback, 0.6);
 
   // Register in step_angles_ so callback function can find step angle corresponding to
   // specific servomotor instance.
@@ -123,6 +126,14 @@ void Shooter::Update() {
       left_flywheel_motor_->SetOutput(left_pid_->ComputeConstrainedOutput(left_diff));
       right_flywheel_motor_->SetOutput(right_pid_->ComputeConstrainedOutput(right_diff));
       load_servo_->CalcOutput();
+
+      static int i = 0;
+      if (i > 10) {
+        load_servo_->PrintData();
+        i = 0;
+      } else {
+        i++;
+      }
       break;
   }
 }

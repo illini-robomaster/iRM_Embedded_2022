@@ -19,7 +19,7 @@
  ****************************************************************************/
 
 // If want controller to be used
-#define WITH_CONTROLLER
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -38,7 +38,7 @@
 #ifdef WITH_CONTROLLER
 #define TARGET_SPEED 160
 #else
-#define TARGET_SPEED1 0
+#define TARGET_SPEED1 350
 #define TARGET_SPEED2 80
 #endif
 
