@@ -204,7 +204,7 @@ const osThreadAttr_t refereeTaskAttribute = {.name = "refereeTask",
                                              .cb_mem = nullptr,
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
-                                             .stack_size = 512 * 4,
+                                             .stack_size = 1024 * 4,
                                              .priority = (osPriority_t)osPriorityAboveNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
@@ -340,7 +340,7 @@ const osThreadAttr_t shooterTaskAttribute = {.name = "shooterTask",
                                              .cb_size = 0,
                                              .stack_mem = nullptr,
                                              .stack_size = 256 * 4,
-                                             .priority = (osPriority_t)osPriorityBelowNormal,
+                                             .priority = (osPriority_t)osPriorityNormal,
                                              .tz_module = 0,
                                              .reserved = 0};
 
@@ -431,7 +431,7 @@ void selfTestTask(void* arg) {
   UNUSED(arg);
 
   OLED->ShowIlliniRMLOGO();
-  buzzer->SingSong(Mario);
+  buzzer->SingSong(Mario, [](uint32_t milli) { osDelay(milli); });
   OLED->OperateGram(display::PEN_CLEAR);
 
   OLED->ShowString(0, 0, (uint8_t*)"GP");
@@ -448,7 +448,7 @@ void selfTestTask(void* arg) {
   OLED->ShowString(4, 0, (uint8_t*)"Ref");
   OLED->ShowString(4, 6, (uint8_t*)"Dbus");
 
-  char temp[3] = "";
+  char temp[6] = "";
   while (true) {
     pitch_motor->connection_flag_ = false;
     yaw_motor->connection_flag_ = false;
@@ -485,7 +485,7 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(2, 12, bl_motor_flag);
     OLED->ShowBlock(2, 17, br_motor_flag);
     OLED->ShowBlock(3, 4, imu->CaliDone());
-    snprintf(temp, 3, "%d", (int)imu->Temp);
+    snprintf(temp, 6, "%.2f", imu->Temp);
     OLED->ShowString(3, 12, (uint8_t*)temp);
     OLED->ShowBlock(4, 3, referee_flag);
     OLED->ShowBlock(4, 10, dbus_flag);
@@ -504,7 +504,7 @@ const osThreadAttr_t UITaskAttribute = {.name = "UITask",
                                         .cb_size = 0,
                                         .stack_mem = nullptr,
                                         .stack_size = 1024 * 4,
-                                        .priority = (osPriority_t)osPriorityLow,
+                                        .priority = (osPriority_t)osPriorityBelowNormal,
                                         .tz_module = 0,
                                         .reserved = 0};
 
@@ -740,7 +740,7 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
-  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
+//  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
 
 //==================================================================================================
