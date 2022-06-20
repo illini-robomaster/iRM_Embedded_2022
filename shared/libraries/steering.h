@@ -25,14 +25,22 @@
 #include "power_limit.h"
 
 constexpr uint16_t MOTOR_NUM = 4;
+constexpr float SPEED = 10 * PI;
+constexpr float TEST_SPEED = 0.5 * PI;
+constexpr float ACCELERATION = 50 * PI;
 
 namespace control {
 
 typedef struct {
-  control::SteeringMotor* fl_steer_motor = nullptr;
-  control::SteeringMotor* fr_steer_motor = nullptr;
-  control::SteeringMotor* bl_steer_motor = nullptr;
-  control::SteeringMotor* br_steer_motor = nullptr;
+  control::MotorCANBase* fl_steer_motor = nullptr;
+  control::MotorCANBase* fr_steer_motor = nullptr;
+  control::MotorCANBase* bl_steer_motor = nullptr;
+  control::MotorCANBase* br_steer_motor = nullptr;
+
+  align_detect_t fl_steer_motor_detect_func = nullptr;
+  align_detect_t fr_steer_motor_detect_func = nullptr;
+  align_detect_t bl_steer_motor_detect_func = nullptr;
+  align_detect_t br_steer_motor_detect_func = nullptr;
 
   control::MotorCANBase* fl_wheel_motor = nullptr;
   control::MotorCANBase* fr_wheel_motor = nullptr;
@@ -46,44 +54,54 @@ typedef struct {
 
 class SteeringChassis {
   public:
-  SteeringChassis(const steering_chassis_t* chassis);
+  SteeringChassis(steering_chassis_t* chassis);
 
   ~SteeringChassis();
 
   // right -> positive, left -> negative
-  void SetXSpeed(double _vx);
+  void SetXSpeed(float _vx);
 
   // front -> positive, back -> negative
-  void SetYSpeed(double _vy);
+  void SetYSpeed(float _vy);
 
   // counterclockwise -> positive
-  void SetWSpeed(double _vw);
+  void SetWSpeed(float _vw);
 
   void Update(float power_limit, float chassis_power, float chassis_power_buffer);
-  
+
+  bool AlignUpdate();
+
+  void PrintData();
+
   private:
+
+  control::SteeringMotor* fl_steer_motor;
+  control::SteeringMotor* fr_steer_motor;
+  control::SteeringMotor* bl_steer_motor;
+  control::SteeringMotor* br_steer_motor;
+
   // current velocity
   // right -> positive, left -> negative
   // front -> positive, back -> negative
   // counterclockwise -> positive
-  double vx;
-  double vy;
-  double vw;
+  float vx;
+  float vy;
+  float vw;
 
   // radius of the vehicle from the center to the wheels
-  double radius;  
+  float radius;  
 
   // current steering pos of the 4 wheels
-  double theta0;
-  double theta1;
-  double theta2;
-  double theta3;
+  float theta0;
+  float theta1;
+  float theta2;
+  float theta3;
 
   // same as class Chassis
   ConstrainedPID pids[4];
   PowerLimit* power_limit;
   power_limit_t power_limit_info;
-  const steering_chassis_t* chassis;
+  steering_chassis_t* chassis;
 
 
 }; // class SteeringChassis ends
