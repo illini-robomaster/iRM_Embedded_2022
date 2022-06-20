@@ -17,112 +17,52 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *                                                                          *
  ****************************************************************************/
-#include <cstring>
+
+#include "main.h"
+
 #include <memory>
 
 #include "bsp_gpio.h"
-#include "bsp_os.h"
 #include "bsp_print.h"
+#include "bsp_uart.h"
+#include "bsp_os.h"
 #include "cmsis_os.h"
 #include "controller.h"
-
+#include "dbus.h"
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
 #include "minipc.h"
-#include "bsp_uart.h"
-
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define SPEED (10 * PI)
+#define SPEED (50 * PI)
 #define TEST_SPEED (0.5 * PI)
 #define ACCELERATION (100 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
-control::SteeringMotor* steering = nullptr;
-static bsp::GPIO *gpio_red, *gpio_green;
+control::ServoMotor* servo = nullptr;
+remote::DBUS* dbus = nullptr;
+
+bsp::GPIO* key = nullptr;
+BoolEdgeDetector key_detector(false);
+bsp::GPIO* gpio_red;
+bsp::GPIO* gpio_green;
 
 auto miniPCreceiver = communication::MiniPCProtocol();
 uint32_t buffer[2] = {0};
 
-bsp::GPIO* key = nullptr;
-
 bool steering_align_detect() {
   // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
   // return abs(theta - 3) < 0.05;
-  return key->Read() == 1;
+  return key && key->Read() == 1;
 }
 
 #define RX_SIGNAL (1 << 0)
 
-static osThreadId_t miniPCTaskHandle;
-
-const osThreadAttr_t miniPCTask_attributes = {.name = "miniPC_Task",
-                                            .attr_bits = osThreadDetached,
-                                            .cb_mem = nullptr,
-                                            .cb_size = 0,
-                                            .stack_mem = nullptr,
-                                            .stack_size = 512 * 4,
-                                            .priority = (osPriority_t)osPriorityNormal,
-                                            .tz_module = 0,
-                                            .reserved = 0};
-void miniPCTask(void* argument);
-
-void RM_RTOS_Threads_Init(void) {
-  miniPCTaskHandle = osThreadNew(miniPCTask, nullptr, &miniPCTask_attributes);
-}
-
-
-
-void RM_RTOS_Init() {
-
-  print_use_uart(&huart6);
-  bsp::SetHighresClockTimer(&htim2);
-
-  can1 = new bsp::CAN(&hcan1, 0x205);
-  motor = new control::Motor3508(can1, 0x205);
-
-  control::steering_t steering_data;
-  steering_data.motor = motor;
-  steering_data.max_speed = SPEED;
-  steering_data.test_speed = TEST_SPEED;
-  steering_data.max_acceleration = ACCELERATION;
-  steering_data.transmission_ratio = 8;
-  steering_data.offset_angle = 5.96;
-  steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
-  steering_data.max_iout = 1000;
-  steering_data.max_out = 13000;
-  steering_data.align_detect_func = steering_align_detect;
-  steering = new control::SteeringMotor(steering_data);
-
-  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
-  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-
-}
-
-void RM_RTOS_Default_Task(const void* args) {
-  UNUSED(args);
-  control::MotorCANBase* motors[] = {motor};
-  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-
-
-  osDelay(500);  // DBUS initialization needs time
-
-  float pitch_relative = 0.0;
-  while (true) {
-    pitch_relative = static_cast<float>(buffer[0]) / 100000;
-    UNUSED(pitch_relative);
-    //steering->TurnRelative(0);
-    steering->Update();
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(2);
-  }
-}
-
-
+extern osThreadId_t defaultTaskHandle;
 
 class CustomUART : public bsp::UART {
  public:
@@ -130,21 +70,41 @@ class CustomUART : public bsp::UART {
 
  protected:
   /* notify application when rx data is pending read */
-  void RxCompleteCallback() override final { osThreadFlagsSet(miniPCTaskHandle, RX_SIGNAL); }
+  void RxCompleteCallback() override final { osThreadFlagsSet(defaultTaskHandle, RX_SIGNAL); }
 };
 
+void RM_RTOS_Init() {
+  print_use_uart(&huart6);
+  bsp::SetHighresClockTimer(&htim2);
 
-auto uart = std::make_unique<CustomUART>(&huart8);
+  can1 = new bsp::CAN(&hcan1, 0x205);
+  motor = new control::Motor3508(can1, 0x205);
 
-void miniPCTask(void* argument) {
+  control::servo_t servo_data;
+  servo_data.motor = motor;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = 8;
+  servo_data.omega_pid_param = new float[3]{140, 1.2, 25};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo = new control::ServoMotor(servo_data);
+
+  dbus = new remote::DBUS(&huart1);
+
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
+  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+}
+
+void RM_RTOS_Default_Task(const void* argument) {
   UNUSED(argument);
 
   uint32_t length;
   uint8_t* data;
 
-  uart->SetupRx(50);
-  uart->SetupTx(50);
-
+  auto uart = std::make_unique<CustomUART>(&huart8);  // see cmake for which uart
+  uart->SetupRx(200);
+  uart->SetupTx(200);
 
   while (true) {
     /* wait until rx data is available */
@@ -157,7 +117,7 @@ void miniPCTask(void* argument) {
       if (miniPCreceiver.GetFlag() == 1) {
         gpio_red->High();
         miniPCreceiver.GetPayLoad(buffer);
-        print("%d\r\n", buffer[0]);
+        print("Pitch: %10d Yaw: %10d\r\n", buffer[0], buffer[1]);
           gpio_green->High();
       } else {
           gpio_red->High();
@@ -167,7 +127,36 @@ void miniPCTask(void* argument) {
         gpio_red->High();
     }
     osDelay(200);
-    gpio_green->Low();
-    gpio_red->Low();
   }
+}
+
+void motorTask(void* arg) {
+  UNUSED(arg);
+  control::MotorCANBase* motors[] = {motor};
+  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+
+  osDelay(500);  // DBUS initialization needs time
+  
+  while (true) {
+    servo->SetTarget(buffer[0] / 10e6, true);
+    servo->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors, 1);
+    osDelay(2);
+  }
+}
+
+const osThreadAttr_t motorTaskAttribute = {.name = "UITask",
+                                           .attr_bits = osThreadDetached,
+                                           .cb_mem = nullptr,
+                                           .cb_size = 0,
+                                           .stack_mem = nullptr,
+                                           .stack_size = 1024 * 4,
+                                           .priority = (osPriority_t)osPriorityBelowNormal,
+                                           .tz_module = 0,
+                                           .reserved = 0};
+
+osThreadId_t motorTaskHandle;
+
+void RM_RTOS_Threads_Init(void) {
+  motorTaskHandle = osThreadNew(motorTask, nullptr, &motorTaskAttribute);
 }
