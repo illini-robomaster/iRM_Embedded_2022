@@ -428,7 +428,11 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
       cumulated_angle_ -= 2 * PI;
   } else {
     motor_angle_ = motor_->theta_ - align_angle_;
-    offset_angle_ = 0;
+    float angle_diff = abs(wrap<float>(motor_angle_, -PI, PI));
+    if (angle_diff < PI / 2)
+      offset_angle_ = 0;
+    else
+      offset_angle_ = sign<float>(angle_diff, 0) * 2 * PI / transmission_ratio_;
     servo_angle_ = 0;
     cumulated_angle_ = 0;
     inner_wrap_detector_->input(motor_angle_);
