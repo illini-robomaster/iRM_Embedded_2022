@@ -353,7 +353,7 @@ BoolEdgeDetector shoot_detector(false);
 void shooterTask(void* arg) {
   UNUSED(arg);
 
-//  control::MotorCANBase* motors_can1_shooter[] = {ld_motorcccc
+  control::MotorCANBase* motors_can1_shooter[] = {ld_motor};
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
@@ -378,8 +378,8 @@ void shooterTask(void* arg) {
 //    else
 //      shooter->SetFlywheelSpeed(0);
 
-//    if (dbus->mouse.l || dbus->swr == remote::UP)
-//      shooter->LoadNext();
+    if (dbus->mouse.l || dbus->swr == remote::UP)
+      shooter->LoadNext();
     shoot_detector.input(dbus->keyboard.bit.Q || dbus->swr == remote::DOWN);
     if (shoot_detector.posEdge()) {
       shooter->SetFlywheelSpeed(0);
@@ -387,8 +387,8 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(150);
     }
 
-//    shooter->Update();
-//    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 1);
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors_can1_shooter, 1);
     osDelay(SHOOTER_TASK_DELAY);
   }
 }
