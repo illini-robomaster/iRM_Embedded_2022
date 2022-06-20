@@ -18,9 +18,10 @@
  *                                                                          *
  ****************************************************************************/
 
-#define WITH_CONTROLLER
+// #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
+#include "bsp_os.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
@@ -31,12 +32,14 @@
 #include "dbus.h"
 #endif
 
+#ifndef WITH_CONTROLLER
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
+#endif
 
 #define NOTCH (2 * PI / 4)
-#define SPEED (4 * PI)
-#define ACCELERATION (8 * PI)
+#define SPEED 200
+#define ACCELERATION (80 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -47,19 +50,54 @@ remote::DBUS* dbus = nullptr;
 BoolEdgeDetector key_detector(false);
 #endif
 
+// #define USING_M3508
+// #define USING_M2006
+#define USING_M3508_STEERING
+
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  bsp::SetHighresClockTimer(&htim2);
 
+  can1 = new bsp::CAN(&hcan1, 0x201);
+
+#ifdef USING_M3508
+  motor = new control::Motor3508(can1, 0x201);
   control::servo_t servo_data;
   servo_data.motor = motor;
-  servo_data.mode = control::SERVO_NEAREST;
   servo_data.max_speed = SPEED;
   servo_data.max_acceleration = ACCELERATION;
   servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{25, 5, 35};
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
   servo = new control::ServoMotor(servo_data);
+#endif
+
+#ifdef USING_M2006
+  motor = new control::Motor2006(can1, 0x202);
+  control::servo_t servo_data;
+  servo_data.motor = motor;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = M2006P36_RATIO;
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo = new control::ServoMotor(servo_data);
+#endif
+
+#ifdef USING_M3508_STEERING
+  motor = new control::Motor3508(can1, 0x201);
+  control::servo_t servo_data;
+  servo_data.motor = motor;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = 8;
+  servo_data.omega_pid_param = new float[3]{140, 1.2, 25};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo = new control::ServoMotor(servo_data);
+#endif
 
 #ifdef WITH_CONTROLLER
   dbus = new remote::DBUS(&huart1);
@@ -70,26 +108,36 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 #ifdef WITH_CONTROLLER
   osDelay(500);  // DBUS initialization needs time
-#endif
-
-  control::MotorCANBase* motors[] = {motor};
+#else
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+#endif
+  // control::MotorCANBase* motors[] = {motor};
 
-  float target = NOTCH;
+  float target = 0;
 
   while (true) {
 #ifdef WITH_CONTROLLER
-    target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * PI;
+    target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
     servo->SetTarget(target, true);
 #else
     key_detector.input(key.Read());
-    if (key_detector.posEdge() && servo->SetTarget(target) != 0) {
-      target = wrap<float>(target + NOTCH, 0, 2 * PI);
+    constexpr float desired_target = 0.5 * 2 * PI;
+    if (key_detector.posEdge() && servo->SetTarget(desired_target - target) != 0) {
+      target = desired_target - target;
     }
 #endif
     servo->CalcOutput();
-    servo->PrintData();
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(10);
+    // control::MotorCANBase::TransmitOutput(motors, 1);
+
+    static int i = 0;
+    if (i > 10) {
+      // print("%10.2f %10.2f %10.2f %10.2f ", dbus->ch0, dbus->ch0, dbus->ch0, dbus->ch0);
+      servo->PrintData();
+      i = 0;
+    } else {
+      i++;
+    }
+
+    osDelay(2);
   }
 }

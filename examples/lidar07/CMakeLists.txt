@@ -18,36 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_motor ASM C CXX)
+project(example_lidar07 ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_m3508
+irm_add_arm_executable(${PROJECT_NAME}_uart
     TARGET DJI_Board_TypeA
-    SOURCES m3508.cc)
+    SOURCES uart.cc)
 
-irm_add_arm_executable(${PROJECT_NAME}_m3508_speed
-    TARGET DJI_Board_TypeA
-    SOURCES m3508_speed.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_position
-    TARGET DJI_Board_TypeA
-    SOURCES m3508_position.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_antijam
-    TARGET DJI_Board_TypeA
-    SOURCES m3508_antijam.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_steering
-    TARGET DJI_Board_TypeA
-    SOURCES m3508_steering.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m6020
-    TARGET DJI_Board_TypeA
-    SOURCES m6020.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m6623
-    TARGET DJI_Board_TypeA
-    SOURCES m6623.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_pwm
-    TARGET DJI_Board_TypeA
-    SOURCES pwm.cc)
+irm_add_arm_executable(${PROJECT_NAME}_i2c
+    TARGET DJI_Board_TypeC
+    SOURCES i2c.cc)
