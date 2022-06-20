@@ -351,6 +351,8 @@ static control::MotorCANBase* sr_motor = nullptr;
 static control::MotorCANBase* ld_motor = nullptr;
 static control::Shooter* shooter = nullptr;
 
+static volatile bool flywheelFlag = false;
+
 void shooterTask(void* arg) {
   UNUSED(arg);
 
@@ -372,14 +374,19 @@ void shooterTask(void* arg) {
         (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
     if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
-        dbus->swr == remote::DOWN)
-      shooter->SetFlywheelSpeed(0);
-    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15)
-      shooter->SetFlywheelSpeed(490);
-    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18)
-      shooter->SetFlywheelSpeed(560);
-    else
-      shooter->SetFlywheelSpeed(0);
+        dbus->swr == remote::DOWN) {
+        flywheelFlag = false;
+        shooter->SetFlywheelSpeed(0);
+    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15) {
+        flywheelFlag = true;
+        shooter->SetFlywheelSpeed(490);
+    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18) {
+        flywheelFlag = true;
+        shooter->SetFlywheelSpeed(560);
+    } else {
+        flywheelFlag = false;
+        shooter->SetFlywheelSpeed(0);
+    }
 
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
@@ -533,8 +540,8 @@ void UITask(void* arg) {
   communication::graphic_data_t graphPercent;
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
-  communication::graphic_data_t graphDist;
-  communication::graphic_data_t graphLid;
+//  communication::graphic_data_t graphDist;
+//  communication::graphic_data_t graphLid;
   communication::graphic_data_t graphWheel;
 
   char msgBuffer1[30] = "PITCH MOTOR UNCONNECTED";
@@ -615,30 +622,30 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
-  // Initialize distance GUI
-  char distanceStr[15] = "0.0";
-  UI->DistanceGUIInit(&graphDist);
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, sizeof distanceStr);
-  referee->PrepareUIContent(communication::CHAR_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(UI_TASK_DELAY);
+//  // Initialize distance GUI
+//  char distanceStr[15] = "0.0";
+//  UI->DistanceGUIInit(&graphDist);
+//  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, sizeof distanceStr);
+//  referee->PrepareUIContent(communication::CHAR_GRAPH);
+//  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//  referee_uart->Write(frame.data, frame.length);
+//  osDelay(UI_TASK_DELAY);
 
-  // Initialize lid status GUI
-  char lidOpenStr[15] = "LID OPENED";
-  char lidCloseStr[15] = "LID CLOSED";
-  UI->LidGUIInit(&graphLid);
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof lidStr);
-  referee->PrepareUIContent(communication::CHAR_GRAPH);
-  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-  referee_uart->Write(frame.data, frame.length);
-  osDelay(UI_TASK_DELAY);
+//  // Initialize lid status GUI
+//  char lidOpenStr[15] = "LID OPENED";
+//  char lidCloseStr[15] = "LID CLOSED";
+//  UI->LidGUIInit(&graphLid);
+//  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof lidOpenStr);
+//  referee->PrepareUIContent(communication::CHAR_GRAPH);
+//  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//  referee_uart->Write(frame.data, frame.length);
+//  osDelay(UI_TASK_DELAY);
 
   // Initialize flywheel status GUI
   char wheelOnStr[15] = "FLYWHEEL ON";
   char wheelOffStr[15] = "FLYWHEEL OFF";
   UI->WheelGUIInit(&graphWheel);
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelOffStr, sizeof wheelStr);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelOffStr, sizeof wheelOffStr);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
@@ -683,30 +690,30 @@ void UITask(void* arg) {
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
 
-    // Update distance GUI
-    snprintf(distanceStr, 20, "%.2f m", dist);
-    UI->DistanceGUIUpdate(&graphDist);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
-    referee->PrepareUIContent(communication::CHAR_GRAPH);
-    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-    referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
+//    // Update distance GUI
+//    snprintf(distanceStr, 20, "%.2f m", dist);
+//    UI->DistanceGUIUpdate(&graphDist);
+//    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
+//    referee->PrepareUIContent(communication::CHAR_GRAPH);
+//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//    referee_uart->Write(frame.data, frame.length);
+//    osDelay(UI_TASK_DELAY);
 
-    // Update lid status GUI
-    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
-    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
-    UI->LidGuiUpdate(&graphLid, lidColor);
-    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
-    referee->PrepareUIContent(communication::CHAR_GRAPH);
-    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-    referee_uart->Write(frame.data, frame.length);
-    osDelay(UI_TASK_DELAY);
+//    // Update lid status GUI
+//    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
+//    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
+//    UI->LidGuiUpdate(&graphLid, lidColor);
+//    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
+//    referee->PrepareUIContent(communication::CHAR_GRAPH);
+//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+//    referee_uart->Write(frame.data, frame.length);
+//    osDelay(UI_TASK_DELAY);
 
     // Update wheel status GUI
-    char wheelStr[15] = wheelFlag ? wheelOnStr : wheelOffStr;
-    uint32_t wheelColor = wheelFlag ? UI_Color_Pink : UI_Color_Green;
-    UI->WheelGUIInit(&graphWheel);
+    char* wheelStr = flywheelFlag ? wheelOnStr : wheelOffStr;
+    uint32_t wheelColor = flywheelFlag ? UI_Color_Pink : UI_Color_Green;
     UI->WheelGUIUpdate(&graphWheel, wheelColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelStr, 15);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
