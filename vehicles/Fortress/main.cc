@@ -37,6 +37,7 @@
 #include "shooter.h"
 #include "user_interface.h"
 #include "utils.h"
+#include "lidar07.h"
 
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
@@ -517,10 +518,16 @@ const osThreadAttr_t UITaskAttribute = {.name = "UITask",
 
 osThreadId_t UITaskHandle;
 
+static distance::LIDAR07_UART* LIDAR = nullptr;
 static communication::UserInterface* UI = nullptr;
 
 void UITask(void* arg) {
   UNUSED(arg);
+
+  while (!LIDAR->begin())
+      osDelay(50);
+  while (!LIDAR->startFilter())
+      osDelay(50);
 
   communication::package_t frame;
   communication::graphic_data_t graphGimbal;
@@ -540,7 +547,7 @@ void UITask(void* arg) {
   communication::graphic_data_t graphPercent;
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
-//  communication::graphic_data_t graphDist;
+  communication::graphic_data_t graphDist;
 //  communication::graphic_data_t graphLid;
   communication::graphic_data_t graphWheel;
 
@@ -622,14 +629,14 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
-//  // Initialize distance GUI
-//  char distanceStr[15] = "0.0";
-//  UI->DistanceGUIInit(&graphDist);
-//  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, sizeof distanceStr);
-//  referee->PrepareUIContent(communication::CHAR_GRAPH);
-//  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//  referee_uart->Write(frame.data, frame.length);
-//  osDelay(UI_TASK_DELAY);
+  // Initialize distance GUI
+  char distanceStr[15] = "0.0";
+  UI->DistanceGUIInit(&graphDist);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, sizeof distanceStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
 
 //  // Initialize lid status GUI
 //  char lidOpenStr[15] = "LID OPENED";
@@ -653,6 +660,9 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
+    while (!LIDAR->startMeasure())
+        osDelay(50);
+
     // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
@@ -690,14 +700,15 @@ void UITask(void* arg) {
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
 
-//    // Update distance GUI
-//    snprintf(distanceStr, 20, "%.2f m", dist);
-//    UI->DistanceGUIUpdate(&graphDist);
-//    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
-//    referee->PrepareUIContent(communication::CHAR_GRAPH);
-//    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//    referee_uart->Write(frame.data, frame.length);
-//    osDelay(UI_TASK_DELAY);
+    // Update distance GUI
+    double dist = LIDAR->distance * 1000;
+    snprintf(distanceStr, 15, "%.2f m", dist);
+    UI->DistanceGUIUpdate(&graphDist);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
 //    // Update lid status GUI
 //    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
@@ -818,7 +829,7 @@ void UITask(void* arg) {
 //==================================================================================================
 
 void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
+  print_use_usb();
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
@@ -894,6 +905,7 @@ void RM_RTOS_Init(void) {
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
 
+  LIDAR = new distance::LIDAR07_UART(&huart1, [](uint32_t milli) { osDelay(milli); });
   UI = new communication::UserInterface(UI_Data_RobotID_BStandard3, UI_Data_CilentID_BStandard3);
 }
 
