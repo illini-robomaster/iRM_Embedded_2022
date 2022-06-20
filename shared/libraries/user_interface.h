@@ -143,6 +143,12 @@ class UserInterface {
                   graphic_data_t* graph);
   void ModeGUIInit(graphic_data_t* modeGraph);
   void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color);
+  void DistanceGUIInit(graphic_data_t* distanceGraph);
+  void DistanceGUIUpdate(graphic_data_t* distanceGraph);
+  void LidGUIInit(graphic_data_t* lidGraph);
+  void LidGuiUpdate(graphic_data_t* lidGraph, uint32_t color);
+  void WheelGUIInit(graphic_data_t* wheelGraph);
+  void WheelGUIUpdate(graphic_data_t* wheelGraph, uint32_t color);
 
   char* getPercentStr() { return percentStr_; }
   int getPercentLen() { return percentLen_; }

@@ -533,6 +533,9 @@ void UITask(void* arg) {
   communication::graphic_data_t graphPercent;
   communication::graphic_data_t graphDiag;
   communication::graphic_data_t graphMode;
+  communication::graphic_data_t graphDist;
+  communication::graphic_data_t graphLid;
+  communication::graphic_data_t graphWheel;
 
   char msgBuffer1[30] = "PITCH MOTOR UNCONNECTED";
   char msgBuffer2[30] = "YAW MOTOR UNCONNECTED";
@@ -554,6 +557,7 @@ void UITask(void* arg) {
   bool bl_motor_flag_ui = bl_motor_flag;
   bool br_motor_flag_ui = br_motor_flag;
 
+  // Initialize chassis GUI
   UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
                    graphCali, graphEmpty2);
@@ -562,6 +566,7 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize crosshair GUI
   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
@@ -572,6 +577,7 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize supercapacitor GUI
   UI->CapGUIInit(&graphBarFrame, &graphBar);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
@@ -579,6 +585,7 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize Supercapacitor string GUI
   UI->CapGUICharInit(&graphPercent);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
                   UI->getPercentLen());
@@ -587,6 +594,7 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize self-diagnosis GUI
   char diagStr[30] = "";
   UI->DiagGUIInit(&graphDiag, 30);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
@@ -595,10 +603,10 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize current mode GUI
   char followModeStr[15] = "FOLLOW MODE";
   char spinModeStr[15] = "SPIN  MODE";
   uint32_t modeColor = UI_Color_Orange;
-
   UI->ModeGUIInit(&graphMode);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
                   sizeof followModeStr);
@@ -607,8 +615,38 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
+  // Initialize distance GUI
+  char distanceStr[15] = "0.0";
+  UI->DistanceGUIInit(&graphDist);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, sizeof distanceStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize lid status GUI
+  char lidOpenStr[15] = "LID OPENED";
+  char lidCloseStr[15] = "LID CLOSED";
+  UI->LidGUIInit(&graphLid);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof lidStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize flywheel status GUI
+  char wheelOnStr[15] = "FLYWHEEL ON";
+  char wheelOffStr[15] = "FLYWHEEL OFF";
+  UI->WheelGUIInit(&graphWheel);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelOffStr, sizeof wheelStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
   float j = 1;
   while (true) {
+    // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
                      graphCali, graphEmpty2);
@@ -617,6 +655,7 @@ void UITask(void* arg) {
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
 
+    // Update supercapacitor GUI
     UI->CapGUIUpdate(std::abs(sin(j)));
     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
     referee->PrepareUIContent(communication::SINGLE_GRAPH);
@@ -625,6 +664,7 @@ void UITask(void* arg) {
     j += 0.1;
     osDelay(UI_TASK_DELAY);
 
+    // Update supercapacitor string GUI
     UI->CapGUICharUpdate();
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
                     UI->getPercentLen());
@@ -633,6 +673,7 @@ void UITask(void* arg) {
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
 
+    // Update current mode GUI
     char* modeStr = SpinMode ? spinModeStr : followModeStr;
     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
     UI->ModeGuiUpdate(&graphMode, modeColor);
@@ -642,6 +683,36 @@ void UITask(void* arg) {
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
 
+    // Update distance GUI
+    snprintf(distanceStr, 20, "%.2f m", dist);
+    UI->DistanceGUIUpdate(&graphDist);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update lid status GUI
+    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
+    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
+    UI->LidGuiUpdate(&graphLid, lidColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update wheel status GUI
+    char wheelStr[15] = wheelFlag ? wheelOnStr : wheelOffStr;
+    uint32_t wheelColor = wheelFlag ? UI_Color_Pink : UI_Color_Green;
+    UI->WheelGUIInit(&graphWheel);
+    UI->WheelGUIUpdate(&graphWheel, wheelColor);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update self-diagnosis messages
     if (!pitch_motor_flag_ui && !pitch_motor_flag){
       UI->AddMessage(msgBuffer1, sizeof msgBuffer1, UI, referee, &graphDiag);
       referee->PrepareUIContent(communication::CHAR_GRAPH);
@@ -723,7 +794,7 @@ void UITask(void* arg) {
       osDelay(UI_TASK_DELAY);
     }
 
-  //   clear diagnosis messages
+    // clear self-diagnosis messages
     if (dbus->keyboard.bit.C) {
       for (int i = 1; i <= UI->getMessageCount(); ++i) {
         UI->DiagGUIClear(UI, referee, &graphDiag, i);

@@ -352,8 +352,6 @@ void UserInterface::ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arro
            chassisY_ + chassisLen_ / 2 - 7, chassisX_ + 7, chassisY_ + chassisLen_ / 2 + 7);
   LineDraw(gimbal, "g", UI_Graph_Add, 0, UI_Color_White, 7, chassisX_, chassisY_, chassisX_,
            chassisY_ + gimbalLen_);
-//  LineDraw(cali, "e1", UI_Graph_Add, 0, UI_Color_Pink, 20, centerX_, centerY_ + 30, centerX_,
-//           centerY_ + 40);
   CircleDraw(cali, "cal", UI_Graph_Add, 0, UI_Color_Pink, 14, centerX_ + 925, centerY_ + 330, 7);
   LineDraw(empty2, "e2", UI_Graph_Add, 0, UI_Color_Yellow, 20, centerX_, centerY_ + 60, centerX_,
            centerY_ + 60);
@@ -473,6 +471,30 @@ void UserInterface::ModeGUIInit(graphic_data_t* modeGraph) {
 
 void UserInterface::ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color) {
   CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - 70, modeStartY_);
+}
+
+void UserInterface::DistanceGUIInit(graphic_data_t *distanceGraph) {
+    CharDraw(distanceGraph, "DG", UI_Graph_Add, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
+}
+
+void UserInterface::DistanceGUIUpdate(graphic_data_t *distanceGraph) {
+    CharDraw(distanceGraph, "DG", UI_Graph_Change, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
+}
+
+void UserInterface::LidGUIInit(graphic_data_t *lidGraph) {
+    CharDraw(lidGraph, "LG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 50);
+}
+
+void UserInterface::LidGuiUpdate(graphic_data_t *lidGraph, uint32_t color) {
+    CharDraw(lidGraph, "LG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 50);
+}
+
+void UserInterface::WheelGUIInit(graphic_data_t *wheelGraph) {
+    CharDraw(wheelGraph, "WG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 100);
+}
+
+void UserInterface::WheelGUIUpdate(graphic_data_t *wheelGraph, uint32_t color) {
+    CharDraw(wheelGraph, "WG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 100);
 }
 
 }  // namespace communication
