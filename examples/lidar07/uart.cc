@@ -18,24 +18,29 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "lidar07.h"
+#include "main.h"
 
-static distance::LIDAR07* sensor;
+static distance::LIDAR07_UART* sensor = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart8);
-  sensor = new distance::LIDAR07(&huart6);
+  sensor = new distance::LIDAR07_UART(&huart6, [](uint32_t milli) { osDelay(milli); });
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
+  while (!sensor->begin()) osDelay(50);
+  while (!sensor->startFilter()) osDelay(50);
+
   while (true) {
-    print("LIDAR07: %s\r\n", sensor->begin() ? "success" : "fail");
+    set_cursor(0, 0);
+    clear_screen();
+    while (!sensor->startMeasure()) osDelay(50);
+    print("Distance: %.2f m\r\n", sensor->distance / 1000.0);
     osDelay(100);
   }
 }
