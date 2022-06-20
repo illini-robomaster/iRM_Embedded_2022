@@ -53,6 +53,8 @@ typedef struct {
 DBUS::DBUS(UART_HandleTypeDef* huart) : bsp::UART(huart) { SetupRx(sizeof(dbus_t) + 1); }
 
 void DBUS::RxCompleteCallback() {
+  connection_flag_ = true;
+
   uint8_t* data;
   // data frame misalignment
   if (this->Read<true>(&data) != sizeof(dbus_t)) return;

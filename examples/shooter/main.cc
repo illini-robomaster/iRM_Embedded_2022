@@ -39,12 +39,14 @@ control::ServoMotor* load_servo = nullptr;
 control::Shooter* shooter = nullptr;
 
 void RM_RTOS_Init() {
+  print_use_uart(&huart8);
+
   dbus = new remote::DBUS(&huart1);
 
   can = new bsp::CAN(&hcan1, 0x201);
-  left_flywheel_motor = new control::Motor3508(can, 0x201);
+  left_flywheel_motor = new control::Motor3508(can, 0x203);
   right_flywheel_motor = new control::Motor3508(can, 0x202);
-  load_motor = new control::Motor3508(can, 0x203);
+  load_motor = new control::Motor3508(can, 0x201);
 
   control::shooter_t shooter_data;
   shooter_data.left_flywheel_motor = left_flywheel_motor;
@@ -66,6 +68,14 @@ void RM_RTOS_Default_Task(const void* args) {
     if (dbus->ch3 > 500) shooter->LoadNext();
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors, 3);
-    osDelay(10);
+    osDelay(1);
+
+    static int i = 0;
+    if (i > 10) {
+      print("%10d, %10d, %10d, %10d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+      i = 0;
+    } else {
+      i++;
+    }
   }
 }

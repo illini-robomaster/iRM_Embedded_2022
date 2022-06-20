@@ -39,10 +39,8 @@ irm_add_board_specific_library(DJI_Board_TypeA_irm
     INCLUDES ${IRM_INCLUDES}
     DEPENDS eigen3)
 
-
-irm_add_board_specific_library(F103C8_irm
-    TARGET F103C8
+irm_add_board_specific_library(DJI_Board_TypeC_irm
+    TARGET DJI_Board_TypeC
     SOURCES ${IRM_SOURCES}
     INCLUDES ${IRM_INCLUDES}
     DEPENDS eigen3)
-
