@@ -477,8 +477,8 @@ void UserInterface::DistanceGUIInit(graphic_data_t *distanceGraph) {
     CharDraw(distanceGraph, "DG", UI_Graph_Add, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
 }
 
-void UserInterface::DistanceGUIUpdate(graphic_data_t *distanceGraph) {
-    CharDraw(distanceGraph, "DG", UI_Graph_Change, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
+void UserInterface::DistanceGUIUpdate(graphic_data_t *distanceGraph, uint32_t color) {
+    CharDraw(distanceGraph, "DG", UI_Graph_Change, 0, color, 10, 30, 2, centerX_ + 50, centerY_);
 }
 
 void UserInterface::LidGUIInit(graphic_data_t *lidGraph) {

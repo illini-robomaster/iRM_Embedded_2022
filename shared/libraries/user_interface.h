@@ -144,7 +144,7 @@ class UserInterface {
   void ModeGUIInit(graphic_data_t* modeGraph);
   void ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color);
   void DistanceGUIInit(graphic_data_t* distanceGraph);
-  void DistanceGUIUpdate(graphic_data_t* distanceGraph);
+  void DistanceGUIUpdate(graphic_data_t* distanceGraph, uint32_t color);
   void LidGUIInit(graphic_data_t* lidGraph);
   void LidGuiUpdate(graphic_data_t* lidGraph, uint32_t color);
   void WheelGUIInit(graphic_data_t* wheelGraph);

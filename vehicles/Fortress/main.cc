@@ -435,6 +435,8 @@ static bool volatile calibration_flag = false;
 static bool volatile referee_flag = false;
 static bool volatile dbus_flag = false;
 
+static volatile bool selftestStart = false;
+
 void selfTestTask(void* arg) {
   UNUSED(arg);
 
@@ -499,6 +501,8 @@ void selfTestTask(void* arg) {
     OLED->ShowBlock(4, 10, dbus_flag);
 
     OLED->RefreshGram();
+
+    selftestStart = true;
   }
 }
 
@@ -524,10 +528,21 @@ static communication::UserInterface* UI = nullptr;
 void UITask(void* arg) {
   UNUSED(arg);
 
-  while (!LIDAR->begin())
-      osDelay(50);
-  while (!LIDAR->startFilter())
-      osDelay(50);
+  while (!selftestStart)
+    osDelay(100);
+
+  int tryLIDAR = 0;
+  while (!LIDAR->begin()) {
+    if (++tryLIDAR >= 5)
+      break;
+    osDelay(10);
+  }
+  tryLIDAR = 0;
+  while (!LIDAR->startFilter()) {
+    if (++tryLIDAR >= 5)
+      break;
+    osDelay(10);
+  }
 
   communication::package_t frame;
   communication::graphic_data_t graphGimbal;
@@ -660,8 +675,12 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    while (!LIDAR->startMeasure())
-        osDelay(50);
+    tryLIDAR = 0;
+    while (!LIDAR->startMeasure()) {
+      if (++tryLIDAR >= 5)
+        break;
+      osDelay(10);
+    }
 
     // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
@@ -701,9 +720,16 @@ void UITask(void* arg) {
     osDelay(UI_TASK_DELAY);
 
     // Update distance GUI
-    double dist = LIDAR->distance / 1000.0;
-    snprintf(distanceStr, 15, "%.2f m", dist);
-    UI->DistanceGUIUpdate(&graphDist);
+    uint32_t distColor = UI_Color_Cyan;
+    float currDist = LIDAR->distance / 1000.0;
+    if (currDist < 60){
+      snprintf(distanceStr, 15, "%.2f m", currDist);
+      distColor = UI_Color_Cyan;
+    } else {
+      snprintf(distanceStr, 15, "ERROR");
+      distColor = UI_Color_Pink;
+    }
+    UI->DistanceGUIUpdate(&graphDist, distColor);
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
     referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
