@@ -701,7 +701,7 @@ void UITask(void* arg) {
     osDelay(UI_TASK_DELAY);
 
     // Update distance GUI
-    double dist = LIDAR->distance * 1000;
+    double dist = LIDAR->distance / 1000.0;
     snprintf(distanceStr, 15, "%.2f m", dist);
     UI->DistanceGUIUpdate(&graphDist);
     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
