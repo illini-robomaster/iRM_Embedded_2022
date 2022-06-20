@@ -380,18 +380,18 @@ void UserInterface::CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* cro
                                  graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                                  graphic_data_t* crosshair5, graphic_data_t* crosshair6,
                                  graphic_data_t* crosshair7) {
-  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 30,
-           centerX_ + 50, centerY_ - 30);
-  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 40,
-           centerX_ + 30, centerY_ - 40);
-  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 50,
-           centerX_ + 30, centerY_ - 50);
-  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 60,
-           centerX_ + 50, centerY_ - 60);
-  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 70,
-           centerX_ + 30, centerY_ - 70);
-  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 80,
+  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 40,
+           centerX_ + 50, centerY_ - 40);
+  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 55,
+           centerX_ + 30, centerY_ - 55);
+  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 60,
+           centerX_ + 30, centerY_ - 60);
+  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 70,
+           centerX_ + 50, centerY_ - 70);
+  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 80,
            centerX_ + 30, centerY_ - 80);
+  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 90,
+           centerX_ + 30, centerY_ - 90);
   LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_, centerY_ - 30, centerX_,
            centerY_ - 100);
 }
@@ -482,19 +482,19 @@ void UserInterface::DistanceGUIUpdate(graphic_data_t *distanceGraph) {
 }
 
 void UserInterface::LidGUIInit(graphic_data_t *lidGraph) {
-    CharDraw(lidGraph, "LG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 50);
+    CharDraw(lidGraph, "LG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 100);
 }
 
 void UserInterface::LidGuiUpdate(graphic_data_t *lidGraph, uint32_t color) {
-    CharDraw(lidGraph, "LG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 50);
+    CharDraw(lidGraph, "LG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 100);
 }
 
 void UserInterface::WheelGUIInit(graphic_data_t *wheelGraph) {
-    CharDraw(wheelGraph, "WG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 100);
+    CharDraw(wheelGraph, "WG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 50);
 }
 
 void UserInterface::WheelGUIUpdate(graphic_data_t *wheelGraph, uint32_t color) {
-    CharDraw(wheelGraph, "WG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 100);
+    CharDraw(wheelGraph, "WG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 50);
 }
 
 }  // namespace communication
