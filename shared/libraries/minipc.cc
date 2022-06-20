@@ -60,7 +60,11 @@ void MiniPCProtocol::Receive(const uint8_t* data, uint8_t length) {
   }
 }
 
-void MiniPCProtocol::handle(void) { flag = 1; }
+void MiniPCProtocol::handle(void) {
+  if (host_command[PKG_LEN - 2] == 'E' && host_command[PKG_LEN - 1] == 'D') {
+    flag = 1;
+  }
+}
 
 uint8_t MiniPCProtocol::GetFlag(void) {
   uint8_t temp = flag;
@@ -69,8 +73,8 @@ uint8_t MiniPCProtocol::GetFlag(void) {
 }
 
 void MiniPCProtocol::GetPayLoad(uint32_t * buf) {
-  buf[0] = static_cast<uint32_t> (host_command[6]);
-  buf[1] = static_cast<uint32_t> (host_command[10]);
+  buf[0] = host_command[6] << 24 | host_command[7] << 16 | host_command[8] << 8 | host_command[9];
+  buf[1] = host_command[10] << 24 | host_command[11] << 16 | host_command[12] << 8 | host_command[13];
 }
 
 }  // namespace communication

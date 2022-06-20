@@ -25,7 +25,7 @@
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
-#include "dbus.h"
+
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
@@ -43,7 +43,7 @@
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::SteeringMotor* steering = nullptr;
-remote::DBUS* dbus = nullptr;
+static bsp::GPIO *gpio_red, *gpio_green;
 
 auto miniPCreceiver = communication::MiniPCProtocol();
 uint32_t buffer[2] = {0};
@@ -65,7 +65,7 @@ const osThreadAttr_t miniPCTask_attributes = {.name = "miniPC_Task",
                                             .cb_mem = nullptr,
                                             .cb_size = 0,
                                             .stack_mem = nullptr,
-                                            .stack_size = 128 * 4,
+                                            .stack_size = 512 * 4,
                                             .priority = (osPriority_t)osPriorityNormal,
                                             .tz_module = 0,
                                             .reserved = 0};
@@ -78,6 +78,8 @@ void RM_RTOS_Threads_Init(void) {
 
 
 void RM_RTOS_Init() {
+
+  print_use_uart(&huart6);
   bsp::SetHighresClockTimer(&htim2);
 
   can1 = new bsp::CAN(&hcan1, 0x205);
@@ -96,7 +98,8 @@ void RM_RTOS_Init() {
   steering_data.align_detect_func = steering_align_detect;
   steering = new control::SteeringMotor(steering_data);
 
-  dbus = new remote::DBUS(&huart1);
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
+  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
 
 }
 
@@ -105,17 +108,14 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
+
   osDelay(500);  // DBUS initialization needs time
 
-  print("Alignment Begin\r\n");
-  while (!steering->AlignUpdate()) {
-    control::MotorCANBase::TransmitOutput(motors, 1);
-    osDelay(2);
-  }
-  print("\r\nAlignment End\r\n");
-
+  float pitch_relative = 0.0;
   while (true) {
-    steering->TurnRelative(static_cast<float>(buffer[0]) / 100000);
+    pitch_relative = static_cast<float>(buffer[0]) / 100000;
+    UNUSED(pitch_relative);
+    //steering->TurnRelative(0);
     steering->Update();
     control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(2);
@@ -155,9 +155,19 @@ void miniPCTask(void* argument) {
 
       miniPCreceiver.Receive(data, length);
       if (miniPCreceiver.GetFlag() == 1) {
+        gpio_red->High();
         miniPCreceiver.GetPayLoad(buffer);
+        print("%d\r\n", buffer[0]);
+          gpio_green->High();
+      } else {
+          gpio_red->High();
       }
-      osDelay(200);
+    } else {
+        gpio_green->High();
+        gpio_red->High();
     }
+    osDelay(200);
+    gpio_green->Low();
+    gpio_red->Low();
   }
 }
