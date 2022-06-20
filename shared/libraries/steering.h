@@ -29,10 +29,10 @@ constexpr uint16_t MOTOR_NUM = 4;
 namespace control {
 
 typedef struct {
-  control::ServoMotor* fl_steer_motor = nullptr;
-  control::ServoMotor* fr_steer_motor = nullptr;
-  control::ServoMotor* bl_steer_motor = nullptr;
-  control::ServoMotor* br_steer_motor = nullptr;
+  control::SteeringMotor* fl_steer_motor = nullptr;
+  control::SteeringMotor* fr_steer_motor = nullptr;
+  control::SteeringMotor* bl_steer_motor = nullptr;
+  control::SteeringMotor* br_steer_motor = nullptr;
 
   control::MotorCANBase* fl_wheel_motor = nullptr;
   control::MotorCANBase* fr_wheel_motor = nullptr;

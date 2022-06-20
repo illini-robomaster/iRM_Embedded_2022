@@ -21,19 +21,31 @@
 #include "main.h"
 #include <cmath>
 
+#include "bsp_gpio.h"
 #include "bsp_print.h"
 #include "chassis.h"
 #include "cmsis_os.h"
 #include "dbus.h"
 
 
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
+
 #define NOTCH (2 * PI / 4)
 #define SPEED (4 * PI)
 #define ACCELERATION (8 * PI)
+#define TEST_SPEED (0.5 * PI)
+
 
 bsp::CAN* can1 = nullptr;
 bsp::CAN* can2 = nullptr;
+bsp::GPIO* key = nullptr;
 
+bool steering_align_detect() {
+  // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
+  // return abs(theta - 3) < 0.05;
+  return key->Read() == 1;
+}
 
 control::MotorCANBase* motor1 = nullptr;
 control::MotorCANBase* motor2 = nullptr;
@@ -45,32 +57,38 @@ control::MotorCANBase* motor7 = nullptr;
 control::MotorCANBase* motor8 = nullptr;
 
 typedef struct {
-  control::ServoMotor* fl_steer_motor = nullptr;
-  control::ServoMotor* fr_steer_motor = nullptr;
-  control::ServoMotor* bl_steer_motor = nullptr;
-  control::ServoMotor* br_steer_motor = nullptr;
+  control::SteeringMotor* fl_steer_motor = nullptr;
+  control::SteeringMotor* fr_steer_motor = nullptr;
+  control::SteeringMotor* bl_steer_motor = nullptr;
+  control::SteeringMotor* br_steer_motor = nullptr;
 
   control::MotorCANBase* fl_wheel_motor = nullptr;
   control::MotorCANBase* fr_wheel_motor = nullptr;
   control::MotorCANBase* bl_wheel_motor = nullptr;
   control::MotorCANBase* br_wheel_motor = nullptr;
 
-} steering_chassis_t;
+  double radius = 1.0;
 
+} steering_chassis_t;
 steering_chassis_t* chassis = nullptr;
 remote::DBUS* dbus = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart6);
+  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   // servo
-  control::servo_t servo_data;
+  control::steering_t steering_data;
 
-  servo_data.mode = control::SERVO_NEAREST;
-  servo_data.max_speed = SPEED;
-  servo_data.max_acceleration = ACCELERATION;
-  servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{25, 5, 35};
+  steering_data.max_speed = SPEED;
+  steering_data.test_speed = TEST_SPEED;
+  steering_data.max_acceleration = ACCELERATION;
+  steering_data.transmission_ratio = 8;
+  steering_data.offset_angle = 5.96;
+  steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
+  steering_data.max_iout = 1000;
+  steering_data.max_out = 13000;
+  steering_data.align_detect_func = steering_align_detect;
 
   can1 = new bsp::CAN(&hcan1, 0x201, false);
   can2 = new bsp::CAN(&hcan2, 0x205, true);
@@ -80,17 +98,17 @@ void RM_RTOS_Init() {
   motor3 = new control::Motor3508(can1, 0x203);
   motor4 = new control::Motor3508(can1, 0x204);
 
-  servo_data.motor = motor1;
-  chassis->fl_steer_motor = new control::ServoMotor(servo_data);
+  steering_data.motor = motor1;
+  chassis->fl_steer_motor = new control::SteeringMotor(steering_data);
 
-  servo_data.motor = motor2;
-  chassis->fr_steer_motor = new control::ServoMotor(servo_data);
+  steering_data.motor = motor2;
+  chassis->fr_steer_motor = new control::SteeringMotor(steering_data);
 
-  servo_data.motor = motor3;
-  chassis->bl_steer_motor = new control::ServoMotor(servo_data);
+  steering_data.motor = motor3;
+  chassis->bl_steer_motor = new control::SteeringMotor(steering_data);
 
-  servo_data.motor = motor4;
-  chassis->br_steer_motor = new control::ServoMotor(servo_data);
+  steering_data.motor = motor4;
+  chassis->br_steer_motor = new control::SteeringMotor(steering_data);
   
   // wheel
   chassis->fl_wheel_motor = new control::Motor3508(can2, 0x205);

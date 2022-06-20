@@ -20,6 +20,8 @@
 
 #include <cmath>
 #include "steering.h"
+#include "motor.h"
+#include "controller.h"
 
 namespace control {
   SteeringChassis::SteeringChassis(const steering_chassis_t* _chassis) : chassis(_chassis) {
@@ -32,8 +34,7 @@ namespace control {
     float MOTOR_MAX_IOUT = 2000;
     float MOTOR_MAX_OUT = 20000;
     for (int i = 0; i < MOTOR_NUM; i++) {
-      pids[i].Reinit(PID_PARAMS);
-      pids[i].ChangeMax(MOTOR_MAX_IOUT, MOTOR_MAX_OUT);
+      pids[i].Reinit(PID_PARAMS, MOTOR_MAX_IOUT, MOTOR_MAX_OUT);
     }
     
   }
