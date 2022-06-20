@@ -23,5 +23,5 @@ project(example_uart ASM C CXX)
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeA
     SOURCES main.cc)
-target_compile_definitions(${PROJECT_NAME}.elf PRIVATE UART_HANDLE=huart6)
+target_compile_definitions(${PROJECT_NAME}.elf PRIVATE UART_HANDLE=huart8)
 
