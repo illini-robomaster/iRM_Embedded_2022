@@ -278,6 +278,7 @@ ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, floa
   inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
   outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
+  reset_flag_ = false;
 
   omega_pid_.Reinit(data.omega_pid_param, data.max_iout, data.max_out);
 
@@ -408,21 +409,32 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   // This is a dumb method to get the align angle
   if (align_angle_ < 0) align_angle_ = motor_->theta_;
 
-  motor_angle_ = motor_->theta_ - align_angle_;
-  // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
-  // edge, which means that the motor is turning in positive direction when crossing encoder
-  // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
-  inner_wrap_detector_->input(motor_angle_);
-  if (inner_wrap_detector_->negEdge())
-    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
-  else if (inner_wrap_detector_->posEdge())
-    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
-  servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
-  outer_wrap_detector_->input(servo_angle_);
-  if (outer_wrap_detector_->negEdge())
-    cumulated_angle_ += 2 * PI;
-  else if (outer_wrap_detector_->posEdge())
-    cumulated_angle_ -= 2 * PI;
+  if (!reset_flag_) {
+    // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
+    // edge, which means that the motor is turning in positive direction when crossing encoder
+    // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
+    motor_angle_ = motor_->theta_ - align_angle_;
+    inner_wrap_detector_->input(motor_angle_);
+    if (inner_wrap_detector_->negEdge())
+      offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
+    else if (inner_wrap_detector_->posEdge())
+      offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
+    
+    servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
+    outer_wrap_detector_->input(servo_angle_);
+    if (outer_wrap_detector_->negEdge())
+      cumulated_angle_ += 2 * PI;
+    else if (outer_wrap_detector_->posEdge())
+      cumulated_angle_ -= 2 * PI;
+  } else {
+    motor_angle_ = motor_->theta_ - align_angle_;
+    offset_angle_ = 0;
+    servo_angle_ = 0;
+    cumulated_angle_ = 0;
+    inner_wrap_detector_->input(motor_angle_);
+    outer_wrap_detector_->input(servo_angle_);
+    reset_flag_ = false;
+  }
 
   // determine if the motor should be in hold state
   float diff = abs(GetThetaDelta(target_angle_));
@@ -465,9 +477,10 @@ bool SteeringMotor::AlignUpdate() {
     servo_->CalcOutput();
     return true;
   } else if (align_detect_func()) {
-    servo_->servo_angle_ = 0;
-    servo_->cumulated_angle_ = 0;
+    servo_->reset_flag_ = true;
     align_complete = true;
+    servo_->SetTarget(align_angle_, true);
+    servo_->CalcOutput();
     return true;
   } else {
     servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(
