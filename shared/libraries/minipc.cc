@@ -28,6 +28,8 @@ namespace communication {
 MiniPCProtocol::MiniPCProtocol() {
   index = -1;
   flag = 0;
+
+  gimbal_moving = false;
 }
 
 void MiniPCProtocol::Receive(const uint8_t* data, uint8_t length) {
@@ -62,6 +64,8 @@ void MiniPCProtocol::Receive(const uint8_t* data, uint8_t length) {
 
 void MiniPCProtocol::handle(void) {
   if (host_command[PKG_LEN - 2] == 'E' && host_command[PKG_LEN - 1] == 'D') {
+    if (host_command[0] == 'M' && host_command[1] == 'Y') gimbal_moving = true;
+    if (host_command[0] == 'S' && host_command[1] == 'T') gimbal_moving = false;
     flag = 1;
   }
 }
@@ -72,7 +76,7 @@ uint8_t MiniPCProtocol::GetFlag(void) {
   return temp;
 }
 
-void MiniPCProtocol::GetPayLoad(uint32_t * buf) {
+void MiniPCProtocol::GetPayLoad(int32_t * buf) {
   buf[0] = host_command[6] << 24 | host_command[7] << 16 | host_command[8] << 8 | host_command[9];
   buf[1] = host_command[10] << 24 | host_command[11] << 16 | host_command[12] << 8 | host_command[13];
 }

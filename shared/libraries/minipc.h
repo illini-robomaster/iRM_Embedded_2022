@@ -38,6 +38,9 @@ class MiniPCProtocol {
   void Send();
   uint8_t GetFlag(void);
   void GetPayLoad(uint32_t * buf);
+  void GetPayLoad(int32_t * buf);
+
+  bool gimbal_moving;
 
  private:
   int index;

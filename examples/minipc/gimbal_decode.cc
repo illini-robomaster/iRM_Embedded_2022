@@ -28,37 +28,23 @@
 #include "bsp_os.h"
 #include "cmsis_os.h"
 #include "controller.h"
-#include "dbus.h"
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
 #include "minipc.h"
-
-#define KEY_GPIO_GROUP GPIOB
-#define KEY_GPIO_PIN GPIO_PIN_2
+#include "gimbal.h"
 
 #define SPEED (50 * PI)
 #define TEST_SPEED (0.5 * PI)
 #define ACCELERATION (100 * PI)
 
 bsp::CAN* can1 = nullptr;
-control::MotorCANBase* motor = nullptr;
-control::ServoMotor* servo = nullptr;
-remote::DBUS* dbus = nullptr;
-
-bsp::GPIO* key = nullptr;
-BoolEdgeDetector key_detector(false);
-bsp::GPIO* gpio_red;
-bsp::GPIO* gpio_green;
+control::MotorCANBase* pitch_motor = nullptr;
+control::MotorCANBase* yaw_motor = nullptr;
+control::Gimbal* gimbal = nullptr;
 
 auto miniPCreceiver = communication::MiniPCProtocol();
-uint32_t buffer[2] = {0};
-
-bool steering_align_detect() {
-  // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
-  // return abs(theta - 3) < 0.05;
-  return key && key->Read() == 1;
-}
+int32_t buffer[2] = {0};
 
 #define RX_SIGNAL (1 << 0)
 
@@ -74,26 +60,18 @@ class CustomUART : public bsp::UART {
 };
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart6);
-  bsp::SetHighresClockTimer(&htim2);
+  // print_use_uart(&huart6);
+  bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x205);
-  motor = new control::Motor3508(can1, 0x205);
+  pitch_motor = new control::Motor3508(can1, 0x205);
+  yaw_motor = new control::Motor3508(can1, 0x206);
 
-  control::servo_t servo_data;
-  servo_data.motor = motor;
-  servo_data.max_speed = SPEED;
-  servo_data.max_acceleration = ACCELERATION;
-  servo_data.transmission_ratio = 8;
-  servo_data.omega_pid_param = new float[3]{140, 1.2, 25};
-  servo_data.max_iout = 1000;
-  servo_data.max_out = 13000;
-  servo = new control::ServoMotor(servo_data);
-
-  dbus = new remote::DBUS(&huart1);
-
-  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
-  gpio_green = new bsp::GPIO(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+  control::gimbal_t gimbal_data;
+  gimbal_data.pitch_motor = pitch_motor;
+  gimbal_data.yaw_motor = yaw_motor;
+  gimbal_data.model = control::GIMBAL_STANDARD_ZERO;
+  gimbal = new control::Gimbal(gimbal_data);
 }
 
 void RM_RTOS_Default_Task(const void* argument) {
@@ -102,7 +80,7 @@ void RM_RTOS_Default_Task(const void* argument) {
   uint32_t length;
   uint8_t* data;
 
-  auto uart = std::make_unique<CustomUART>(&huart8);  // see cmake for which uart
+  auto uart = std::make_unique<CustomUART>(&huart1);  // see cmake for which uart
   uart->SetupRx(200);
   uart->SetupTx(200);
 
@@ -115,48 +93,45 @@ void RM_RTOS_Default_Task(const void* argument) {
 
       miniPCreceiver.Receive(data, length);
       if (miniPCreceiver.GetFlag() == 1) {
-        gpio_red->High();
         miniPCreceiver.GetPayLoad(buffer);
-        print("Pitch: %10d Yaw: %10d\r\n", buffer[0], buffer[1]);
-          gpio_green->High();
-      } else {
-          gpio_red->High();
+        print("Moving: %d Pitch: %10.2f Yaw: %10.2f ", 
+            miniPCreceiver.gimbal_moving, buffer[0] / 100000.0, buffer[1] / 100000.0);
+        
+        print("\r\n");
       }
-    } else {
-        gpio_green->High();
-        gpio_red->High();
     }
     osDelay(200);
   }
 }
 
-void motorTask(void* arg) {
+void gimbalTask(void* arg) {
   UNUSED(arg);
-  control::MotorCANBase* motors[] = {motor};
-  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+  control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
 
-  osDelay(500);  // DBUS initialization needs time
+  osDelay(500);  // initialization needs time
   
   while (true) {
-    servo->SetTarget(buffer[0] / 10e6, true);
-    servo->CalcOutput();
-    control::MotorCANBase::TransmitOutput(motors, 1);
+    if (miniPCreceiver.gimbal_moving) {
+      gimbal->TargetRel(buffer[0] / 100000.0, buffer[1] / 100000.0);
+    }
+    gimbal->Update();
+    control::MotorCANBase::TransmitOutput(motors, 2);
     osDelay(2);
   }
 }
 
-const osThreadAttr_t motorTaskAttribute = {.name = "UITask",
-                                           .attr_bits = osThreadDetached,
-                                           .cb_mem = nullptr,
-                                           .cb_size = 0,
-                                           .stack_mem = nullptr,
-                                           .stack_size = 1024 * 4,
-                                           .priority = (osPriority_t)osPriorityBelowNormal,
-                                           .tz_module = 0,
-                                           .reserved = 0};
+const osThreadAttr_t gimbalTaskAttribute = {.name = "GimbalTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 1024 * 4,
+                                            .priority = (osPriority_t)osPriorityBelowNormal,
+                                            .tz_module = 0,
+                                            .reserved = 0};
 
-osThreadId_t motorTaskHandle;
+osThreadId_t gimbalTaskHandle;
 
 void RM_RTOS_Threads_Init(void) {
-  motorTaskHandle = osThreadNew(motorTask, nullptr, &motorTaskAttribute);
+  gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
 }

@@ -21,17 +21,17 @@ Gimbal::Gimbal(gimbal_t gimbal)
       data_.yaw_max_ = 1.551f;
       {
         float pitch_theta_max_iout = 0;
-        float pitch_theta_max_out = 0;
-        float pitch_omega_max_iout = 0;
-        float pitch_omega_max_out = 0;
+        float pitch_theta_max_out = 10;
+        float pitch_omega_max_iout = 1000;
+        float pitch_omega_max_out = 30000;
         float yaw_theta_max_iout = 0;
-        float yaw_theta_max_out = 0;
-        float yaw_omega_max_iout = 0;
-        float yaw_omega_max_out = 0;
-        pitch_theta_pid_param_ = new float[3]{0, 0, 0};
-        pitch_omega_pid_param_ = new float[3]{0, 0, 0};
-        yaw_theta_pid_param_ = new float[3]{0, 0, 0};
-        yaw_omega_pid_param_ = new float[3]{0, 0, 0};
+        float yaw_theta_max_out = 10;
+        float yaw_omega_max_iout = 1000;
+        float yaw_omega_max_out = 30000;
+        pitch_theta_pid_param_ = new float[3]{35, 0, 0};
+        pitch_omega_pid_param_ = new float[3]{250, 2, 10};
+        yaw_theta_pid_param_ = new float[3]{35, 0, 0};
+        yaw_omega_pid_param_ = new float[3]{250, 2, 10};
         pitch_theta_pid_ =
             new ConstrainedPID(pitch_theta_pid_param_, pitch_theta_max_iout, pitch_theta_max_out);
         pitch_omega_pid_ =
