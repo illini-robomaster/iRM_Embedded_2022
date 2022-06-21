@@ -529,7 +529,7 @@ void KillAll() {
   }
 }
 
-static bool debug = false;
+static bool debug = true;
 // static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
