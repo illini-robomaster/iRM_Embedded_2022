@@ -558,11 +558,7 @@ void UITask(void* arg) {
     if (++tryLIDAR >= 5) break;
     osDelay(10);
   }
-  tryLIDAR = 0;
-  while (!LIDAR->startFilter()) {
-    if (++tryLIDAR >= 5) break;
-    osDelay(10);
-  }
+  LIDAR->startFilter();
 
   communication::package_t frame;
   communication::graphic_data_t graphGimbal;
@@ -698,11 +694,7 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    tryLIDAR = 0;
-    while (!LIDAR->startMeasure()) {
-      if (++tryLIDAR >= 5) break;
-      osDelay(10);
-    }
+    LIDAR->startMeasure();
 
     // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
