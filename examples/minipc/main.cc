@@ -59,7 +59,7 @@ void RM_RTOS_Default_Task(const void* argument) {
 
   auto miniPCreceiver = communication::MiniPCProtocol();
 
-  uint32_t buffer[2] = {0};
+  int32_t buffer[2] = {0};
 
   while (true) {
     /* wait until rx data is available */
