@@ -319,10 +319,15 @@ typedef struct {
   uint16_t receiver_ID;
 } __packed UI_header_data_t;
 
+//typedef struct {
+//  UI_header_data_t header;
+//  uint8_t data[];
+//} __packed robot_interactive_data_t;
+
 typedef struct {
   UI_header_data_t header;
-  uint8_t data[];
-} __packed robot_interactive_data_t;
+  bool enable_shooting;
+} __packed robot_sentry_data_t;
 
 typedef struct {
   UI_header_data_t header;
@@ -401,6 +406,8 @@ class Referee : public Protocol {
   bullet_remaining_t bullet_remaining{};
   rfid_status_t rfid_status{};
   dart_client_cmd_t dart_client_cmd{};
+
+  robot_sentry_data_t robot_sentry_data{};
 
   graphic_delete_t graphic_delete{};
   graphic_single_t graphic_single{};
