@@ -57,8 +57,7 @@ void RM_RTOS_Default_Task(const void* args) {
 
   while (true) {
     // Kill switch for safety measure
-    if (dbus->swl == remote::DOWN)
-      RM_ASSERT_TRUE(false, "Operation killed");
+    if (dbus->swl == remote::DOWN) RM_ASSERT_TRUE(false, "Operation killed");
 
     shoot_detector.input(dbus->swr == remote::UP);
     if (shoot_detector.posEdge())
@@ -66,8 +65,8 @@ void RM_RTOS_Default_Task(const void* args) {
     else if (shoot_detector.negEdge())
       shooter->SetFlywheelSpeed(0);
 
-     shooter->Update();
-     control::MotorCANBase::TransmitOutput(motors, 1);
+    shooter->Update();
+    control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(10);
   }
 }
