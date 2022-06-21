@@ -483,28 +483,29 @@ void UserInterface::ModeGuiUpdate(graphic_data_t* modeGraph, uint32_t color) {
   CharDraw(modeGraph, "MG", UI_Graph_Change, 0, color, 15, 30, 2, chassisX_ - 70, modeStartY_);
 }
 
-void UserInterface::DistanceGUIInit(graphic_data_t *distanceGraph) {
-    CharDraw(distanceGraph, "DG", UI_Graph_Add, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
+void UserInterface::DistanceGUIInit(graphic_data_t* distanceGraph) {
+  CharDraw(distanceGraph, "DG", UI_Graph_Add, 0, UI_Color_Cyan, 10, 30, 2, centerX_ + 50, centerY_);
 }
 
-void UserInterface::DistanceGUIUpdate(graphic_data_t *distanceGraph, uint32_t color) {
-    CharDraw(distanceGraph, "DG", UI_Graph_Change, 0, color, 10, 30, 2, centerX_ + 50, centerY_);
+void UserInterface::DistanceGUIUpdate(graphic_data_t* distanceGraph, uint32_t color) {
+  CharDraw(distanceGraph, "DG", UI_Graph_Change, 0, color, 10, 30, 2, centerX_ + 50, centerY_);
 }
 
-void UserInterface::LidGUIInit(graphic_data_t *lidGraph) {
-    CharDraw(lidGraph, "LG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 100);
+void UserInterface::LidGUIInit(graphic_data_t* lidGraph) {
+  CharDraw(lidGraph, "LG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 100);
 }
 
-void UserInterface::LidGuiUpdate(graphic_data_t *lidGraph, uint32_t color) {
-    CharDraw(lidGraph, "LG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 100);
+void UserInterface::LidGuiUpdate(graphic_data_t* lidGraph, uint32_t color) {
+  CharDraw(lidGraph, "LG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 100);
 }
 
-void UserInterface::WheelGUIInit(graphic_data_t *wheelGraph) {
-    CharDraw(wheelGraph, "WG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_, barStartY_ + 50);
+void UserInterface::WheelGUIInit(graphic_data_t* wheelGraph) {
+  CharDraw(wheelGraph, "WG", UI_Graph_Add, 0, UI_Color_Pink, 15, 30, 2, barStartX_,
+           barStartY_ + 50);
 }
 
-void UserInterface::WheelGUIUpdate(graphic_data_t *wheelGraph, uint32_t color) {
-    CharDraw(wheelGraph, "WG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 50);
+void UserInterface::WheelGUIUpdate(graphic_data_t* wheelGraph, uint32_t color) {
+  CharDraw(wheelGraph, "WG", UI_Graph_Change, 0, color, 15, 30, 2, barStartX_, barStartY_ + 50);
 }
 
 }  // namespace communication
