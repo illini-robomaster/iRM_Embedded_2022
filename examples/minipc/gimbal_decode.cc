@@ -138,7 +138,7 @@ void motorTask(void* arg) {
   osDelay(500);  // DBUS initialization needs time
   
   while (true) {
-    servo->SetTarget(buffer[0] / 10e6, true);
+    servo->SetTarget(buffer[0] * 1.0 / 1e6, true);
     servo->CalcOutput();
     control::MotorCANBase::TransmitOutput(motors, 1);
     osDelay(2);
