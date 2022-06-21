@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "minipc.h"
 #include "gimbal.h"
+#include "dbus.h"
 
 #define SPEED (50 * PI)
 #define TEST_SPEED (0.5 * PI)
@@ -42,6 +43,7 @@ bsp::CAN* can1 = nullptr;
 control::MotorCANBase* pitch_motor = nullptr;
 control::MotorCANBase* yaw_motor = nullptr;
 control::Gimbal* gimbal = nullptr;
+remote::DBUS* dbus = nullptr;
 
 auto miniPCreceiver = communication::MiniPCProtocol();
 int32_t buffer[2] = {0};
@@ -60,8 +62,8 @@ class CustomUART : public bsp::UART {
 };
 
 void RM_RTOS_Init() {
-  // print_use_uart(&huart6);
   bsp::SetHighresClockTimer(&htim5);
+  dbus = new remote::DBUS(&huart3);
 
   can1 = new bsp::CAN(&hcan1, 0x205);
   pitch_motor = new control::Motor3508(can1, 0x205);
@@ -70,7 +72,7 @@ void RM_RTOS_Init() {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = control::GIMBAL_STANDARD_ZERO;
+  gimbal_data.model = control::GIMBAL_SENTRY;
   gimbal = new control::Gimbal(gimbal_data);
 }
 
@@ -94,13 +96,9 @@ void RM_RTOS_Default_Task(const void* argument) {
       miniPCreceiver.Receive(data, length);
       if (miniPCreceiver.GetFlag() == 1) {
         miniPCreceiver.GetPayLoad(buffer);
-        print("Moving: %d Pitch: %10.2f Yaw: %10.2f ", 
-            miniPCreceiver.gimbal_moving, buffer[0] / 100000.0, buffer[1] / 100000.0);
-        
-        print("\r\n");
       }
     }
-    osDelay(200);
+    osDelay(10);
   }
 }
 
@@ -109,14 +107,24 @@ void gimbalTask(void* arg) {
   control::MotorCANBase* motors[] = {pitch_motor, yaw_motor};
 
   osDelay(500);  // initialization needs time
+
+  gimbal->TargetAbs(0, 0);
+  gimbal->Update();
   
   while (true) {
+    gimbal->TargetRel(dbus->ch1 / 660.0 / 20, dbus->ch0 / 660.0 / 20);
     if (miniPCreceiver.gimbal_moving) {
-      gimbal->TargetRel(buffer[0] / 100000.0, buffer[1] / 100000.0);
+      // print("Moving: %d Pitch: %10.2f Yaw: %10.2f ", 
+      //       miniPCreceiver.gimbal_moving, buffer[0] / 100000.0, buffer[1] / 100000.0);
+        
+      // print("\r\n");
+      gimbal->TargetRel(-buffer[1] / 100000.0, buffer[0] / 100000.0);
+      buffer[0] = 0;
+      buffer[1] = 0;
     }
     gimbal->Update();
     control::MotorCANBase::TransmitOutput(motors, 2);
-    osDelay(2);
+    osDelay(1);
   }
 }
 

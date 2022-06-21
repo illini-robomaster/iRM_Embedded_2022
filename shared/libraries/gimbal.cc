@@ -43,10 +43,14 @@ Gimbal::Gimbal(gimbal_t gimbal)
       }
       break;
     case GIMBAL_SENTRY:
-      data_.pitch_offset_ = 1.6352f;
+      // data_.pitch_offset_ = 1.6352f;
+      // data_.yaw_offset_ = 2.8718f;
+      // data_.pitch_max_ = 0.5080f;
+      // data_.yaw_max_ = PI;
+      data_.pitch_offset_ = 1.2f;
       data_.yaw_offset_ = 2.8718f;
-      data_.pitch_max_ = 0.5080f;
-      data_.yaw_max_ = PI;
+      data_.pitch_max_ = 0.45f;
+      data_.yaw_max_ = 0.4f;
       {
         float pitch_theta_max_iout = 0;
         float pitch_theta_max_out = 10;
@@ -56,10 +60,10 @@ Gimbal::Gimbal(gimbal_t gimbal)
         float yaw_theta_max_out = 10;
         float yaw_omega_max_iout = 10000;
         float yaw_omega_max_out = 30000;
-        pitch_theta_pid_param_ = new float[3]{15, 0, 0};
-        pitch_omega_pid_param_ = new float[3]{1740, 25, 0};
-        yaw_theta_pid_param_ = new float[3]{26, 0, 0.3};
-        yaw_omega_pid_param_ = new float[3]{2160, 12, 0};
+        pitch_theta_pid_param_ = new float[3]{30, 0, 0};
+        pitch_omega_pid_param_ = new float[3]{2540, 25, 0};
+        yaw_theta_pid_param_ = new float[3]{40, 0, 0.3};
+        yaw_omega_pid_param_ = new float[3]{2560, 12, 0};
         pitch_theta_pid_ =
             new ConstrainedPID(pitch_theta_pid_param_, pitch_theta_max_iout, pitch_theta_max_out);
         pitch_omega_pid_ =
