@@ -279,8 +279,7 @@ void chassisTask(void* arg) {
     osDelay(100);
   }
 
-  while (!imu->CaliDone())
-    osDelay(100);
+  while (!imu->CaliDone()) osDelay(100);
 
   while (true) {
     while (Dead) osDelay(100);
@@ -333,7 +332,9 @@ void chassisTask(void* arg) {
       vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
       static const float peek_angle = 30.0 / 180 * PI;
       wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
-      if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) && (relative_angle - peek_angle) < CHASSIS_DEADZONE) wz_set = 0;
+      if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
+          (relative_angle - peek_angle) < CHASSIS_DEADZONE)
+        wz_set = 0;
     } else {
       sin_yaw = arm_sin_f32(relative_angle);
       cos_yaw = arm_cos_f32(relative_angle);
