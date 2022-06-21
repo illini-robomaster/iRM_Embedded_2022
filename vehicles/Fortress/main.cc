@@ -63,7 +63,8 @@ static BoolEdgeDetector FakeDeath(false);
 static volatile bool Dead = false;
 static BoolEdgeDetector ChangeSpinMode(false);
 static volatile bool SpinMode = false;
-static BoolEdgeDetector ChangePeekMode(false);
+static BoolEdgeDetector PeekModeLeft(false);
+static BoolEdgeDetector PeekModeRight(false);
 static volatile bool PeekMode = false;
 
 static volatile float relative_angle = 0;
@@ -259,7 +260,9 @@ static control::MotorCANBase* bl_motor = nullptr;
 static control::MotorCANBase* br_motor = nullptr;
 static control::Chassis* chassis = nullptr;
 
-const float CHASSIS_DEADZONE = 0.04;
+static const float CHASSIS_DEADZONE = 0.04;
+
+static bool PeekDirection = false;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -284,8 +287,17 @@ void chassisTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    ChangePeekMode.input(dbus->keyboard.bit.E);
-    if (ChangePeekMode.posEdge()) PeekMode = !PeekMode;
+    PeekModeLeft.input(dbus->keyboard.bit.Q);
+    if (PeekModeLeft.posEdge()) {
+      PeekMode = true;
+      PeekDirection = false;
+    }
+
+    PeekModeRight.input(dbus->keyboard.bit.E);
+    if (PeekModeLeft.posEdge()) {
+      PeekMode = true;
+      PeekDirection = true;
+    }
 
     ChangeSpinMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
     if (ChangeSpinMode.posEdge()) SpinMode = !SpinMode;
@@ -330,7 +342,10 @@ void chassisTask(void* arg) {
       cos_yaw = arm_cos_f32(relative_angle);
       vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
       vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
-      static const float peek_angle = 30.0 / 180 * PI;
+
+      float peek_angle = 30.0 / 180 * PI;
+      peek_angle = PeekDirection ? peek_angle : -peek_angle;
+
       wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
       if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
           (relative_angle - peek_angle) < CHASSIS_DEADZONE)
@@ -457,6 +472,7 @@ static bool volatile br_motor_flag = false;
 static bool volatile calibration_flag = false;
 static bool volatile referee_flag = false;
 static bool volatile dbus_flag = false;
+static bool volatile lidar_flag = false;
 
 static volatile bool selftestStart = false;
 
@@ -480,6 +496,7 @@ void selfTestTask(void* arg) {
   OLED->ShowString(3, 7, (uint8_t*)"Temp:");
   OLED->ShowString(4, 0, (uint8_t*)"Ref");
   OLED->ShowString(4, 6, (uint8_t*)"Dbus");
+  OLED->ShowString(4, 13, (uint8_t*)"Lidar");
 
   char temp[6] = "";
   while (true) {
@@ -522,6 +539,7 @@ void selfTestTask(void* arg) {
     OLED->ShowString(3, 12, (uint8_t*)temp);
     OLED->ShowBlock(4, 3, referee_flag);
     OLED->ShowBlock(4, 10, dbus_flag);
+    OLED->ShowBlock(4, 18, lidar_flag);
 
     OLED->RefreshGram();
 
@@ -698,11 +716,7 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    tryLIDAR = 0;
-    while (!LIDAR->startMeasure()) {
-      if (++tryLIDAR >= 5) break;
-      osDelay(10);
-    }
+    lidar_flag = LIDAR->startMeasure();
 
     // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
@@ -989,6 +1003,7 @@ void KillAll() {
     FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
     if (FakeDeath.posEdge()) {
       SpinMode = false;
+      PeekMode = false;
       Dead = false;
       RGB->Display(color_green);
       laser->On();
