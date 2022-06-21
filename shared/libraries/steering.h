@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "motor.h"
 #include "controller.h"
+#include "motor.h"
 #include "power_limit.h"
 
 constexpr uint16_t MOTOR_NUM = 4;
@@ -51,9 +51,8 @@ typedef struct {
 
 } steering_chassis_t;
 
-
 class SteeringChassis {
-  public:
+ public:
   SteeringChassis(steering_chassis_t* chassis);
 
   ~SteeringChassis();
@@ -73,12 +72,16 @@ class SteeringChassis {
 
   void PrintData();
 
-  private:
-
+ private:
   control::SteeringMotor* fl_steer_motor;
   control::SteeringMotor* fr_steer_motor;
   control::SteeringMotor* bl_steer_motor;
   control::SteeringMotor* br_steer_motor;
+
+  control::MotorCANBase* fl_wheel_motor;
+  control::MotorCANBase* fr_wheel_motor;
+  control::MotorCANBase* bl_wheel_motor;
+  control::MotorCANBase* br_wheel_motor;
 
   // current velocity
   // right -> positive, left -> negative
@@ -89,7 +92,7 @@ class SteeringChassis {
   float vw;
 
   // radius of the vehicle from the center to the wheels
-  float radius;  
+  float radius;
 
   // current steering pos of the 4 wheels
   float theta0;
@@ -101,9 +104,7 @@ class SteeringChassis {
   ConstrainedPID pids[4];
   PowerLimit* power_limit;
   power_limit_t power_limit_info;
-  steering_chassis_t* chassis;
 
+};  // class SteeringChassis ends
 
-}; // class SteeringChassis ends
-
-} //ns control
+}  // namespace control

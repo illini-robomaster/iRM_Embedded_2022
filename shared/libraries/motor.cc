@@ -419,7 +419,7 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
       offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
     else if (inner_wrap_detector_->posEdge())
       offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
-    
+
     servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
     outer_wrap_detector_->input(servo_angle_);
     if (outer_wrap_detector_->negEdge())

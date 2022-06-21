@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include "main.h"
+
 #include <cmath>
 
 #include "bsp_gpio.h"
@@ -27,7 +28,6 @@
 #include "cmsis_os.h"
 #include "dbus.h"
 
-
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
@@ -35,7 +35,6 @@
 #define SPEED (4 * PI)
 #define ACCELERATION (8 * PI)
 #define TEST_SPEED (0.5 * PI)
-
 
 bsp::CAN* can1 = nullptr;
 bsp::CAN* can2 = nullptr;
@@ -109,7 +108,7 @@ void RM_RTOS_Init() {
 
   steering_data.motor = motor4;
   chassis->br_steer_motor = new control::SteeringMotor(steering_data);
-  
+
   // wheel
   chassis->fl_wheel_motor = new control::Motor3508(can2, 0x205);
   chassis->fr_wheel_motor = new control::Motor3508(can2, 0x206);
@@ -130,7 +129,6 @@ void RM_RTOS_Default_Task(const void* args) {
   double theta3 = 0.0;
 
   while (true) {
-
     double vx = static_cast<double>(dbus->ch0) / 660;
     double vy = static_cast<double>(dbus->ch1) / 660;
     double vw = static_cast<double>(dbus->ch2) / 660;
@@ -139,16 +137,16 @@ void RM_RTOS_Default_Task(const void* args) {
     if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
       RM_ASSERT_TRUE(false, "Operation killed");
     }
-    
-//    double v0 = sqrt(pow(vy - vw * cos(PI/4), 2.0) + pow(vx - vw * sin(PI/4), 2.0));
-//    double v1 = sqrt(pow(vy - vw * cos(PI/4), 2.0) + pow(vx + vw * sin(PI/4), 2.0));
-//    double v2 = sqrt(pow(vy + vw * cos(PI/4), 2.0) + pow(vx + vw * sin(PI/4), 2.0));
-//    double v3 = sqrt(pow(vy + vw * cos(PI/4), 2.0) + pow(vx - vw * sin(PI/4), 2.0));
-    
-    double _theta0 = atan2(vy - vw * cos(PI/4), vx - vw * sin(PI/4));
-    double _theta1 = atan2(vy - vw * cos(PI/4), vx + vw * sin(PI/4));
-    double _theta2 = atan2(vy + vw * cos(PI/4), vx + vw * sin(PI/4));
-    double _theta3 = atan2(vy + vw * cos(PI/4), vx - vw * sin(PI/4));
+
+    //    double v0 = sqrt(pow(vy - vw * cos(PI/4), 2.0) + pow(vx - vw * sin(PI/4), 2.0));
+    //    double v1 = sqrt(pow(vy - vw * cos(PI/4), 2.0) + pow(vx + vw * sin(PI/4), 2.0));
+    //    double v2 = sqrt(pow(vy + vw * cos(PI/4), 2.0) + pow(vx + vw * sin(PI/4), 2.0));
+    //    double v3 = sqrt(pow(vy + vw * cos(PI/4), 2.0) + pow(vx - vw * sin(PI/4), 2.0));
+
+    double _theta0 = atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
+    double _theta1 = atan2(vy - vw * cos(PI / 4), vx + vw * sin(PI / 4));
+    double _theta2 = atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
+    double _theta3 = atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
 
     // update with relative angles (-180 - 180)
     chassis->fl_steer_motor->TurnRelative(clip<double>(_theta0 - theta0, -PI, PI));
@@ -161,6 +159,5 @@ void RM_RTOS_Default_Task(const void* args) {
     theta3 = _theta3;
 
     osDelay(10);
-    
   }
 }
