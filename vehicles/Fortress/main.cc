@@ -61,8 +61,10 @@ static const uint32_t color_magenta = 0xFFFF00FF;
 
 static BoolEdgeDetector FakeDeath(false);
 static volatile bool Dead = false;
-static BoolEdgeDetector ChangeMode(false);
+static BoolEdgeDetector ChangeSpinMode(false);
 static volatile bool SpinMode = false;
+static BoolEdgeDetector ChangePeekMode(false);
+static volatile bool PeekMode = false;
 
 static volatile float relative_angle = 0;
 
@@ -277,8 +279,16 @@ void chassisTask(void* arg) {
     osDelay(100);
   }
 
+  while (!imu->CaliDone()) osDelay(100);
+
   while (true) {
     while (Dead) osDelay(100);
+
+    ChangePeekMode.input(dbus->keyboard.bit.E);
+    if (ChangePeekMode.posEdge()) PeekMode = !PeekMode;
+
+    ChangeSpinMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
+    if (ChangeSpinMode.posEdge()) SpinMode = !SpinMode;
 
     if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
     if (dbus->keyboard.bit.D) vx_keyboard += 61.5;
@@ -304,19 +314,32 @@ void chassisTask(void* arg) {
     vx_remote = dbus->ch0;
     vy_remote = dbus->ch1;
 
+    vx_set = vx_keyboard + vx_remote;
+    vy_set = vy_keyboard + vy_remote;
+
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
 
-    sin_yaw = arm_sin_f32(relative_angle);
-    cos_yaw = arm_cos_f32(relative_angle);
-    vx_set = cos_yaw * (vx_keyboard + vx_remote) + sin_yaw * (vy_keyboard + vy_remote);
-    vy_set = -sin_yaw * (vx_keyboard + vx_remote) + cos_yaw * (vy_keyboard + vy_remote);
-
-    ChangeMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
-    if (ChangeMode.posEdge()) SpinMode = !SpinMode;
-
     if (SpinMode) {
+      sin_yaw = arm_sin_f32(relative_angle);
+      cos_yaw = arm_cos_f32(relative_angle);
+      vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+      vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
       wz_set = spin_speed;
+    } else if (PeekMode) {
+      sin_yaw = arm_sin_f32(relative_angle);
+      cos_yaw = arm_cos_f32(relative_angle);
+      vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+      vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+      static const float peek_angle = 30.0 / 180 * PI;
+      wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
+      if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
+          (relative_angle - peek_angle) < CHASSIS_DEADZONE)
+        wz_set = 0;
     } else {
+      sin_yaw = arm_sin_f32(relative_angle);
+      cos_yaw = arm_cos_f32(relative_angle);
+      vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+      vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
       wz_set = std::min(follow_speed, follow_speed * relative_angle);
       if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
     }

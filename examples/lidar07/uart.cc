@@ -33,7 +33,9 @@ void RM_RTOS_Init(void) {
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
+  print("Begin\r\n");
   while (!sensor->begin()) osDelay(50);
+  print("StartFilter\r\n");
   while (!sensor->startFilter()) osDelay(50);
 
   while (true) {
