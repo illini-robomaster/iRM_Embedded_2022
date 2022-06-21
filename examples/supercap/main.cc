@@ -25,7 +25,7 @@
 #include "supercap.h"
 
 static bsp::CAN* can = nullptr;
-static control::SuperCap *supercap = nullptr;
+static control::SuperCap* supercap = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
@@ -38,7 +38,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   while (true) {
-    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage, supercap->info.energy);
+    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
+          supercap->info.energy);
     osDelay(100);
   }
 }
