@@ -45,23 +45,26 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
   steering_data.test_speed = TEST_SPEED;
   steering_data.max_acceleration = ACCELERATION;
   steering_data.transmission_ratio = 8;
-  steering_data.offset_angle = 5.96;
   steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
   steering_data.max_iout = 1000;
   steering_data.max_out = 13000;
 
+  steering_data.offset_angle = 2.314;
   steering_data.motor = _chassis->fl_steer_motor;
   steering_data.align_detect_func = _chassis->fl_steer_motor_detect_func;
   fl_steer_motor = new control::SteeringMotor(steering_data);
 
+  steering_data.offset_angle = 5.377;
   steering_data.motor = _chassis->fr_steer_motor;
   steering_data.align_detect_func = _chassis->fr_steer_motor_detect_func;
   fr_steer_motor = new control::SteeringMotor(steering_data);
 
+  steering_data.offset_angle = 2.313;
   steering_data.motor = _chassis->bl_steer_motor;
   steering_data.align_detect_func = _chassis->bl_steer_motor_detect_func;
   bl_steer_motor = new control::SteeringMotor(steering_data);
 
+  steering_data.offset_angle = 2.108;
   steering_data.motor = _chassis->br_steer_motor;
   steering_data.align_detect_func = _chassis->br_steer_motor_detect_func;
   br_steer_motor = new control::SteeringMotor(steering_data);
@@ -150,10 +153,11 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   // only if effort > 0.1 update theta difference
   // otherwise, diff = 0.0
   if (effort > 0.1) {
-    float theta0_new = atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
-    float theta1_new = atan2(vy - vw * cos(PI / 4), vx + vw * sin(PI / 4));
-    float theta2_new = atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
-    float theta3_new = atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
+
+    float theta0_new = -atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
+    float theta1_new = -atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
+    float theta2_new = -atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
+    float theta3_new = -atan2(vy - vw * cos(PI / 4), vx + vw * sin(PI / 4));
 
     theta0_diff = wrap<float>(theta0_new - theta0, -PI / 2, PI / 2);
     theta1_diff = wrap<float>(theta1_new - theta1, -PI / 2, PI / 2);
@@ -192,6 +196,7 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   float v2 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
   float v3 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
 
+  // 16 is a arbitrary factor
   v0 = sign0 * v0 * 16;
   v1 = sign1 * v1 * 16;
   v2 = sign2 * v2 * 16;

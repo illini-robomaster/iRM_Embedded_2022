@@ -75,10 +75,10 @@ void RM_RTOS_Init() {
 
   steering_chassis = new control::steering_chassis_t();
 
-  steering_chassis->fl_steer_motor = motor1;
-  steering_chassis->fr_steer_motor = motor2;
-  steering_chassis->bl_steer_motor = motor3;
-  steering_chassis->br_steer_motor = motor4;
+  steering_chassis->fl_steer_motor = motor4;
+  steering_chassis->fr_steer_motor = motor3;
+  steering_chassis->bl_steer_motor = motor1;
+  steering_chassis->br_steer_motor = motor2;
 
   steering_chassis->fl_steer_motor_detect_func = steering_align_detect;
   steering_chassis->fr_steer_motor_detect_func = steering_align_detect;
@@ -98,8 +98,10 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  control::MotorCANBase* steer_motors[] = {motor3, motor2, motor3, motor4};
-  control::MotorCANBase* wheel_motors[] = {motor7, motor6, motor7, motor8};
+  control::MotorCANBase* steer_motors[] = {motor1, motor2, motor3, motor4};
+  control::MotorCANBase* wheel_motors[] = {motor5, motor6, motor7, motor8};
+  UNUSED(wheel_motors);
+  UNUSED(steer_motors);
   key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
   osDelay(500);  // DBUS initialization needs time
@@ -124,13 +126,13 @@ void RM_RTOS_Default_Task(const void* args) {
       RM_ASSERT_TRUE(false, "operation killed");
     }
 
-    chassis->SetXSpeed(static_cast<float>(dbus->ch0) / 660);
-    chassis->SetYSpeed(static_cast<float>(dbus->ch1) / 660);
+    chassis->SetYSpeed(static_cast<float>(dbus->ch0) / 660);
+    chassis->SetXSpeed(static_cast<float>(dbus->ch1) / 660);
     chassis->SetWSpeed(static_cast<float>(dbus->ch2) / 660);
     chassis->Update(30, 20, 60);
 
-    control::MotorCANBase::TransmitOutput(wheel_motors, 1);
-    control::MotorCANBase::TransmitOutput(steer_motors, 1);
+    //control::MotorCANBase::TransmitOutput(wheel_motors, 1);
+    control::MotorCANBase::TransmitOutput(steer_motors, 4);
 
     osDelay(2);
   }

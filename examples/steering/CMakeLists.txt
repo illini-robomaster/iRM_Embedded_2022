@@ -20,11 +20,6 @@
 
 project(example_steering ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}
-    TARGET DJI_Board_TypeA
-    SOURCES main.cc)
-    
-
 irm_add_arm_executable(${PROJECT_NAME}_one
     TARGET DJI_Board_TypeA
     SOURCES steering_test.cc)

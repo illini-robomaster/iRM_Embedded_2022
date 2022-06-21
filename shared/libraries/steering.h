@@ -57,10 +57,10 @@ class SteeringChassis {
 
   ~SteeringChassis();
 
-  // right -> positive, left -> negative
+  // front -> positive, back -> negative
   void SetXSpeed(float _vx);
 
-  // front -> positive, back -> negative
+  // left -> positive, right -> negative
   void SetYSpeed(float _vy);
 
   // counterclockwise -> positive
