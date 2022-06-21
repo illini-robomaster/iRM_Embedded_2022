@@ -18,14 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_uart ASM C CXX)
+project(example_lidar07 ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_typeA
+irm_add_arm_executable(${PROJECT_NAME}_uart
     TARGET DJI_Board_TypeA
-    SOURCES main.cc)
-target_compile_definitions(${PROJECT_NAME}_typeA.elf PRIVATE UART_HANDLE=huart8)
+    SOURCES uart.cc)
 
-irm_add_arm_executable(${PROJECT_NAME}_typeC
+irm_add_arm_executable(${PROJECT_NAME}_i2c
     TARGET DJI_Board_TypeC
-    SOURCES main.cc)
-target_compile_definitions(${PROJECT_NAME}_typeC.elf PRIVATE UART_HANDLE=huart1)
+    SOURCES i2c.cc)
