@@ -132,6 +132,9 @@ class UserInterface {
                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
                     graphic_data_t* crosshair7);
+  void CrosshairCharGUI(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
+                        graphic_data_t* crosschar3, graphic_data_t* crosschar4,
+                        graphic_data_t* crosschar5);
   void CapGUIInit(graphic_data_t* barFrame, graphic_data_t* bar);
   void CapGUIUpdate(float cap);  // cap 0 - 1
   void CapGUICharInit(graphic_data_t* percent);

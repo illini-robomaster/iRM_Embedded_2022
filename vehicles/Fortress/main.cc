@@ -26,6 +26,7 @@
 #include "bsp_imu.h"
 #include "bsp_laser.h"
 #include "bsp_print.h"
+#include "bsp_os.h"
 #include "chassis.h"
 #include "cmsis_os.h"
 #include "dbus.h"
@@ -126,7 +127,8 @@ static bsp::Laser* laser = nullptr;
 void gimbalTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor};
+  control::MotorCANBase* motors_can2_gimbal[] = {yaw_motor};
 
   print("Wait for beginning signal...\r\n");
   RGB->Display(color_red);
@@ -141,7 +143,8 @@ void gimbalTask(void* arg) {
   while (i < 2000 || !imu->DataReady()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(1);
     ++i;
   }
@@ -154,7 +157,8 @@ void gimbalTask(void* arg) {
   while (!imu->DataReady() || !imu->CaliDone()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(1);
   }
 
@@ -189,7 +193,8 @@ void gimbalTask(void* arg) {
     gimbal->TargetRel(-pitch_diff, yaw_diff);
 
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(GIMBAL_TASK_DELAY);
   }
 }
@@ -557,6 +562,11 @@ void UITask(void* arg) {
   communication::graphic_data_t graphCrosshair5;
   communication::graphic_data_t graphCrosshair6;
   communication::graphic_data_t graphCrosshair7;
+  communication::graphic_data_t graphCrosschar1;
+  communication::graphic_data_t graphCrosschar2;
+  communication::graphic_data_t graphCrosschar3;
+  communication::graphic_data_t graphCrosschar4;
+  communication::graphic_data_t graphCrosschar5;
   communication::graphic_data_t graphBarFrame;
   communication::graphic_data_t graphBar;
   communication::graphic_data_t graphPercent;
@@ -602,6 +612,40 @@ void UITask(void* arg) {
                    graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
                    graphCrosshair7);
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize crosshair character GUI
+  char crosschar1[] = "3m";
+  char crosschar2[] = "5m";
+  char crosschar3[] = "7m";
+  char crosschar4[] = "10m";
+  char crosschar5[] = "15m";
+  UI->CrosshairCharGUI(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3,
+                       &graphCrosschar4, &graphCrosschar5);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar3);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar3, crosschar3, sizeof crosschar3);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar4, crosschar4, sizeof crosschar4);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar5, crosschar5, sizeof crosschar5);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
@@ -856,6 +900,7 @@ void UITask(void* arg) {
 
 void RM_RTOS_Init(void) {
   print_use_usb();
+  bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
@@ -891,7 +936,7 @@ void RM_RTOS_Init(void) {
 
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
   pitch_motor = new control::Motor6020(can1, 0x205);
-  yaw_motor = new control::Motor6020(can1, 0x206);
+  yaw_motor = new control::Motor6020(can2, 0x206);
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
@@ -956,7 +1001,8 @@ void RM_RTOS_Threads_Init(void) {
 void KillAll() {
   RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
 
-  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor};
+  control::MotorCANBase* motors_can2_gimbal[] = {yaw_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
 
@@ -975,7 +1021,8 @@ void KillAll() {
 
     pitch_motor->SetOutput(0);
     yaw_motor->SetOutput(0);
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
 
     fl_motor->SetOutput(0);
     bl_motor->SetOutput(0);
