@@ -342,8 +342,10 @@ void chassisTask(void* arg) {
       cos_yaw = arm_cos_f32(relative_angle);
       vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
       vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+
       float peek_angle = 30.0 / 180 * PI;
       peek_angle = PeekDirection ? peek_angle : -peek_angle;
+
       wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
       if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
           (relative_angle - peek_angle) < CHASSIS_DEADZONE)
