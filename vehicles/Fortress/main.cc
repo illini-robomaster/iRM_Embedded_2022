@@ -618,7 +618,7 @@ void UITask(void* arg) {
   char crosschar2[] = "5m";
   char crosschar3[] = "7m";
   char crosschar4[] = "10m";
-  char crosschar5[] = "15m";
+  char crosschar5[] = "12m";
   UI->CrosshairCharGUI(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3,
                        &graphCrosschar4, &graphCrosschar5);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
