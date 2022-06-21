@@ -18,64 +18,93 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
 #include "bsp_gpio.h"
-#include "bsp_laser.h"
+#include "bsp_os.h"
+#include "bsp_print.h"
 #include "cmsis_os.h"
+#include "controller.h"
 #include "dbus.h"
-#include "shooter.h"
+#include "main.h"
+#include "motor.h"
+#include "utils.h"
 
-#define LASER_Pin GPIO_PIN_13
-#define LASER_GPIO_Port GPIOG
+#define KEY_GPIO_GROUP GPIOB
+#define KEY_GPIO_PIN GPIO_PIN_2
 
-bsp::CAN* can = nullptr;
-control::MotorCANBase* left_flywheel_motor = nullptr;
-control::MotorCANBase* right_flywheel_motor = nullptr;
-control::MotorCANBase* load_motor = nullptr;
+#define SPEED (10 * PI)
+#define TEST_SPEED (0.5 * PI)
+#define ACCELERATION (100 * PI)
 
+bsp::CAN* can1 = nullptr;
+control::MotorCANBase* motor = nullptr;
+control::SteeringMotor* steering = nullptr;
 remote::DBUS* dbus = nullptr;
-control::ServoMotor* load_servo = nullptr;
-control::Shooter* shooter = nullptr;
+
+bsp::GPIO* key = nullptr;
+
+bool steering_align_detect() {
+  // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
+  // return abs(theta - 3) < 0.05;
+  return key->Read() == 1;
+}
 
 void RM_RTOS_Init() {
   print_use_uart(&huart8);
+  bsp::SetHighresClockTimer(&htim2);
+
+  can1 = new bsp::CAN(&hcan1, 0x201);
+  motor = new control::Motor3508(can1, 0x201);
+
+  control::steering_t steering_data;
+  steering_data.motor = motor;
+  steering_data.max_speed = SPEED;
+  steering_data.test_speed = TEST_SPEED;
+  steering_data.max_acceleration = ACCELERATION;
+  steering_data.transmission_ratio = 8;
+  steering_data.offset_angle = 5.96;
+  steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
+  steering_data.max_iout = 1000;
+  steering_data.max_out = 13000;
+  steering_data.align_detect_func = steering_align_detect;
+  steering = new control::SteeringMotor(steering_data);
 
   dbus = new remote::DBUS(&huart1);
-
-  can = new bsp::CAN(&hcan1, 0x201);
-  left_flywheel_motor = new control::Motor3508(can, 0x203);
-  right_flywheel_motor = new control::Motor3508(can, 0x202);
-  load_motor = new control::Motor3508(can, 0x201);
-
-  control::shooter_t shooter_data;
-  shooter_data.left_flywheel_motor = left_flywheel_motor;
-  shooter_data.right_flywheel_motor = right_flywheel_motor;
-  shooter_data.load_motor = load_motor;
-  shooter = new control::Shooter(shooter_data);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
+  control::MotorCANBase* motors[] = {motor};
+  key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+
   osDelay(500);  // DBUS initialization needs time
 
-  control::MotorCANBase* motors[] = {left_flywheel_motor, right_flywheel_motor, load_motor};
-  bsp::GPIO laser(LASER_GPIO_Port, LASER_Pin);
-  laser.High();
-
-  while (true) {
-    shooter->SetFlywheelSpeed(dbus->ch1);
-    if (dbus->ch3 > 500) shooter->LoadNext();
-    shooter->Update();
-    control::MotorCANBase::TransmitOutput(motors, 3);
-    osDelay(1);
-
+  print("Alignment Begin\r\n");
+  while (!steering->AlignUpdate()) {
+    control::MotorCANBase::TransmitOutput(motors, 1);
     static int i = 0;
     if (i > 10) {
-      print("%10d, %10d, %10d, %10d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+      steering->PrintData();
       i = 0;
     } else {
       i++;
     }
+    osDelay(2);
+  }
+  print("\r\nAlignment End\r\n");
+
+  while (true) {
+    steering->TurnRelative(float(dbus->ch1) / remote::DBUS::ROCKER_MAX / 20);
+    steering->Update();
+    control::MotorCANBase::TransmitOutput(motors, 1);
+
+    static int i = 0;
+    if (i > 10) {
+      steering->PrintData();
+      i = 0;
+    } else {
+      i++;
+    }
+
+    osDelay(2);
   }
 }
