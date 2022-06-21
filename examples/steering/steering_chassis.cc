@@ -131,7 +131,7 @@ void RM_RTOS_Default_Task(const void* args) {
     chassis->SetWSpeed(static_cast<float>(dbus->ch2) / 660);
     chassis->Update(30, 20, 60);
 
-    //control::MotorCANBase::TransmitOutput(wheel_motors, 1);
+    // control::MotorCANBase::TransmitOutput(wheel_motors, 1);
     control::MotorCANBase::TransmitOutput(steer_motors, 4);
 
     osDelay(2);

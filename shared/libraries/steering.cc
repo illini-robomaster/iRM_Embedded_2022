@@ -153,7 +153,6 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   // only if effort > 0.1 update theta difference
   // otherwise, diff = 0.0
   if (effort > 0.1) {
-
     float theta0_new = -atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
     float theta1_new = -atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
     float theta2_new = -atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
