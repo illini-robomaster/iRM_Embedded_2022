@@ -26,17 +26,24 @@
 
 namespace communication {
 
+
+constexpr uint8_t PKG_LEN = 16;
+constexpr uint8_t PAYLOAD_LEN = 8;
+
 class MiniPCProtocol {
  public:
   MiniPCProtocol();
   void Receive(const uint8_t* data, uint8_t len);
   // dummy send
   void Send();
-  uint8_t get(void);
+  uint8_t GetFlag(void);
+  void GetPayLoad(uint32_t * buf);
+  void GetPayLoad(int32_t * buf);
+
+  bool gimbal_moving;
 
  private:
   int index;
-  static constexpr uint8_t PKG_LEN = 16;
   uint8_t flag;
   uint8_t host_command[PKG_LEN];
   void handle();
