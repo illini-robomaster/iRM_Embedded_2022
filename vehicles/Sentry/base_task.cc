@@ -22,15 +22,15 @@
 #include <memory>
 
 #include "bsp_gpio.h"
+#include "bsp_os.h"
 #include "bsp_print.h"
 #include "bsp_uart.h"
 #include "cmsis_os.h"
-#include "main.h"
-#include "bsp_os.h"
 #include "controller.h"
+#include "dbus.h"
+#include "main.h"
 #include "motor.h"
 #include "utils.h"
-#include "dbus.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -49,14 +49,14 @@ BoolEdgeDetector key_detector(false);
 bsp::GPIO* gpio_red;
 
 const osThreadAttr_t baseTaskAttribute = {.name = "baseTask",
-                                            .attr_bits = osThreadDetached,
-                                            .cb_mem = nullptr,
-                                            .cb_size = 0,
-                                            .stack_mem = nullptr,
-                                            .stack_size = 512 * 4,
-                                            .priority = (osPriority_t)osPriorityRealtime,
-                                            .tz_module = 0,
-                                            .reserved = 0};
+                                          .attr_bits = osThreadDetached,
+                                          .cb_mem = nullptr,
+                                          .cb_size = 0,
+                                          .stack_mem = nullptr,
+                                          .stack_size = 512 * 4,
+                                          .priority = (osPriority_t)osPriorityRealtime,
+                                          .tz_module = 0,
+                                          .reserved = 0};
 osThreadId_t baseTaskHandle;
 
 // declare for the base Task
@@ -87,7 +87,6 @@ void RM_RTOS_Init(void) {
   servo = new control::ServoMotor(servo_data);
 
   // dbus = new remote::DBUS(&huart3);
-
 }
 
 // dummy main thread to test multi-tasks
@@ -134,5 +133,3 @@ void baseTask(void* argument) {
     osDelay(2);
   }
 }
-
-
