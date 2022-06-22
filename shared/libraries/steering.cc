@@ -36,7 +36,6 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
       _chassis->bl_wheel_motor == nullptr || _chassis->br_wheel_motor == nullptr) {
     RM_ASSERT_TRUE(false, "Chassis pointer is null\r\n");
   }
-  radius = _chassis->radius;
   // Init Steering Motors from CANBaseMotor
   control::steering_t steering_data;
 

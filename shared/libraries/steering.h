@@ -47,8 +47,6 @@ typedef struct {
   control::MotorCANBase* bl_wheel_motor = nullptr;
   control::MotorCANBase* br_wheel_motor = nullptr;
 
-  double radius = 1.0;
-
   double fl_calibration_offset;
   double fr_calibration_offset;
   double bl_calibration_offset;
@@ -94,9 +92,6 @@ class SteeringChassis {
   float vx;
   float vy;
   float vw;
-
-  // radius of the vehicle from the center to the wheels
-  float radius;
 
   // current steering pos of the 4 wheels
   float theta0;
