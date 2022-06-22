@@ -76,21 +76,47 @@ void RM_RTOS_Init() {
   gimbal = new control::Gimbal(gimbal_data);
 }
 
+/* ===== BEGIN RTOS TASK DEF ===== */
+const osThreadAttr_t gimbalTaskAttribute = {.name = "GimbalTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 1024 * 4,
+                                            .priority = (osPriority_t)osPriorityRealtime1,
+                                            .tz_module = 0,
+                                            .reserved = 0};
+
+const osThreadAttr_t jetsonSendTaskAttribute = {.name = "JetsonSendTask",
+                                            .attr_bits = osThreadDetached,
+                                            .cb_mem = nullptr,
+                                            .cb_size = 0,
+                                            .stack_mem = nullptr,
+                                            .stack_size = 256 * 4,
+                                            .priority = (osPriority_t)osPriorityRealtime1,
+                                            .tz_module = 0,
+                                            .reserved = 0};
+
+osThreadId_t gimbalTaskHandle;
+osThreadId_t jetsonSendTaskHandle;
+/* =====  END RTOS TASK DEF  ===== */
+
+std::unique_ptr<CustomUART> uart;
+
 void RM_RTOS_Default_Task(const void* argument) {
   UNUSED(argument);
 
   uint32_t length;
   uint8_t* data;
 
-  auto uart = std::make_unique<CustomUART>(&huart1);  // see cmake for which uart
+  uart = std::make_unique<CustomUART>(&huart1);  // see cmake for which uart
   uart->SetupRx(200);
   uart->SetupTx(200);
 
   while (true) {
     /* wait until rx data is available */
     uint32_t flags = osThreadFlagsWait(RX_SIGNAL, osFlagsWaitAll, osWaitForever);
-    if (flags & RX_SIGNAL) {  // unnecessary check
-      /* time the non-blocking rx / tx calls (should be <= 1 osTick) */
+    if (flags & RX_SIGNAL) {
       length = uart->Read(&data);
 
       miniPCreceiver.Receive(data, length);
@@ -98,7 +124,6 @@ void RM_RTOS_Default_Task(const void* argument) {
         miniPCreceiver.GetPayLoad(buffer);
       }
     }
-    osDelay(10);
   }
 }
 
@@ -114,10 +139,6 @@ void gimbalTask(void* arg) {
   while (true) {
     gimbal->TargetRel(dbus->ch1 / 660.0 / 20, dbus->ch0 / 660.0 / 20);
     if (miniPCreceiver.gimbal_moving) {
-      // print("Moving: %d Pitch: %10.2f Yaw: %10.2f ", 
-      //       miniPCreceiver.gimbal_moving, buffer[0] / 100000.0, buffer[1] / 100000.0);
-        
-      // print("\r\n");
       gimbal->TargetRel(-buffer[1] / 100000.0, buffer[0] / 100000.0);
       buffer[0] = 0;
       buffer[1] = 0;
@@ -128,18 +149,24 @@ void gimbalTask(void* arg) {
   }
 }
 
-const osThreadAttr_t gimbalTaskAttribute = {.name = "GimbalTask",
-                                            .attr_bits = osThreadDetached,
-                                            .cb_mem = nullptr,
-                                            .cb_size = 0,
-                                            .stack_mem = nullptr,
-                                            .stack_size = 1024 * 4,
-                                            .priority = (osPriority_t)osPriorityBelowNormal,
-                                            .tz_module = 0,
-                                            .reserved = 0};
+void jetsonSendTask(void* arg) {
+  // tell Jetson the status of embedded system
+  // (e.g., enemy team; IMU state; timestamp)
+  // receiving is done in another task for efficiency
+  UNUSED(arg);
 
-osThreadId_t gimbalTaskHandle;
+  osDelay(100); // wait for UART init
+
+  while (true) {
+    // 'B' for Blue; 'R' for Red enemy team
+    // FIXME: read from referee system!
+    uint8_t enemy_team = uint8_t(char('B')); // 'R' or 'B'
+    uart->Write(&enemy_team, 1);
+    osDelay(1000);
+  }
+}
 
 void RM_RTOS_Threads_Init(void) {
   gimbalTaskHandle = osThreadNew(gimbalTask, nullptr, &gimbalTaskAttribute);
+  jetsonSendTaskHandle = osThreadNew(jetsonSendTask, nullptr, &jetsonSendTaskAttribute);
 }
