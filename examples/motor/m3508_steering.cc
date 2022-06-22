@@ -31,7 +31,7 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
-#define SPEED (5 * PI)
+#define SPEED (10 * PI)
 #define TEST_SPEED (0.5 * PI)
 #define ACCELERATION (100 * PI)
 
@@ -61,14 +61,14 @@ void RM_RTOS_Init() {
   steering_data.max_speed = SPEED;
   steering_data.test_speed = TEST_SPEED;
   steering_data.max_acceleration = ACCELERATION;
-  steering_data.transmission_ratio = 8;
-  steering_data.offset_angle = 5.96;
-  steering_data.omega_pid_param = new float[3]{100, 1, 25};
+  steering_data.transmission_ratio = M3508P19_RATIO;
+  steering_data.offset_angle = 5.36;
+  steering_data.omega_pid_param = new float[3]{100, 0.8, 25};
   steering_data.max_iout = 1000;
   steering_data.max_out = 13000;
   steering_data.align_detect_func = steering_align_detect;
-  steering_data.calibrate_offset = 0.858458848;
-  // steering_data.calibrate_offset = 0;
+  // steering_data.calibrate_offset = 0.858458848;
+  steering_data.calibrate_offset = 0;
   steering = new control::SteeringMotor(steering_data);
 
   dbus = new remote::DBUS(&huart1);

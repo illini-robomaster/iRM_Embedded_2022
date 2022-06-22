@@ -381,6 +381,7 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
+  print("Svo-align: % 10.6f ", align_angle_);
   print("Svo-theta: % 10.6f ", GetTheta());
   print("Svo-omega: % 10.6f ", GetOmega());
   print("Svo-target: % 10.6f ", target_angle_);
@@ -470,9 +471,9 @@ bool SteeringMotor::AlignUpdate() {
     servo_->CalcOutput();
     return true;
   } else if (align_detect_func()) {
-    float offset =
-        wrap<float>(servo_->motor_->GetThetaDelta(servo_->align_angle_ - 2 * PI), -PI, PI);
-    float current = (servo_->motor_->GetTheta() + offset) / servo_->transmission_ratio_ +
+    float current_theta = servo_->motor_->GetTheta();
+    float offset = wrap<float>(servo_->align_angle_ - current_theta, -PI, PI);
+    float current = (current_theta + offset) / servo_->transmission_ratio_ +
                     servo_->offset_angle_ + servo_->cumulated_angle_;
     align_angle_ = current + calibrate_offset;
     align_complete = true;
