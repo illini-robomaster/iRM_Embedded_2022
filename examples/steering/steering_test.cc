@@ -75,7 +75,6 @@ void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   control::MotorCANBase* motors[] = {motor};
   key = new bsp::GPIO(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-
   osDelay(500);  // DBUS initialization needs time
 
   print("Alignment Begin\r\n");
@@ -103,14 +102,14 @@ void RM_RTOS_Default_Task(const void* args) {
     if (dbus->swl == remote::UP || dbus->swl == remote::DOWN) {
       RM_ASSERT_TRUE(false, "operation killed");
     }
-    
+
     float effort = sqrt(pow(vx, 2) + pow(vy, 2) + pow(vw, 2));
 
     float theta_diff;
     if (effort > 0.1) {
-      float theta_new = atan2(vy - vw * cos(PI/4), vx - vw * sin(PI/4));
-      theta_diff = wrap<float>(wrap<float>(theta_new - theta, -PI/2, PI/2), -PI/2, PI/2);
-      theta = wrap<float>(theta + theta_diff, -PI/2, PI/2);
+      float theta_new = atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
+      theta_diff = wrap<float>(wrap<float>(theta_new - theta, -PI / 2, PI / 2), -PI / 2, PI / 2);
+      theta = wrap<float>(theta + theta_diff, -PI / 2, PI / 2);
     } else {
       theta_diff = 0;
     }
@@ -121,8 +120,8 @@ void RM_RTOS_Default_Task(const void* args) {
 
     static int i = 0;
     if (i > 10) {
-      print("vx: %10.4f vy: %10.4f vw: %10.4f theta: %10.4f diff: %10.4f\r\n", 
-          vx, vy, vw, theta, theta_diff);
+      print("vx: %10.4f vy: %10.4f vw: %10.4f theta: %10.4f diff: %10.4f\r\n", vx, vy, vw, theta,
+            theta_diff);
       i = 0;
     } else {
       i++;

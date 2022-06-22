@@ -278,7 +278,6 @@ ServoMotor::ServoMotor(servo_t data, float align_angle, float proximity_in, floa
   inner_wrap_detector_ = new FloatEdgeDetector(0, PI);
   outer_wrap_detector_ = new FloatEdgeDetector(0, PI);
   hold_detector_ = new BoolEdgeDetector(false);
-  reset_flag_ = false;
 
   omega_pid_.Reinit(data.omega_pid_param, data.max_iout, data.max_out);
 
@@ -382,13 +381,13 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
-  print("theta: % 9.4f ", GetTheta());
-  print("omega: % 9.4f ", GetOmega());
-  print("target: % 9.4f ", target_angle_);
+  print("Svo-theta: % 10.6f ", GetTheta());
+  print("Svo-omega: % 10.6f ", GetOmega());
+  print("Svo-target: % 10.6f ", target_angle_);
   if (hold_)
-    print("status: holding ");
+    print("Svo-status: holding ");
   else
-    print("status: moving  ");
+    print("Svo-status: moving  ");
   motor_->PrintData();
 }
 
@@ -409,36 +408,22 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   // This is a dumb method to get the align angle
   if (align_angle_ < 0) align_angle_ = motor_->theta_;
 
-  if (!reset_flag_) {
-    // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
-    // edge, which means that the motor is turning in positive direction when crossing encoder
-    // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
-    motor_angle_ = motor_->theta_ - align_angle_;
-    inner_wrap_detector_->input(motor_angle_);
-    if (inner_wrap_detector_->negEdge())
-      offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
-    else if (inner_wrap_detector_->posEdge())
-      offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
-    
-    servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
-    outer_wrap_detector_->input(servo_angle_);
-    if (outer_wrap_detector_->negEdge())
-      cumulated_angle_ += 2 * PI;
-    else if (outer_wrap_detector_->posEdge())
-      cumulated_angle_ -= 2 * PI;
-  } else {
-    motor_angle_ = motor_->theta_ - align_angle_;
-    float angle_diff = abs(wrap<float>(motor_angle_, -PI, PI));
-    if (angle_diff < PI / 2)
-      offset_angle_ = 0;
-    else
-      offset_angle_ = sign<float>(angle_diff, 0) * 2 * PI / transmission_ratio_;
-    servo_angle_ = 0;
-    cumulated_angle_ = 0;
-    inner_wrap_detector_->input(motor_angle_);
-    outer_wrap_detector_->input(servo_angle_);
-    reset_flag_ = false;
-  }
+  // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
+  // edge, which means that the motor is turning in positive direction when crossing encoder
+  // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
+  motor_angle_ = motor_->theta_ - align_angle_;
+  inner_wrap_detector_->input(motor_angle_);
+  if (inner_wrap_detector_->negEdge())
+    offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
+  else if (inner_wrap_detector_->posEdge())
+    offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
+
+  servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
+  outer_wrap_detector_->input(servo_angle_);
+  if (outer_wrap_detector_->negEdge())
+    cumulated_angle_ += 2 * PI;
+  else if (outer_wrap_detector_->posEdge())
+    cumulated_angle_ -= 2 * PI;
 
   // determine if the motor should be in hold state
   float diff = abs(GetThetaDelta(target_angle_));
@@ -461,11 +446,15 @@ SteeringMotor::SteeringMotor(steering_t data) {
   align_detect_func = data.align_detect_func;
   align_angle_ = 0;
   align_detector = new BoolEdgeDetector(false);
+  calibrate_offset = data.calibrate_offset;
 }
 
 float SteeringMotor::GetRawTheta() const { return servo_->GetTheta(); }
 
-void SteeringMotor::PrintData() const { servo_->PrintData(); }
+void SteeringMotor::PrintData() const {
+  print("Str-align: %10.5f ", align_angle_);
+  servo_->PrintData();
+}
 
 void SteeringMotor::TurnRelative(float angle) {
   servo_->SetTarget(servo_->GetTarget() + angle, true);
@@ -481,7 +470,11 @@ bool SteeringMotor::AlignUpdate() {
     servo_->CalcOutput();
     return true;
   } else if (align_detect_func()) {
-    servo_->reset_flag_ = true;
+    float offset =
+        wrap<float>(servo_->motor_->GetThetaDelta(servo_->align_angle_ - 2 * PI), -PI, PI);
+    float current = (servo_->motor_->GetTheta() + offset) / servo_->transmission_ratio_ +
+                    servo_->offset_angle_ + servo_->cumulated_angle_;
+    align_angle_ = current + calibrate_offset;
     align_complete = true;
     servo_->SetTarget(align_angle_, true);
     servo_->CalcOutput();

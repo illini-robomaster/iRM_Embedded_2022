@@ -56,6 +56,34 @@ T wrap(T value, T min, T max) {
 }
 
 /**
+ * @brief max of two values
+ *
+ * @tparam T     type of the value
+ * @param value1 first value
+ * @param value2 second value
+ *
+ * @return the max of the values
+ */
+template <typename T>
+T max(T value1, T value2) {
+  return value1 < value2 ? value2 : value1;
+}
+
+/**
+ * @brief min of two values
+ *
+ * @tparam T     type of the value
+ * @param value1 first value
+ * @param value2 second value
+ *
+ * @return the min of the values
+ */
+template <typename T>
+T min(T value1, T value2) {
+  return value1 < value2 ? value1 : value2;
+}
+
+/**
  * @brief get sign of a value
  *
  * @tparam T    type of the value

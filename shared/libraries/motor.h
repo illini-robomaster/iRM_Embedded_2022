@@ -468,7 +468,6 @@ class ServoMotor {
   float offset_angle_; /* cumulative offset angle of motor shaft, range between [0, 2PI] in [rad] */
   float servo_angle_;  /* current angle of motor shaft, range between [0, 2PI] in [rad]           */
   float cumulated_angle_;
-  bool reset_flag_;
 
   // jam detection
   jam_callback_t jam_callback_; /* callback function that will be invoked if motor jammed */
@@ -504,6 +503,7 @@ typedef struct {
   float max_iout;
   float max_out;
   align_detect_t align_detect_func;
+  float calibrate_offset;
 } steering_t;
 
 class SteeringMotor {
@@ -524,8 +524,9 @@ class SteeringMotor {
 
   float test_speed_;
   align_detect_t align_detect_func;
-  float align_angle_;
+  float calibrate_offset;
 
+  float align_angle_;
   BoolEdgeDetector* align_detector;
 };
 
