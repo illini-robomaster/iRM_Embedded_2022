@@ -23,3 +23,7 @@ project(Fortress ASM C CXX)
 irm_add_arm_executable(Sentry
     TARGET DJI_Board_TypeC
     SOURCES main.cc)
+    
+irm_add_arm_executable(Sentry_base
+    TARGET DJI_Board_TypeC
+    SOURCES base_task.cc)
