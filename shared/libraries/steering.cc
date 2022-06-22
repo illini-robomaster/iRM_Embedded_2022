@@ -51,21 +51,25 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
   steering_data.offset_angle = 2.314;
   steering_data.motor = _chassis->fl_steer_motor;
   steering_data.align_detect_func = _chassis->fl_steer_motor_detect_func;
+  steering_data.calibrate_offset = -0.858458848;
   fl_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 5.377;
   steering_data.motor = _chassis->fr_steer_motor;
   steering_data.align_detect_func = _chassis->fr_steer_motor_detect_func;
+  steering_data.calibrate_offset = 0.858458848;
   fr_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 2.313;
   steering_data.motor = _chassis->bl_steer_motor;
   steering_data.align_detect_func = _chassis->bl_steer_motor_detect_func;
+  steering_data.calibrate_offset = -2.283133461;
   bl_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 2.108;
   steering_data.motor = _chassis->br_steer_motor;
   steering_data.align_detect_func = _chassis->br_steer_motor_detect_func;
+  steering_data.calibrate_offset = 2.283133461;
   br_steer_motor = new control::SteeringMotor(steering_data);
   // Init Steering Motors complete
 
