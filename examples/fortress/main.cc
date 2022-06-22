@@ -18,45 +18,40 @@
  *                                                                          *
  ****************************************************************************/
 
-#define WITH_CONTROLLER
+#include "main.h"
 
 #include "bsp_gpio.h"
 #include "bsp_os.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
-#include "main.h"
 #include "motor.h"
 #include "utils.h"
-#ifdef WITH_CONTROLLER
-#include "dbus.h"
-#endif
-
-#ifndef WITH_CONTROLLER
-#define KEY_GPIO_GROUP GPIOA
-#define KEY_GPIO_PIN GPIO_PIN_0
-#endif
 
 #define NOTCH (2 * PI / 4)
 #define SPEED 200
 #define ACCELERATION (80 * PI)
 
+static bsp::GPIO* left = nullptr;
+static bsp::GPIO* right = nullptr;
+
 bsp::CAN* can1 = nullptr;
 bsp::CAN* can2 = nullptr;
+
 control::MotorCANBase* motor_left = nullptr;
 control::MotorCANBase* motor_right = nullptr;
 control::ServoMotor* servo_left = nullptr;
 control::ServoMotor* servo_right = nullptr;
-#ifdef WITH_CONTROLLER
-remote::DBUS* dbus = nullptr;
-#else
-BoolEdgeDetector key_detector(false);
-#endif
+
+BoolEdgeDetector left_edge(true);
+BoolEdgeDetector right_edge(true);
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
-  // bsp::SetHighresClockTimer(&htim2);
   bsp::SetHighresClockTimer(&htim5);
+
+  left = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  right = new bsp::GPIO(IN2_GPIO_Port, IN2_Pin);
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x205, false);
@@ -76,54 +71,59 @@ void RM_RTOS_Init() {
   servo_left = new control::ServoMotor(servo_data);
   servo_data.motor = motor_right;
   servo_right = new control::ServoMotor(servo_data);
-
-#ifdef WITH_CONTROLLER
-  dbus = new remote::DBUS(&huart3);
-#endif
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-#ifdef WITH_CONTROLLER
-  osDelay(500);  // DBUS initialization needs time
-#else
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
-#endif
+
   control::MotorCANBase* motors[] = {motor_left, motor_right};
 
-  float target = 0;
+  float target_left = 0;
+  float target_right = 0;
+
+  bool left_reach = false;
+  bool right_reach = false;
 
   while (true) {
-#ifdef WITH_CONTROLLER
-    target += float(dbus->ch1) / remote::DBUS::ROCKER_MAX / 20;
-    servo_left->SetTarget(target, true);
-    servo_right->SetTarget(target, true);
-#else
-    key_detector.input(key.Read() == 0);
-    constexpr float desired_target = 5 * 2 * PI;
-    if (key_detector.posEdge() && servo_left->Holding() && servo_right->Holding()) {
-      servo_left->SetTarget(target);
-      servo_right->SetTarget(target);
-      target = desired_target - target;
+    left_edge.input(left->Read());
+    right_edge.input(right->Read());
+
+    if (!left_reach && left_edge.negEdge()) {
+      target_left = servo_left->GetTheta();
+      left_reach = true;
+    } else if (!left_reach) {
+      target_left -= 0.01;
     }
-#endif
+
+    if (!right_reach && right_edge.negEdge()) {
+      target_right = servo_right->GetTheta();
+      right_reach = true;
+    } else if (!right_reach) {
+      target_right -= 0.01;
+    }
+
+    print("Left: %s, Right: %s\r\n", left_reach ? "YES" : "NO", right_reach ? "YES" : "NO");
+
+    servo_left->SetTarget(target_left, true);
+    servo_right->SetTarget(target_right, true);
     servo_left->CalcOutput();
     servo_right->CalcOutput();
     control::MotorCANBase::TransmitOutput(motors, 2);
 
-    static int i = 0;
-    if (i > 15) {
-      print("Left:  ");
-      servo_left->PrintData();
-      print("Right: ");
-      servo_right->PrintData();
-      i = 0;
-    } else {
-      i++;
-    }
+    if (left_reach && right_reach) break;
 
     osDelay(2);
   }
-}
 
-// 35.7
+  target_left += 35.7;
+  target_right += 35.7;
+
+  while (true) {
+    servo_left->SetTarget(target_left, true);
+    servo_right->SetTarget(target_right, true);
+    servo_left->CalcOutput();
+    servo_right->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors, 2);
+    osDelay(2);
+  }
+}

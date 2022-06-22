@@ -23,3 +23,7 @@ project(example_fortress ASM C CXX)
 irm_add_arm_executable(${PROJECT_NAME}
     TARGET DJI_Board_TypeC
     SOURCES fortress.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_temp
+    TARGET DJI_Board_TypeC
+    SOURCES main.cc)

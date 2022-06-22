@@ -23,8 +23,10 @@
 #include <cstdio>
 
 #include "bsp_buzzer.h"
+#include "bsp_gpio.h"
 #include "bsp_imu.h"
 #include "bsp_laser.h"
+#include "bsp_os.h"
 #include "bsp_print.h"
 #include "chassis.h"
 #include "cmsis_os.h"
@@ -39,11 +41,16 @@
 #include "user_interface.h"
 #include "utils.h"
 
+#define NOTCH (2 * PI / 4)
+#define SPEED 200
+#define ACCELERATION (80 * PI)
+
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
 static const int SELFTEST_TASK_DELAY = 100;
 static const int UI_TASK_DELAY = 20;
+static const int FORTRESS_TASK_DELAY = 2;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -887,11 +894,104 @@ void UITask(void* arg) {
 }
 
 //==================================================================================================
+// Fortress
+//==================================================================================================
+
+const osThreadAttr_t FortressTaskAttribute = {.name = "FortressTask",
+                                              .attr_bits = osThreadDetached,
+                                              .cb_mem = nullptr,
+                                              .cb_size = 0,
+                                              .stack_mem = nullptr,
+                                              .stack_size = 256 * 4,
+                                              .priority = (osPriority_t)osPriorityNormal,
+                                              .tz_module = 0,
+                                              .reserved = 0};
+
+osThreadId_t FortressTaskHandle;
+
+static bsp::GPIO* left = nullptr;
+static bsp::GPIO* right = nullptr;
+
+static control::MotorCANBase* elevator_left_motor = nullptr;
+static control::MotorCANBase* elevator_right_motor = nullptr;
+static control::ServoMotor* servo_left = nullptr;
+static control::ServoMotor* servo_right = nullptr;
+
+static BoolEdgeDetector left_edge(true);
+static BoolEdgeDetector right_edge(true);
+
+static control::MotorCANBase* fortress_motor = nullptr;
+
+void FortressTask(void* arg) {
+  UNUSED(arg);
+
+  control::MotorCANBase* motors_can1_elevator[] = {elevator_left_motor, elevator_right_motor};
+  control::MotorCANBase* motors_can1_fortress[] = {fortress_motor};
+
+  float target_left = 0;
+  float target_right = 0;
+
+  bool left_reach = false;
+  bool right_reach = false;
+
+  while (true) {
+    left_edge.input(left->Read());
+    right_edge.input(right->Read());
+
+    if (!left_reach && left_edge.negEdge()) {
+      target_left = servo_left->GetTheta();
+      left_reach = true;
+    } else if (!left_reach)
+      target_left -= 0.01;
+
+    if (!right_reach && right_edge.negEdge()) {
+      target_right = servo_right->GetTheta();
+      right_reach = true;
+    } else if (!right_reach)
+      target_right -= 0.01;
+
+    servo_left->SetTarget(target_left, true);
+    servo_right->SetTarget(target_right, true);
+    servo_left->CalcOutput();
+    servo_right->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors_can1_elevator, 2);
+
+    if (left_reach && right_reach) break;
+
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+
+  target_left += 35.7;
+  target_right += 35.7;
+
+  int changeModeDelay = 2000 / FORTRESS_TASK_DELAY;
+
+  int i = 0;
+  while (true) {
+    if (++i >= changeModeDelay) break;
+    servo_left->SetTarget(target_left, true);
+    servo_right->SetTarget(target_right, true);
+    servo_left->CalcOutput();
+    servo_right->CalcOutput();
+    control::MotorCANBase::TransmitOutput(motors_can1_elevator, 2);
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+
+  while (true) {
+    while (Dead) osDelay(100);
+    fortress_motor->SetOutput(50);
+    control::MotorCANBase::TransmitOutput(motors_can1_fortress, 1);
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+}
+
+//==================================================================================================
 // RM Init
 //==================================================================================================
 
 void RM_RTOS_Init(void) {
   print_use_usb();
+  bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
@@ -964,6 +1064,23 @@ void RM_RTOS_Init(void) {
   shooter_data.model = control::SHOOTER_STANDARD;
   shooter = new control::Shooter(shooter_data);
 
+  left = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  right = new bsp::GPIO(IN2_GPIO_Port, IN2_Pin);
+  elevator_left_motor = new control::Motor3508(can2, 0x205);
+  elevator_right_motor = new control::Motor3508(can2, 0x208);
+  control::servo_t servo_data;
+  servo_data.max_speed = SPEED;
+  servo_data.max_acceleration = ACCELERATION;
+  servo_data.transmission_ratio = M3508P19_RATIO;
+  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
+  servo_data.max_iout = 1000;
+  servo_data.max_out = 13000;
+  servo_data.motor = elevator_left_motor;
+  servo_left = new control::ServoMotor(servo_data);
+  servo_data.motor = elevator_right_motor;
+  servo_right = new control::ServoMotor(servo_data);
+  fortress_motor = new control::Motor6020(can1, 0x207);
+
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
 
@@ -981,6 +1098,7 @@ void RM_RTOS_Threads_Init(void) {
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
+  FortressTaskHandle = osThreadNew(FortressTask, nullptr, &FortressTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
   UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
@@ -995,6 +1113,8 @@ void KillAll() {
   control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
   control::MotorCANBase* motors_can2_chassis[] = {fl_motor, fr_motor, bl_motor, br_motor};
   control::MotorCANBase* motors_can1_shooter[] = {sl_motor, sr_motor, ld_motor};
+  control::MotorCANBase* motors_can1_elevator[] = {elevator_left_motor, elevator_right_motor};
+  control::MotorCANBase* motors_can1_fortress[] = {fortress_motor};
 
   RGB->Display(color_blue);
   laser->Off();
@@ -1024,6 +1144,12 @@ void KillAll() {
     sr_motor->SetOutput(0);
     ld_motor->SetOutput(0);
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+
+    elevator_left_motor->SetOutput(0);
+    elevator_right_motor->SetOutput(0);
+    fortress_motor->SetOutput(0);
+    control::MotorCANBase::TransmitOutput(motors_can1_elevator, 2);
+    control::MotorCANBase::TransmitOutput(motors_can1_fortress, 1);
 
     osDelay(KILLALL_DELAY);
   }
