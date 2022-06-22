@@ -56,7 +56,8 @@ typedef struct {
 } steering_chassis_t;
 
 class SteeringChassis {
- public:teering_chassis_t* chassis);
+ public:
+  SteeringChassis(steering_chassis_t* chassis);
 
   ~SteeringChassis();
 
