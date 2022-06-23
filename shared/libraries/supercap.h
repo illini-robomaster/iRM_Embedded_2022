@@ -35,7 +35,7 @@ class SuperCap {
 
   volatile bool connection_flag_ = false;
 
-  cap_message_t info;
+  cap_message_t info = {0, 0};
 };
 
 }  // namespace control

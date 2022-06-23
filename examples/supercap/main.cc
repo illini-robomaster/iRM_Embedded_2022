@@ -38,6 +38,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   while (true) {
+    set_cursor(0, 0);
+    clear_screen();
     print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
           supercap->info.energy);
     osDelay(100);
