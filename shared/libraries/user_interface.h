@@ -128,13 +128,27 @@ class UserInterface {
   void ChassisGUIInit(graphic_data_t* chassis, graphic_data_t* arrow, graphic_data_t* gimbal,
                       graphic_data_t* empty1, graphic_data_t* empty2);
   void ChassisGUIUpdate(float relative, bool flag);
-  void CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+  void CrosshairGUIInit(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                        graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                        graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                        graphic_data_t* crosshair7);
+  void Crosshair18GUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
                     graphic_data_t* crosshair7);
-  void CrosshairCharGUI(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
+  void CrosshairCharGUIInit(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
+                            graphic_data_t* crosschar3, graphic_data_t* crosschar4,
+                            graphic_data_t* crosschar5);
+  void Crosshair18CharGUI(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
                         graphic_data_t* crosschar3, graphic_data_t* crosschar4,
                         graphic_data_t* crosschar5);
+  void CrosshairGUIUpdate(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                                     graphic_data_t* crosshair7, int shootSpeed);
+  void CrossCharGUIUpdate(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
+                            graphic_data_t* crosschar3, graphic_data_t* crosschar4,
+                            graphic_data_t* crosschar5, int shootSpeed);
   void CapGUIInit(graphic_data_t* barFrame, graphic_data_t* bar);
   void CapGUIUpdate(float cap);  // cap 0 - 1
   void CapGUICharInit(graphic_data_t* percent);

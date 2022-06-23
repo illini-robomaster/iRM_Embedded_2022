@@ -386,10 +386,19 @@ void shooterTask(void* arg) {
     } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15) {
       flywheelFlag = true;
       shooter->SetFlywheelSpeed(490);
-    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18) {
+    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 18) {
+      flywheelFlag = true;
+      shooter->SetFlywheelSpeed(600);
+    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 30) {
       flywheelFlag = true;
       shooter->SetFlywheelSpeed(560);
-    } else {
+    }
+    // TODO: change shoot speed (delete the following)
+    else if (referee->game_robot_status.shooter_id1_17mm_speed_limit > 0) {
+      flywheelFlag = true;
+      shooter->SetFlywheelSpeed(890);
+    }
+    else {
       flywheelFlag = false;
       shooter->SetFlywheelSpeed(0);
     }
@@ -603,8 +612,8 @@ void UITask(void* arg) {
   osDelay(UI_TASK_DELAY);
 
   // Initialize crosshair GUI
-  UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
-                   &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
+  UI->CrosshairGUIInit(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                         &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
                    graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
                    graphCrosshair7);
@@ -619,14 +628,14 @@ void UITask(void* arg) {
   char crosschar3[] = "7m";
   char crosschar4[] = "10m";
   char crosschar5[] = "12m";
-  UI->CrosshairCharGUI(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3,
-                       &graphCrosschar4, &graphCrosschar5);
+  UI->CrosshairCharGUIInit(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3,
+                           &graphCrosschar4, &graphCrosschar5);
   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
-  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar3);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar2);
   referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
@@ -730,6 +739,48 @@ void UITask(void* arg) {
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
                      graphCali, graphEmpty2);
     referee->PrepareUIContent(communication::FIVE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update crosshair GUI
+    // referee->game_robot_status.shooter_id1_17mm_speed_limit
+    // TODO: change shooter speed
+    UI->CrosshairGUIUpdate(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                         &graphCrosshair5, &graphCrosshair6, &graphCrosshair7,
+                         18);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
+                     graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6, graphCrosshair7);
+    referee->PrepareUIContent(communication::SEVEN_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update crosshair character GUI
+    UI->CrossCharGUIUpdate(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3, &graphCrosschar4,
+                           &graphCrosschar5, 18);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar2);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar3, crosschar3, sizeof crosschar3);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar4, crosschar4, sizeof crosschar4);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar5, crosschar5, sizeof crosschar5);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
