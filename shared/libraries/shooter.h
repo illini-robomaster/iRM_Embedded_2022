@@ -29,8 +29,8 @@ namespace control {
  * @brief gimbal models
  */
 typedef enum {
-  SHOOTER_STANDARD_ZERO,
-  SHOOTER_STANDARD_2022,
+  SHOOTER_SENTRY,
+  SHOOTER_STANDARD,
 } shooter_model_t;
 
 /**

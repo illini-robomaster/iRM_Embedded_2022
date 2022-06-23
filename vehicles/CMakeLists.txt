@@ -19,3 +19,4 @@
 # ---------------------------------------------------------------------- #
 
 add_subdirectory(Fortress)
+add_subdirectory(Sentry)

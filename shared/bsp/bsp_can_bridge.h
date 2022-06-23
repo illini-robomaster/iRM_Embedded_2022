@@ -18,32 +18,26 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#pragma once
 
-#include "bsp_laser.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
+#include "bsp_can.h"
 
-static bsp::Laser* laser = nullptr;
+namespace bsp {
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
-}
+static const int MAX_IO = 4;
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+class CanBridge {
+ public:
+  CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id);
+  void UpdateData(const uint8_t data[]);
+  void TransmitOutput(uint8_t* IO_data);
 
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
-  }
-}
+  uint8_t IO[MAX_IO] = {};
+
+ private:
+  bsp::CAN* can_;
+  uint16_t rx_id_;
+  uint16_t tx_id_;
+};
+
+}  // namespace bsp

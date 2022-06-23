@@ -931,7 +931,7 @@ void RM_RTOS_Init(void) {
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
-  gimbal_data.model = control::GIMBAL_STANDARD_2022_ALPHA;
+  gimbal_data.model = control::GIMBAL_FORTRESS;
   gimbal = new control::Gimbal(gimbal_data);
   gimbal_param = gimbal->GetData();
 
@@ -961,7 +961,7 @@ void RM_RTOS_Init(void) {
   shooter_data.left_flywheel_motor = sl_motor;
   shooter_data.right_flywheel_motor = sr_motor;
   shooter_data.load_motor = ld_motor;
-  shooter_data.model = control::SHOOTER_STANDARD_2022;
+  shooter_data.model = control::SHOOTER_STANDARD;
   shooter = new control::Shooter(shooter_data);
 
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
