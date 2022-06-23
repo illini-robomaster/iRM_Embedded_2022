@@ -40,8 +40,10 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
+    print("Supercap %s\r\nVoltage: %.2f, Energy: %.2f\r\n",
+          supercap->connection_flag_ ? "connected" : "disconnected", supercap->info.voltage,
           supercap->info.energy);
+    supercap->connection_flag_ = false;
     osDelay(100);
   }
 }
