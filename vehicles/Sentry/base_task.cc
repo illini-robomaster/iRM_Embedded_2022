@@ -68,6 +68,7 @@ void RM_RTOS_Threads_Init(void) {
 }
 
 void RM_RTOS_Init(void) {
+  print_use_uart(&huart8);
   gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
   gpio_red->High();
 
@@ -84,7 +85,6 @@ void RM_RTOS_Init(void) {
 
 // dummy main thread to test multi-tasks
 void RM_RTOS_Default_Task(const void* args) {
-  print_use_uart(&huart8);
   UNUSED(args);
   osDelay(500);  // DBUS initialization needs time
   while (true) {
@@ -118,7 +118,8 @@ void baseTask(void* argument) {
     motor->SetOutput(50);
   }
   while (true) {
-    print("theta: % 9.4f \r\n ", LIDAR->distance/1000);
+    while (!LIDAR->startMeasure()) osDelay(50);
+    print("theta: % .2f m\r\n ", LIDAR->distance/1000.0);
     //print("in the loop");
     if (LIDAR->distance > pos - 100 || LIDAR->distance < pos + 100) {
       // You can reset the position can reset the target;
@@ -137,6 +138,6 @@ void baseTask(void* argument) {
     //print("hey");
     //control::MotorCANBase::TransmitOutput(motors, 1);
     //print("can we get here");
-    osDelay(1000);
+    osDelay(100);
   }
 }
