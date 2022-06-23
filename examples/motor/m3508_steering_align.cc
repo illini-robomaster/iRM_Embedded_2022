@@ -46,7 +46,7 @@ void RM_RTOS_Init() {
   // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
-  
+
   transmission_ratio = 8;
   float* omega_pid_param = new float[3]{140, 1.2, 25};
   float max_iout = 1000;
@@ -74,13 +74,13 @@ void RM_RTOS_Default_Task(const void* args) {
       end_angle = motor->GetTheta();
       neg_edge_aligned = true;
     }
-    motor->SetOutput(pid.ComputeConstrainedOutput(
-        motor->GetOmegaDelta(TEST_SPEED * transmission_ratio)));
+    motor->SetOutput(
+        pid.ComputeConstrainedOutput(motor->GetOmegaDelta(TEST_SPEED * transmission_ratio)));
     control::MotorCANBase::TransmitOutput(motors, 1);
   }
   motor->SetOutput(0);
   control::MotorCANBase::TransmitOutput(motors, 1);
-  
+
   float angle_diff = wrap<float>(end_angle - start_angle, -PI, PI);
   float aligned_angle = wrap<float>(start_angle + angle_diff, 0, 2 * PI);
   print("Alignment End, <offset_angle = %10.7f>\r\n", aligned_angle);
