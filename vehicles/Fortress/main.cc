@@ -66,6 +66,22 @@ static volatile bool PeekMode = false;
 
 static volatile float relative_angle = 0;
 
+static bool volatile pitch_motor_flag = false;
+static bool volatile yaw_motor_flag = false;
+static bool volatile sl_motor_flag = false;
+static bool volatile sr_motor_flag = false;
+static bool volatile ld_motor_flag = false;
+static bool volatile fl_motor_flag = false;
+static bool volatile fr_motor_flag = false;
+static bool volatile bl_motor_flag = false;
+static bool volatile br_motor_flag = false;
+static bool volatile calibration_flag = false;
+static bool volatile referee_flag = false;
+static bool volatile dbus_flag = false;
+static bool volatile lidar_flag = false;
+
+static volatile bool selftestStart = false;
+
 //==================================================================================================
 // IMU
 //==================================================================================================
@@ -326,7 +342,10 @@ void chassisTask(void* arg) {
     vx_set = vx_keyboard + vx_remote;
     vy_set = vy_keyboard + vy_remote;
 
-    relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    if (yaw_motor_flag)
+      relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    else
+      relative_angle = 0;
 
     if (SpinMode) {
       sin_yaw = arm_sin_f32(relative_angle);
@@ -456,22 +475,6 @@ static bsp::BuzzerNoteDelayed Mario[] = {
 
 static bsp::Buzzer* buzzer = nullptr;
 static display::OLED* OLED = nullptr;
-
-static bool volatile pitch_motor_flag = false;
-static bool volatile yaw_motor_flag = false;
-static bool volatile sl_motor_flag = false;
-static bool volatile sr_motor_flag = false;
-static bool volatile ld_motor_flag = false;
-static bool volatile fl_motor_flag = false;
-static bool volatile fr_motor_flag = false;
-static bool volatile bl_motor_flag = false;
-static bool volatile br_motor_flag = false;
-static bool volatile calibration_flag = false;
-static bool volatile referee_flag = false;
-static bool volatile dbus_flag = false;
-static bool volatile lidar_flag = false;
-
-static volatile bool selftestStart = false;
 
 void selfTestTask(void* arg) {
   UNUSED(arg);
@@ -986,7 +989,7 @@ void RM_RTOS_Init(void) {
 
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
   pitch_motor = new control::Motor6020(can1, 0x205);
-  yaw_motor = new control::Motor6020(can1, 0x206);
+  yaw_motor = new control::Motor6020(can2, 0x206);
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
