@@ -31,6 +31,7 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
+#include "lidar07.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -44,6 +45,7 @@ control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
 BoolEdgeDetector key_detector(false);
 
+static distance::LIDAR07_UART* sensor = nullptr;
 // remote::DBUS* dbus = nullptr;
 
 bsp::GPIO* gpio_red;
@@ -67,7 +69,10 @@ void RM_RTOS_Threads_Init(void) {
 }
 
 void RM_RTOS_Init(void) {
-  gpio_red = new bsp::GPIO(LED_R_GPIO_Port, LED_R_Pin);
+  print_use_uart(&huart8);
+  sensor = new distance::LIDAR07_UART(&huart6, [](uint32_t milli) { osDelay(milli); });
+
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
   gpio_red->High();
 
   // print_use_uart(&huart8);
@@ -101,7 +106,12 @@ void RM_RTOS_Default_Task(const void* args) {
 
 void baseTask(void* argument) {
   UNUSED(argument);
-  osDelay(500);  // DBUS initialization needs time
+//  osDelay(500);  // DBUS initialization needs time
+
+  print("Begin\r\n");
+  while (!sensor->begin()) osDelay(50);
+  print("StartFilter\r\n");
+  while (!sensor->startFilter()) osDelay(50);
 
   // real pos
   float target = 0;
@@ -114,6 +124,10 @@ void baseTask(void* argument) {
   const float MIN = -2.0 * PI;
   float step = PI;
   while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    while (!sensor->startMeasure()) osDelay(50);
+    print("Distance: %.2f m\r\n", sensor->distance / 1000.0);
     // target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
     curr_target += direction * step;
     // servo->GetTheta(); you can use this to get the absolute pos of the motor
