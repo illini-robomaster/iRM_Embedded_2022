@@ -65,13 +65,13 @@ bool Fortress::Calibrate() {
     target_left_ = servo_left_->GetTheta();
     left_reach_ = true;
   } else if (!left_reach_)
-    target_left_ -= 0.01;
+    target_left_ -= 0.005;
 
   if (!right_reach_ && right_edge_->negEdge()) {
     target_right_ = servo_right_->GetTheta();
     right_reach_ = true;
   } else if (!right_reach_)
-    target_right_ -= 0.01;
+    target_right_ -= 0.005;
 
   servo_left_->SetTarget(target_left_, true);
   servo_right_->SetTarget(target_right_, true);
