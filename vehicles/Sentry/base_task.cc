@@ -36,6 +36,9 @@
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
 
+#define TARGET_SPEED1 200
+#define TARGET_SPEED2 -200
+
 #define NOTCH (2 * PI / 4)
 #define SPEED 200
 #define ACCELERATION (80 * PI)
@@ -72,7 +75,6 @@ void RM_RTOS_Init(void) {
   gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
   gpio_red->High();
 
-  // print_use_uart(&huart8);
   bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
@@ -102,42 +104,57 @@ void baseTask(void* argument) {
   while (LIDAR->startFilter()) osDelay(50);
   print("Start Filter\r\n");
 
-  //control::MotorCANBase* motors[] = {motor};
-  float direction = 1.0;
-//  const float MAX = 2.0 * PI;
-//  const float MIN = -2.0 * PI;
-  //float step = PI;
-  int a = 0;
-  int b = 2000;
-  float pos = (rand()%(b-a+1))+ a;
-  if (LIDAR->distance > pos) {
-    direction = -1.0;
-    motor->SetOutput(-50);
-  } else {
-    direction = 1.0;
-    motor->SetOutput(50);
-  }
+  control::MotorCANBase* motors[] = {motor};
+  control::PIDController pid(20, 15, 30);
+  bool dir = true;
   while (true) {
     while (!LIDAR->startMeasure()) osDelay(50);
-    print("theta: % .2f m\r\n ", LIDAR->distance/1000.0);
-    //print("in the loop");
-    if (LIDAR->distance > pos - 100 || LIDAR->distance < pos + 100) {
-      // You can reset the position can reset the target;
-      if (direction > 0) {
-        a = 0;
-        b = LIDAR->distance;
-      } else {
-        a = LIDAR->distance;
-        b = 2000;
-      }
-      direction = -direction;
-      if (direction > 0) motor->SetOutput(50);
-      else motor->SetOutput(-50);
-      pos = (rand()%(b-a+1))+ a;
+    clear_screen();
+    print("sentry position is %9.4f mm \r\n", LIDAR->distance/1.0);
+    if (LIDAR->distance/1.0 < 300.0) {
+      print("Going right");
+      dir = true;
+    } else if ( LIDAR->distance/1.0 > 1300.0) {
+      print("Going left");
+      dir = false;
     }
+
+    if (dir) {
+      float diff = motor->GetOmegaDelta(TARGET_SPEED1);
+      int16_t out = pid.ComputeConstrainedOutput(diff);
+      motor->SetOutput(out);
+    } else {
+      float diff = motor->GetOmegaDelta(TARGET_SPEED2);
+      int16_t out = pid.ComputeConstrainedOutput(diff);
+      motor->SetOutput(out);
+    }
+    //print("theta: % .2f m\r\n ", LIDAR->distance);
+    //print("in the loop");
+//    if (LIDAR->distance/1.0 > pos - 100 || LIDAR->distance/1.0 < pos + 100) {
+//       //You can reset the position can reset the target;
+//      if (direction > 0) {
+//        a = 0;
+//        b = LIDAR->distance;
+//      } else {
+//        a = LIDAR->distance;
+//        b = 2000;
+//      }
+//      direction = -direction;
+//      if (direction > 0) {
+//        motor->SetOutput(50);
+//        //print("Going Right");
+//      }
+//      else {
+//        motor->SetOutput(-50);
+//        //print("Going Left");
+//      }
+////      pos = (rand()%(b-a))+ a;
+////      print("sentry position is %.2f m \r\n", LIDAR->distance);
+////      print("position is % .2f mm \r\n", pos);
+//    }
     //print("hey");
-    //control::MotorCANBase::TransmitOutput(motors, 1);
+    control::MotorCANBase::TransmitOutput(motors, 1);
     //print("can we get here");
-    osDelay(100);
+    osDelay(10);
   }
 }
