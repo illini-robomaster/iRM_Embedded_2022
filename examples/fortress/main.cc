@@ -24,27 +24,20 @@
 #include "bsp_os.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "controller.h"
 #include "motor.h"
-#include "utils.h"
-
-#define NOTCH (2 * PI / 4)
-#define SPEED 200
-#define ACCELERATION (80 * PI)
+#include "fortress.h"
 
 static bsp::GPIO* left = nullptr;
 static bsp::GPIO* right = nullptr;
 
-bsp::CAN* can1 = nullptr;
-bsp::CAN* can2 = nullptr;
+static bsp::CAN* can1 = nullptr;
+static bsp::CAN* can2 = nullptr;
 
-control::MotorCANBase* motor_left = nullptr;
-control::MotorCANBase* motor_right = nullptr;
-control::ServoMotor* servo_left = nullptr;
-control::ServoMotor* servo_right = nullptr;
+static control::MotorCANBase* motor_left = nullptr;
+static control::MotorCANBase* motor_right = nullptr;
+static control::MotorCANBase* motor_fortress = nullptr;
 
-BoolEdgeDetector left_edge(true);
-BoolEdgeDetector right_edge(true);
+static control::Fortress* fortress = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
@@ -59,18 +52,15 @@ void RM_RTOS_Init() {
   motor_left = new control::Motor3508(can2, 0x205);
   motor_right = new control::Motor3508(can2, 0x208);
 
-  control::servo_t servo_data;
-  servo_data.max_speed = SPEED;
-  servo_data.max_acceleration = ACCELERATION;
-  servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{150, 1.2, 5};
-  servo_data.max_iout = 1000;
-  servo_data.max_out = 13000;
+  motor_fortress = new control::Motor6020(can2, 0x207);
 
-  servo_data.motor = motor_left;
-  servo_left = new control::ServoMotor(servo_data);
-  servo_data.motor = motor_right;
-  servo_right = new control::ServoMotor(servo_data);
+  control::fortress_t fortress_data;
+  fortress_data.leftSwitch = left;
+  fortress_data.rightSwitch = right;
+  fortress_data.leftElevatorMotor = motor_left;
+  fortress_data.rightElevatorMotor = motor_right;
+  fortress_data.fortressMotor = motor_fortress;
+  fortress = new control::Fortress(fortress_data);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
@@ -78,51 +68,13 @@ void RM_RTOS_Default_Task(const void* args) {
 
   control::MotorCANBase* motors[] = {motor_left, motor_right};
 
-  float target_left = 0;
-  float target_right = 0;
-
-  bool left_reach = false;
-  bool right_reach = false;
-
-  while (true) {
-    left_edge.input(left->Read());
-    right_edge.input(right->Read());
-
-    if (!left_reach && left_edge.negEdge()) {
-      target_left = servo_left->GetTheta();
-      left_reach = true;
-    } else if (!left_reach) {
-      target_left -= 0.01;
-    }
-
-    if (!right_reach && right_edge.negEdge()) {
-      target_right = servo_right->GetTheta();
-      right_reach = true;
-    } else if (!right_reach) {
-      target_right -= 0.01;
-    }
-
-    print("Left: %s, Right: %s\r\n", left_reach ? "YES" : "NO", right_reach ? "YES" : "NO");
-
-    servo_left->SetTarget(target_left, true);
-    servo_right->SetTarget(target_right, true);
-    servo_left->CalcOutput();
-    servo_right->CalcOutput();
+  while (!fortress->Calibrate()) {
     control::MotorCANBase::TransmitOutput(motors, 2);
-
-    if (left_reach && right_reach) break;
-
     osDelay(2);
   }
 
-  target_left += 35.7;
-  target_right += 35.7;
-
   while (true) {
-    servo_left->SetTarget(target_left, true);
-    servo_right->SetTarget(target_right, true);
-    servo_left->CalcOutput();
-    servo_right->CalcOutput();
+    fortress->Transform(true);
     control::MotorCANBase::TransmitOutput(motors, 2);
     osDelay(2);
   }

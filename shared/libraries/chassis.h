@@ -82,13 +82,13 @@ class Chassis {
 
  private:
   // acquired from user
-  MotorCANBase** motors_;
+  MotorCANBase** motors_ = nullptr;
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
   ConstrainedPID pids_[MAX_WHEEL_NUM];
-  PowerLimit* power_limit_;
-  float* speeds_;
+  PowerLimit* power_limit_ = nullptr;
+  float* speeds_ = nullptr;
 
   power_limit_t power_limit_info_;
 };
