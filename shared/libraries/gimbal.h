@@ -109,10 +109,14 @@ class Gimbal {
   gimbal_data_t data_;
 
   // pitch and yaw pid
-  float* pitch_theta_pid_param_ = nullptr;    /* pid param that used to control pitch motor when moving  */
-  float* pitch_omega_pid_param_ = nullptr;    /* pid param that used to control pitch motor when holding */
-  float* yaw_theta_pid_param_ = nullptr;      /* pid param that used to control yaw motor when moving    */
-  float* yaw_omega_pid_param_ = nullptr;      /* pid param that used to control yaw motor when holding   */
+  float* pitch_theta_pid_param_ =
+      nullptr; /* pid param that used to control pitch motor when moving  */
+  float* pitch_omega_pid_param_ =
+      nullptr; /* pid param that used to control pitch motor when holding */
+  float* yaw_theta_pid_param_ =
+      nullptr; /* pid param that used to control yaw motor when moving    */
+  float* yaw_omega_pid_param_ =
+      nullptr; /* pid param that used to control yaw motor when holding   */
   ConstrainedPID* pitch_theta_pid_ = nullptr; /* pitch theta pid */
   ConstrainedPID* pitch_omega_pid_ = nullptr; /* pitch omega pid */
   ConstrainedPID* yaw_theta_pid_ = nullptr;   /* yaw theta pid   */

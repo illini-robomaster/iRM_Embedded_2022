@@ -24,8 +24,8 @@
 #include "bsp_os.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "motor.h"
 #include "fortress.h"
+#include "motor.h"
 
 static bsp::GPIO* left = nullptr;
 static bsp::GPIO* right = nullptr;
