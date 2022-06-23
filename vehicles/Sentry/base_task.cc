@@ -31,6 +31,7 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
+#include "lidar07.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -41,7 +42,7 @@
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
-control::ServoMotor* servo = nullptr;
+
 BoolEdgeDetector key_detector(false);
 
 // remote::DBUS* dbus = nullptr;
@@ -58,16 +59,16 @@ const osThreadAttr_t baseTaskAttribute = {.name = "baseTask",
                                           .tz_module = 0,
                                           .reserved = 0};
 osThreadId_t baseTaskHandle;
-
 // declare for the base Task
 void baseTask(void* argument);
+static distance::LIDAR07_UART* LIDAR = nullptr;
 
 void RM_RTOS_Threads_Init(void) {
   baseTaskHandle = osThreadNew(baseTask, nullptr, &baseTaskAttribute);
 }
 
 void RM_RTOS_Init(void) {
-  gpio_red = new bsp::GPIO(LED_R_GPIO_Port, LED_R_Pin);
+  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
   gpio_red->High();
 
   // print_use_uart(&huart8);
@@ -76,21 +77,14 @@ void RM_RTOS_Init(void) {
   can1 = new bsp::CAN(&hcan1, 0x201);
 
   motor = new control::Motor3508(can1, 0x201);
-  control::servo_t servo_data;
-  servo_data.motor = motor;
-  servo_data.max_speed = SPEED;
-  servo_data.max_acceleration = ACCELERATION;
-  servo_data.transmission_ratio = M3508P19_RATIO;
-  servo_data.omega_pid_param = new float[3]{140, 1.2, 25};
-  servo_data.max_iout = 1000;
-  servo_data.max_out = 13000;
-  servo = new control::ServoMotor(servo_data);
+  LIDAR = new distance::LIDAR07_UART(&huart6, [](uint32_t milli) { osDelay(milli); });
 
   // dbus = new remote::DBUS(&huart3);
 }
 
 // dummy main thread to test multi-tasks
 void RM_RTOS_Default_Task(const void* args) {
+  print_use_uart(&huart8);
   UNUSED(args);
   osDelay(500);  // DBUS initialization needs time
   while (true) {
@@ -102,34 +96,47 @@ void RM_RTOS_Default_Task(const void* args) {
 void baseTask(void* argument) {
   UNUSED(argument);
   osDelay(500);  // DBUS initialization needs time
+  print("something is working here");
+  while (LIDAR->begin()) osDelay(50);
+  print("Begin\r\n");
+  while (LIDAR->startFilter()) osDelay(50);
+  print("Start Filter\r\n");
 
-  // real pos
-  float target = 0;
-  // want-to-go pos
-  float curr_target = 0.0;
-
-  control::MotorCANBase* motors[] = {motor};
+  //control::MotorCANBase* motors[] = {motor};
   float direction = 1.0;
-  const float MAX = 2.0 * PI;
-  const float MIN = -2.0 * PI;
-  float step = PI;
+//  const float MAX = 2.0 * PI;
+//  const float MIN = -2.0 * PI;
+  //float step = PI;
+  int a = 0;
+  int b = 2000;
+  float pos = (rand()%(b-a+1))+ a;
+  if (LIDAR->distance > pos) {
+    direction = -1.0;
+    motor->SetOutput(-50);
+  } else {
+    direction = 1.0;
+    motor->SetOutput(50);
+  }
   while (true) {
-    // target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
-    curr_target += direction * step;
-    // servo->GetTheta(); you can use this to get the absolute pos of the motor
-    // if servo command not rejected
-    // use FALSE to wait until last command finished
-    if (servo->SetTarget(curr_target, false) != 0) {
-      target = curr_target;
-      if (target >= MAX || target <= MIN) {
-        direction = -direction;
+    print("theta: % 9.4f \r\n ", LIDAR->distance/1000);
+    //print("in the loop");
+    if (LIDAR->distance > pos - 100 || LIDAR->distance < pos + 100) {
+      // You can reset the position can reset the target;
+      if (direction > 0) {
+        a = 0;
+        b = LIDAR->distance;
+      } else {
+        a = LIDAR->distance;
+        b = 2000;
       }
-    } else {
-      curr_target = target;
+      direction = -direction;
+      if (direction > 0) motor->SetOutput(50);
+      else motor->SetOutput(-50);
+      pos = (rand()%(b-a+1))+ a;
     }
-    servo->CalcOutput();
-    control::MotorCANBase::TransmitOutput(motors, 1);
-
-    osDelay(2);
+    //print("hey");
+    //control::MotorCANBase::TransmitOutput(motors, 1);
+    //print("can we get here");
+    osDelay(1000);
   }
 }

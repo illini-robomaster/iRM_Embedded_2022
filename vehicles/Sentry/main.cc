@@ -1,3 +1,5 @@
+//#pragma clang diagnostic push
+//#pragma ide diagnostic ignored "EndlessLoop"
 /****************************************************************************
  *                                                                          *
  *  Copyright (C) 2022 RoboMaster.                                          *
@@ -37,6 +39,7 @@
 #include "shooter.h"
 #include "user_interface.h"
 #include "utils.h"
+#include "lidar07.h"
 
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
@@ -236,96 +239,37 @@ void gimbalTask(void* arg) {
 // Chassis
 //==================================================================================================
 
-// const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
-//                                              .attr_bits = osThreadDetached,
-//                                              .cb_mem = nullptr,
-//                                              .cb_size = 0,
-//                                              .stack_mem = nullptr,
-//                                              .stack_size = 256 * 4,
-//                                              .priority = (osPriority_t)osPriorityNormal,
-//                                              .tz_module = 0,
-//                                              .reserved = 0};
-// osThreadId_t chassisTaskHandle;
-//
-// static control::MotorCANBase* fl_motor = nullptr;
-// static control::MotorCANBase* fr_motor = nullptr;
-// static control::MotorCANBase* bl_motor = nullptr;
-// static control::MotorCANBase* br_motor = nullptr;
-// static control::Chassis* chassis = nullptr;
-//
-// const float CHASSIS_DEADZONE = 0.04;
-//
-// void chassisTask(void* arg) {
-//   UNUSED(arg);
-//
-//   control::MotorCANBase* motors[] = {fl_motor, fr_motor, bl_motor, br_motor};
-//
-//   float sin_yaw, cos_yaw;
-//   float vx_keyboard = 0, vy_keyboard = 0;
-//   float vx_remote, vy_remote;
-//   float vx_set, vy_set, wz_set;
-//
-//   float spin_speed = 600;
-//   float follow_speed = 400;
-//
-//   while (true) {
-//     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
-//     osDelay(100);
-//   }
-//
-//   while (true) {
-//     while (Dead) osDelay(100);
-//
-//     if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
-//     if (dbus->keyboard.bit.D) vx_keyboard += 61.5;
-//     if (dbus->keyboard.bit.W) vy_keyboard += 61.5;
-//     if (dbus->keyboard.bit.S) vy_keyboard -= 61.5;
-//
-//     if (-35 <= vx_keyboard && vx_keyboard <= 35) vx_keyboard = 0;
-//     if (-35 <= vy_keyboard && vy_keyboard <= 35) vy_keyboard = 0;
-//
-//     if (vx_keyboard > 0)
-//       vx_keyboard -= 60;
-//     else if (vx_keyboard < 0)
-//       vx_keyboard += 60;
-//
-//     if (vy_keyboard > 0)
-//       vy_keyboard -= 60;
-//     else if (vy_keyboard < 0)
-//       vy_keyboard += 60;
-//
-//     vx_keyboard = clip<float>(vx_keyboard, -1200, 1200);
-//     vy_keyboard = clip<float>(vy_keyboard, -1200, 1200);
-//
-//     vx_remote = dbus->ch0;
-//     vy_remote = dbus->ch1;
-//
-//     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-//
-//     sin_yaw = arm_sin_f32(relative_angle);
-//     cos_yaw = arm_cos_f32(relative_angle);
-//     vx_set = cos_yaw * (vx_keyboard + vx_remote) + sin_yaw * (vy_keyboard + vy_remote);
-//     vy_set = -sin_yaw * (vx_keyboard + vx_remote) + cos_yaw * (vy_keyboard + vy_remote);
-//
-//     ChangeMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
-//     if (ChangeMode.posEdge()) SpinMode = !SpinMode;
-//
-//     if (SpinMode) {
-//       wz_set = spin_speed;
-//     } else {
-//       wz_set = std::min(follow_speed, follow_speed * relative_angle);
-//       if (-CHASSIS_DEADZONE < relative_angle && relative_angle < CHASSIS_DEADZONE) wz_set = 0;
-//     }
-//
-//     chassis->SetSpeed(vx_set, vy_set, wz_set);
-//
-//     chassis->Update((float)referee->game_robot_status.chassis_power_limit,
-//                     referee->power_heat_data.chassis_power,
-//                     (float)referee->power_heat_data.chassis_power_buffer);
-//     control::MotorCANBase::TransmitOutput(motors, 4);
-//     osDelay(CHASSIS_TASK_DELAY);
-//   }
-// }
+ const osThreadAttr_t chassisTaskAttribute = {.name = "chassisTask",
+                                              .attr_bits = osThreadDetached,
+                                              .cb_mem = nullptr,
+                                              .cb_size = 0,
+                                              .stack_mem = nullptr,
+                                              .stack_size = 256 * 4,
+                                              .priority = (osPriority_t)osPriorityNormal,
+                                              .tz_module = 0,
+                                              .reserved = 0};
+ osThreadId_t chassisTaskHandle;
+
+ static distance::LIDAR07_UART* LIDAR = nullptr;
+ static control::MotorCANBase* mv_motor = nullptr;
+
+
+ void chassisTask(void* arg) {
+   UNUSED(arg);
+
+   control::MotorCANBase* motors[] = {mv_motor};
+   LIDAR = new distance::LIDAR07_UART(&huart1, [](uint32_t milli) { osDelay(milli); });
+
+
+   while (true) {
+     while (Dead) osDelay(100);
+
+
+
+     control::MotorCANBase::TransmitOutput(motors, 1);
+     osDelay(CHASSIS_TASK_DELAY);
+   }
+ }
 
 //==================================================================================================
 // Shooter
@@ -404,6 +348,7 @@ void RM_RTOS_Init(void) {
   dbus = new remote::DBUS(&huart3);
   RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
 
+
   bsp::IST8310_init_t IST8310_init;
   IST8310_init.hi2c = &hi2c3;
   IST8310_init.int_pin = DRDY_IST8310_Pin;
@@ -469,6 +414,8 @@ void RM_RTOS_Init(void) {
   shooter_data.load_motor = ld_motor;
   shooter_data.model = control::SHOOTER_SENTRY;
   shooter = new control::Shooter(shooter_data);
+  LIDAR = new distance::LIDAR07_UART(&huart1, [](uint32_t milli) { osDelay(milli); });
+
 
   //  buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   //  OLED = new display::OLED(&hi2c2, 0x3C);
@@ -484,6 +431,7 @@ void RM_RTOS_Threads_Init(void) {
   //  refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   //  chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
+  //
 }
 
 //==================================================================================================
@@ -592,3 +540,5 @@ void RM_RTOS_Default_Task(const void* arg) {
 //==================================================================================================
 // END
 //==================================================================================================
+
+//#pragma clang diagnostic pop
