@@ -31,7 +31,7 @@
 #include "main.h"
 #include "motor.h"
 #include "utils.h"
-#include "lidar07.h"
+#include "rgb.h"
 
 #define KEY_GPIO_GROUP GPIOB
 #define KEY_GPIO_PIN GPIO_PIN_2
@@ -44,8 +44,13 @@ bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
 BoolEdgeDetector key_detector(false);
+static BoolEdgeDetector FakeDeath(false);
+static remote::DBUS* dbus = nullptr;
+static display::RGB* RGB = nullptr;
+static const uint32_t color_red = 0xFFFF0000;
+static const uint32_t color_green = 0xFF00FF00;
+static const uint32_t color_blue = 0xFF0000FF;
 
-static distance::LIDAR07_UART* sensor = nullptr;
 // remote::DBUS* dbus = nullptr;
 
 bsp::GPIO* gpio_red;
@@ -69,17 +74,15 @@ void RM_RTOS_Threads_Init(void) {
 }
 
 void RM_RTOS_Init(void) {
-  print_use_uart(&huart8);
-  sensor = new distance::LIDAR07_UART(&huart6, [](uint32_t milli) { osDelay(milli); });
-
-  gpio_red = new bsp::GPIO(LED_RED_GPIO_Port, LED_RED_Pin);
-  gpio_red->High();
+//  RGB->Display(color_red);
+//  osDelay(1000);
 
   // print_use_uart(&huart8);
   bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
 
+  RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
   motor = new control::Motor3508(can1, 0x201);
   control::servo_t servo_data;
   servo_data.motor = motor;
@@ -91,28 +94,41 @@ void RM_RTOS_Init(void) {
   servo_data.max_out = 13000;
   servo = new control::ServoMotor(servo_data);
 
-  // dbus = new remote::DBUS(&huart3);
+  dbus = new remote::DBUS(&huart3);
+}
+
+void KillAll() {
+    RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
+    control::MotorCANBase *motor_can1_base[] = {motor};
+
+    while (true) {
+        FakeDeath.input(dbus->swl == remote::DOWN);
+        motor->SetOutput(0);
+        control::MotorCANBase::TransmitOutput(motor_can1_base, 1);
+        osDelay(100);
+    }
 }
 
 // dummy main thread to test multi-tasks
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
   osDelay(500);  // DBUS initialization needs time
-  while (true) {
-    gpio_red->Toggle();
-    osDelay(500);
-  }
+  RGB->Display(color_green);
+//  while (true) {
+//    if (FakeDeath.posEdge()) {
+//      RGB->Display(color_blue);
+//      KillAll();
+//    }
+//    osDelay(500);
+//  }
 }
 
 void baseTask(void* argument) {
   UNUSED(argument);
-//  osDelay(500);  // DBUS initialization needs time
+  osDelay(500);  // DBUS initialization needs time
 
-  print("Begin\r\n");
-  while (!sensor->begin()) osDelay(50);
-  print("StartFilter\r\n");
-  while (!sensor->startFilter()) osDelay(50);
-
+  RGB->Display(color_red);
+  osDelay(2000);
   // real pos
   float target = 0;
   // want-to-go pos
@@ -124,10 +140,6 @@ void baseTask(void* argument) {
   const float MIN = -2.0 * PI;
   float step = PI;
   while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    while (!sensor->startMeasure()) osDelay(50);
-    print("Distance: %.2f m\r\n", sensor->distance / 1000.0);
     // target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
     curr_target += direction * step;
     // servo->GetTheta(); you can use this to get the absolute pos of the motor
