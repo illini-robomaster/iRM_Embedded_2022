@@ -26,7 +26,7 @@
 
 namespace control {
 
-Fortress::Fortress(const fortress_t fortress) : pid_() {
+Fortress::Fortress(const fortress_t fortress) {
   leftSwitch_ = fortress.leftSwitch;
   rightSwitch_ = fortress.rightSwitch;
   leftElevatorMotor_ = fortress.leftElevatorMotor;
@@ -49,10 +49,12 @@ Fortress::Fortress(const fortress_t fortress) : pid_() {
   right_edge_ = new BoolEdgeDetector(true);
 
   fortressMotor_ = fortress.fortressMotor;
-  float* pid_param = new float[3]{3600, 20, 0};
-  float motor_max_iout = 10000;
-  float motor_max_out = 30000;
-  pid_.Reinit(pid_param, motor_max_iout, motor_max_out);
+
+  MotorCANBase* motors_spinner[] = {fortressMotor_};
+  chassis_t chassis_data;
+  chassis_data.motors = motors_spinner;
+  chassis_data.model = CHASSIS_ONE_WHEEL;
+  spinner_ = new Chassis(chassis_data);
 }
 
 bool Fortress::Calibrate() {
@@ -65,13 +67,13 @@ bool Fortress::Calibrate() {
     target_left_ = servo_left_->GetTheta();
     left_reach_ = true;
   } else if (!left_reach_)
-    target_left_ -= 0.005;
+    target_left_ -= 0.02;
 
   if (!right_reach_ && right_edge_->negEdge()) {
     target_right_ = servo_right_->GetTheta();
     right_reach_ = true;
   } else if (!right_reach_)
-    target_right_ -= 0.005;
+    target_right_ -= 0.02;
 
   servo_left_->SetTarget(target_left_, true);
   servo_right_->SetTarget(target_right_, true);
@@ -83,7 +85,7 @@ bool Fortress::Calibrate() {
 
 #define MAX_LEN 35.7
 
-void Fortress::Transform(bool fortress_mode) {
+void Fortress::Transform(const bool fortress_mode) {
   if (fortress_mode != fortress_mode_) {
     fortress_mode_ = fortress_mode;
 
@@ -97,10 +99,28 @@ void Fortress::Transform(bool fortress_mode) {
   servo_right_->CalcOutput();
 }
 
-void Fortress::Spin(float speed) {
+void Fortress::Spin(float power_limit, float chassis_power,
+                    float chassis_power_buffer) {
   if (!fortress_mode_) return;
-  fortressMotor_->SetOutput(
-      control::ClipMotorRange(pid_.ComputeOutput(fortressMotor_->GetOmegaDelta(speed))));
+  spinner_->SetSpeed(-60);
+  spinner_->Update(power_limit, chassis_power, chassis_power_buffer);
+}
+
+bool Fortress::Error() {
+  return abs(leftElevatorMotor_->GetCurr()) > 15000 || abs(rightElevatortMotor_->GetCurr()) > 15000;
+}
+
+void Fortress::Stop(const fortress_component_t component) {
+  if (component == ELEVATOR) {
+    leftElevatorMotor_->SetOutput(0);
+    rightElevatortMotor_->SetOutput(0);
+  } else if (component == SPINNER)
+    fortressMotor_->SetOutput(0);
+}
+
+bool Fortress::Finished() {
+  return abs(leftElevatorMotor_->GetOmega()) < 0.0001 &&
+         abs(rightElevatortMotor_->GetOmega()) < 0.0001;
 }
 
 }  // namespace control

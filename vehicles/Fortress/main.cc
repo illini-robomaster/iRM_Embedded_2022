@@ -63,6 +63,8 @@ static volatile bool SpinMode = false;
 static BoolEdgeDetector PeekModeLeft(false);
 static BoolEdgeDetector PeekModeRight(false);
 static volatile bool PeekMode = false;
+static BoolEdgeDetector ChangeFortressMode(false);
+static volatile bool FortressMode = false;
 
 static volatile float relative_angle = 0;
 
@@ -142,8 +144,8 @@ static bsp::Laser* laser = nullptr;
 void gimbalTask(void* arg) {
   UNUSED(arg);
 
-  //  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor};
-  //  control::MotorCANBase* motors_can2_gimbal[] = {yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor};
+  control::MotorCANBase* motors_can2_gimbal[] = {yaw_motor};
 
   print("Wait for beginning signal...\r\n");
   RGB->Display(display::color_red);
@@ -158,8 +160,8 @@ void gimbalTask(void* arg) {
   while (i < 1000 || !imu->DataReady()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    //    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    //    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(GIMBAL_TASK_DELAY);
     ++i;
   }
@@ -172,8 +174,8 @@ void gimbalTask(void* arg) {
   while (!imu->DataReady() || !imu->CaliDone()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    //    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    //    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(GIMBAL_TASK_DELAY);
   }
 
@@ -208,8 +210,8 @@ void gimbalTask(void* arg) {
     gimbal->TargetRel(-pitch_diff, yaw_diff);
 
     gimbal->Update();
-    //    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    //    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
     osDelay(GIMBAL_TASK_DELAY);
   }
 }
@@ -346,10 +348,10 @@ void chassisTask(void* arg) {
     vx_set = vx_keyboard + vx_remote;
     vy_set = vy_keyboard + vy_remote;
 
-    //    if (yaw_motor_flag)
-    //      relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-    //    else
-    relative_angle = 0;
+    if (yaw_motor_flag)
+      relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
+    else
+      relative_angle = 0;
 
     if (SpinMode) {
       sin_yaw = arm_sin_f32(relative_angle);
@@ -918,39 +920,71 @@ static control::Fortress* fortress = nullptr;
 void FortressTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can2_elevator_left[] = {elevator_left_motor};
-  control::MotorCANBase* motors_can2_elevator_right[] = {elevator_right_motor};
-  //  control::MotorCANBase* motors_can2_fortress[] = {fortress_motor};
+  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor, fortress_motor};
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
     osDelay(100);
   }
 
-  //  while (!imu->CaliDone()) osDelay(100);
+  while (!imu->CaliDone()) osDelay(100);
 
   while (!fortress->Calibrate()) {
     while (Dead) osDelay(100);
-    control::MotorCANBase::TransmitOutput(motors_can2_elevator_left, 1);
-    control::MotorCANBase::TransmitOutput(motors_can2_elevator_right, 1);
+    if (fortress->Error()) {
+      while (true) {
+        fortress->Stop(control::ELEVATOR);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(100);
+      }
+    }
+    fortress->Stop(control::SPINNER);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
     osDelay(FORTRESS_TASK_DELAY);
   }
 
-  //  int changeModeDelay = 2000 / FORTRESS_TASK_DELAY;
-  //  int i = 0;
-  //  while (true) {
-  //    while (Dead) osDelay(100);
-  //    if (++i >= changeModeDelay) break;
-  //    fortress->Transform(true);
-  //    control::MotorCANBase::TransmitOutput(motors_can2_elevator, 2);
-  //    osDelay(FORTRESS_TASK_DELAY);
-  //  }
-
   while (true) {
-    //    while (Dead) osDelay(100);
-    //    fortress_motor->SetOutput(50);
-    //    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 1);
-    osDelay(FORTRESS_TASK_DELAY);
+    ChangeFortressMode.input(dbus->keyboard.bit.X);
+    if (ChangeFortressMode.posEdge()) FortressMode = !FortressMode;
+
+    if (FortressMode) {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(true);
+        fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
+                       referee->power_heat_data.chassis_power,
+                       (float)referee->power_heat_data.chassis_power_buffer);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    } else {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(false);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    }
   }
 }
 

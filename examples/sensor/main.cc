@@ -18,57 +18,26 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+#include "main.h"
 
 #include "bsp_gpio.h"
-#include "chassis.h"
-#include "controller.h"
-#include "motor.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
 
-namespace control {
+static bsp::GPIO* input = nullptr;
 
-typedef enum { ELEVATOR, SPINNER } fortress_component_t;
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart1);
+  input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+}
 
-typedef struct {
-  bsp::GPIO* leftSwitch;
-  bsp::GPIO* rightSwitch;
-  MotorCANBase* leftElevatorMotor;
-  MotorCANBase* rightElevatorMotor;
-  MotorCANBase* fortressMotor;
-} fortress_t;
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
 
-class Fortress {
- public:
-  Fortress(const fortress_t fortress);
-  bool Calibrate();
-  void Transform(const bool fortress_mode);
-  void Spin(float power_limit, float chassis_power, float chassis_power_buffer);
-  bool Error();
-  void Stop(const fortress_component_t component);
-  bool Finished();
-
- private:
-  bool fortress_mode_ = false;
-
-  bsp::GPIO* leftSwitch_ = nullptr;
-  bsp::GPIO* rightSwitch_ = nullptr;
-  MotorCANBase* leftElevatorMotor_ = nullptr;
-  MotorCANBase* rightElevatortMotor_ = nullptr;
-  ServoMotor* servo_left_ = nullptr;
-  ServoMotor* servo_right_ = nullptr;
-
-  float target_left_ = 0;
-  float target_right_ = 0;
-
-  bool left_reach_ = false;
-  bool right_reach_ = false;
-
-  MotorCANBase* fortressMotor_ = nullptr;
-
-  BoolEdgeDetector* left_edge_;
-  BoolEdgeDetector* right_edge_;
-
-  Chassis* spinner_;
-};
-
-}  // namespace control
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    print("sensor: %s\r\n", input->Read() ? "on" : "off");
+    osDelay(100);
+  }
+}

@@ -16,7 +16,7 @@ Gimbal::Gimbal(gimbal_t gimbal)
   switch (gimbal.model) {
     case GIMBAL_FORTRESS:
       data_.pitch_offset_ = 5.205564f;
-      data_.yaw_offset_ = 3.434583f;
+      data_.yaw_offset_ = 1.8132f;
       data_.pitch_max_ = 0.5080f;
       data_.yaw_max_ = PI;
       {
@@ -30,8 +30,8 @@ Gimbal::Gimbal(gimbal_t gimbal)
         float yaw_omega_max_out = 30000;
         pitch_theta_pid_param_ = new float[3]{15, 0, 0};
         pitch_omega_pid_param_ = new float[3]{2900, 60, 0};
-        yaw_theta_pid_param_ = new float[3]{26, 0, 0.3};
-        yaw_omega_pid_param_ = new float[3]{3600, 20, 0};
+        yaw_theta_pid_param_ = new float[3]{24, 0, 0.3};
+        yaw_omega_pid_param_ = new float[3]{3400, 18, 0};
         pitch_theta_pid_ =
             new ConstrainedPID(pitch_theta_pid_param_, pitch_theta_max_iout, pitch_theta_max_out);
         pitch_omega_pid_ =
