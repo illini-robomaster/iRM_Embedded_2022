@@ -31,7 +31,7 @@ namespace control {
 /**
  * @brief chassis models
  */
-typedef enum { CHASSIS_MECANUM_WHEEL } chassis_model_t;
+typedef enum { CHASSIS_MECANUM_WHEEL, CHASSIS_ONE_WHEEL } chassis_model_t;
 
 /**
  * @brief structure used when chassis instance is initialized
@@ -46,6 +46,10 @@ typedef struct {
  */
 struct FourWheel {
   enum { front_left, front_right, back_left, back_right, motor_num };
+};
+
+struct OneWheel {
+  enum { center, motor_num };
 };
 
 /**
@@ -72,7 +76,7 @@ class Chassis {
    * @param y_speed chassis speed on y-direction
    * @param turn_speed chassis clockwise turning speed
    */
-  void SetSpeed(const float x_speed, const float y_speed, const float turn_speed);
+  void SetSpeed(const float x_speed, const float y_speed = 0, const float turn_speed = 0);
 
   /**
    * @brief calculate the output of the motors under current configuration
@@ -82,13 +86,13 @@ class Chassis {
 
  private:
   // acquired from user
-  MotorCANBase** motors_;
+  MotorCANBase** motors_ = nullptr;
   chassis_model_t model_;
 
   // pids and current speeds for each motor on the chassis
   ConstrainedPID pids_[MAX_WHEEL_NUM];
-  PowerLimit* power_limit_;
-  float* speeds_;
+  PowerLimit* power_limit_ = nullptr;
+  float* speeds_ = nullptr;
 
   power_limit_t power_limit_info_;
 };
