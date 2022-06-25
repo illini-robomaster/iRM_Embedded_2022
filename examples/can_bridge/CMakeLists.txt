@@ -18,5 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(Fortress)
-add_subdirectory(Sentry)
+project(example_can_bridge ASM C CXX)
+
+irm_add_arm_executable(${PROJECT_NAME}_send
+    TARGET DJI_Board_TypeA
+    SOURCES send.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_receive
+    TARGET DJI_Board_TypeC
+    SOURCES receive.cc)

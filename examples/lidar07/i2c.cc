@@ -18,28 +18,33 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "lidar07.h"
+#include "main.h"
 
-#include "bsp_pwm.h"
+static distance::LIDAR07_IIC* sensor = nullptr;
 
-namespace display {
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart1);
+  sensor = new distance::LIDAR07_IIC(&hi2c2, 0x70, [](uint32_t milli) { osDelay(milli); });
+}
 
-const uint32_t color_red = 0xFFFF0000;
-const uint32_t color_green = 0xFF00FF00;
-const uint32_t color_blue = 0xFF0000FF;
-const uint32_t color_yellow = 0xFFFFFF00;
-const uint32_t color_cyan = 0xFF00FFFF;
-const uint32_t color_magenta = 0xFFFF00FF;
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
 
-class RGB {
- public:
-  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
-      uint32_t clock_freq);
-  void Display(uint32_t aRGB);
-  void Stop();
+  while (!sensor->IsReady()) osDelay(50);
+  print("Ready\r\n");
+  while (!sensor->begin()) osDelay(50);
+  print("Begin\r\n");
+  while (!sensor->startFilter()) osDelay(50);
+  print("Start Filter\r\n");
 
- private:
-  bsp::PWM R_, G_, B_;
-};
-
-}  // namespace display
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    while (!sensor->startMeasure()) osDelay(50);
+    print("Distance: %.2f m\r\n", sensor->distance / 1000.0);
+    osDelay(1000);
+  }
+}

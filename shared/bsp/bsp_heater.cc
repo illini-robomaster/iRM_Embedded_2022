@@ -42,7 +42,7 @@ Heater::Heater(heater_init_t init) : pwm_(init.htim, init.channel, init.clock_fr
 }
 
 float Heater::Update(float real_temp) {
-  if (real_temp < temp_ - 0.5) pid_.cumulated_err_ = 0;
+  if (real_temp < temp_ - 1) pid_.cumulated_err_ = 0;
   float output = pid_.ComputeOutput(temp_ - real_temp);
   output = output > 0 ? output : 0;
   if (real_temp > temp_ + 0.5) output = 0;

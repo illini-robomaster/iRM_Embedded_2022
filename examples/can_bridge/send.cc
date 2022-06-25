@@ -18,28 +18,30 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+#include "bsp_can_bridge.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "main.h"
 
-#include "bsp_pwm.h"
+static bsp::CAN* can = nullptr;
+static bsp::CanBridge* send = nullptr;
 
-namespace display {
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart8);
+  can = new bsp::CAN(&hcan1, 0x401);
+  send = new bsp::CanBridge(can, 0x401, 0x402);
+}
 
-const uint32_t color_red = 0xFFFF0000;
-const uint32_t color_green = 0xFF00FF00;
-const uint32_t color_blue = 0xFF0000FF;
-const uint32_t color_yellow = 0xFFFFFF00;
-const uint32_t color_cyan = 0xFF00FFFF;
-const uint32_t color_magenta = 0xFFFF00FF;
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
 
-class RGB {
- public:
-  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
-      uint32_t clock_freq);
-  void Display(uint32_t aRGB);
-  void Stop();
+  uint8_t output1[4] = {1, 1, 0, 1};
+  uint8_t output2[4] = {1, 0, 1, 1};
 
- private:
-  bsp::PWM R_, G_, B_;
-};
-
-}  // namespace display
+  while (true) {
+    send->TransmitOutput(output1);
+    osDelay(1000);
+    send->TransmitOutput(output2);
+    osDelay(1000);
+  }
+}

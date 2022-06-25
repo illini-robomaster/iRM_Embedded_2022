@@ -18,28 +18,30 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+#include "main.h"
 
-#include "bsp_pwm.h"
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "supercap.h"
 
-namespace display {
+static bsp::CAN* can = nullptr;
+static control::SuperCap* supercap = nullptr;
 
-const uint32_t color_red = 0xFFFF0000;
-const uint32_t color_green = 0xFF00FF00;
-const uint32_t color_blue = 0xFF0000FF;
-const uint32_t color_yellow = 0xFFFFFF00;
-const uint32_t color_cyan = 0xFF00FFFF;
-const uint32_t color_magenta = 0xFFFF00FF;
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart1);
 
-class RGB {
- public:
-  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
-      uint32_t clock_freq);
-  void Display(uint32_t aRGB);
-  void Stop();
+  can = new bsp::CAN(&hcan1, 0x301);
+  supercap = new control::SuperCap(can, 0x301);
+}
 
- private:
-  bsp::PWM R_, G_, B_;
-};
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
 
-}  // namespace display
+  while (true) {
+    set_cursor(0, 0);
+    clear_screen();
+    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
+          supercap->info.energy);
+    osDelay(100);
+  }
+}

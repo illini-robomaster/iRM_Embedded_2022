@@ -18,28 +18,24 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+#include "supercap.h"
 
-#include "bsp_pwm.h"
+#include <cstring>
 
-namespace display {
+namespace control {
 
-const uint32_t color_red = 0xFFFF0000;
-const uint32_t color_green = 0xFF00FF00;
-const uint32_t color_blue = 0xFF0000FF;
-const uint32_t color_yellow = 0xFFFFFF00;
-const uint32_t color_cyan = 0xFF00FFFF;
-const uint32_t color_magenta = 0xFFFF00FF;
+static void supercap_callback(const uint8_t data[], void* args) {
+  SuperCap* supercap = reinterpret_cast<SuperCap*>(args);
+  supercap->UpdateData(data);
+}
 
-class RGB {
- public:
-  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
-      uint32_t clock_freq);
-  void Display(uint32_t aRGB);
-  void Stop();
+SuperCap::SuperCap(bsp::CAN* can, uint16_t rx_id) {
+  can->RegisterRxCallback(rx_id, supercap_callback, this);
+}
 
- private:
-  bsp::PWM R_, G_, B_;
-};
+void SuperCap::UpdateData(const uint8_t* data) {
+  memcpy(&info, data, sizeof(cap_message_t));
+  connection_flag_ = true;
+}
 
-}  // namespace display
+}  // namespace control
