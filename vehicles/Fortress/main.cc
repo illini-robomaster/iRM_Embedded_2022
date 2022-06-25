@@ -432,7 +432,7 @@ void shooterTask(void* arg) {
 
     if (referee->game_robot_status.mains_power_shooter_output &&
         referee->power_heat_data.shooter_id1_17mm_cooling_heat <
-            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 10 &&
+            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 20 &&
         (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
     if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
@@ -441,10 +441,10 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15) {
       flywheelFlag = true;
-      shooter->SetFlywheelSpeed(490);
+      shooter->SetFlywheelSpeed(440); // 445 MAX
     } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18) {
       flywheelFlag = true;
-      shooter->SetFlywheelSpeed(560);
+      shooter->SetFlywheelSpeed(485); // 490 MAX
     } else {
       flywheelFlag = false;
       shooter->SetFlywheelSpeed(0);
