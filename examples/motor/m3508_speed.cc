@@ -19,7 +19,7 @@
  ****************************************************************************/
 
 // If want controller to be used
-// #define WITH_CONTROLLER
+#define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -42,7 +42,7 @@
 #define TARGET_SPEED2 80
 #endif
 
-bsp::CAN* can1 = nullptr;
+bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
 #ifdef WITH_CONTROLLER
 remote::DBUS* dbus = nullptr;
@@ -51,12 +51,12 @@ BoolEdgeDetector detector(false);
 #endif
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  print_use_uart(&huart1);
+  can = new bsp::CAN(&hcan1, 0x202, true);
+  motor = new control::Motor3508(can, 0x202);
 
 #ifdef WITH_CONTROLLER
-  dbus = new remote::DBUS(&huart1);
+  dbus = new remote::DBUS(&huart3);
 #endif
 }
 
@@ -100,7 +100,6 @@ void RM_RTOS_Default_Task(const void* args) {
     int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
-    motor->PrintData();
     osDelay(10);
   }
 }

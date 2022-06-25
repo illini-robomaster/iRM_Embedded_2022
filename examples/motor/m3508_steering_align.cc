@@ -30,7 +30,7 @@
 
 #define TEST_SPEED (0.4 * PI)
 
-bsp::CAN* can1 = nullptr;
+bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
 float transmission_ratio;
 control::ConstrainedPID pid;
@@ -48,8 +48,8 @@ void RM_RTOS_Init() {
   input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
 
   // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
-  can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  can = new bsp::CAN(&hcan2, 0x201, false);
+  motor = new control::Motor3508(can, 0x201);
 
   transmission_ratio = 8;
   float* omega_pid_param = new float[3]{140, 1.2, 25};

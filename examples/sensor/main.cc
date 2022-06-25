@@ -24,11 +24,17 @@
 #include "bsp_print.h"
 #include "cmsis_os.h"
 
-static bsp::GPIO* input = nullptr;
+static bsp::GPIO* input1 = nullptr;
+static bsp::GPIO* input2 = nullptr;
+static bsp::GPIO* input3 = nullptr;
+static bsp::GPIO* input4 = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  input1 = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  input2 = new bsp::GPIO(IN2_GPIO_Port, IN2_Pin);
+  input3 = new bsp::GPIO(IN3_GPIO_Port, IN3_Pin);
+  input4 = new bsp::GPIO(IN4_GPIO_Port, IN4_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -37,7 +43,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("sensor: %s\r\n", input->Read() ? "on" : "off");
+    print("sensor: %d %d %d %d\r\n", input1->Read(), input2->Read(), input3->Read(), input4->Read());
     osDelay(100);
   }
 }
