@@ -35,13 +35,17 @@ control::MotorCANBase* motor = nullptr;
 float transmission_ratio;
 control::ConstrainedPID pid;
 
+static bsp::GPIO* input = nullptr;
+
 bool steering_align_detect() {
   // Fill in the detection for photoelectric switch
-  return true;
+  return !input->Read();
 }
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
+
+  input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
 
   // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
   can1 = new bsp::CAN(&hcan1, 0x201);
