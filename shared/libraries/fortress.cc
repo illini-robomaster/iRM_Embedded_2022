@@ -107,7 +107,7 @@ void Fortress::Spin(bool power_limit_on, float power_limit, float chassis_power,
 }
 
 bool Fortress::Error() {
-  return abs(leftElevatorMotor_->GetCurr()) > 40000 || abs(rightElevatortMotor_->GetCurr()) > 40000;
+  return abs(leftElevatorMotor_->GetCurr()) > 50000 || abs(rightElevatortMotor_->GetCurr()) > 50000;
 }
 
 void Fortress::Stop(const fortress_component_t component) {

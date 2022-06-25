@@ -19,7 +19,7 @@
  ****************************************************************************/
 
 // If want controller to be used
-// #define WITH_CONTROLLER
+ #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -51,12 +51,12 @@ BoolEdgeDetector detector(false);
 #endif
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+  print_use_uart(&huart1);
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
 
 #ifdef WITH_CONTROLLER
-  dbus = new remote::DBUS(&huart1);
+  dbus = new remote::DBUS(&huart3);
 #endif
 }
 
@@ -69,34 +69,34 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
+//  bsp::GPIO key(KEY_GPIO_GROUP, KEY_GPIO_PIN);
 
-#ifdef WITH_CONTROLLER
-  float target = 0;
-#else
-  float target = TARGET_SPEED1;
-#endif
+//#ifdef WITH_CONTROLLER
+//  float target = 0;
+//#else
+//  float target = TARGET_SPEED1;
+//#endif
 
   while (true) {
-#ifdef WITH_CONTROLLER
-    if (dbus->ch3 > 10) {
-      target = TARGET_SPEED;
-    } else if (dbus->ch3 < -10) {
-      target = -TARGET_SPEED;
-    } else {
-      target = 0;
-    }
-#else
-    detector.input(key.Read());
-    if (detector.posEdge()) {
-      target = TARGET_SPEED2;
-      pid.Reset();
-    } else if (detector.negEdge()) {
-      target = TARGET_SPEED1;
-      pid.Reset();
-    }
-#endif
-    float diff = motor->GetOmegaDelta(target);
+//#ifdef WITH_CONTROLLER
+//    if (dbus->ch3 > 10) {
+//      target = TARGET_SPEED;
+//    } else if (dbus->ch3 < -10) {
+//      target = -TARGET_SPEED;
+//    } else {
+//      target = 0;
+//    }
+//#else
+//    detector.input(key.Read());
+//    if (detector.posEdge()) {
+//      target = TARGET_SPEED2;
+//      pid.Reset();
+//    } else if (detector.negEdge()) {
+//      target = TARGET_SPEED1;
+//      pid.Reset();
+//    }
+//#endif
+    float diff = motor->GetOmegaDelta(160);
     int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);
     control::MotorCANBase::TransmitOutput(motors, 1);
