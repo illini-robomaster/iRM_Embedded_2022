@@ -68,7 +68,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
     } else {
       stepper->Stop();
     }
-    osDelay(100);
+    osDelay(10);
   }
 
 
