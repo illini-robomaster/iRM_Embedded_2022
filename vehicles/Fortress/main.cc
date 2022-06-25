@@ -144,8 +144,7 @@ static bsp::Laser* laser = nullptr;
 void gimbalTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor};
-  control::MotorCANBase* motors_can2_gimbal[] = {yaw_motor};
+  control::MotorCANBase* motors_can1_gimbal[] = {pitch_motor, yaw_motor};
 
   print("Wait for beginning signal...\r\n");
   RGB->Display(display::color_red);
@@ -160,8 +159,7 @@ void gimbalTask(void* arg) {
   while (i < 1000 || !imu->DataReady()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(GIMBAL_TASK_DELAY);
     ++i;
   }
@@ -174,8 +172,7 @@ void gimbalTask(void* arg) {
   while (!imu->DataReady() || !imu->CaliDone()) {
     gimbal->TargetAbs(0, 0);
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(GIMBAL_TASK_DELAY);
   }
 
@@ -210,8 +207,7 @@ void gimbalTask(void* arg) {
     gimbal->TargetRel(-pitch_diff, yaw_diff);
 
     gimbal->Update();
-    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 1);
-    control::MotorCANBase::TransmitOutput(motors_can2_gimbal, 1);
+    control::MotorCANBase::TransmitOutput(motors_can1_gimbal, 2);
     osDelay(GIMBAL_TASK_DELAY);
   }
 }
@@ -1030,7 +1026,7 @@ void RM_RTOS_Init(void) {
 
   laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
   pitch_motor = new control::Motor6020(can1, 0x205);
-  yaw_motor = new control::Motor6020(can2, 0x206);
+  yaw_motor = new control::Motor6020(can1, 0x206);
   control::gimbal_t gimbal_data;
   gimbal_data.pitch_motor = pitch_motor;
   gimbal_data.yaw_motor = yaw_motor;
