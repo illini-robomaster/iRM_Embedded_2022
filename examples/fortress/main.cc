@@ -119,8 +119,7 @@ void RM_RTOS_Threads_Init(void) {
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
-  control::MotorCANBase* motors[] = {motor_left, motor_right};
-  control::MotorCANBase* fortress_motor[] = {motor_fortress};
+  control::MotorCANBase* motors_can2_fortress[] = {motor_left, motor_right, motor_fortress};
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
@@ -131,11 +130,11 @@ void RM_RTOS_Default_Task(const void* args) {
     if (fortress->Error()) {
       while (true) {
         fortress->Stop(control::ELEVATOR);
-        control::MotorCANBase::TransmitOutput(motors, 2);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
         osDelay(100);
       }
     }
-    control::MotorCANBase::TransmitOutput(motors, 2);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
     osDelay(2);
   }
 
@@ -145,39 +144,42 @@ void RM_RTOS_Default_Task(const void* args) {
     if (fortress->Error()) {
       while (true) {
         fortress->Stop(control::ELEVATOR);
-        control::MotorCANBase::TransmitOutput(motors, 2);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
         osDelay(100);
       }
     }
-    fortress->Transform(true);
-    control::MotorCANBase::TransmitOutput(motors, 2);
-    osDelay(2);
-  }
-
-  int j = 0;
-  int z = 0;
-  while (true) {
-    if (++j > 5000) break;
-    if (++z >= 50) {
-      z = 0;
-      set_cursor(0, 0);
-      clear_screen();
-      motor_fortress->PrintData();
-      print("Power Limit: %.2f / %.2f\r\nPower Buffer: %.2f\r\n",
-            referee->power_heat_data.chassis_power,
-            (float)referee->game_robot_status.chassis_power_limit,
-            (float)referee->power_heat_data.chassis_power_buffer);
-    }
-    fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
-                   referee->power_heat_data.chassis_power,
-                   (float)referee->power_heat_data.chassis_power_buffer);
-    control::MotorCANBase::TransmitOutput(fortress_motor, 1);
-    osDelay(2);
-  }
-
-  while (true) {
     fortress->Stop(control::SPINNER);
-    control::MotorCANBase::TransmitOutput(fortress_motor, 1);
+    fortress->Transform(true);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+    osDelay(2);
+  }
+
+//  int j = 0;
+//  int z = 0;
+//  while (true) {
+//    if (++j > 5000) break;
+//    if (++z >= 50) {
+//      z = 0;
+//      set_cursor(0, 0);
+//      clear_screen();
+//      motor_fortress->PrintData();
+//      print("Power Limit: %.2f / %.2f\r\nPower Buffer: %.2f\r\n",
+//            referee->power_heat_data.chassis_power,
+//            (float)referee->game_robot_status.chassis_power_limit,
+//            (float)referee->power_heat_data.chassis_power_buffer);
+//    }
+//    fortress->Stop(control::ELEVATOR);
+//    fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
+//                   referee->power_heat_data.chassis_power,
+//                   (float)referee->power_heat_data.chassis_power_buffer);
+//    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+//    osDelay(2);
+//  }
+
+  while (true) {
+    fortress->Stop(control::ELEVATOR);
+    fortress->Stop(control::SPINNER);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
     osDelay(2);
   }
 }
