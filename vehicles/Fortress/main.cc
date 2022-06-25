@@ -916,7 +916,8 @@ static control::Fortress* fortress = nullptr;
 void FortressTask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor, fortress_motor};
+  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor,
+                                                   fortress_motor};
 
   while (true) {
     if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;

@@ -99,8 +99,7 @@ void Fortress::Transform(const bool fortress_mode) {
   servo_right_->CalcOutput();
 }
 
-void Fortress::Spin(float power_limit, float chassis_power,
-                    float chassis_power_buffer) {
+void Fortress::Spin(float power_limit, float chassis_power, float chassis_power_buffer) {
   if (!fortress_mode_) return;
   spinner_->SetSpeed(-60);
   spinner_->Update(power_limit, chassis_power, chassis_power_buffer);
