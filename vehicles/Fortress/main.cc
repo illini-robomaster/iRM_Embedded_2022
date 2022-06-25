@@ -39,6 +39,7 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "supercap.h"
 #include "user_interface.h"
 #include "utils.h"
 
@@ -55,6 +56,7 @@ static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
 static remote::DBUS* dbus = nullptr;
 static display::RGB* RGB = nullptr;
+static control::SuperCap* supercap = nullptr;
 
 static BoolEdgeDetector FakeDeath(false);
 static volatile bool Dead = false;
@@ -83,6 +85,9 @@ static bool volatile dbus_flag = false;
 static bool volatile lidar_flag = false;
 
 static volatile bool selftestStart = false;
+
+static BoolEdgeDetector SuperCapKey(false);
+static bool volatile UseSuperCap = false;
 
 //==================================================================================================
 // IMU
@@ -379,7 +384,7 @@ void chassisTask(void* arg) {
 
     chassis->SetSpeed(vx_set, vy_set, wz_set);
 
-    chassis->Update((float)referee->game_robot_status.chassis_power_limit,
+    chassis->Update(!UseSuperCap, (float)referee->game_robot_status.chassis_power_limit,
                     referee->power_heat_data.chassis_power,
                     (float)referee->power_heat_data.chassis_power_buffer);
     control::MotorCANBase::TransmitOutput(motors, 4);
@@ -448,6 +453,102 @@ void shooterTask(void* arg) {
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);
+  }
+}
+
+//==================================================================================================
+// Fortress
+//==================================================================================================
+
+const osThreadAttr_t fortressTaskAttribute = {.name = "fortressTask",
+                                              .attr_bits = osThreadDetached,
+                                              .cb_mem = nullptr,
+                                              .cb_size = 0,
+                                              .stack_mem = nullptr,
+                                              .stack_size = 256 * 4,
+                                              .priority = (osPriority_t)osPriorityNormal,
+                                              .tz_module = 0,
+                                              .reserved = 0};
+
+osThreadId_t fortressTaskHandle;
+
+static bsp::GPIO* left = nullptr;
+static bsp::GPIO* right = nullptr;
+
+static control::MotorCANBase* elevator_left_motor = nullptr;
+static control::MotorCANBase* elevator_right_motor = nullptr;
+static control::MotorCANBase* fortress_motor = nullptr;
+static control::Fortress* fortress = nullptr;
+
+void fortressTask(void* arg) {
+  UNUSED(arg);
+
+  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor,
+                                                   fortress_motor};
+
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    osDelay(100);
+  }
+
+  while (!imu->CaliDone()) osDelay(100);
+
+  while (!fortress->Calibrate()) {
+    while (Dead) osDelay(100);
+    if (fortress->Error()) {
+      while (true) {
+        fortress->Stop(control::ELEVATOR);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(100);
+      }
+    }
+    fortress->Stop(control::SPINNER);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+
+  while (true) {
+    ChangeFortressMode.input(dbus->keyboard.bit.X);
+    if (ChangeFortressMode.posEdge()) FortressMode = !FortressMode;
+
+    if (FortressMode) {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(true);
+        fortress->Spin(!UseSuperCap, (float)referee->game_robot_status.chassis_power_limit,
+                       referee->power_heat_data.chassis_power,
+                       (float)referee->power_heat_data.chassis_power_buffer);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    } else {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(false);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    }
   }
 }
 
@@ -890,102 +991,6 @@ void selfTestTask(void* arg) {
 // }
 
 //==================================================================================================
-// Fortress
-//==================================================================================================
-
-const osThreadAttr_t FortressTaskAttribute = {.name = "FortressTask",
-                                              .attr_bits = osThreadDetached,
-                                              .cb_mem = nullptr,
-                                              .cb_size = 0,
-                                              .stack_mem = nullptr,
-                                              .stack_size = 256 * 4,
-                                              .priority = (osPriority_t)osPriorityNormal,
-                                              .tz_module = 0,
-                                              .reserved = 0};
-
-osThreadId_t FortressTaskHandle;
-
-static bsp::GPIO* left = nullptr;
-static bsp::GPIO* right = nullptr;
-
-static control::MotorCANBase* elevator_left_motor = nullptr;
-static control::MotorCANBase* elevator_right_motor = nullptr;
-static control::MotorCANBase* fortress_motor = nullptr;
-static control::Fortress* fortress = nullptr;
-
-void FortressTask(void* arg) {
-  UNUSED(arg);
-
-  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor,
-                                                   fortress_motor};
-
-  while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
-    osDelay(100);
-  }
-
-  while (!imu->CaliDone()) osDelay(100);
-
-  while (!fortress->Calibrate()) {
-    while (Dead) osDelay(100);
-    if (fortress->Error()) {
-      while (true) {
-        fortress->Stop(control::ELEVATOR);
-        fortress->Stop(control::SPINNER);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(100);
-      }
-    }
-    fortress->Stop(control::SPINNER);
-    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-    osDelay(FORTRESS_TASK_DELAY);
-  }
-
-  while (true) {
-    ChangeFortressMode.input(dbus->keyboard.bit.X);
-    if (ChangeFortressMode.posEdge()) FortressMode = !FortressMode;
-
-    if (FortressMode) {
-      int i = 0;
-      while (true) {
-        if (++i > 100 / 2 && fortress->Finished()) break;
-        if (fortress->Error()) {
-          while (true) {
-            fortress->Stop(control::ELEVATOR);
-            fortress->Stop(control::SPINNER);
-            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-            osDelay(100);
-          }
-        }
-        fortress->Transform(true);
-        fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
-                       referee->power_heat_data.chassis_power,
-                       (float)referee->power_heat_data.chassis_power_buffer);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(FORTRESS_TASK_DELAY);
-      }
-    } else {
-      int i = 0;
-      while (true) {
-        if (++i > 100 / 2 && fortress->Finished()) break;
-        if (fortress->Error()) {
-          while (true) {
-            fortress->Stop(control::ELEVATOR);
-            fortress->Stop(control::SPINNER);
-            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-            osDelay(100);
-          }
-        }
-        fortress->Transform(false);
-        fortress->Stop(control::SPINNER);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(FORTRESS_TASK_DELAY);
-      }
-    }
-  }
-}
-
-//==================================================================================================
 // RM Init
 //==================================================================================================
 
@@ -1077,6 +1082,8 @@ void RM_RTOS_Init(void) {
   fortress_data.fortressMotor = fortress_motor;
   fortress = new control::Fortress(fortress_data);
 
+  supercap = new control::SuperCap(can2, 0x301);
+
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
 
@@ -1095,7 +1102,7 @@ void RM_RTOS_Threads_Init(void) {
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
-  FortressTaskHandle = osThreadNew(FortressTask, nullptr, &FortressTaskAttribute);
+  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
   //  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
@@ -1154,7 +1161,7 @@ void KillAll() {
   }
 }
 
-static bool debug = true;
+static bool debug = false;
 static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
@@ -1166,6 +1173,12 @@ void RM_RTOS_Default_Task(const void* arg) {
       Dead = true;
       KillAll();
     }
+
+    SuperCapKey.input(dbus->keyboard.bit.CTRL);
+    if (SuperCapKey.posEdge())
+      UseSuperCap = !UseSuperCap;
+    if (supercap->info.energy < 15)
+      UseSuperCap = false;
 
     if (debug) {
       set_cursor(0, 0);

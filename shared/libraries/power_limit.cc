@@ -24,8 +24,12 @@ namespace control {
 
 PowerLimit::PowerLimit(int motor_num) { motor_num_ = motor_num; }
 
-void PowerLimit::Output(power_limit_t power_limit_info, float chassis_power,
+void PowerLimit::Output(bool turn_on, power_limit_t power_limit_info, float chassis_power,
                         float chassis_power_buffer, float* PID_output, float* output) {
+  if (!turn_on) {
+    for (int i = 0; i < motor_num_; ++i) output[i] = PID_output[i];
+    return;
+  }
   float total_current_limit;
   if (chassis_power_buffer < power_limit_info.WARNING_power_buff) {
     float power_scale;

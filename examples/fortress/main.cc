@@ -169,7 +169,7 @@ void RM_RTOS_Default_Task(const void* args) {
             (float)referee->power_heat_data.chassis_power_buffer);
     }
     fortress->Stop(control::ELEVATOR);
-    fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
+    fortress->Spin(true, (float)referee->game_robot_status.chassis_power_limit,
                    referee->power_heat_data.chassis_power,
                    (float)referee->power_heat_data.chassis_power_buffer);
     control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
