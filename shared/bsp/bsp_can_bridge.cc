@@ -18,30 +18,26 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#include "bsp_can_bridge.h"
 
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "supercap.h"
+namespace bsp {
 
-static bsp::CAN* can = nullptr;
-static control::SuperCap* supercap = nullptr;
-
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-
-  can = new bsp::CAN(&hcan1, 0x301);
-  supercap = new control::SuperCap(can, 0x301);
+static void bridge_callback(const uint8_t data[], void* args) {
+  CanBridge* bridge = reinterpret_cast<CanBridge*>(args);
+  bridge->UpdateData(data);
 }
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
-          supercap->info.energy);
-    osDelay(100);
-  }
+CanBridge::CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id) {
+  can_ = can;
+  rx_id_ = rx_id;
+  tx_id_ = tx_id;
+  can_->RegisterRxCallback(rx_id_, bridge_callback, this);
 }
+
+void CanBridge::UpdateData(const uint8_t* data) {
+  for (int i = 0; i < MAX_IO; ++i) IO[i] = data[i];
+}
+
+void CanBridge::TransmitOutput(uint8_t* IO_data) { can_->Transmit(tx_id_, IO_data, MAX_IO); }
+
+}  // namespace bsp

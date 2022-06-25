@@ -18,20 +18,18 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
+#include "bsp_can_bridge.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "supercap.h"
+#include "main.h"
 
 static bsp::CAN* can = nullptr;
-static control::SuperCap* supercap = nullptr;
+static bsp::CanBridge* send = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-
-  can = new bsp::CAN(&hcan1, 0x301);
-  supercap = new control::SuperCap(can, 0x301);
+  can = new bsp::CAN(&hcan1, 0x401);
+  send = new bsp::CanBridge(can, 0x402, 0x401);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -40,8 +38,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
-          supercap->info.energy);
+    print("%d %d %d %d\r\n", send->IO[0], send->IO[1], send->IO[2], send->IO[3]);
     osDelay(100);
   }
 }

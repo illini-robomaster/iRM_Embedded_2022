@@ -24,7 +24,7 @@
 #include "bsp_print.h"
 #include "cmsis_os.h"
 
-static bsp::Laser* laser;
+static bsp::Laser* laser = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
