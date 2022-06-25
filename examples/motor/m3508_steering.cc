@@ -63,7 +63,7 @@ void RM_RTOS_Init() {
   steering_data.max_acceleration = ACCELERATION;
   steering_data.transmission_ratio = M3508P19_RATIO;
   steering_data.offset_angle = 5.36;
-  steering_data.omega_pid_param = new float[3]{100, 0.8, 25};
+  steering_data.omega_pid_param = new float[3]{100, 0.5, 12};
   steering_data.max_iout = 1000;
   steering_data.max_out = 13000;
   steering_data.align_detect_func = steering_align_detect;

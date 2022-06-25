@@ -473,7 +473,7 @@ bool SteeringMotor::AlignUpdate() {
   } else if (align_detect_func()) {
     float current_theta = servo_->motor_->GetTheta();
     float offset = wrap<float>(servo_->align_angle_ - current_theta, -PI, PI);
-    float current = (current_theta + offset) / servo_->transmission_ratio_ +
+    float current = (current_theta + offset - servo_->align_angle_) / servo_->transmission_ratio_ +
                     servo_->offset_angle_ + servo_->cumulated_angle_;
     align_angle_ = current + calibrate_offset;
     align_complete = true;
