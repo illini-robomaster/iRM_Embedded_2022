@@ -38,7 +38,7 @@
 #endif
 
 #define NOTCH (2 * PI / 4)
-#define SPEED 200
+#define SPEED 50
 #define ACCELERATION (80 * PI)
 
 bsp::CAN* can1 = nullptr;
@@ -55,8 +55,8 @@ BoolEdgeDetector key_detector(false);
 #define USING_M3508_STEERING
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-  bsp::SetHighresClockTimer(&htim2);
+  print_use_uart(&huart6);
+  bsp::SetHighresClockTimer(&htim1);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
 

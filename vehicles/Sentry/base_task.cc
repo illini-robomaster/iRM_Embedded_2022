@@ -38,8 +38,8 @@
 #define KEY_GPIO_PIN GPIO_PIN_2
 
 #define NOTCH (2 * PI / 4)
-#define SPEED 200
-#define ACCELERATION (80 * PI)
+#define SPEED 50
+#define ACCELERATION (20 * PI)
 
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
@@ -216,12 +216,17 @@ void baseTask(void* argument) {
   float curr_target = 0.0;
 
   control::MotorCANBase* motors[] = {motor};
-  int totalLength = 2093;
-  int offset = 290;
+//  int totalLength = 2093;
+//  int offset = 290;
   float direction = 1.0;
-  const float MAX = (totalLength - 2 * offset) / (100 * PI) * 2;
+//  const float MAX = (totalLength - 2 * offset) / (100 * PI) * 2;
+//  const float MIN = 0;
+
+//  const float MAX = (totalLength - 2 * offset) / (100 * PI) ;
 //  const float MIN = - (totalLength - 2 * offset) / (100 * PI);
-  const float MIN = 0;
+
+  const float MAX = 2 * PI;
+  const float MIN = - 2 * PI;
   float step = PI;
   while (true) {
     while (Dead) osDelay(100);

@@ -19,7 +19,7 @@
  ****************************************************************************/
 
 // If want controller to be used
-// #define WITH_CONTROLLER
+ #define WITH_CONTROLLER
 
 #include "bsp_gpio.h"
 #include "bsp_print.h"
@@ -51,12 +51,12 @@ BoolEdgeDetector detector(false);
 #endif
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+//  print_use_uart(&huart8);
   can1 = new bsp::CAN(&hcan1, 0x201);
   motor = new control::Motor3508(can1, 0x201);
 
 #ifdef WITH_CONTROLLER
-  dbus = new remote::DBUS(&huart1);
+  dbus = new remote::DBUS(&huart3);
 #endif
 }
 
