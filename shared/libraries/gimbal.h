@@ -101,22 +101,26 @@ class Gimbal {
 
  private:
   // acquired from user
-  MotorCANBase* pitch_motor_;
-  MotorCANBase* yaw_motor_;
+  MotorCANBase* pitch_motor_ = nullptr;
+  MotorCANBase* yaw_motor_ = nullptr;
   gimbal_model_t model_;
 
   // pitch and yaw constants
   gimbal_data_t data_;
 
   // pitch and yaw pid
-  float* pitch_theta_pid_param_;    /* pid param that used to control pitch motor when moving  */
-  float* pitch_omega_pid_param_;    /* pid param that used to control pitch motor when holding */
-  float* yaw_theta_pid_param_;      /* pid param that used to control yaw motor when moving    */
-  float* yaw_omega_pid_param_;      /* pid param that used to control yaw motor when holding   */
-  ConstrainedPID* pitch_theta_pid_; /* pitch theta pid */
-  ConstrainedPID* pitch_omega_pid_; /* pitch omega pid */
-  ConstrainedPID* yaw_theta_pid_;   /* yaw theta pid   */
-  ConstrainedPID* yaw_omega_pid_;   /* yaw omega pid   */
+  float* pitch_theta_pid_param_ =
+      nullptr; /* pid param that used to control pitch motor when moving  */
+  float* pitch_omega_pid_param_ =
+      nullptr; /* pid param that used to control pitch motor when holding */
+  float* yaw_theta_pid_param_ =
+      nullptr; /* pid param that used to control yaw motor when moving    */
+  float* yaw_omega_pid_param_ =
+      nullptr; /* pid param that used to control yaw motor when holding   */
+  ConstrainedPID* pitch_theta_pid_ = nullptr; /* pitch theta pid */
+  ConstrainedPID* pitch_omega_pid_ = nullptr; /* pitch omega pid */
+  ConstrainedPID* yaw_theta_pid_ = nullptr;   /* yaw theta pid   */
+  ConstrainedPID* yaw_omega_pid_ = nullptr;   /* yaw omega pid   */
 
   // pitch and yaw angle
   float pitch_angle_; /* current gimbal pitch angle */

@@ -27,7 +27,7 @@
 
 namespace control {
 
-constexpr int MOTOR_RANGE = 32767;
+constexpr int MOTOR_RANGE = 30000;  // TODO: 32767 or 30000?
 
 int16_t ClipMotorRange(float output);
 
