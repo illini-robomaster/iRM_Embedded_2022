@@ -16,7 +16,7 @@ Gimbal::Gimbal(gimbal_t gimbal)
   switch (gimbal.model) {
     case GIMBAL_FORTRESS:
       data_.pitch_offset_ = 5.205564f;
-      data_.yaw_offset_ = 3.434583f;
+      data_.yaw_offset_ = 1.8132f;
       data_.pitch_max_ = 0.5080f;
       data_.yaw_max_ = PI;
       {

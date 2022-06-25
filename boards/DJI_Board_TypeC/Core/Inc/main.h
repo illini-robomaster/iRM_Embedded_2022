@@ -64,14 +64,14 @@ void RM_RTOS_Default_Task(const void *argument);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define PWM7_Pin GPIO_PIN_7
-#define PWM7_GPIO_Port GPIOI
-#define PWM6_Pin GPIO_PIN_6
-#define PWM6_GPIO_Port GPIOI
+#define IN1_Pin GPIO_PIN_7
+#define IN1_GPIO_Port GPIOI
+#define IN2_Pin GPIO_PIN_6
+#define IN2_GPIO_Port GPIOI
 #define LASER_Pin GPIO_PIN_8
 #define LASER_GPIO_Port GPIOC
-#define PWM5_Pin GPIO_PIN_6
-#define PWM5_GPIO_Port GPIOC
+#define IN3_Pin GPIO_PIN_6
+#define IN3_GPIO_Port GPIOC
 #define RSTN_IST8310_Pin GPIO_PIN_6
 #define RSTN_IST8310_GPIO_Port GPIOG
 #define HEATER_Pin GPIO_PIN_6
@@ -103,8 +103,8 @@ void RM_RTOS_Default_Task(const void *argument);
 #define PWM1_GPIO_Port GPIOE
 #define PWM2_Pin GPIO_PIN_11
 #define PWM2_GPIO_Port GPIOE
-#define PWM4_Pin GPIO_PIN_14
-#define PWM4_GPIO_Port GPIOE
+#define IN4_Pin GPIO_PIN_14
+#define IN4_GPIO_Port GPIOE
 #define CS1_GYRO_Pin GPIO_PIN_0
 #define CS1_GYRO_GPIO_Port GPIOB
 #define STEPPER_DIR_Pin GPIO_PIN_15

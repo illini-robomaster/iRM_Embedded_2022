@@ -20,26 +20,55 @@
 
 #pragma once
 
-#include "bsp_pwm.h"
+#include "bsp_gpio.h"
+#include "chassis.h"
+#include "controller.h"
+#include "motor.h"
 
-namespace display {
+namespace control {
 
-const uint32_t color_red = 0xFFFF0000;
-const uint32_t color_green = 0xFF00FF00;
-const uint32_t color_blue = 0xFF0000FF;
-const uint32_t color_yellow = 0xFFFFFF00;
-const uint32_t color_cyan = 0xFF00FFFF;
-const uint32_t color_magenta = 0xFFFF00FF;
+typedef enum { ELEVATOR, SPINNER } fortress_component_t;
 
-class RGB {
+typedef struct {
+  bsp::GPIO* leftSwitch;
+  bsp::GPIO* rightSwitch;
+  MotorCANBase* leftElevatorMotor;
+  MotorCANBase* rightElevatorMotor;
+  MotorCANBase* fortressMotor;
+} fortress_t;
+
+class Fortress {
  public:
-  RGB(TIM_HandleTypeDef* htim, uint8_t channelR, uint8_t channelG, uint8_t channelB,
-      uint32_t clock_freq);
-  void Display(uint32_t aRGB);
-  void Stop();
+  Fortress(const fortress_t fortress);
+  bool Calibrate();
+  void Transform(const bool fortress_mode);
+  void Spin(float power_limit, float chassis_power, float chassis_power_buffer);
+  bool Error();
+  void Stop(const fortress_component_t component);
+  bool Finished();
 
  private:
-  bsp::PWM R_, G_, B_;
+  bool fortress_mode_ = false;
+
+  bsp::GPIO* leftSwitch_ = nullptr;
+  bsp::GPIO* rightSwitch_ = nullptr;
+  MotorCANBase* leftElevatorMotor_ = nullptr;
+  MotorCANBase* rightElevatortMotor_ = nullptr;
+  ServoMotor* servo_left_ = nullptr;
+  ServoMotor* servo_right_ = nullptr;
+
+  float target_left_ = 0;
+  float target_right_ = 0;
+
+  bool left_reach_ = false;
+  bool right_reach_ = false;
+
+  MotorCANBase* fortressMotor_ = nullptr;
+
+  BoolEdgeDetector* left_edge_;
+  BoolEdgeDetector* right_edge_;
+
+  Chassis* spinner_;
 };
 
-}  // namespace display
+}  // namespace control
