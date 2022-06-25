@@ -41,7 +41,7 @@ Shooter::Shooter(shooter_t shooter) {
   servo_data.motor = shooter.load_motor;
 
   switch (shooter.model) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       servo_data.max_speed = 2 * PI;
       servo_data.max_acceleration = 8 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
@@ -52,7 +52,7 @@ Shooter::Shooter(shooter_t shooter) {
       load_step_angle_ = 2 * PI / 8;
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       servo_data.max_speed = 40 * PI;
       servo_data.max_acceleration = 20 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
@@ -84,9 +84,9 @@ Shooter::~Shooter() {
   load_servo_ = nullptr;
 
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       break;
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       delete left_pid_;
       left_pid_ = nullptr;
       delete right_pid_;
@@ -98,12 +98,12 @@ Shooter::~Shooter() {
 
 void Shooter::SetFlywheelSpeed(float speed) {
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       left_flywheel_motor_->SetOutput(speed);
       right_flywheel_motor_->SetOutput(speed);
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       speed_ = speed;
       break;
   }
@@ -115,25 +115,17 @@ int Shooter::LoadNext() {
 
 void Shooter::Update() {
   switch (model_) {
-    case SHOOTER_STANDARD_ZERO:
+    case SHOOTER_SENTRY:
       load_servo_->CalcOutput();
       break;
 
-    case SHOOTER_STANDARD_2022:
+    case SHOOTER_STANDARD:
       flywheel_turning_detector_->input(speed_ == 0);
       float left_diff = static_cast<MotorCANBase*>(left_flywheel_motor_)->GetOmegaDelta(speed_);
       float right_diff = static_cast<MotorCANBase*>(right_flywheel_motor_)->GetOmegaDelta(-speed_);
       left_flywheel_motor_->SetOutput(left_pid_->ComputeConstrainedOutput(left_diff));
       right_flywheel_motor_->SetOutput(right_pid_->ComputeConstrainedOutput(right_diff));
       load_servo_->CalcOutput();
-
-      static int i = 0;
-      if (i > 10) {
-        load_servo_->PrintData();
-        i = 0;
-      } else {
-        i++;
-      }
       break;
   }
 }

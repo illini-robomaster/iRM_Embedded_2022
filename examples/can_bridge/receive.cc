@@ -18,17 +18,18 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
-#include "bsp_laser.h"
+#include "bsp_can_bridge.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "main.h"
 
-static bsp::Laser* laser = nullptr;
+static bsp::CAN* can = nullptr;
+static bsp::CanBridge* send = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+  can = new bsp::CAN(&hcan1, 0x401);
+  send = new bsp::CanBridge(can, 0x402, 0x401);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -37,13 +38,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
+    print("%d %d %d %d\r\n", send->IO[0], send->IO[1], send->IO[2], send->IO[3]);
+    osDelay(100);
   }
 }

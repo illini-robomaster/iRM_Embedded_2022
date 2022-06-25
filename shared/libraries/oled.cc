@@ -1953,7 +1953,7 @@ OLED::OLED(I2C_HandleTypeDef* hi2c, uint16_t OLED_i2c_addr) {
   Init();
 }
 
-bool OLED::IsReady() { return HAL_I2C_IsDeviceReady(hi2c_, OLED_i2c_addr_, 1, 100) == HAL_OK; }
+bool OLED::IsReady() { return HAL_I2C_IsDeviceReady(hi2c_, OLED_i2c_addr_, 1, 10) == HAL_OK; }
 
 void OLED::WriteByte(uint8_t dat, uint8_t cmd) {
   uint8_t cmd_data[2];

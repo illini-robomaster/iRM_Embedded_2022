@@ -18,32 +18,33 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
-
-#include "bsp_laser.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "lidar07.h"
+#include "main.h"
 
-static bsp::Laser* laser = nullptr;
+static distance::LIDAR07_IIC* sensor = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+  sensor = new distance::LIDAR07_IIC(&hi2c2, 0x70, [](uint32_t milli) { osDelay(milli); });
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
+  while (!sensor->IsReady()) osDelay(50);
+  print("Ready\r\n");
+  while (!sensor->begin()) osDelay(50);
+  print("Begin\r\n");
+  while (!sensor->startFilter()) osDelay(50);
+  print("Start Filter\r\n");
+
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
+    while (!sensor->startMeasure()) osDelay(50);
+    print("Distance: %.2f m\r\n", sensor->distance / 1000.0);
     osDelay(1000);
   }
 }

@@ -20,15 +20,18 @@
 
 #include "main.h"
 
-#include "bsp_laser.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "supercap.h"
 
-static bsp::Laser* laser = nullptr;
+static bsp::CAN* can = nullptr;
+static control::SuperCap* supercap = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+
+  can = new bsp::CAN(&hcan1, 0x301);
+  supercap = new control::SuperCap(can, 0x301);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -37,13 +40,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
+    print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
+          supercap->info.energy);
+    osDelay(100);
   }
 }

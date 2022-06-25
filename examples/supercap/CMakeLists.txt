@@ -18,5 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(Fortress)
-add_subdirectory(Sentry)
+project(example_supercap ASM C CXX)
+
+irm_add_arm_executable(${PROJECT_NAME}
+    TARGET DJI_Board_TypeC
+    SOURCES main.cc)

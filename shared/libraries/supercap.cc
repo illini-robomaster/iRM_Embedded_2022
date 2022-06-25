@@ -18,32 +18,24 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "main.h"
+#include "supercap.h"
 
-#include "bsp_laser.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
+#include <cstring>
 
-static bsp::Laser* laser = nullptr;
+namespace control {
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  laser = new bsp::Laser(LASER_GPIO_Port, LASER_Pin);
+static void supercap_callback(const uint8_t data[], void* args) {
+  SuperCap* supercap = reinterpret_cast<SuperCap*>(args);
+  supercap->UpdateData(data);
 }
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-
-  while (true) {
-    set_cursor(0, 0);
-    clear_screen();
-    laser->On();
-    print("laser on\r\n");
-    osDelay(1000);
-    set_cursor(0, 0);
-    clear_screen();
-    laser->Off();
-    print("laser off\r\n");
-    osDelay(1000);
-  }
+SuperCap::SuperCap(bsp::CAN* can, uint16_t rx_id) {
+  can->RegisterRxCallback(rx_id, supercap_callback, this);
 }
+
+void SuperCap::UpdateData(const uint8_t* data) {
+  memcpy(&info, data, sizeof(cap_message_t));
+  connection_flag_ = true;
+}
+
+}  // namespace control

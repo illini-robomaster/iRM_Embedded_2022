@@ -18,5 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(Fortress)
-add_subdirectory(Sentry)
+project(example_lidar07 ASM C CXX)
+
+irm_add_arm_executable(${PROJECT_NAME}_uart
+    TARGET DJI_Board_TypeA
+    SOURCES uart.cc)
+
+irm_add_arm_executable(${PROJECT_NAME}_i2c
+    TARGET DJI_Board_TypeC
+    SOURCES i2c.cc)
