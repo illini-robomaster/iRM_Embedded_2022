@@ -25,5 +25,5 @@ irm_add_arm_executable(${PROJECT_NAME}_one
     SOURCES steering_test.cc)
 
 irm_add_arm_executable(${PROJECT_NAME}_chassis
-    TARGET DJI_Board_TypeA
+    TARGET DJI_Board_TypeC
     SOURCES steering_chassis.cc)
