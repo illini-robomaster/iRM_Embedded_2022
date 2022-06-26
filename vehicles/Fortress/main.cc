@@ -39,6 +39,7 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "supercap.h"
 #include "user_interface.h"
 #include "utils.h"
 
@@ -55,6 +56,7 @@ static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
 static remote::DBUS* dbus = nullptr;
 static display::RGB* RGB = nullptr;
+// static control::SuperCap* supercap = nullptr;
 
 static BoolEdgeDetector FakeDeath(false);
 static volatile bool Dead = false;
@@ -83,6 +85,9 @@ static bool volatile dbus_flag = false;
 static bool volatile lidar_flag = false;
 
 static volatile bool selftestStart = false;
+
+static BoolEdgeDetector SuperCapKey(false);
+static bool volatile UseSuperCap = false;
 
 //==================================================================================================
 // IMU
@@ -355,19 +360,19 @@ void chassisTask(void* arg) {
       vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
       vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
       wz_set = spin_speed;
-    } else if (PeekMode) {
-      sin_yaw = arm_sin_f32(relative_angle);
-      cos_yaw = arm_cos_f32(relative_angle);
-      vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
-      vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
-
-      float peek_angle = 30.0 / 180 * PI;
-      peek_angle = PeekDirection ? peek_angle : -peek_angle;
-
-      wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
-      if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
-          (relative_angle - peek_angle) < CHASSIS_DEADZONE)
-        wz_set = 0;
+      //    } else if (PeekMode) {
+      //      sin_yaw = arm_sin_f32(relative_angle);
+      //      cos_yaw = arm_cos_f32(relative_angle);
+      //      vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+      //      vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+      //
+      //      float peek_angle = 30.0 / 180 * PI;
+      //      peek_angle = PeekDirection ? peek_angle : -peek_angle;
+      //
+      //      wz_set = std::min(follow_speed, follow_speed * (relative_angle - peek_angle));
+      //      if (-CHASSIS_DEADZONE < (relative_angle - peek_angle) &&
+      //          (relative_angle - peek_angle) < CHASSIS_DEADZONE)
+      //        wz_set = 0;
     } else {
       sin_yaw = arm_sin_f32(relative_angle);
       cos_yaw = arm_cos_f32(relative_angle);
@@ -379,9 +384,17 @@ void chassisTask(void* arg) {
 
     chassis->SetSpeed(vx_set, vy_set, wz_set);
 
-    chassis->Update((float)referee->game_robot_status.chassis_power_limit,
+    chassis->Update(true, (float)referee->game_robot_status.chassis_power_limit,
                     referee->power_heat_data.chassis_power,
                     (float)referee->power_heat_data.chassis_power_buffer);
+
+    if (FortressMode) {
+      fl_motor->SetOutput(0);
+      fr_motor->SetOutput(0);
+      bl_motor->SetOutput(0);
+      br_motor->SetOutput(0);
+    }
+
     control::MotorCANBase::TransmitOutput(motors, 4);
     osDelay(CHASSIS_TASK_DELAY);
   }
@@ -427,7 +440,7 @@ void shooterTask(void* arg) {
 
     if (referee->game_robot_status.mains_power_shooter_output &&
         referee->power_heat_data.shooter_id1_17mm_cooling_heat <
-            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 10 &&
+            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 20 &&
         (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
     if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
@@ -436,10 +449,10 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15) {
       flywheelFlag = true;
-      shooter->SetFlywheelSpeed(490);
+      shooter->SetFlywheelSpeed(440);  // 445 MAX
     } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18) {
       flywheelFlag = true;
-      shooter->SetFlywheelSpeed(560);
+      shooter->SetFlywheelSpeed(485);  // 490 MAX
     } else {
       flywheelFlag = false;
       shooter->SetFlywheelSpeed(0);
@@ -448,6 +461,102 @@ void shooterTask(void* arg) {
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);
+  }
+}
+
+//==================================================================================================
+// Fortress
+//==================================================================================================
+
+const osThreadAttr_t fortressTaskAttribute = {.name = "fortressTask",
+                                              .attr_bits = osThreadDetached,
+                                              .cb_mem = nullptr,
+                                              .cb_size = 0,
+                                              .stack_mem = nullptr,
+                                              .stack_size = 256 * 4,
+                                              .priority = (osPriority_t)osPriorityNormal,
+                                              .tz_module = 0,
+                                              .reserved = 0};
+
+osThreadId_t fortressTaskHandle;
+
+static bsp::GPIO* left = nullptr;
+static bsp::GPIO* right = nullptr;
+
+static control::MotorCANBase* elevator_left_motor = nullptr;
+static control::MotorCANBase* elevator_right_motor = nullptr;
+static control::MotorCANBase* fortress_motor = nullptr;
+static control::Fortress* fortress = nullptr;
+
+void fortressTask(void* arg) {
+  UNUSED(arg);
+
+  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor,
+                                                   fortress_motor};
+
+  while (true) {
+    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
+    osDelay(100);
+  }
+
+  while (!imu->CaliDone()) osDelay(100);
+
+  while (!fortress->Calibrate()) {
+    while (Dead) osDelay(100);
+    if (fortress->Error()) {
+      while (true) {
+        fortress->Stop(control::ELEVATOR);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(100);
+      }
+    }
+    fortress->Stop(control::SPINNER);
+    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+    osDelay(FORTRESS_TASK_DELAY);
+  }
+
+  while (true) {
+    ChangeFortressMode.input(dbus->keyboard.bit.X);
+    if (ChangeFortressMode.posEdge()) FortressMode = !FortressMode;
+
+    if (FortressMode) {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(true);
+        fortress->Spin(true, (float)referee->game_robot_status.chassis_power_limit,
+                       referee->power_heat_data.chassis_power,
+                       (float)referee->power_heat_data.chassis_power_buffer);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    } else {
+      int i = 0;
+      while (true) {
+        if (++i > 100 / 2 && fortress->Finished()) break;
+        if (fortress->Error()) {
+          while (true) {
+            fortress->Stop(control::ELEVATOR);
+            fortress->Stop(control::SPINNER);
+            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+            osDelay(100);
+          }
+        }
+        fortress->Transform(false);
+        fortress->Stop(control::SPINNER);
+        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
+        osDelay(FORTRESS_TASK_DELAY);
+      }
+    }
   }
 }
 
@@ -553,433 +662,338 @@ void selfTestTask(void* arg) {
 // UI
 //==================================================================================================
 
-// const osThreadAttr_t UITaskAttribute = {.name = "UITask",
-//                                         .attr_bits = osThreadDetached,
-//                                         .cb_mem = nullptr,
-//                                         .cb_size = 0,
-//                                         .stack_mem = nullptr,
-//                                         .stack_size = 1024 * 4,
-//                                         .priority = (osPriority_t)osPriorityBelowNormal,
-//                                         .tz_module = 0,
-//                                         .reserved = 0};
-//
-// osThreadId_t UITaskHandle;
-//
+const osThreadAttr_t UITaskAttribute = {.name = "UITask",
+                                        .attr_bits = osThreadDetached,
+                                        .cb_mem = nullptr,
+                                        .cb_size = 0,
+                                        .stack_mem = nullptr,
+                                        .stack_size = 1024 * 4,
+                                        .priority = (osPriority_t)osPriorityBelowNormal,
+                                        .tz_module = 0,
+                                        .reserved = 0};
+
+osThreadId_t UITaskHandle;
+
 // static distance::LIDAR07_UART* LIDAR = nullptr;
-// static communication::UserInterface* UI = nullptr;
-//
-// void UITask(void* arg) {
-//   UNUSED(arg);
-//
-//   while (!selftestStart) osDelay(100);
-//
-//   int tryLIDAR = 0;
-//   while (!LIDAR->begin()) {
-//     if (++tryLIDAR >= 5) break;
-//     osDelay(10);
-//   }
-//   tryLIDAR = 0;
-//   while (!LIDAR->startFilter()) {
-//     if (++tryLIDAR >= 5) break;
-//     osDelay(10);
-//   }
-//
-//   communication::package_t frame;
-//   communication::graphic_data_t graphGimbal;
-//   communication::graphic_data_t graphChassis;
-//   communication::graphic_data_t graphArrow;
-//   communication::graphic_data_t graphCali;
-//   communication::graphic_data_t graphEmpty2;
-//   communication::graphic_data_t graphCrosshair1;
-//   communication::graphic_data_t graphCrosshair2;
-//   communication::graphic_data_t graphCrosshair3;
-//   communication::graphic_data_t graphCrosshair4;
-//   communication::graphic_data_t graphCrosshair5;
-//   communication::graphic_data_t graphCrosshair6;
-//   communication::graphic_data_t graphCrosshair7;
-//   communication::graphic_data_t graphBarFrame;
-//   communication::graphic_data_t graphBar;
-//   communication::graphic_data_t graphPercent;
-//   communication::graphic_data_t graphDiag;
-//   communication::graphic_data_t graphMode;
-//   communication::graphic_data_t graphDist;
-//   //  communication::graphic_data_t graphLid;
-//   communication::graphic_data_t graphWheel;
-//
-//   char msgBuffer1[30] = "PITCH MOTOR UNCONNECTED";
-//   char msgBuffer2[30] = "YAW MOTOR UNCONNECTED";
-//   char msgBuffer3[30] = "L SHOOTER MOTOR UNCONNECTED";
-//   char msgBuffer4[30] = "R SHOOTER MOTOR UNCONNECTED";
-//   char msgBuffer5[30] = "LOAD MOTOR UNCONNECTED";
-//   char msgBuffer6[30] = "FRONT L MOTOR UNCONNECTED";
-//   char msgBuffer7[30] = "FRONT R MOTOR UNCONNECTED";
-//   char msgBuffer8[30] = "BACK L MOTOR UNCONNECTED";
-//   char msgBuffer9[30] = "BACK R MOTOR UNCONNECTED";
-//
-//   bool pitch_motor_flag_ui = pitch_motor_flag;
-//   bool yaw_motor_flag_ui = yaw_motor_flag;
-//   bool sl_motor_flag_ui = sl_motor_flag;
-//   bool sr_motor_flag_ui = sr_motor_flag;
-//   bool ld_motor_flag_ui = ld_motor_flag;
-//   bool fl_motor_flag_ui = fl_motor_flag;
-//   bool fr_motor_flag_ui = fr_motor_flag;
-//   bool bl_motor_flag_ui = bl_motor_flag;
-//   bool br_motor_flag_ui = br_motor_flag;
-//
-//   // Initialize chassis GUI
-//   UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
-//   UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
-//                    graphCali, graphEmpty2);
-//   referee->PrepareUIContent(communication::FIVE_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize crosshair GUI
-//   UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
-//                    &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
-//   UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
-//                    graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
-//                    graphCrosshair7);
-//   referee->PrepareUIContent(communication::SEVEN_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize supercapacitor GUI
-//   UI->CapGUIInit(&graphBarFrame, &graphBar);
-//   UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
-//   referee->PrepareUIContent(communication::DOUBLE_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize Supercapacitor string GUI
-//   UI->CapGUICharInit(&graphPercent);
-//   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
-//                   UI->getPercentLen());
-//   referee->PrepareUIContent(communication::CHAR_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize self-diagnosis GUI
-//   char diagStr[30] = "";
-//   UI->DiagGUIInit(&graphDiag, 30);
-//   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
-//   referee->PrepareUIContent(communication::CHAR_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize current mode GUI
-//   char followModeStr[15] = "FOLLOW MODE";
-//   char spinModeStr[15] = "SPIN  MODE";
-//   uint32_t modeColor = UI_Color_Orange;
-//   UI->ModeGUIInit(&graphMode);
-//   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
-//                   sizeof followModeStr);
-//   referee->PrepareUIContent(communication::CHAR_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // Initialize distance GUI
-//   char distanceStr[15] = "0.0";
-//   UI->DistanceGUIInit(&graphDist);
-//   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr,
-//                   sizeof distanceStr);
-//   referee->PrepareUIContent(communication::CHAR_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   // TODO: add lid UI in the future
-//
-//   //  // Initialize lid status GUI
-//   //  char lidOpenStr[15] = "LID OPENED";
-//   //  char lidCloseStr[15] = "LID CLOSED";
-//   //  UI->LidGUIInit(&graphLid);
-//   //  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof
-//   //  lidOpenStr); referee->PrepareUIContent(communication::CHAR_GRAPH); frame =
-//   //  referee->Transmit(communication::STUDENT_INTERACTIVE); referee_uart->Write(frame.data,
-//   //  frame.length); osDelay(UI_TASK_DELAY);
-//
-//   // Initialize flywheel status GUI
-//   char wheelOnStr[15] = "FLYWHEEL ON";
-//   char wheelOffStr[15] = "FLYWHEEL OFF";
-//   UI->WheelGUIInit(&graphWheel);
-//   UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelOffStr,
-//                   sizeof wheelOffStr);
-//   referee->PrepareUIContent(communication::CHAR_GRAPH);
-//   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//   referee_uart->Write(frame.data, frame.length);
-//   osDelay(UI_TASK_DELAY);
-//
-//   float j = 1;
-//   while (true) {
-//     lidar_flag = LIDAR->startMeasure();
-//
-//     // Update chassis GUI
-//     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
-//     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow,
-//     graphGimbal,
-//                      graphCali, graphEmpty2);
-//     referee->PrepareUIContent(communication::FIVE_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     osDelay(UI_TASK_DELAY);
-//
-//     // Update supercapacitor GUI
-//     UI->CapGUIUpdate(std::abs(sin(j)));
-//     UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
-//     referee->PrepareUIContent(communication::SINGLE_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     j += 0.1;
-//     osDelay(UI_TASK_DELAY);
-//
-//     // Update supercapacitor string GUI
-//     UI->CapGUICharUpdate();
-//     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
-//                     UI->getPercentLen());
-//     referee->PrepareUIContent(communication::CHAR_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     osDelay(UI_TASK_DELAY);
-//
-//     // Update current mode GUI
-//     char* modeStr = SpinMode ? spinModeStr : followModeStr;
-//     modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
-//     UI->ModeGuiUpdate(&graphMode, modeColor);
-//     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 15);
-//     referee->PrepareUIContent(communication::CHAR_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     osDelay(UI_TASK_DELAY);
-//
-//     // Update distance GUI
-//     uint32_t distColor = UI_Color_Cyan;
-//     float currDist = LIDAR->distance / 1000.0;
-//     if (currDist < 60) {
-//       snprintf(distanceStr, 15, "%.2f m", currDist);
-//       distColor = UI_Color_Cyan;
-//     } else {
-//       snprintf(distanceStr, 15, "ERROR");
-//       distColor = UI_Color_Pink;
-//     }
-//     UI->DistanceGUIUpdate(&graphDist, distColor);
-//     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
-//     referee->PrepareUIContent(communication::CHAR_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     osDelay(UI_TASK_DELAY);
-//
-//     //    // Update lid status GUI
-//     //    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
-//     //    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
-//     //    UI->LidGuiUpdate(&graphLid, lidColor);
-//     //    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
-//     //    referee->PrepareUIContent(communication::CHAR_GRAPH);
-//     //    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     //    referee_uart->Write(frame.data, frame.length);
-//     //    osDelay(UI_TASK_DELAY);
-//
-//     // Update wheel status GUI
-//     char* wheelStr = flywheelFlag ? wheelOnStr : wheelOffStr;
-//     uint32_t wheelColor = flywheelFlag ? UI_Color_Pink : UI_Color_Green;
-//     UI->WheelGUIUpdate(&graphWheel, wheelColor);
-//     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelStr, 15);
-//     referee->PrepareUIContent(communication::CHAR_GRAPH);
-//     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//     referee_uart->Write(frame.data, frame.length);
-//     osDelay(UI_TASK_DELAY);
-//
-//     // Update self-diagnosis messages
-//     if (!pitch_motor_flag_ui && !pitch_motor_flag) {
-//       UI->AddMessage(msgBuffer1, sizeof msgBuffer1, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       pitch_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!yaw_motor_flag_ui && !yaw_motor_flag) {
-//       UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       yaw_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!sl_motor_flag_ui && !sl_motor_flag) {
-//       UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       sl_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!sr_motor_flag_ui && !sr_motor_flag) {
-//       UI->AddMessage(msgBuffer4, sizeof msgBuffer4, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       sr_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!ld_motor_flag_ui && !ld_motor_flag) {
-//       UI->AddMessage(msgBuffer5, sizeof msgBuffer5, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       ld_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!fl_motor_flag_ui && !fl_motor_flag) {
-//       UI->AddMessage(msgBuffer6, sizeof msgBuffer6, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       fl_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!fr_motor_flag_ui && !fr_motor_flag) {
-//       UI->AddMessage(msgBuffer7, sizeof msgBuffer7, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       fr_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!bl_motor_flag_ui && !bl_motor_flag) {
-//       UI->AddMessage(msgBuffer8, sizeof msgBuffer8, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       bl_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     if (!br_motor_flag_ui && !br_motor_flag) {
-//       UI->AddMessage(msgBuffer9, sizeof msgBuffer9, UI, referee, &graphDiag);
-//       referee->PrepareUIContent(communication::CHAR_GRAPH);
-//       frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//       referee_uart->Write(frame.data, frame.length);
-//       br_motor_flag_ui = true;
-//       osDelay(UI_TASK_DELAY);
-//     }
-//
-//     // clear self-diagnosis messages
-//     if (dbus->keyboard.bit.C) {
-//       for (int i = 1; i <= UI->getMessageCount(); ++i) {
-//         UI->DiagGUIClear(UI, referee, &graphDiag, i);
-//         frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-//         referee_uart->Write(frame.data, frame.length);
-//         osDelay(UI_TASK_DELAY);
-//       }
-//     }
-//   }
-// }
+static communication::UserInterface* UI = nullptr;
 
-//==================================================================================================
-// Fortress
-//==================================================================================================
-
-const osThreadAttr_t FortressTaskAttribute = {.name = "FortressTask",
-                                              .attr_bits = osThreadDetached,
-                                              .cb_mem = nullptr,
-                                              .cb_size = 0,
-                                              .stack_mem = nullptr,
-                                              .stack_size = 256 * 4,
-                                              .priority = (osPriority_t)osPriorityNormal,
-                                              .tz_module = 0,
-                                              .reserved = 0};
-
-osThreadId_t FortressTaskHandle;
-
-static bsp::GPIO* left = nullptr;
-static bsp::GPIO* right = nullptr;
-
-static control::MotorCANBase* elevator_left_motor = nullptr;
-static control::MotorCANBase* elevator_right_motor = nullptr;
-static control::MotorCANBase* fortress_motor = nullptr;
-static control::Fortress* fortress = nullptr;
-
-void FortressTask(void* arg) {
+void UITask(void* arg) {
   UNUSED(arg);
 
-  control::MotorCANBase* motors_can2_fortress[] = {elevator_left_motor, elevator_right_motor,
-                                                   fortress_motor};
+  while (!selftestStart) osDelay(100);
 
+  //   int tryLIDAR = 0;
+  //   while (!LIDAR->begin()) {
+  //     if (++tryLIDAR >= 5) break;
+  //     osDelay(10);
+  //   }
+  //   tryLIDAR = 0;
+  //   while (!LIDAR->startFilter()) {
+  //     if (++tryLIDAR >= 5) break;
+  //     osDelay(10);
+  //   }
+
+  UI->SetID(referee->game_robot_status.robot_id);
+
+  communication::package_t frame;
+  communication::graphic_data_t graphGimbal;
+  communication::graphic_data_t graphChassis;
+  communication::graphic_data_t graphArrow;
+  communication::graphic_data_t graphCali;
+  communication::graphic_data_t graphEmpty2;
+  communication::graphic_data_t graphCrosshair1;
+  communication::graphic_data_t graphCrosshair2;
+  communication::graphic_data_t graphCrosshair3;
+  communication::graphic_data_t graphCrosshair4;
+  communication::graphic_data_t graphCrosshair5;
+  communication::graphic_data_t graphCrosshair6;
+  communication::graphic_data_t graphCrosshair7;
+  communication::graphic_data_t graphBarFrame;
+  communication::graphic_data_t graphBar;
+  communication::graphic_data_t graphPercent;
+  communication::graphic_data_t graphDiag;
+  communication::graphic_data_t graphMode;
+  communication::graphic_data_t graphDist;
+  //  communication::graphic_data_t graphLid;
+  communication::graphic_data_t graphWheel;
+
+  char msgBuffer1[30] = "PITCH MOTOR UNCONNECTED";
+  char msgBuffer2[30] = "YAW MOTOR UNCONNECTED";
+  char msgBuffer3[30] = "L SHOOTER MOTOR UNCONNECTED";
+  char msgBuffer4[30] = "R SHOOTER MOTOR UNCONNECTED";
+  char msgBuffer5[30] = "LOAD MOTOR UNCONNECTED";
+  char msgBuffer6[30] = "FRONT L MOTOR UNCONNECTED";
+  char msgBuffer7[30] = "FRONT R MOTOR UNCONNECTED";
+  char msgBuffer8[30] = "BACK L MOTOR UNCONNECTED";
+  char msgBuffer9[30] = "BACK R MOTOR UNCONNECTED";
+
+  bool pitch_motor_flag_ui = pitch_motor_flag;
+  bool yaw_motor_flag_ui = yaw_motor_flag;
+  bool sl_motor_flag_ui = sl_motor_flag;
+  bool sr_motor_flag_ui = sr_motor_flag;
+  bool ld_motor_flag_ui = ld_motor_flag;
+  bool fl_motor_flag_ui = fl_motor_flag;
+  bool fr_motor_flag_ui = fr_motor_flag;
+  bool bl_motor_flag_ui = bl_motor_flag;
+  bool br_motor_flag_ui = br_motor_flag;
+
+  // Initialize chassis GUI
+  UI->ChassisGUIInit(&graphChassis, &graphArrow, &graphGimbal, &graphCali, &graphEmpty2);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
+                   graphCali, graphEmpty2);
+  referee->PrepareUIContent(communication::FIVE_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize crosshair GUI
+  UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                   &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
+                   graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
+                   graphCrosshair7);
+  referee->PrepareUIContent(communication::SEVEN_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize supercapacitor GUI
+  UI->CapGUIInit(&graphBarFrame, &graphBar);
+  UI->GraphRefresh((uint8_t*)(&referee->graphic_double), 2, graphBarFrame, graphBar);
+  referee->PrepareUIContent(communication::DOUBLE_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize Supercapacitor string GUI
+  UI->CapGUICharInit(&graphPercent);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
+                  UI->getPercentLen());
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize self-diagnosis GUI
+  char diagStr[30] = "";
+  UI->DiagGUIInit(&graphDiag, 30);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDiag, diagStr, 2);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize current mode GUI
+  char followModeStr[15] = "FOLLOW MODE";
+  char spinModeStr[15] = "SPIN  MODE";
+  uint32_t modeColor = UI_Color_Orange;
+  UI->ModeGUIInit(&graphMode);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, followModeStr,
+                  sizeof followModeStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize distance GUI
+  char distanceStr[15] = "0.0";
+  UI->DistanceGUIInit(&graphDist);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr,
+                  sizeof distanceStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // TODO: add lid UI in the future
+
+  //  // Initialize lid status GUI
+  //  char lidOpenStr[15] = "LID OPENED";
+  //  char lidCloseStr[15] = "LID CLOSED";
+  //  UI->LidGUIInit(&graphLid);
+  //  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof
+  //  lidOpenStr); referee->PrepareUIContent(communication::CHAR_GRAPH); frame =
+  //  referee->Transmit(communication::STUDENT_INTERACTIVE); referee_uart->Write(frame.data,
+  //  frame.length); osDelay(UI_TASK_DELAY);
+
+  // Initialize flywheel status GUI
+  char wheelOnStr[15] = "FLYWHEEL ON";
+  char wheelOffStr[15] = "FLYWHEEL OFF";
+  UI->WheelGUIInit(&graphWheel);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelOffStr,
+                  sizeof wheelOffStr);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  float j = 1;
   while (true) {
-    if (dbus->keyboard.bit.V || dbus->swr == remote::DOWN) break;
-    osDelay(100);
-  }
+    //     lidar_flag = LIDAR->startMeasure();
 
-  while (!imu->CaliDone()) osDelay(100);
+    // Update chassis GUI
+    UI->ChassisGUIUpdate(relative_angle, calibration_flag);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
+                     graphCali, graphEmpty2);
+    referee->PrepareUIContent(communication::FIVE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
 
-  while (!fortress->Calibrate()) {
-    while (Dead) osDelay(100);
-    if (fortress->Error()) {
-      while (true) {
-        fortress->Stop(control::ELEVATOR);
-        fortress->Stop(control::SPINNER);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(100);
-      }
+    // Update supercapacitor GUI
+    UI->CapGUIUpdate(std::abs(sin(j)));
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_single), 1, graphBar);
+    referee->PrepareUIContent(communication::SINGLE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    j += 0.1;
+    osDelay(UI_TASK_DELAY);
+
+    // Update supercapacitor string GUI
+    UI->CapGUICharUpdate();
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphPercent, UI->getPercentStr(),
+                    UI->getPercentLen());
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update current mode GUI
+    char* modeStr = SpinMode ? spinModeStr : followModeStr;
+    modeColor = SpinMode ? UI_Color_Green : UI_Color_Orange;
+    UI->ModeGuiUpdate(&graphMode, modeColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphMode, modeStr, 15);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update distance GUI
+    //     uint32_t distColor = UI_Color_Cyan;
+    //     float currDist = LIDAR->distance / 1000.0;
+    //     if (currDist < 60) {
+    //       snprintf(distanceStr, 15, "%.2f m", currDist);
+    //       distColor = UI_Color_Cyan;
+    //     } else {
+    //       snprintf(distanceStr, 15, "ERROR");
+    //       distColor = UI_Color_Pink;
+    //     }
+    //     UI->DistanceGUIUpdate(&graphDist, distColor);
+    //     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
+    //     referee->PrepareUIContent(communication::CHAR_GRAPH);
+    //     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    //     referee_uart->Write(frame.data, frame.length);
+    //     osDelay(UI_TASK_DELAY);
+
+    //    // Update lid status GUI
+    //    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
+    //    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
+    //    UI->LidGuiUpdate(&graphLid, lidColor);
+    //    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
+    //    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    //    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    //    referee_uart->Write(frame.data, frame.length);
+    //    osDelay(UI_TASK_DELAY);
+
+    // Update wheel status GUI
+    char* wheelStr = flywheelFlag ? wheelOnStr : wheelOffStr;
+    uint32_t wheelColor = flywheelFlag ? UI_Color_Pink : UI_Color_Green;
+    UI->WheelGUIUpdate(&graphWheel, wheelColor);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphWheel, wheelStr, 15);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update self-diagnosis messages
+    if (!pitch_motor_flag_ui && !pitch_motor_flag) {
+      UI->AddMessage(msgBuffer1, sizeof msgBuffer1, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      pitch_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
     }
-    fortress->Stop(control::SPINNER);
-    control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-    osDelay(FORTRESS_TASK_DELAY);
-  }
 
-  while (true) {
-    ChangeFortressMode.input(dbus->keyboard.bit.X);
-    if (ChangeFortressMode.posEdge()) FortressMode = !FortressMode;
+    if (!yaw_motor_flag_ui && !yaw_motor_flag) {
+      UI->AddMessage(msgBuffer2, sizeof msgBuffer2, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      yaw_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
 
-    if (FortressMode) {
-      int i = 0;
-      while (true) {
-        if (++i > 100 / 2 && fortress->Finished()) break;
-        if (fortress->Error()) {
-          while (true) {
-            fortress->Stop(control::ELEVATOR);
-            fortress->Stop(control::SPINNER);
-            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-            osDelay(100);
-          }
-        }
-        fortress->Transform(true);
-        fortress->Spin((float)referee->game_robot_status.chassis_power_limit,
-                       referee->power_heat_data.chassis_power,
-                       (float)referee->power_heat_data.chassis_power_buffer);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(FORTRESS_TASK_DELAY);
-      }
-    } else {
-      int i = 0;
-      while (true) {
-        if (++i > 100 / 2 && fortress->Finished()) break;
-        if (fortress->Error()) {
-          while (true) {
-            fortress->Stop(control::ELEVATOR);
-            fortress->Stop(control::SPINNER);
-            control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-            osDelay(100);
-          }
-        }
-        fortress->Transform(false);
-        fortress->Stop(control::SPINNER);
-        control::MotorCANBase::TransmitOutput(motors_can2_fortress, 3);
-        osDelay(FORTRESS_TASK_DELAY);
+    if (!sl_motor_flag_ui && !sl_motor_flag) {
+      UI->AddMessage(msgBuffer3, sizeof msgBuffer3, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      sl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!sr_motor_flag_ui && !sr_motor_flag) {
+      UI->AddMessage(msgBuffer4, sizeof msgBuffer4, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      sr_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!ld_motor_flag_ui && !ld_motor_flag) {
+      UI->AddMessage(msgBuffer5, sizeof msgBuffer5, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      ld_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!fl_motor_flag_ui && !fl_motor_flag) {
+      UI->AddMessage(msgBuffer6, sizeof msgBuffer6, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      fl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!fr_motor_flag_ui && !fr_motor_flag) {
+      UI->AddMessage(msgBuffer7, sizeof msgBuffer7, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      fr_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!bl_motor_flag_ui && !bl_motor_flag) {
+      UI->AddMessage(msgBuffer8, sizeof msgBuffer8, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      bl_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    if (!br_motor_flag_ui && !br_motor_flag) {
+      UI->AddMessage(msgBuffer9, sizeof msgBuffer9, UI, referee, &graphDiag);
+      referee->PrepareUIContent(communication::CHAR_GRAPH);
+      frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+      referee_uart->Write(frame.data, frame.length);
+      br_motor_flag_ui = true;
+      osDelay(UI_TASK_DELAY);
+    }
+
+    // clear self-diagnosis messages
+    if (dbus->keyboard.bit.C) {
+      for (int i = 1; i <= UI->getMessageCount(); ++i) {
+        UI->DiagGUIClear(UI, referee, &graphDiag, i);
+        frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+        referee_uart->Write(frame.data, frame.length);
+        osDelay(UI_TASK_DELAY);
       }
     }
   }
@@ -1077,12 +1091,13 @@ void RM_RTOS_Init(void) {
   fortress_data.fortressMotor = fortress_motor;
   fortress = new control::Fortress(fortress_data);
 
+  //  supercap = new control::SuperCap(can2, 0x301);
+
   buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
   OLED = new display::OLED(&hi2c2, 0x3C);
 
   //  LIDAR = new distance::LIDAR07_UART(&huart1, [](uint32_t milli) { osDelay(milli); });
-  //  UI = new communication::UserInterface(UI_Data_RobotID_BStandard3,
-  //  UI_Data_CilentID_BStandard3);
+  UI = new communication::UserInterface();
 }
 
 //==================================================================================================
@@ -1095,9 +1110,9 @@ void RM_RTOS_Threads_Init(void) {
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
-  FortressTaskHandle = osThreadNew(FortressTask, nullptr, &FortressTaskAttribute);
+  fortressTaskHandle = osThreadNew(fortressTask, nullptr, &fortressTaskAttribute);
   selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
-  //  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
+  UITaskHandle = osThreadNew(UITask, nullptr, &UITaskAttribute);
 }
 
 //==================================================================================================
@@ -1154,7 +1169,7 @@ void KillAll() {
   }
 }
 
-static bool debug = true;
+static bool debug = false;
 static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
@@ -1166,6 +1181,12 @@ void RM_RTOS_Default_Task(const void* arg) {
       Dead = true;
       KillAll();
     }
+
+    //    SuperCapKey.input(dbus->keyboard.bit.CTRL);
+    //    if (SuperCapKey.posEdge())
+    //      UseSuperCap = !UseSuperCap;
+    //    if (supercap->info.energy < 15)
+    //      UseSuperCap = false;
 
     if (debug) {
       set_cursor(0, 0);
