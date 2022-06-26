@@ -112,7 +112,6 @@ void KillAll() {
     }
 }
 
-static volatile int output = 0;
 void chassisTask(void* arg) {
   UNUSED(arg);
   osDelay(500);  // DBUS initialization needs time
@@ -124,40 +123,20 @@ void chassisTask(void* arg) {
 
   control::MotorCANBase *motors[] = {motor};
 
-  int time = 0;
-  int direction = 0;
-  int lastDir = 0;
+  int output = 1000;
   while (true) {
-    direction = rand() % 2 == 1 ? 1 : -1;
-//    direction = 1;
-    if (lastDir != direction) time = rand() % 100 + 200;
-    else time = rand() % 100 + 100;
-//    time = rand() % 150 + 200;
-
-    lastDir = direction;
-    output = direction * (rand() % 1500 + 2000);
-
-    int i = 0;
-    while (true) {
-      while (Dead) osDelay(100);
-      if (++i >= time / 2)
-        break;
-      motor->SetOutput(output);
-      control::MotorCANBase::TransmitOutput(motors, 1);
-      leftEdge.input(!inputLeft->Read());
-      rightEdge.input(!inputRight->Read());
-      if (leftEdge.posEdge()) {
-        i = 0;
-        time = 800;
-        output = -1100;  // TODO: change to go to center
-      }
-      if (rightEdge.posEdge()) {
-        i = 0;
-        time = 800;
-        output = 1100;  // TODO: change to go to center
-      }
-      osDelay(2);
+    while (Dead) osDelay(100);
+    motor->SetOutput(output);
+    control::MotorCANBase::TransmitOutput(motors, 1);
+    leftEdge.input(!inputLeft->Read());
+    rightEdge.input(!inputRight->Read());
+    if (leftEdge.posEdge()){
+      output = -1000;
     }
+    if (rightEdge.posEdge()){
+      output = 1000;
+    }
+    osDelay(2);
   }
 }
 
@@ -209,7 +188,7 @@ void RM_RTOS_Default_Task(const void* args) {
     print("Chassis Buffer: %d / 200\r\n", referee->power_heat_data.chassis_power_buffer);
     print("Maximum Power: %.3f\r\n", maxPower);
     print("Lowest Buffer Power: %d\r\n", minBuffer);
-    print("Output: %d\r\n", output);
+//    print("Output: %d\r\n", output);
 
     osDelay(100);
   }
