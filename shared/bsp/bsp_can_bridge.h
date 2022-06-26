@@ -25,9 +25,9 @@
 namespace bsp {
 
 typedef struct {
-  float vx;
-  float vy;
-  float wz;
+  uint8_t vx;
+  uint8_t vy;
+  uint8_t wz;
 } bridge_data_t;
 
 class CanBridge {

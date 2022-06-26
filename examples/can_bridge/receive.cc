@@ -38,7 +38,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("vx: %f\r\nvy: %f\r\nwz: %f\r\n", send->cmd.vx, send->cmd.vy, send->cmd.wz);
+    print("vx: %d\r\nvy: %d\r\nwz: %d\r\n", send->cmd.vx, send->cmd.vy, send->cmd.wz);
     osDelay(100);
   }
 }

@@ -52,28 +52,28 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
   steering_data.motor = _chassis->fl_steer_motor;
   steering_data.align_detect_func = _chassis->fl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -0.858458848;
-  steering_data.calibrate_offset = -0.2;
+  steering_data.calibrate_offset = 0;
   fl_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 0;
   steering_data.motor = _chassis->fr_steer_motor;
   steering_data.align_detect_func = _chassis->fr_steer_motor_detect_func;
   // steering_data.calibrate_offset = 0.858458848;
-  steering_data.calibrate_offset = 0.1;
+  steering_data.calibrate_offset = 0;
   fr_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 0;
   steering_data.motor = _chassis->bl_steer_motor;
   steering_data.align_detect_func = _chassis->bl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -2.283133461;
-  steering_data.calibrate_offset = 0.307954;
+  steering_data.calibrate_offset = 0;
   bl_steer_motor = new control::SteeringMotor(steering_data);
 
   steering_data.offset_angle = 0;
   steering_data.motor = _chassis->br_steer_motor;
   steering_data.align_detect_func = _chassis->br_steer_motor_detect_func;
   // steering_data.calibrate_offset = 2.283133461;
-  steering_data.calibrate_offset = 0.22;
+  steering_data.calibrate_offset = 0;
   br_steer_motor = new control::SteeringMotor(steering_data);
   // Init Steering Motors complete
 
@@ -152,11 +152,6 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   float theta2_diff;
   float theta3_diff;
 
-  float sign0 = 1.0;
-  float sign1 = 1.0;
-  float sign2 = 1.0;
-  float sign3 = 1.0;
-
   // only if effort > 0.1 update theta difference
   // otherwise, diff = 0.0
   if (effort > 0.1) {
@@ -170,21 +165,10 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
     theta2_diff = wrap<float>(theta2_new - theta2, -PI, PI);
     theta3_diff = wrap<float>(theta3_new - theta3, -PI, PI);
 
-    sign0 = 1;
-    sign1 = 1;
-    sign2 = 1;
-    sign3 = 1;
-
     theta0 = wrap<float>(theta0 + theta0_diff, -PI, PI);
     theta1 = wrap<float>(theta1 + theta1_diff, -PI, PI);
     theta2 = wrap<float>(theta2 + theta2_diff, -PI, PI);
     theta3 = wrap<float>(theta3 + theta3_diff, -PI, PI);
-
-    static int i = 0;
-    if (++i >= 50) {
-      i = 0;
-      print("%10.6f, %10.6f, %10.6f, %10.6f\r\n", theta0, theta1, theta2, theta3);
-    }
   } else {
     theta0_diff = 0;
     theta1_diff = 0;
@@ -209,10 +193,10 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   float v3 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
 
   // 16 is a arbitrary factor
-  v0 = sign0 * v0 * WHEEL_SPEED_FACTOR;
-  v1 = sign1 * v1 * WHEEL_SPEED_FACTOR;
-  v2 = sign2 * v2 * WHEEL_SPEED_FACTOR;
-  v3 = sign3 * v3 * WHEEL_SPEED_FACTOR;
+  v0 = v0 * WHEEL_SPEED_FACTOR;
+  v1 = v1 * WHEEL_SPEED_FACTOR;
+  v2 = v2 * WHEEL_SPEED_FACTOR;
+  v3 = v3 * WHEEL_SPEED_FACTOR;
 
   // Update Wheels
   float PID_output[MOTOR_NUM];

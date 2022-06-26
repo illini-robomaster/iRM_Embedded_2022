@@ -37,13 +37,13 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   while (true) {
-    send->cmd.vx = -1;
-    send->cmd.vy = -10;
-    send->cmd.wz = -PI;
+    send->cmd.vx = 1;
+    send->cmd.vy = 3;
+    send->cmd.wz = 5;
     send->TransmitOutput();
     osDelay(1000);
-    send->cmd.vx = PI;
-    send->cmd.vy = 10;
+    send->cmd.vx = 5;
+    send->cmd.vy = 3;
     send->cmd.wz = 1;
     send->TransmitOutput();
     osDelay(1000);
