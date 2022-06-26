@@ -154,6 +154,8 @@ class UserInterface {
   int getPercentLen() { return percentLen_; }
   int getMessageCount() { return messageCount_; }
 
+  int Robot_ID_;
+  int Client_ID_;
  private:
   graphic_data_t* gimbal_;
   graphic_data_t* chassis_;
@@ -163,8 +165,6 @@ class UserInterface {
   graphic_data_t* percent_;
   graphic_data_t* diag_;
   graphic_data_t* cali_;
-  int Robot_ID_;
-  int Client_ID_;
   int centerX_ = 960;
   int centerY_ = 540;
   int chassisX_ = 1300;
