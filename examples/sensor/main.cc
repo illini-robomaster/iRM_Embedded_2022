@@ -28,7 +28,7 @@ static bsp::GPIO* input = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  input = new bsp::GPIO(IN2_GPIO_Port, IN2_Pin);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
