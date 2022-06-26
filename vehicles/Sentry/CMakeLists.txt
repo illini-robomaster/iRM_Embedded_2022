@@ -31,3 +31,7 @@ irm_add_arm_executable(Sentry_base
 irm_add_arm_executable(Sentry_speed
     TARGET DJI_Board_TypeC
     SOURCES speed.cc)
+
+irm_add_arm_executable(Sentry_speed_constant
+    TARGET DJI_Board_TypeC
+    SOURCES constant.cc)
