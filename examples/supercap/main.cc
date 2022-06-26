@@ -22,8 +22,8 @@
 
 #include "bsp_print.h"
 #include "cmsis_os.h"
-#include "supercap.h"
 #include "oled.h"
+#include "supercap.h"
 
 static bsp::CAN* can = nullptr;
 static control::SuperCap* supercap = nullptr;
@@ -45,8 +45,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   OLED->OperateGram(display::PEN_CLEAR);
 
   while (true) {
-    OLED->Printf(0, 0, "Supercap: %.2f %.2f", supercap->info.voltage,
-                 supercap->info.energy);
+    OLED->Printf(0, 0, "Supercap: %.2f %.2f", supercap->info.voltage, supercap->info.energy);
     osDelay(100);
     OLED->RefreshGram();
 

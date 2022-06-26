@@ -28,9 +28,60 @@
 
 namespace communication {
 
-UserInterface::UserInterface(int Robot_ID, int Client_ID) {
-  Robot_ID_ = Robot_ID;
-  Client_ID_ = Client_ID;
+bool UserInterface::SetID(int Robot_ID) {
+  switch (Robot_ID) {
+    case 1:
+      Robot_ID_ = UI_Data_RobotID_RHero;
+      Client_ID_ = UI_Data_CilentID_RHero;
+      break;
+    case 2:
+      Robot_ID_ = UI_Data_RobotID_REngineer;
+      Client_ID_ = UI_Data_CilentID_REngineer;
+      break;
+    case 3:
+      Robot_ID_ = UI_Data_RobotID_RStandard1;
+      Client_ID_ = UI_Data_CilentID_RStandard1;
+      break;
+    case 4:
+      Robot_ID_ = UI_Data_RobotID_RStandard2;
+      Client_ID_ = UI_Data_CilentID_RStandard2;
+      break;
+    case 5:
+      Robot_ID_ = UI_Data_RobotID_RStandard3;
+      Client_ID_ = UI_Data_CilentID_RStandard3;
+      break;
+    case 6:
+      Robot_ID_ = UI_Data_RobotID_RAerial;
+      Client_ID_ = UI_Data_CilentID_RAerial;
+      break;
+    case 101:
+      Robot_ID_ = UI_Data_RobotID_BHero;
+      Client_ID_ = UI_Data_CilentID_BHero;
+      break;
+    case 102:
+      Robot_ID_ = UI_Data_RobotID_BEngineer;
+      Client_ID_ = UI_Data_CilentID_BEngineer;
+      break;
+    case 103:
+      Robot_ID_ = UI_Data_RobotID_BStandard1;
+      Client_ID_ = UI_Data_CilentID_BStandard1;
+      break;
+    case 104:
+      Robot_ID_ = UI_Data_RobotID_BStandard2;
+      Client_ID_ = UI_Data_CilentID_BStandard2;
+      break;
+    case 105:
+      Robot_ID_ = UI_Data_RobotID_BStandard3;
+      Client_ID_ = UI_Data_CilentID_BStandard3;
+      break;
+    case 106:
+      Robot_ID_ = UI_Data_RobotID_BAerial;
+      Client_ID_ = UI_Data_CilentID_BAerial;
+      break;
+    default:
+      return false;
+  }
+  return true;
 }
 
 /**

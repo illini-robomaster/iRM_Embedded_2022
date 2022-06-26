@@ -93,7 +93,7 @@ namespace communication {
 
 class UserInterface {
  public:
-  UserInterface(int Robot_ID, int Client_ID);
+  bool SetID(int Robot_ID);
   void LineDraw(graphic_data_t* image, const char name[3], uint32_t graph_operate,
                 uint32_t graph_layer, uint32_t graph_color, uint32_t graph_width, uint32_t start_x,
                 uint32_t start_y, uint32_t end_x, uint32_t end_y);
@@ -154,9 +154,9 @@ class UserInterface {
   int getPercentLen() { return percentLen_; }
   int getMessageCount() { return messageCount_; }
 
+ private:
   int Robot_ID_;
   int Client_ID_;
- private:
   graphic_data_t* gimbal_;
   graphic_data_t* chassis_;
   graphic_data_t* arrow_;
