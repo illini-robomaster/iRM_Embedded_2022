@@ -18,6 +18,8 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-add_subdirectory(Fortress)
-add_subdirectory(Sentry)
-add_subdirectory(Steering)
+project(Steering ASM C CXX)
+
+irm_add_arm_executable(Steering
+    TARGET DJI_Board_TypeC
+    SOURCES main.cc)

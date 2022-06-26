@@ -24,14 +24,14 @@
 #include "main.h"
 #include "motor.h"
 
-#define TARGET_SPEED 160
+#define TARGET_SPEED 30
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan2, 0x201, false);
+  can = new bsp::CAN(&hcan1, 0x201, true);
   motor = new control::Motor3508(can, 0x201);
 }
 
@@ -41,7 +41,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  while (true) {
+  while (true) { 
     float diff = motor->GetOmegaDelta(TARGET_SPEED);
     int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);
