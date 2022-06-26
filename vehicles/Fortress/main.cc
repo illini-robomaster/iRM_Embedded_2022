@@ -674,26 +674,12 @@ const osThreadAttr_t UITaskAttribute = {.name = "UITask",
 
 osThreadId_t UITaskHandle;
 
-// static distance::LIDAR07_UART* LIDAR = nullptr;
 static communication::UserInterface* UI = nullptr;
 
 void UITask(void* arg) {
   UNUSED(arg);
 
   while (!selftestStart) osDelay(100);
-
-  //   int tryLIDAR = 0;
-  //   while (!LIDAR->begin()) {
-  //     if (++tryLIDAR >= 5) break;
-  //     osDelay(10);
-  //   }
-  //   tryLIDAR = 0;
-  //   while (!LIDAR->startFilter()) {
-  //     if (++tryLIDAR >= 5) break;
-  //     osDelay(10);
-  //   }
-
-  UI->SetID(referee->game_robot_status.robot_id);
 
   communication::package_t frame;
   communication::graphic_data_t graphGimbal;
@@ -708,6 +694,11 @@ void UITask(void* arg) {
   communication::graphic_data_t graphCrosshair5;
   communication::graphic_data_t graphCrosshair6;
   communication::graphic_data_t graphCrosshair7;
+  communication::graphic_data_t graphCrosschar1;
+  communication::graphic_data_t graphCrosschar2;
+  communication::graphic_data_t graphCrosschar3;
+  communication::graphic_data_t graphCrosschar4;
+  communication::graphic_data_t graphCrosschar5;
   communication::graphic_data_t graphBarFrame;
   communication::graphic_data_t graphBar;
   communication::graphic_data_t graphPercent;
@@ -747,12 +738,46 @@ void UITask(void* arg) {
   osDelay(UI_TASK_DELAY);
 
   // Initialize crosshair GUI
-  UI->CrosshairGUI(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
-                   &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
+  UI->CrosshairGUIInit(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                         &graphCrosshair5, &graphCrosshair6, &graphCrosshair7);
   UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
                    graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6,
                    graphCrosshair7);
   referee->PrepareUIContent(communication::SEVEN_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+
+  // Initialize crosshair character GUI
+  char crosschar1[] = "3m";
+  char crosschar2[] = "5m";
+  char crosschar3[] = "7m";
+  char crosschar4[] = "10m";
+  char crosschar5[] = "12m";
+  UI->CrosshairCharGUIInit(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3,
+                           &graphCrosschar4, &graphCrosschar5);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar2);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar3, crosschar3, sizeof crosschar3);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar4, crosschar4, sizeof crosschar4);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
+  frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+  referee_uart->Write(frame.data, frame.length);
+  osDelay(UI_TASK_DELAY);
+  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar5, crosschar5, sizeof crosschar5);
+  referee->PrepareUIContent(communication::CHAR_GRAPH);
   frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
@@ -805,17 +830,6 @@ void UITask(void* arg) {
   referee_uart->Write(frame.data, frame.length);
   osDelay(UI_TASK_DELAY);
 
-  // TODO: add lid UI in the future
-
-  //  // Initialize lid status GUI
-  //  char lidOpenStr[15] = "LID OPENED";
-  //  char lidCloseStr[15] = "LID CLOSED";
-  //  UI->LidGUIInit(&graphLid);
-  //  UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidOpenStr, sizeof
-  //  lidOpenStr); referee->PrepareUIContent(communication::CHAR_GRAPH); frame =
-  //  referee->Transmit(communication::STUDENT_INTERACTIVE); referee_uart->Write(frame.data,
-  //  frame.length); osDelay(UI_TASK_DELAY);
-
   // Initialize flywheel status GUI
   char wheelOnStr[15] = "FLYWHEEL ON";
   char wheelOffStr[15] = "FLYWHEEL OFF";
@@ -829,13 +843,54 @@ void UITask(void* arg) {
 
   float j = 1;
   while (true) {
-    //     lidar_flag = LIDAR->startMeasure();
 
     // Update chassis GUI
     UI->ChassisGUIUpdate(relative_angle, calibration_flag);
     UI->GraphRefresh((uint8_t*)(&referee->graphic_five), 5, graphChassis, graphArrow, graphGimbal,
                      graphCali, graphEmpty2);
     referee->PrepareUIContent(communication::FIVE_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update crosshair GUI
+    // referee->game_robot_status.shooter_id1_17mm_speed_limit
+    // TODO: change shooter speed
+    UI->CrosshairGUIUpdate(&graphCrosshair1, &graphCrosshair2, &graphCrosshair3, &graphCrosshair4,
+                         &graphCrosshair5, &graphCrosshair6, &graphCrosshair7,
+                         15);
+    UI->GraphRefresh((uint8_t*)(&referee->graphic_seven), 7, graphCrosshair1, graphCrosshair2,
+                     graphCrosshair3, graphCrosshair4, graphCrosshair5, graphCrosshair6, graphCrosshair7);
+    referee->PrepareUIContent(communication::SEVEN_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+
+    // Update crosshair character GUI
+    UI->CrossCharGUIUpdate(&graphCrosschar1, &graphCrosschar2, &graphCrosschar3, &graphCrosschar4,
+                           &graphCrosschar5, 15);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar1, crosschar1, sizeof crosschar1);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar2, crosschar2, sizeof crosschar2);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar3, crosschar3, sizeof crosschar3);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar4, crosschar4, sizeof crosschar4);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
+    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
+    referee_uart->Write(frame.data, frame.length);
+    osDelay(UI_TASK_DELAY);
+    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphCrosschar5, crosschar5, sizeof crosschar5);
+    referee->PrepareUIContent(communication::CHAR_GRAPH);
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
@@ -867,33 +922,6 @@ void UITask(void* arg) {
     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
     referee_uart->Write(frame.data, frame.length);
     osDelay(UI_TASK_DELAY);
-
-    // Update distance GUI
-    //     uint32_t distColor = UI_Color_Cyan;
-    //     float currDist = LIDAR->distance / 1000.0;
-    //     if (currDist < 60) {
-    //       snprintf(distanceStr, 15, "%.2f m", currDist);
-    //       distColor = UI_Color_Cyan;
-    //     } else {
-    //       snprintf(distanceStr, 15, "ERROR");
-    //       distColor = UI_Color_Pink;
-    //     }
-    //     UI->DistanceGUIUpdate(&graphDist, distColor);
-    //     UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphDist, distanceStr, 15);
-    //     referee->PrepareUIContent(communication::CHAR_GRAPH);
-    //     frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-    //     referee_uart->Write(frame.data, frame.length);
-    //     osDelay(UI_TASK_DELAY);
-
-    //    // Update lid status GUI
-    //    char lidStr[15] = lidFlag ? lidOpenStr : lidCloseStr;
-    //    uint32_t lidColor = lidFlag ? UI_Color_Pink : UI_Color_Green;
-    //    UI->LidGuiUpdate(&graphLid, lidColor);
-    //    UI->CharRefresh((uint8_t*)(&referee->graphic_character), graphLid, lidStr, 15);
-    //    referee->PrepareUIContent(communication::CHAR_GRAPH);
-    //    frame = referee->Transmit(communication::STUDENT_INTERACTIVE);
-    //    referee_uart->Write(frame.data, frame.length);
-    //    osDelay(UI_TASK_DELAY);
 
     // Update wheel status GUI
     char* wheelStr = flywheelFlag ? wheelOnStr : wheelOffStr;

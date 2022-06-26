@@ -427,24 +427,117 @@ void UserInterface::ChassisGUIUpdate(float relative, bool flag) {
   CircleDraw(cali_, "cal", UI_Graph_Change, 0, color, 14, centerX_ + 925, centerY_ + 330, 7);
 }
 
-void UserInterface::CrosshairGUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
-                                 graphic_data_t* crosshair3, graphic_data_t* crosshair4,
-                                 graphic_data_t* crosshair5, graphic_data_t* crosshair6,
-                                 graphic_data_t* crosshair7) {
-  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 40,
-           centerX_ + 50, centerY_ - 40);
-  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 55,
-           centerX_ + 30, centerY_ - 55);
-  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 60,
-           centerX_ + 30, centerY_ - 60);
-  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 50, centerY_ - 70,
-           centerX_ + 50, centerY_ - 70);
-  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 80,
-           centerX_ + 30, centerY_ - 80);
-  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - 30, centerY_ - 90,
-           centerX_ + 30, centerY_ - 90);
-  LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_, centerY_ - 30, centerX_,
-           centerY_ - 100);
+// Speed limit 15 m/s
+void UserInterface::CrosshairGUIInit(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                                     graphic_data_t* crosshair7) {
+  int offset = 12;
+  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
+           centerX_ - offset + 50, centerY_ - 30);
+  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 65,
+           centerX_ - offset + 30, centerY_ - 65);
+  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 120,
+           centerX_ - offset + 30, centerY_ - 120);
+  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 214,
+           centerX_ - offset + 50, centerY_ - 214);
+  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 280,
+           centerX_ - offset + 30, centerY_ - 280);
+  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 10, centerY_ - 370,
+           centerX_ - offset + 10, centerY_ - 370);
+  LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset, centerY_ - 30, centerX_ - offset,
+           centerY_ - 400);
+}
+
+void UserInterface::CrosshairCharGUIInit(graphic_data_t *crosschar1, graphic_data_t *crosschar2,
+                                         graphic_data_t *crosschar3, graphic_data_t *crosschar4,
+                                         graphic_data_t *crosschar5) {
+    CharDraw(crosschar1, "cc1", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 30);
+    CharDraw(crosschar2, "cc2", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 65);
+    CharDraw(crosschar3, "cc3", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 120);
+    CharDraw(crosschar4, "cc4", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 214);
+    CharDraw(crosschar5, "cc5", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 280);
+}
+
+void UserInterface::CrosshairGUIUpdate(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
+                                     graphic_data_t* crosshair3, graphic_data_t* crosshair4,
+                                     graphic_data_t* crosshair5, graphic_data_t* crosshair6,
+                                     graphic_data_t* crosshair7, int shootSpeed) {
+    int offset = 12;
+    if (shootSpeed == 15){
+      LineDraw(crosshair1, "ch1", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
+               centerX_ - offset + 50, centerY_ - 30);
+      LineDraw(crosshair2, "ch2", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 65,
+               centerX_ - offset + 30, centerY_ - 65);
+      LineDraw(crosshair3, "ch3", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 120,
+               centerX_ - offset + 30, centerY_ - 120);
+      LineDraw(crosshair4, "ch4", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 214,
+               centerX_ - offset + 50, centerY_ - 214);
+      LineDraw(crosshair5, "ch5", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 280,
+               centerX_ - offset + 30, centerY_ - 280);
+      LineDraw(crosshair6, "ch6", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 10, centerY_ - 370,
+               centerX_ - offset + 10, centerY_ - 370);
+      LineDraw(crosshair7, "ch7", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset, centerY_ - 30, centerX_ - offset,
+               centerY_ - 400);
+    }
+    if (shootSpeed == 18){
+      LineDraw(crosshair1, "ch1", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
+               centerX_ - offset + 50, centerY_ - 30);
+      LineDraw(crosshair2, "ch2", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 40,
+               centerX_ - offset + 30, centerY_ - 40);
+      LineDraw(crosshair3, "ch3", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 65,
+               centerX_ - offset + 30, centerY_ - 65);
+      LineDraw(crosshair4, "ch4", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 113,
+               centerX_ - offset + 50, centerY_ - 113);
+      LineDraw(crosshair5, "ch5", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 225,
+               centerX_ - offset + 30, centerY_ - 225);
+      LineDraw(crosshair6, "ch6", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 10, centerY_ - 300,
+               centerX_ - offset + 10, centerY_ - 300);
+      LineDraw(crosshair7, "ch7", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset, centerY_ - 30, centerX_ - offset,
+               centerY_ - 400);
+    }
+    if (shootSpeed == 30){
+      LineDraw(crosshair1, "ch1", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
+               centerX_ - offset + 50, centerY_ - 30);
+      LineDraw(crosshair2, "ch2", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 43,
+               centerX_ - offset + 30, centerY_ - 43);
+      LineDraw(crosshair3, "ch3", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 43,
+               centerX_ - offset + 30, centerY_ - 43);
+      LineDraw(crosshair4, "ch4", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
+               centerX_ - offset + 50, centerY_ - 30);
+      LineDraw(crosshair5, "ch5", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 43,
+               centerX_ - offset + 30, centerY_ - 43);
+      LineDraw(crosshair6, "ch6", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset - 10, centerY_ - 43,
+               centerX_ - offset + 10, centerY_ - 43);
+      LineDraw(crosshair7, "ch7", UI_Graph_Change, 0, UI_Color_Cyan, 2, centerX_ - offset, centerY_ - 30, centerX_ - offset,
+               centerY_ - 40);
+    }
+}
+
+void UserInterface::CrossCharGUIUpdate(graphic_data_t *crosschar1, graphic_data_t *crosschar2,
+                                       graphic_data_t *crosschar3, graphic_data_t *crosschar4,
+                                       graphic_data_t *crosschar5, int shootSpeed) {
+    if (shootSpeed == 15){
+        CharDraw(crosschar2, "cc2", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 65);
+        CharDraw(crosschar1, "cc1", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 30);
+        CharDraw(crosschar3, "cc3", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 120);
+        CharDraw(crosschar4, "cc4", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 214);
+        CharDraw(crosschar5, "cc5", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 280);
+    }
+    if (shootSpeed == 18){
+        CharDraw(crosschar1, "cc1", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 25);
+        CharDraw(crosschar2, "cc2", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 40);
+        CharDraw(crosschar3, "cc3", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 65);
+        CharDraw(crosschar4, "cc4", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 113);
+        CharDraw(crosschar5, "cc5", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 225);
+    }
+    if (shootSpeed == 30){
+        CharDraw(crosschar1, "cc1", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 25);
+        CharDraw(crosschar2, "cc2", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 100, centerY_ - 25);
+        CharDraw(crosschar3, "cc3", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 120, centerY_ - 25);
+        CharDraw(crosschar4, "cc4", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 140, centerY_ - 25);
+        CharDraw(crosschar5, "cc5", UI_Graph_Change, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 40);
+    }
 }
 
 void UserInterface::CapGUIInit(graphic_data_t* barFrame, graphic_data_t* bar) {
