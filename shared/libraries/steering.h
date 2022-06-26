@@ -26,7 +26,7 @@
 
 constexpr uint16_t MOTOR_NUM = 4;
 constexpr float SPEED = 10 * PI;
-constexpr float TEST_SPEED = 0.5 * PI;
+constexpr float TEST_SPEED = 1 * PI;
 constexpr float ACCELERATION = 50 * PI;
 
 namespace control {

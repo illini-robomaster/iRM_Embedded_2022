@@ -121,19 +121,19 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);  // DBUS initialization needs time
 
-  print("Alignment Begin\r\n");
+//  print("Alignment Begin\r\n");
   while (!chassis->AlignUpdate()) {
       control::MotorCANBase::TransmitOutput(steer_motors, 4);
-      static int i = 0;
-      if (i > 20) {
-        chassis->PrintData();
-        i = 0;
-      } else {
-        i++;
-      }
+//      static int i = 0;
+//      if (i > 20) {
+//        chassis->PrintData();
+//        i = 0;
+//      } else {
+//        i++;
+//      }
       osDelay(2);
     }
-  print("\r\nAlignment End\r\n");
+//  print("\r\nAlignment End\r\n");
 
   while (true) {
     // kill switch

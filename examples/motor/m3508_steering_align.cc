@@ -45,11 +45,11 @@ bool steering_align_detect() {
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
 
-  input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
+  input = new bsp::GPIO(IN4_GPIO_Port, IN4_Pin);
 
   // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
   can = new bsp::CAN(&hcan1, 0x201, true);
-  motor = new control::Motor3508(can, 0x201);
+  motor = new control::Motor3508(can, 0x204);
 
   transmission_ratio = 8;
   float* omega_pid_param = new float[3]{140, 1.2, 25};
@@ -69,7 +69,7 @@ void RM_RTOS_Default_Task(const void* args) {
   BoolEdgeDetector edge_detect(true);
 
   print("Alignment Begin\r\n");
-  while (!pos_edge_aligned || neg_edge_aligned) {
+  while (!pos_edge_aligned || !neg_edge_aligned) {
     edge_detect.input(steering_align_detect());
     if (!pos_edge_aligned && edge_detect.posEdge()) {
       start_angle = motor->GetTheta();
@@ -87,5 +87,5 @@ void RM_RTOS_Default_Task(const void* args) {
 
   float angle_diff = wrap<float>(end_angle - start_angle, -PI, PI);
   float aligned_angle = wrap<float>(start_angle + angle_diff, 0, 2 * PI);
-  print("Alignment End, <offset_angle = %10.7f>\r\n", aligned_angle);
+  print("Alignment End, <offset_angle = %10.7f>, %.2f %.2f\r\n", aligned_angle, start_angle, end_angle);
 }

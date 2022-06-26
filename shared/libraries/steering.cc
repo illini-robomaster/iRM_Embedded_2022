@@ -45,31 +45,31 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
   steering_data.max_acceleration = ACCELERATION;
   steering_data.transmission_ratio = 8;
   steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
-  steering_data.max_iout = 1000;
+  steering_data.max_iout = 3000;
   steering_data.max_out = 13000;
 
-  steering_data.offset_angle = 5.2831855;
+  steering_data.offset_angle = 1.2740;
   steering_data.motor = _chassis->fl_steer_motor;
   steering_data.align_detect_func = _chassis->fl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -0.858458848;
   steering_data.calibrate_offset = 0;
   fl_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 5.2831855;
+  steering_data.offset_angle = 2.6814;
   steering_data.motor = _chassis->fr_steer_motor;
   steering_data.align_detect_func = _chassis->fr_steer_motor_detect_func;
   // steering_data.calibrate_offset = 0.858458848;
   steering_data.calibrate_offset = 0;
   fr_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 5.2831855;
+  steering_data.offset_angle = 2.2296;
   steering_data.motor = _chassis->bl_steer_motor;
   steering_data.align_detect_func = _chassis->bl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -2.283133461;
   steering_data.calibrate_offset = 0;
   bl_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 5.2831855;
+  steering_data.offset_angle = 1.8648;
   steering_data.motor = _chassis->br_steer_motor;
   steering_data.align_detect_func = _chassis->br_steer_motor_detect_func;
   // steering_data.calibrate_offset = 2.283133461;
@@ -160,25 +160,31 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   // only if effort > 0.1 update theta difference
   // otherwise, diff = 0.0
   if (effort > 0.1) {
-    float theta0_new = -atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
-    float theta1_new = -atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
-    float theta2_new = -atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
-    float theta3_new = -atan2(vy - vw * cos(PI / 4), vx + vw * sin(PI / 4));
+    float theta0_new = -atan2(vy - vw * cos(PI / 4), vx - vw * sin(PI / 4));
+    float theta1_new = -atan2(vy - vw * cos(PI / 4), vx + vw * sin(PI / 4));
+    float theta2_new = -atan2(vy + vw * cos(PI / 4), vx - vw * sin(PI / 4));
+    float theta3_new = -atan2(vy + vw * cos(PI / 4), vx + vw * sin(PI / 4));
 
-    theta0_diff = wrap<float>(theta0_new - theta0, -PI / 2, PI / 2);
-    theta1_diff = wrap<float>(theta1_new - theta1, -PI / 2, PI / 2);
-    theta2_diff = wrap<float>(theta2_new - theta2, -PI / 2, PI / 2);
-    theta3_diff = wrap<float>(theta3_new - theta3, -PI / 2, PI / 2);
+    theta0_diff = wrap<float>(theta0_new - theta0, -PI, PI);
+    theta1_diff = wrap<float>(theta1_new - theta1, -PI, PI);
+    theta2_diff = wrap<float>(theta2_new - theta2, -PI, PI);
+    theta3_diff = wrap<float>(theta3_new - theta3, -PI, PI);
 
     sign0 = (theta0_diff == theta0_new - theta0) ? 1.0 : -1.0;
     sign1 = (theta1_diff == theta1_new - theta1) ? 1.0 : -1.0;
     sign2 = (theta2_diff == theta2_new - theta2) ? 1.0 : -1.0;
     sign3 = (theta3_diff == theta3_new - theta3) ? 1.0 : -1.0;
 
-    theta0 = wrap<float>(theta0 + theta0_diff, -PI / 2, PI / 2);
-    theta1 = wrap<float>(theta1 + theta1_diff, -PI / 2, PI / 2);
-    theta2 = wrap<float>(theta2 + theta2_diff, -PI / 2, PI / 2);
-    theta3 = wrap<float>(theta3 + theta3_diff, -PI / 2, PI / 2);
+    static int i = 0;
+    if (++i >= 50) {
+      i = 0;
+      print("%.1f %.1f %.1f %.1f\r\n", sign0, sign1, sign2, sign3);
+    }
+
+    theta0 = wrap<float>(theta0 + theta0_diff, -PI, PI);
+    theta1 = wrap<float>(theta1 + theta1_diff, -PI, PI);
+    theta2 = wrap<float>(theta2 + theta2_diff, -PI, PI);
+    theta3 = wrap<float>(theta3 + theta3_diff, -PI, PI);
   } else {
     theta0_diff = 0;
     theta1_diff = 0;
@@ -199,8 +205,8 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   // compute speed for wheel motors
   float v0 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
   float v1 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
-  float v2 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
-  float v3 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
+  float v2 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
+  float v3 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
 
   // 16 is a arbitrary factor
   v0 = sign0 * v0 * 16;
