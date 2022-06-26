@@ -130,12 +130,12 @@ void chassisTask(void* arg) {
   while (true) {
     direction = rand() % 2 == 1 ? 1 : -1;
 //    direction = 1;
-    if (lastDir != direction) time = rand() % 150 + 400;
-    else time = rand() % 150 + 200;
+    if (lastDir != direction) time = rand() % 100 + 200;
+    else time = rand() % 100 + 100;
 //    time = rand() % 150 + 200;
 
     lastDir = direction;
-    output = direction * (rand() % 500 + 500);
+    output = direction * (rand() % 1500 + 2000);
 
     int i = 0;
     while (true) {
@@ -149,12 +149,12 @@ void chassisTask(void* arg) {
       if (leftEdge.posEdge()) {
         i = 0;
         time = 800;
-        output = -700;  // TODO: change to go to center
+        output = -1100;  // TODO: change to go to center
       }
       if (rightEdge.posEdge()) {
         i = 0;
         time = 800;
-        output = 700;  // TODO: change to go to center
+        output = 1100;  // TODO: change to go to center
       }
       osDelay(2);
     }
