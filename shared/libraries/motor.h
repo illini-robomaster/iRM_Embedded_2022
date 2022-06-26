@@ -528,6 +528,7 @@ class SteeringMotor {
 
   float align_angle_;
   BoolEdgeDetector* align_detector;
+  bool align_complete_;
 };
 
 } /* namespace control */

@@ -445,9 +445,10 @@ SteeringMotor::SteeringMotor(steering_t data) {
 
   test_speed_ = data.test_speed;
   align_detect_func = data.align_detect_func;
+  calibrate_offset = data.calibrate_offset;
   align_angle_ = 0;
   align_detector = new BoolEdgeDetector(false);
-  calibrate_offset = data.calibrate_offset;
+  align_complete_ = false;
 }
 
 float SteeringMotor::GetRawTheta() const { return servo_->GetTheta(); }
@@ -464,9 +465,7 @@ void SteeringMotor::TurnRelative(float angle) {
 void SteeringMotor::TurnAbsolute(float angle) { servo_->SetTarget(angle); }
 
 bool SteeringMotor::AlignUpdate() {
-  static bool align_complete = false;
-
-  if (align_complete) {
+  if (align_complete_) {
     servo_->SetTarget(align_angle_, true);
     servo_->CalcOutput();
     return true;
@@ -476,7 +475,7 @@ bool SteeringMotor::AlignUpdate() {
     float current = (current_theta + offset - servo_->align_angle_) / servo_->transmission_ratio_ +
                     servo_->offset_angle_ + servo_->cumulated_angle_;
     align_angle_ = current + calibrate_offset;
-    align_complete = true;
+    align_complete_ = true;
     servo_->SetTarget(align_angle_, true);
     servo_->CalcOutput();
     return true;
