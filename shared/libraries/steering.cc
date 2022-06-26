@@ -203,16 +203,16 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   br_steer_motor->Update();
 
   // compute speed for wheel motors
-  float v0 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
-  float v1 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
-  float v2 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
-  float v3 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
+  float v0 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
+  float v1 = sqrt(pow(vy + vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
+  float v2 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx - vw * sin(PI / 4), 2.0));
+  float v3 = sqrt(pow(vy - vw * cos(PI / 4), 2.0) + pow(vx + vw * sin(PI / 4), 2.0));
 
   // 16 is a arbitrary factor
-  v0 = sign0 * v0 * 16;
-  v1 = sign1 * v1 * 16;
-  v2 = sign2 * v2 * 16;
-  v3 = sign3 * v3 * 16;
+  v0 = sign0 * v0 * WHEEL_SPEED_FACTOR;
+  v1 = sign1 * v1 * WHEEL_SPEED_FACTOR;
+  v2 = sign2 * v2 * WHEEL_SPEED_FACTOR;
+  v3 = sign3 * v3 * WHEEL_SPEED_FACTOR;
 
   // Update Wheels
   float PID_output[MOTOR_NUM];
