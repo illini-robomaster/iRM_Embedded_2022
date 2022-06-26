@@ -1097,7 +1097,7 @@ void RM_RTOS_Init(void) {
   OLED = new display::OLED(&hi2c2, 0x3C);
 
   //  LIDAR = new distance::LIDAR07_UART(&huart1, [](uint32_t milli) { osDelay(milli); });
-  UI = new communication::UserInterface(UI_Data_RobotID_BStandard3, UI_Data_CilentID_BStandard3);
+  UI = new communication::UserInterface();
 }
 
 //==================================================================================================
