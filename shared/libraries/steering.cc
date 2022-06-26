@@ -239,8 +239,11 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
 }
 
 bool SteeringChassis::AlignUpdate() {
-  return fl_steer_motor->AlignUpdate() && fr_steer_motor->AlignUpdate() &&
-         bl_steer_motor->AlignUpdate() && br_steer_motor->AlignUpdate();
+  volatile bool fl = fl_steer_motor->AlignUpdate();
+  volatile bool fr = fr_steer_motor->AlignUpdate();
+  volatile bool bl = bl_steer_motor->AlignUpdate();
+  volatile bool br = br_steer_motor->AlignUpdate();
+  return fl && fr && bl && br;
 }
 
 void SteeringChassis::PrintData() {
