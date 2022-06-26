@@ -398,28 +398,6 @@ void UserInterface::CrosshairGUIInit(graphic_data_t* crosshair1, graphic_data_t*
            centerY_ - 400);
 }
 
-// Speed limit 18 m/s
-void UserInterface::Crosshair18GUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
-                                 graphic_data_t* crosshair3, graphic_data_t* crosshair4,
-                                 graphic_data_t* crosshair5, graphic_data_t* crosshair6,
-                                 graphic_data_t* crosshair7) {
-  int offset = 12;
-  LineDraw(crosshair1, "ch1", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 30,
-           centerX_ - offset + 50, centerY_ - 30);
-  LineDraw(crosshair2, "ch2", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 40,
-           centerX_ - offset + 30, centerY_ - 40);
-  LineDraw(crosshair3, "ch3", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 65,
-           centerX_ - offset + 30, centerY_ - 65);
-  LineDraw(crosshair4, "ch4", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 50, centerY_ - 113,
-           centerX_ - offset + 50, centerY_ - 113);
-  LineDraw(crosshair5, "ch5", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 225,
-           centerX_ - offset + 30, centerY_ - 225);
-  LineDraw(crosshair6, "ch6", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset - 30, centerY_ - 300,
-           centerX_ - offset + 30, centerY_ - 300);
-  LineDraw(crosshair7, "ch7", UI_Graph_Add, 0, UI_Color_Cyan, 2, centerX_ - offset, centerY_ - 30, centerX_ - offset,
-           centerY_ - 400);
-}
-
 void UserInterface::CrosshairCharGUIInit(graphic_data_t *crosschar1, graphic_data_t *crosschar2,
                                          graphic_data_t *crosschar3, graphic_data_t *crosschar4,
                                          graphic_data_t *crosschar5) {
@@ -428,17 +406,6 @@ void UserInterface::CrosshairCharGUIInit(graphic_data_t *crosschar1, graphic_dat
     CharDraw(crosschar3, "cc3", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 120);
     CharDraw(crosschar4, "cc4", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 214);
     CharDraw(crosschar5, "cc5", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 280);
-}
-
-// Speed limit 18 m/s
-void UserInterface::Crosshair18CharGUI(graphic_data_t *crosschar1, graphic_data_t *crosschar2,
-                                     graphic_data_t *crosschar3, graphic_data_t *crosschar4,
-                                     graphic_data_t *crosschar5) {
-    CharDraw(crosschar1, "cc1", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 30);
-    CharDraw(crosschar2, "cc2", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 40);
-    CharDraw(crosschar3, "cc3", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 65);
-    CharDraw(crosschar4, "cc4", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 113);
-    CharDraw(crosschar5, "cc5", UI_Graph_Add, 0, UI_Color_Cyan, 10, 15, 2, centerX_ + 80, centerY_ - 225);
 }
 
 void UserInterface::CrosshairGUIUpdate(graphic_data_t* crosshair1, graphic_data_t* crosshair2,

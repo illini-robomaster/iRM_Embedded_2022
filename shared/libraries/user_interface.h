@@ -132,16 +132,9 @@ class UserInterface {
                         graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                         graphic_data_t* crosshair5, graphic_data_t* crosshair6,
                         graphic_data_t* crosshair7);
-  void Crosshair18GUI(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
-                    graphic_data_t* crosshair3, graphic_data_t* crosshair4,
-                    graphic_data_t* crosshair5, graphic_data_t* crosshair6,
-                    graphic_data_t* crosshair7);
   void CrosshairCharGUIInit(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
                             graphic_data_t* crosschar3, graphic_data_t* crosschar4,
                             graphic_data_t* crosschar5);
-  void Crosshair18CharGUI(graphic_data_t* crosschar1, graphic_data_t* crosschar2,
-                        graphic_data_t* crosschar3, graphic_data_t* crosschar4,
-                        graphic_data_t* crosschar5);
   void CrosshairGUIUpdate(graphic_data_t* crosshair1, graphic_data_t* crosshair2,
                                      graphic_data_t* crosshair3, graphic_data_t* crosshair4,
                                      graphic_data_t* crosshair5, graphic_data_t* crosshair6,
