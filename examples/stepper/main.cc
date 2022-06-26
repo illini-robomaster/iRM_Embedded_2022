@@ -51,8 +51,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
 //        stepper->Stop();
 //      osDelay(100);
 //    }
-  unsigned speed = 2000; // Empty Weight Max 2100
-  int length = 1000;
+  unsigned speed = 1000; // Empty Weight Max 2100
+  int length = 100;
   bool direction = false;
 
   while (true) {
