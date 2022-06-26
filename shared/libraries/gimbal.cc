@@ -26,7 +26,7 @@ Gimbal::Gimbal(gimbal_t gimbal)
         float pitch_omega_max_out = 30000;
         float yaw_theta_max_iout = 0;
         float yaw_theta_max_out = 10;
-        float yaw_omega_max_iout = 10000;
+        float yaw_omega_max_iout = 25000;  // 10000
         float yaw_omega_max_out = 30000;
         pitch_theta_pid_param_ = new float[3]{15, 0, 0};
         pitch_omega_pid_param_ = new float[3]{2900, 60, 0};

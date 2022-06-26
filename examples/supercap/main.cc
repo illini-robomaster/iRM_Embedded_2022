@@ -22,26 +22,36 @@
 
 #include "bsp_print.h"
 #include "cmsis_os.h"
+#include "oled.h"
 #include "supercap.h"
 
 static bsp::CAN* can = nullptr;
 static control::SuperCap* supercap = nullptr;
+static display::OLED* OLED = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
 
-  can = new bsp::CAN(&hcan1, 0x301);
+  can = new bsp::CAN(&hcan2, 0x301, false);
   supercap = new control::SuperCap(can, 0x301);
+  OLED = new display::OLED(&hi2c2, 0x3C);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
+  OLED->ShowIlliniRMLOGO();
+  osDelay(200);
+  OLED->OperateGram(display::PEN_CLEAR);
+
   while (true) {
+    OLED->Printf(0, 0, "Supercap: %.2f %.2f", supercap->info.voltage, supercap->info.energy);
+    osDelay(100);
+    OLED->RefreshGram();
+
     set_cursor(0, 0);
     clear_screen();
     print("Supercap\r\nVoltage: %.2f, Energy: %.2f\r\n", supercap->info.voltage,
           supercap->info.energy);
-    osDelay(100);
   }
 }

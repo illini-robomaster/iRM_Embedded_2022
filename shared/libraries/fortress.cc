@@ -99,14 +99,15 @@ void Fortress::Transform(const bool fortress_mode) {
   servo_right_->CalcOutput();
 }
 
-void Fortress::Spin(float power_limit, float chassis_power, float chassis_power_buffer) {
+void Fortress::Spin(bool power_limit_on, float power_limit, float chassis_power,
+                    float chassis_power_buffer) {
   if (!fortress_mode_) return;
   spinner_->SetSpeed(-60);
-  spinner_->Update(power_limit, chassis_power, chassis_power_buffer);
+  spinner_->Update(power_limit_on, power_limit, chassis_power, chassis_power_buffer);
 }
 
 bool Fortress::Error() {
-  return abs(leftElevatorMotor_->GetCurr()) > 20000 || abs(rightElevatortMotor_->GetCurr()) > 20000;
+  return abs(leftElevatorMotor_->GetCurr()) > 50000 || abs(rightElevatortMotor_->GetCurr()) > 50000;
 }
 
 void Fortress::Stop(const fortress_component_t component) {

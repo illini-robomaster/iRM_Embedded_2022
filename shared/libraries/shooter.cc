@@ -53,8 +53,8 @@ Shooter::Shooter(shooter_t shooter) {
       break;
 
     case SHOOTER_STANDARD:
-      servo_data.max_speed = 40 * PI;
-      servo_data.max_acceleration = 20 * PI;
+      servo_data.max_speed = 100 * PI;
+      servo_data.max_acceleration = 80 * PI;
       servo_data.transmission_ratio = M2006P36_RATIO;
       servo_data.omega_pid_param = new float[3]{10, 0, 1};
       servo_data.max_iout = 9000;

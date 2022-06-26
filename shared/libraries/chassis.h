@@ -82,7 +82,8 @@ class Chassis {
    * @brief calculate the output of the motors under current configuration
    * @note does not command the motor immediately
    */
-  void Update(float power_limit, float chassis_power, float chassis_power_buffer);
+  void Update(bool power_limit_on, float power_limit, float chassis_power,
+              float chassis_power_buffer);
 
  private:
   // acquired from user

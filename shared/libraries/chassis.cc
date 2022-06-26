@@ -121,7 +121,8 @@ void Chassis::SetSpeed(const float x_speed, const float y_speed, const float tur
   }
 }
 
-void Chassis::Update(float power_limit, float chassis_power, float chassis_power_buffer) {
+void Chassis::Update(bool power_limit_on, float power_limit, float chassis_power,
+                     float chassis_power_buffer) {
   switch (model_) {
     case CHASSIS_MECANUM_WHEEL: {
       power_limit_info_.power_limit = power_limit;
@@ -143,8 +144,8 @@ void Chassis::Update(float power_limit, float chassis_power, float chassis_power
       PID_output[FourWheel::back_right] = pids_[FourWheel::back_right].ComputeOutput(
           motors_[FourWheel::back_right]->GetOmegaDelta(speeds_[FourWheel::back_right]));
 
-      power_limit_->Output(power_limit_info_, chassis_power, chassis_power_buffer, PID_output,
-                           output);
+      power_limit_->Output(power_limit_on, power_limit_info_, chassis_power, chassis_power_buffer,
+                           PID_output, output);
 
       motors_[FourWheel::front_left]->SetOutput(
           control::ClipMotorRange(output[FourWheel::front_left]));
@@ -170,8 +171,8 @@ void Chassis::Update(float power_limit, float chassis_power, float chassis_power
       PID_output[OneWheel::center] = pids_[OneWheel::center].ComputeOutput(
           motors_[OneWheel::center]->GetOmegaDelta(speeds_[OneWheel::center]));
 
-      power_limit_->Output(power_limit_info_, chassis_power, chassis_power_buffer, PID_output,
-                           output);
+      power_limit_->Output(power_limit_on, power_limit_info_, chassis_power, chassis_power_buffer,
+                           PID_output, output);
 
       motors_[OneWheel::center]->SetOutput(control::ClipMotorRange(output[OneWheel::center]));
 
