@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 #include "stepper.h"
 
-bsp::GPIO *key = nullptr, *dir = nullptr;
+bsp::GPIO *key = nullptr;
 control::Stepper* stepper = nullptr;
 
 void RM_RTOS_Init(void) {
@@ -35,10 +35,10 @@ void RM_RTOS_Init(void) {
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
-//  UNUSED(arguments);
-//  //unsigned speed = 2000; // Empty Weight Max 2100
+    UNUSED(arguments);
+  //unsigned speed = 2000; // Empty Weight Max 2100
 //  int length = 1000;
-//  bool direction = false;
+//  //bool direction = false;
 //    while (true) {
 //      if (!key->Read()) {
 //          stepper->Enable();
@@ -51,24 +51,25 @@ void RM_RTOS_Default_Task(const void* arguments) {
 //        stepper->Stop();
 //      osDelay(100);
 //    }
-  unsigned speed = 1000; // Empty Weight Max 2100
-  int length = 100;
-  bool direction = false;
+
+  unsigned speed = 500; // Empty Weight Max 2100
+  int length = 1400;
+  //bool direction = false;
 
   while (true) {
-    if (!key->Read()) {
-      direction = !direction;
-      if (!direction) {
-        stepper->Move(control::FORWARD, speed);
-      } else {
-        stepper->Move(control::BACKWARD, speed);
-      }
-      osDelay(length);
-      stepper->Stop();
-    } else {
-      stepper->Stop();
-    }
-    osDelay(10);
+    stepper->Move(control::BACKWARD, speed);
+    osDelay(length);
+    osDelay(200);
+    stepper->Move(control::FORWARD, speed);
+    osDelay(length);
+//    if (direction) {
+//      stepper->Move(control::FORWARD, speed);
+//    } else {
+//      stepper->Move(control::BACKWARD, speed);
+//    }
+
+    //osDelay(length);
+    osDelay(200);
   }
 
 
@@ -90,8 +91,12 @@ void RM_RTOS_Default_Task(const void* arguments) {
 
 /*
  * A4988 步进电机驱动 接线说明
- * 1B Black
- * 1A Green
+ * 1B Green
+ * 1A Black
  * 2A Red
  * 2B Blue
+ * STEP PWM
+ * MISO MOSI
+ * PB14 PB15
+ * DIR  ENABLE
  */
