@@ -48,7 +48,7 @@ void RM_RTOS_Init() {
   input = new bsp::GPIO(IN1_GPIO_Port, IN1_Pin);
 
   // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
-  can = new bsp::CAN(&hcan2, 0x201, false);
+  can = new bsp::CAN(&hcan1, 0x201, true);
   motor = new control::Motor3508(can, 0x201);
 
   transmission_ratio = 8;

@@ -22,26 +22,30 @@
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "main.h"
+#include "arm_math.h"
 
 static bsp::CAN* can = nullptr;
 static bsp::CanBridge* send = nullptr;
 
 void RM_RTOS_Init(void) {
-  print_use_uart(&huart8);
-  can = new bsp::CAN(&hcan1, 0x401);
+  print_use_uart(&huart1);
+  can = new bsp::CAN(&hcan1, 0x401, true);
   send = new bsp::CanBridge(can, 0x401, 0x402);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
-  uint8_t output1[4] = {1, 1, 0, 1};
-  uint8_t output2[4] = {1, 0, 1, 1};
-
   while (true) {
-    send->TransmitOutput(output1);
+    send->cmd.vx = -1;
+    send->cmd.vy = -10;
+    send->cmd.wz = -PI;
+    send->TransmitOutput();
     osDelay(1000);
-    send->TransmitOutput(output2);
+    send->cmd.vx = PI;
+    send->cmd.vy = 10;
+    send->cmd.wz = 1;
+    send->TransmitOutput();
     osDelay(1000);
   }
 }

@@ -41,7 +41,7 @@ void RM_RTOS_Default_Task(const void* args) {
   control::MotorCANBase* motors[] = {motor};
   control::PIDController pid(20, 15, 30);
 
-  while (true) { 
+  while (true) {
     float diff = motor->GetOmegaDelta(TARGET_SPEED);
     int16_t out = pid.ComputeConstrainedOutput(diff);
     motor->SetOutput(out);

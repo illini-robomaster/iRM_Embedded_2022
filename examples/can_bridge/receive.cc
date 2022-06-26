@@ -28,7 +28,7 @@ static bsp::CanBridge* send = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan1, 0x401);
+  can = new bsp::CAN(&hcan1, 0x401, true);
   send = new bsp::CanBridge(can, 0x402, 0x401);
 }
 
@@ -38,7 +38,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("%d %d %d %d\r\n", send->IO[0], send->IO[1], send->IO[2], send->IO[3]);
+    print("vx: %f\r\nvy: %f\r\nwz: %f\r\n", send->cmd.vx, send->cmd.vy, send->cmd.wz);
     osDelay(100);
   }
 }

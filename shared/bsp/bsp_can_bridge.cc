@@ -20,6 +20,8 @@
 
 #include "bsp_can_bridge.h"
 
+#include <cstring>
+
 namespace bsp {
 
 static void bridge_callback(const uint8_t data[], void* args) {
@@ -34,10 +36,8 @@ CanBridge::CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id) {
   can_->RegisterRxCallback(rx_id_, bridge_callback, this);
 }
 
-void CanBridge::UpdateData(const uint8_t* data) {
-  for (int i = 0; i < MAX_IO; ++i) IO[i] = data[i];
-}
+void CanBridge::UpdateData(const uint8_t* data) { memcpy(&cmd, data, sizeof(bridge_data_t)); }
 
-void CanBridge::TransmitOutput(uint8_t* IO_data) { can_->Transmit(tx_id_, IO_data, MAX_IO); }
+void CanBridge::TransmitOutput() { can_->Transmit(tx_id_, (uint8_t*)&cmd, sizeof(bridge_data_t)); }
 
 }  // namespace bsp

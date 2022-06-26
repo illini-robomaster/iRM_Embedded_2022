@@ -43,7 +43,8 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("sensor: %d %d %d %d\r\n", input1->Read(), input2->Read(), input3->Read(), input4->Read());
+    print("sensor: %d %d %d %d\r\n", input1->Read(), input2->Read(), input3->Read(),
+          input4->Read());
     osDelay(100);
   }
 }

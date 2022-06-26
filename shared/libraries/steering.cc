@@ -224,7 +224,8 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   power_limit_info.WARNING_power_buff = 50;
   power_limit_info.buffer_total_current_limit = 3500 * MOTOR_NUM;
   power_limit_info.power_total_current_limit = 5000 * MOTOR_NUM / 80.0 * _power_limit;
-  power_limit->Output(power_limit_info, _chassis_power, _chassis_power_buffer, PID_output, output);
+  power_limit->Output(true, power_limit_info, _chassis_power, _chassis_power_buffer, PID_output,
+                      output);
 
   // set final output
   //    fl_wheel_motor->SetOutput(control::ClipMotorRange(output[0]));
