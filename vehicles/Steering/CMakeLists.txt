@@ -20,6 +20,10 @@
 
 project(Steering ASM C CXX)
 
-irm_add_arm_executable(Steering
+irm_add_arm_executable(Steering_chassis
     TARGET DJI_Board_TypeC
-    SOURCES main.cc)
+    SOURCES chassis.cc)
+
+irm_add_arm_executable(Steering_gimbal
+    TARGET DJI_Board_TypeC
+    SOURCES gimbal.cc)

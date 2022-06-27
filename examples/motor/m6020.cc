@@ -32,7 +32,7 @@ control::MotorCANBase* motor1 = NULL;
 control::MotorCANBase* motor2 = NULL;
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
+  print_use_uart(&huart1);
 
   can1 = new bsp::CAN(&hcan1, 0x205);
   motor1 = new control::Motor6020(can1, 0x205);
@@ -41,18 +41,21 @@ void RM_RTOS_Init() {
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-  control::MotorCANBase* motors[] = {motor1};
+  //  control::MotorCANBase* motors[] = {motor1};
 
   bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
   while (true) {
-    if (key.Read()) {
-      motor1->SetOutput(800);
-      motor2->SetOutput(800);
-    } else {
-      motor1->SetOutput(0);
-      motor2->SetOutput(0);
-    }
-    control::MotorCANBase::TransmitOutput(motors, 1);
+    //    if (key.Read()) {
+    //      motor1->SetOutput(800);
+    //      motor2->SetOutput(800);
+    //    } else {
+    //      motor1->SetOutput(0);
+    //      motor2->SetOutput(0);
+    //    }
+    //    control::MotorCANBase::TransmitOutput(motors, 1);
+    set_cursor(0, 0);
+    clear_screen();
+    motor2->PrintData();
     osDelay(100);
   }
 }

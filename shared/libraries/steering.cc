@@ -48,28 +48,28 @@ SteeringChassis::SteeringChassis(steering_chassis_t* _chassis) {
   steering_data.max_iout = 3000;
   steering_data.max_out = 13000;
 
-  steering_data.offset_angle = 0;
+  steering_data.offset_angle = -1;
   steering_data.motor = _chassis->fl_steer_motor;
   steering_data.align_detect_func = _chassis->fl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -0.858458848;
   steering_data.calibrate_offset = 0;
   fl_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 0;
+  steering_data.offset_angle = -1;
   steering_data.motor = _chassis->fr_steer_motor;
   steering_data.align_detect_func = _chassis->fr_steer_motor_detect_func;
   // steering_data.calibrate_offset = 0.858458848;
   steering_data.calibrate_offset = 0;
   fr_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 0;
+  steering_data.offset_angle = -1;
   steering_data.motor = _chassis->bl_steer_motor;
   steering_data.align_detect_func = _chassis->bl_steer_motor_detect_func;
   // steering_data.calibrate_offset = -2.283133461;
   steering_data.calibrate_offset = 0;
   bl_steer_motor = new control::SteeringMotor(steering_data);
 
-  steering_data.offset_angle = 0;
+  steering_data.offset_angle = -1;
   steering_data.motor = _chassis->br_steer_motor;
   steering_data.align_detect_func = _chassis->br_steer_motor_detect_func;
   // steering_data.calibrate_offset = 2.283133461;
@@ -222,10 +222,10 @@ void SteeringChassis::Update(float _power_limit, float _chassis_power,
   //    fr_wheel_motor->SetOutput(control::ClipMotorRange(output[1]));
   //    bl_wheel_motor->SetOutput(control::ClipMotorRange(output[2]));
   //    br_wheel_motor->SetOutput(control::ClipMotorRange(output[3]));
-  fl_wheel_motor->SetOutput(PID_output[0]);
-  fr_wheel_motor->SetOutput(PID_output[1]);
-  bl_wheel_motor->SetOutput(PID_output[2]);
-  br_wheel_motor->SetOutput(PID_output[3]);
+  fl_wheel_motor->SetOutput(output[0]);
+  fr_wheel_motor->SetOutput(output[1]);
+  bl_wheel_motor->SetOutput(output[2]);
+  br_wheel_motor->SetOutput(output[3]);
 }
 
 bool SteeringChassis::AlignUpdate() {

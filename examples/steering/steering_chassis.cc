@@ -48,21 +48,13 @@ bsp::GPIO* key2 = nullptr;
 bsp::GPIO* key3 = nullptr;
 bsp::GPIO* key4 = nullptr;
 
-bool steering_align_detect1() {
-  return !key1->Read();
-}
+bool steering_align_detect1() { return !key1->Read(); }
 
-bool steering_align_detect2() {
-  return !key2->Read();
-}
+bool steering_align_detect2() { return !key2->Read(); }
 
-bool steering_align_detect3() {
-  return !key3->Read();
-}
+bool steering_align_detect3() { return !key3->Read(); }
 
-bool steering_align_detect4() {
-  return !key4->Read();
-}
+bool steering_align_detect4() { return !key4->Read(); }
 
 // used to init
 control::steering_chassis_t* steering_chassis;
@@ -121,19 +113,19 @@ void RM_RTOS_Default_Task(const void* args) {
 
   osDelay(500);  // DBUS initialization needs time
 
-//  print("Alignment Begin\r\n");
+  //  print("Alignment Begin\r\n");
   while (!chassis->AlignUpdate()) {
-      control::MotorCANBase::TransmitOutput(steer_motors, 4);
-//      static int i = 0;
-//      if (i > 20) {
-//        chassis->PrintData();
-//        i = 0;
-//      } else {
-//        i++;
-//      }
-      osDelay(2);
-    }
-//  print("\r\nAlignment End\r\n");
+    control::MotorCANBase::TransmitOutput(steer_motors, 4);
+    //      static int i = 0;
+    //      if (i > 20) {
+    //        chassis->PrintData();
+    //        i = 0;
+    //      } else {
+    //        i++;
+    //      }
+    osDelay(2);
+  }
+  //  print("\r\nAlignment End\r\n");
 
   while (true) {
     // kill switch

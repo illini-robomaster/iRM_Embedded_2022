@@ -282,7 +282,7 @@ static control::Chassis* chassis = nullptr;
 
 static const float CHASSIS_DEADZONE = 0.04;
 
-static bool PeekDirection = false;
+// static bool PeekDirection = false;
 
 void chassisTask(void* arg) {
   UNUSED(arg);
@@ -307,17 +307,17 @@ void chassisTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    PeekModeLeft.input(dbus->keyboard.bit.Q);
-    if (PeekModeLeft.posEdge()) {
-      PeekMode = true;
-      PeekDirection = false;
-    }
-
-    PeekModeRight.input(dbus->keyboard.bit.E);
-    if (PeekModeLeft.posEdge()) {
-      PeekMode = true;
-      PeekDirection = true;
-    }
+    //    PeekModeLeft.input(dbus->keyboard.bit.Q);
+    //    if (PeekModeLeft.posEdge()) {
+    //      PeekMode = true;
+    //      PeekDirection = false;
+    //    }
+    //
+    //    PeekModeRight.input(dbus->keyboard.bit.E);
+    //    if (PeekModeLeft.posEdge()) {
+    //      PeekMode = true;
+    //      PeekDirection = true;
+    //    }
 
     ChangeSpinMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
     if (ChangeSpinMode.posEdge()) SpinMode = !SpinMode;

@@ -24,12 +24,12 @@
 #include "main.h"
 
 static bsp::CAN* can = nullptr;
-static bsp::CanBridge* send = nullptr;
+static bsp::CanBridge* receive = nullptr;
 
 void RM_RTOS_Init(void) {
   print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan1, 0x401, true);
-  send = new bsp::CanBridge(can, 0x402, 0x401);
+  can = new bsp::CAN(&hcan2, 0x201, false);
+  receive = new bsp::CanBridge(can, 0x20B, 0x20A);
 }
 
 void RM_RTOS_Default_Task(const void* arguments) {
@@ -38,7 +38,7 @@ void RM_RTOS_Default_Task(const void* arguments) {
   while (true) {
     set_cursor(0, 0);
     clear_screen();
-    print("vx: %d\r\nvy: %d\r\nwz: %d\r\n", send->cmd.vx, send->cmd.vy, send->cmd.wz);
+    print("vx: %f, vy: %f\r\n", receive->vx, receive->vy);
     osDelay(100);
   }
 }

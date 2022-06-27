@@ -25,9 +25,8 @@
 namespace bsp {
 
 typedef struct {
-  uint8_t vx;
-  uint8_t vy;
-  uint8_t wz;
+  uint8_t id;
+  float data;
 } bridge_data_t;
 
 class CanBridge {
@@ -37,6 +36,15 @@ class CanBridge {
   void TransmitOutput();
 
   bridge_data_t cmd;
+  float vx = 0;              // 0
+  float vy = 0;              // 1
+  float relative_angle = 0;  // 2
+  float mode = 0;            // 3
+  float dead = 0;            // 4
+  float shooter_power; // 5
+  float cooling_heat; // 6
+  float cooling_limit; // 7
+  float speed_limit; // 8
 
  private:
   bsp::CAN* can_;

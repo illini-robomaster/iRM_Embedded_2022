@@ -25,7 +25,7 @@
 #include "bsp_error_handler.h"
 #include "can.h"
 
-#define MAX_CAN_DATA_SIZE 20
+#define MAX_CAN_DATA_SIZE 8
 #define MAX_CAN_DEVICES 12
 
 namespace bsp {

@@ -87,5 +87,6 @@ void RM_RTOS_Default_Task(const void* args) {
 
   float angle_diff = wrap<float>(end_angle - start_angle, -PI, PI);
   float aligned_angle = wrap<float>(start_angle + angle_diff, 0, 2 * PI);
-  print("Alignment End, <offset_angle = %10.7f>, %.2f %.2f\r\n", aligned_angle, start_angle, end_angle);
+  print("Alignment End, <offset_angle = %10.7f>, %.2f %.2f\r\n", aligned_angle, start_angle,
+        end_angle);
 }
