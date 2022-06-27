@@ -101,7 +101,7 @@ void KillAll() {
     control::MotorCANBase *motor_can1_base[] = {motor};
 
     while (true) {
-        FakeDeath.input(dbus->swl == remote::DOWN);
+        FakeDeath.input(dbus->swr == remote::UP);
         if (FakeDeath.posEdge()) {
             Dead = false;
             break;
@@ -131,7 +131,7 @@ void chassisTask(void* arg) {
     direction = rand() % 2 == 1 ? 1 : -1;
 //    direction = 1;
     if (lastDir != direction) time = rand() % 250 + 200;
-    else time = rand() % 250 + 100;
+    else time = rand() % 200 + 100;
 //    time = rand() % 150 + 200;
 
     lastDir = direction;
@@ -187,7 +187,7 @@ void RM_RTOS_Default_Task(const void* args) {
   uint16_t minBuffer = 200;
 
   while (true) {
-    FakeDeath.input(dbus->swl == remote::DOWN);
+    FakeDeath.input(dbus->swr == remote::UP);
     if (FakeDeath.posEdge()) {
       Dead = true;
       print("killed");
