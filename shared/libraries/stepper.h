@@ -39,6 +39,4 @@ class Stepper {
   bsp::GPIO dir_;
   bsp::GPIO enable_;
 };
-
-
 }

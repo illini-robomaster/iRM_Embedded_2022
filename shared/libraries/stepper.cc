@@ -44,6 +44,7 @@ void Stepper::Move(dir direction, unsigned int speed) {
   stepper_.SetPulseWidth(1000000 / speed / 2);
 }
 
+
 void Stepper::Stop() {
   stepper_.SetFrequency(0);
   stepper_.SetPulseWidth(0);
@@ -56,5 +57,8 @@ void Stepper::Enable() {
 void Stepper::Disable() {
   enable_.Low();
 }
+
+
+
 
 }  // namespace control
