@@ -30,7 +30,7 @@ namespace control {
 /**
  * @brief gimbal models
  */
-typedef enum { GIMBAL_FORTRESS, GIMBAL_SENTRY } gimbal_model_t;
+typedef enum { GIMBAL_FORTRESS, GIMBAL_SENTRY, GIMBAL_STEERING } gimbal_model_t;
 
 /**
  * @brief offset, max, and proximity angles of different gimbals
@@ -113,10 +113,8 @@ class Gimbal {
       nullptr; /* pid param that used to control pitch motor when moving  */
   float* pitch_omega_pid_param_ =
       nullptr; /* pid param that used to control pitch motor when holding */
-  float* yaw_theta_pid_param_ =
-      nullptr; /* pid param that used to control yaw motor when moving    */
-  float* yaw_omega_pid_param_ =
-      nullptr; /* pid param that used to control yaw motor when holding   */
+  float* yaw_theta_pid_param_ = nullptr; /* pid param that used to control yaw motor when moving */
+  float* yaw_omega_pid_param_ = nullptr; /* pid param that used to control yaw motor when holding */
   ConstrainedPID* pitch_theta_pid_ = nullptr; /* pitch theta pid */
   ConstrainedPID* pitch_omega_pid_ = nullptr; /* pitch omega pid */
   ConstrainedPID* yaw_theta_pid_ = nullptr;   /* yaw theta pid   */

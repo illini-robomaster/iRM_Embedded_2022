@@ -20,6 +20,8 @@
 
 #include "bsp_can_bridge.h"
 
+#include <cstring>
+
 namespace bsp {
 
 static void bridge_callback(const uint8_t data[], void* args) {
@@ -35,9 +37,43 @@ CanBridge::CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id) {
 }
 
 void CanBridge::UpdateData(const uint8_t* data) {
-  for (int i = 0; i < MAX_IO; ++i) IO[i] = data[i];
+  //  float shooter_power; // 5
+  //  float cooling_heat; // 6
+  //  float cooling_limit; // 7
+  //  float speed_limit; // 8
+  memcpy(&cmd, data, sizeof(bridge_data_t));
+  switch (cmd.id) {
+    case 0:
+      vx = cmd.data;
+      break;
+    case 1:
+      vy = cmd.data;
+      break;
+    case 2:
+      relative_angle = cmd.data;
+      break;
+    case 3:
+      mode = cmd.data;
+      break;
+    case 4:
+      dead = cmd.data;
+      break;
+    case 5:
+      shooter_power = cmd.data;
+      break;
+    case 6:
+      cooling_heat = cmd.data;
+      break;
+    case 7:
+      cooling_limit = cmd.data;
+      break;
+    case 8:
+      speed_limit = cmd.data;
+      break;
+    default:;
+  }
 }
 
-void CanBridge::TransmitOutput(uint8_t* IO_data) { can_->Transmit(tx_id_, IO_data, MAX_IO); }
+void CanBridge::TransmitOutput() { can_->Transmit(tx_id_, (uint8_t*)&cmd, sizeof(bridge_data_t)); }
 
 }  // namespace bsp

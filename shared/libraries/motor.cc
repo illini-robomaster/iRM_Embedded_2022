@@ -381,13 +381,14 @@ void ServoMotor::RegisterJamCallback(jam_callback_t callback, float effort_thres
 }
 
 void ServoMotor::PrintData() const {
-  print("theta: % 9.4f ", GetTheta());
-  print("omega: % 9.4f ", GetOmega());
-  print("target: % 9.4f ", target_angle_);
+  print("Svo-align: % 10.6f ", align_angle_);
+  print("Svo-theta: % 10.6f ", GetTheta());
+  print("Svo-omega: % 10.6f ", GetOmega());
+  print("Svo-target: % 10.6f ", target_angle_);
   if (hold_)
-    print("status: holding ");
+    print("Svo-status: holding ");
   else
-    print("status: moving  ");
+    print("Svo-status: moving  ");
   motor_->PrintData();
 }
 
@@ -408,15 +409,16 @@ void ServoMotor::UpdateData(const uint8_t data[]) {
   // This is a dumb method to get the align angle
   if (align_angle_ < 0) align_angle_ = motor_->theta_;
 
-  motor_angle_ = motor_->theta_ - align_angle_;
   // If motor angle is jumped from near 2PI to near 0, then wrap detecter will sense a negative
   // edge, which means that the motor is turning in positive direction when crossing encoder
   // boarder. Vice versa for motor angle jumped from near 0 to near 2PI
+  motor_angle_ = motor_->theta_ - align_angle_;
   inner_wrap_detector_->input(motor_angle_);
   if (inner_wrap_detector_->negEdge())
     offset_angle_ = wrap<float>(offset_angle_ + 2 * PI / transmission_ratio_, 0, 2 * PI);
   else if (inner_wrap_detector_->posEdge())
     offset_angle_ = wrap<float>(offset_angle_ - 2 * PI / transmission_ratio_, 0, 2 * PI);
+
   servo_angle_ = wrap<float>(offset_angle_ + motor_angle_ / transmission_ratio_, 0, 2 * PI);
   outer_wrap_detector_->input(servo_angle_);
   if (outer_wrap_detector_->negEdge())
@@ -443,13 +445,18 @@ SteeringMotor::SteeringMotor(steering_t data) {
 
   test_speed_ = data.test_speed;
   align_detect_func = data.align_detect_func;
+  calibrate_offset = data.calibrate_offset;
   align_angle_ = 0;
   align_detector = new BoolEdgeDetector(false);
+  align_complete_ = false;
 }
 
 float SteeringMotor::GetRawTheta() const { return servo_->GetTheta(); }
 
-void SteeringMotor::PrintData() const { servo_->PrintData(); }
+void SteeringMotor::PrintData() const {
+  print("Str-align: %10.5f ", align_angle_);
+  servo_->PrintData();
+}
 
 void SteeringMotor::TurnRelative(float angle) {
   servo_->SetTarget(servo_->GetTarget() + angle, true);
@@ -458,16 +465,19 @@ void SteeringMotor::TurnRelative(float angle) {
 void SteeringMotor::TurnAbsolute(float angle) { servo_->SetTarget(angle); }
 
 bool SteeringMotor::AlignUpdate() {
-  static bool align_complete = false;
-
-  if (align_complete) {
+  if (align_complete_) {
     servo_->SetTarget(align_angle_, true);
     servo_->CalcOutput();
     return true;
   } else if (align_detect_func()) {
-    servo_->servo_angle_ = 0;
-    servo_->cumulated_angle_ = 0;
-    align_complete = true;
+    float current_theta = servo_->motor_->GetTheta();
+    float offset = wrap<float>(servo_->align_angle_ - current_theta, -PI, PI);
+    float current = (current_theta + offset - servo_->align_angle_) / servo_->transmission_ratio_ +
+                    servo_->offset_angle_ + servo_->cumulated_angle_;
+    align_angle_ = current + calibrate_offset;
+    align_complete_ = true;
+    servo_->SetTarget(align_angle_, true);
+    servo_->CalcOutput();
     return true;
   } else {
     servo_->motor_->SetOutput(servo_->omega_pid_.ComputeConstrainedOutput(

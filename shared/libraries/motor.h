@@ -503,6 +503,7 @@ typedef struct {
   float max_iout;
   float max_out;
   align_detect_t align_detect_func;
+  float calibrate_offset;
 } steering_t;
 
 class SteeringMotor {
@@ -523,9 +524,11 @@ class SteeringMotor {
 
   float test_speed_;
   align_detect_t align_detect_func;
-  float align_angle_;
+  float calibrate_offset;
 
+  float align_angle_;
   BoolEdgeDetector* align_detector;
+  bool align_complete_;
 };
 
 } /* namespace control */

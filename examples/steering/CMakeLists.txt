@@ -18,40 +18,12 @@
 #                                                                        #
 # ---------------------------------------------------------------------- #
 
-project(example_motor ASM C CXX)
+project(example_steering ASM C CXX)
 
-irm_add_arm_executable(${PROJECT_NAME}_m3508
-    TARGET DJI_Board_TypeC
-    SOURCES m3508.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_speed
-    TARGET DJI_Board_TypeC
-    SOURCES m3508_speed.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_position
-    TARGET DJI_Board_TypeC
-    SOURCES m3508_position.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m3508_antijam
+irm_add_arm_executable(${PROJECT_NAME}_one
     TARGET DJI_Board_TypeA
-    SOURCES m3508_antijam.cc)
+    SOURCES steering_test.cc)
 
-irm_add_arm_executable(${PROJECT_NAME}_m3508_steering
-    TARGET DJI_Board_TypeA
-    SOURCES m3508_steering.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m6020
+irm_add_arm_executable(${PROJECT_NAME}_chassis
     TARGET DJI_Board_TypeC
-    SOURCES m6020.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_m6623
-    TARGET DJI_Board_TypeA
-    SOURCES m6623.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_pwm
-    TARGET DJI_Board_TypeA
-    SOURCES pwm.cc)
-
-irm_add_arm_executable(${PROJECT_NAME}_steering_align
-    TARGET DJI_Board_TypeC
-    SOURCES m3508_steering_align.cc)
+    SOURCES steering_chassis.cc)

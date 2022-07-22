@@ -18,35 +18,75 @@
  *                                                                          *
  ****************************************************************************/
 
+#include "bsp_gpio.h"
+#include "bsp_os.h"
 #include "bsp_print.h"
 #include "cmsis_os.h"
 #include "controller.h"
+#include "dbus.h"
 #include "main.h"
 #include "motor.h"
+#include "utils.h"
 
-#define TARGET_SPEED 30
+#define TEST_SPEED (0.4 * PI)
 
 bsp::CAN* can = nullptr;
 control::MotorCANBase* motor = nullptr;
+float transmission_ratio;
+control::ConstrainedPID pid;
+
+static bsp::GPIO* input = nullptr;
+
+bool steering_align_detect() {
+  // Fill in the detection for photoelectric switch
+  return !input->Read();
+}
 
 void RM_RTOS_Init() {
   print_use_uart(&huart1);
+
+  input = new bsp::GPIO(IN4_GPIO_Port, IN4_Pin);
+
+  // Fill in corresponding CAN, motor ID, transmission ratio, and omega PID
   can = new bsp::CAN(&hcan1, 0x201, true);
-  motor = new control::Motor3508(can, 0x201);
+  motor = new control::Motor3508(can, 0x204);
+
+  transmission_ratio = 8;
+  float* omega_pid_param = new float[3]{140, 1.2, 25};
+  float max_iout = 1000;
+  float max_out = 13000;
+  pid.Reinit(omega_pid_param, max_iout, max_out);
 }
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
-
   control::MotorCANBase* motors[] = {motor};
-  control::PIDController pid(20, 15, 30);
 
-  while (true) {
-    float diff = motor->GetOmegaDelta(TARGET_SPEED);
-    int16_t out = pid.ComputeConstrainedOutput(diff);
-    motor->SetOutput(out);
+  float start_angle = -1;
+  float end_angle = -1;
+  bool pos_edge_aligned = false;
+  bool neg_edge_aligned = false;
+  BoolEdgeDetector edge_detect(true);
+
+  print("Alignment Begin\r\n");
+  while (!pos_edge_aligned || !neg_edge_aligned) {
+    edge_detect.input(steering_align_detect());
+    if (!pos_edge_aligned && edge_detect.posEdge()) {
+      start_angle = motor->GetTheta();
+      pos_edge_aligned = true;
+    } else if (pos_edge_aligned && !neg_edge_aligned && edge_detect.negEdge()) {
+      end_angle = motor->GetTheta();
+      neg_edge_aligned = true;
+    }
+    motor->SetOutput(
+        pid.ComputeConstrainedOutput(motor->GetOmegaDelta(TEST_SPEED * transmission_ratio)));
     control::MotorCANBase::TransmitOutput(motors, 1);
-    motor->PrintData();
-    osDelay(10);
   }
+  motor->SetOutput(0);
+  control::MotorCANBase::TransmitOutput(motors, 1);
+
+  float angle_diff = wrap<float>(end_angle - start_angle, -PI, PI);
+  float aligned_angle = wrap<float>(start_angle + angle_diff, 0, 2 * PI);
+  print("Alignment End, <offset_angle = %10.7f>, %.2f %.2f\r\n", aligned_angle, start_angle,
+        end_angle);
 }

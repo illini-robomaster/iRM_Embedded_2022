@@ -46,6 +46,7 @@ bool steering_align_detect() {
   // float theta = wrap<float>(steering->GetRawTheta(), 0, 2 * PI);
   // return abs(theta - 3) < 0.05;
   return key->Read() == 1;
+  // return true;
 }
 
 void RM_RTOS_Init() {
@@ -53,19 +54,21 @@ void RM_RTOS_Init() {
   bsp::SetHighresClockTimer(&htim2);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
-  motor = new control::Motor3508(can1, 0x201);
+  motor = new control::Motor3508(can1, 0x202);
 
   control::steering_t steering_data;
   steering_data.motor = motor;
   steering_data.max_speed = SPEED;
   steering_data.test_speed = TEST_SPEED;
   steering_data.max_acceleration = ACCELERATION;
-  steering_data.transmission_ratio = 8;
-  steering_data.offset_angle = 5.96;
-  steering_data.omega_pid_param = new float[3]{140, 1.2, 25};
+  steering_data.transmission_ratio = M3508P19_RATIO;
+  steering_data.offset_angle = 5.36;
+  steering_data.omega_pid_param = new float[3]{100, 0.5, 12};
   steering_data.max_iout = 1000;
   steering_data.max_out = 13000;
   steering_data.align_detect_func = steering_align_detect;
+  // steering_data.calibrate_offset = 0.858458848;
+  steering_data.calibrate_offset = 0;
   steering = new control::SteeringMotor(steering_data);
 
   dbus = new remote::DBUS(&huart1);
@@ -93,7 +96,7 @@ void RM_RTOS_Default_Task(const void* args) {
   print("\r\nAlignment End\r\n");
 
   while (true) {
-    steering->TurnRelative(float(dbus->ch1) / remote::DBUS::ROCKER_MAX / 20);
+    // steering->TurnRelative(float(dbus->ch1) / remote::DBUS::ROCKER_MAX / 20);
     steering->Update();
     control::MotorCANBase::TransmitOutput(motors, 1);
 

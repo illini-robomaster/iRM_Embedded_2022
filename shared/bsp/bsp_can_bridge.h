@@ -24,15 +24,27 @@
 
 namespace bsp {
 
-static const int MAX_IO = 4;
+typedef struct {
+  uint8_t id;
+  float data;
+} bridge_data_t;
 
 class CanBridge {
  public:
   CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id);
   void UpdateData(const uint8_t data[]);
-  void TransmitOutput(uint8_t* IO_data);
+  void TransmitOutput();
 
-  uint8_t IO[MAX_IO] = {};
+  bridge_data_t cmd;
+  float vx = 0;              // 0
+  float vy = 0;              // 1
+  float relative_angle = 0;  // 2
+  float mode = 0;            // 3
+  float dead = 0;            // 4
+  float shooter_power;       // 5
+  float cooling_heat;        // 6
+  float cooling_limit;       // 7
+  float speed_limit;         // 8
 
  private:
   bsp::CAN* can_;

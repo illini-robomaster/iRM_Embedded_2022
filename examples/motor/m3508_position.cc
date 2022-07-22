@@ -44,6 +44,9 @@
 bsp::CAN* can1 = nullptr;
 control::MotorCANBase* motor = nullptr;
 control::ServoMotor* servo = nullptr;
+
+bsp::GPIO* key = nullptr;
+
 #ifdef WITH_CONTROLLER
 remote::DBUS* dbus = nullptr;
 #else
@@ -55,10 +58,11 @@ BoolEdgeDetector key_detector(false);
 #define USING_M3508_STEERING
 
 void RM_RTOS_Init() {
-  print_use_uart(&huart8);
-  bsp::SetHighresClockTimer(&htim2);
+  print_use_uart(&huart1);
+  bsp::SetHighresClockTimer(&htim5);
 
   can1 = new bsp::CAN(&hcan1, 0x201);
+  key = new bsp::GPIO(IN2_GPIO_Port, IN2_Pin);
 
 #ifdef USING_M3508
   motor = new control::Motor3508(can1, 0x201);
@@ -109,7 +113,7 @@ void RM_RTOS_Default_Task(const void* args) {
 #ifdef WITH_CONTROLLER
   osDelay(500);  // DBUS initialization needs time
 #else
-  bsp::GPIO key(KEY_GPIO_GROUP, GPIO_PIN_2);
+
 #endif
   // control::MotorCANBase* motors[] = {motor};
 
@@ -120,7 +124,7 @@ void RM_RTOS_Default_Task(const void* args) {
     target = float(dbus->ch1) / remote::DBUS::ROCKER_MAX * 6 * PI;
     servo->SetTarget(target, true);
 #else
-    key_detector.input(key.Read());
+    key_detector.input(key->Read());
     constexpr float desired_target = 0.5 * 2 * PI;
     if (key_detector.posEdge() && servo->SetTarget(desired_target - target) != 0) {
       target = desired_target - target;
@@ -132,6 +136,7 @@ void RM_RTOS_Default_Task(const void* args) {
     static int i = 0;
     if (i > 10) {
       // print("%10.2f %10.2f %10.2f %10.2f ", dbus->ch0, dbus->ch0, dbus->ch0, dbus->ch0);
+      print("%d ", !key->Read());
       servo->PrintData();
       i = 0;
     } else {
