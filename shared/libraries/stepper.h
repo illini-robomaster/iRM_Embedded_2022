@@ -18,34 +18,27 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_can_bridge.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
+#pragma once
 
-static bsp::CAN* can = nullptr;
-static bsp::CanBridge* send = nullptr;
+#include "bsp_gpio.h"
+#include "bsp_pwm.h"
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan2, 0x201, false);
-  send = new bsp::CanBridge(can, 0x20A, 0x20B);
-}
+namespace control {
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
+enum dir { FORWARD, BACKWARD };
 
-  while (true) {
-    send->cmd.id = bsp::VX;
-    send->cmd.data_float = 8980.1;
-    send->TransmitOutput();
-    osDelay(1000);
-    send->cmd.id = bsp::VY;
-    send->cmd.data_float = -9.2;
-    send->TransmitOutput();
-    send->cmd.id = bsp::VX;
-    send->cmd.data_float = 999;
-    send->TransmitOutput();
-    osDelay(1000);
-  }
-}
+class Stepper {
+ public:
+  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq, GPIO_TypeDef* dir_group,
+          uint16_t dir_pin, GPIO_TypeDef* enable_group, uint16_t enable_pin);
+  void Move(dir direction, unsigned speed);
+  void Stop();
+  void Enable();
+  void Disable();
+
+ private:
+  bsp::PWM stepper_;
+  bsp::GPIO dir_;
+  bsp::GPIO enable_;
+};
+}  // namespace control

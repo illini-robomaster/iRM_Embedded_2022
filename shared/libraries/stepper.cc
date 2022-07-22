@@ -18,34 +18,41 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "bsp_can_bridge.h"
-#include "bsp_print.h"
-#include "cmsis_os.h"
-#include "main.h"
+#include "stepper.h"
 
-static bsp::CAN* can = nullptr;
-static bsp::CanBridge* send = nullptr;
+namespace control {
 
-void RM_RTOS_Init(void) {
-  print_use_uart(&huart1);
-  can = new bsp::CAN(&hcan2, 0x201, false);
-  send = new bsp::CanBridge(can, 0x20A, 0x20B);
+Stepper::Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq,
+                 GPIO_TypeDef* dir_group, uint16_t dir_pin, GPIO_TypeDef* enable_group,
+                 uint16_t enable_pin)
+    : stepper_(htim, channel, clock_freq, 0, 0),
+      dir_(dir_group, dir_pin),
+      enable_(enable_group, enable_pin) {
+  enable_.Low();
+  stepper_.Start();
 }
 
-void RM_RTOS_Default_Task(const void* arguments) {
-  UNUSED(arguments);
-
-  while (true) {
-    send->cmd.id = bsp::VX;
-    send->cmd.data_float = 8980.1;
-    send->TransmitOutput();
-    osDelay(1000);
-    send->cmd.id = bsp::VY;
-    send->cmd.data_float = -9.2;
-    send->TransmitOutput();
-    send->cmd.id = bsp::VX;
-    send->cmd.data_float = 999;
-    send->TransmitOutput();
-    osDelay(1000);
+void Stepper::Move(dir direction, unsigned int speed) {
+  switch (direction) {
+    case FORWARD:
+      dir_.High();
+      break;
+    case BACKWARD:
+      dir_.Low();
+      break;
+    default:;
   }
+  stepper_.SetFrequency(speed);
+  stepper_.SetPulseWidth(1000000 / speed / 2);
 }
+
+void Stepper::Stop() {
+  stepper_.SetFrequency(0);
+  stepper_.SetPulseWidth(0);
+}
+
+void Stepper::Enable() { enable_.High(); }
+
+void Stepper::Disable() { enable_.Low(); }
+
+}  // namespace control

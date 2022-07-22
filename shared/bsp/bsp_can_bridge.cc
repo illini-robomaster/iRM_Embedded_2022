@@ -39,35 +39,44 @@ CanBridge::CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id) {
 void CanBridge::UpdateData(const uint8_t* data) {
   memcpy(&cmd, data, sizeof(bridge_data_t));
   switch (cmd.id) {
-    case 0:
-      vx = cmd.data;
+    case VX:
+      vx = cmd.data_float;
       break;
-    case 1:
-      vy = cmd.data;
+    case VY:
+      vy = cmd.data_float;
       break;
-    case 2:
-      relative_angle = cmd.data;
+    case RELATIVE_ANGLE:
+      relative_angle = cmd.data_float;
       break;
-    case 3:
-      mode = cmd.data;
+    case START:
+      start = cmd.data_bool;
       break;
-    case 4:
-      dead = cmd.data;
+    case MODE:
+      mode = cmd.data_int;
       break;
-    case 5:
-      shooter_power = cmd.data;
+    case DEAD:
+      dead = cmd.data_bool;
       break;
-    case 6:
-      cooling_heat = cmd.data;
+    case SHOOTER_POWER:
+      shooter_power = cmd.data_bool;
       break;
-    case 7:
-      cooling_limit = cmd.data;
+    case COOLING_HEAT1:
+      cooling_heat1 = cmd.data_float;
       break;
-    case 8:
-      speed_limit = cmd.data;
+    case COOLING_HEAT2:
+      cooling_heat2 = cmd.data_float;
       break;
-    case 9:
-      start = cmd.data;
+    case COOLING_LIMIT1:
+      cooling_limit1 = cmd.data_float;
+      break;
+    case COOLING_LIMIT2:
+      cooling_limit2 = cmd.data_float;
+      break;
+    case SPEED_LIMIT1:
+      speed_limit1 = cmd.data_float;
+      break;
+    case SPEED_LIMIT2:
+      speed_limit2 = cmd.data_float;
       break;
     default:;
   }

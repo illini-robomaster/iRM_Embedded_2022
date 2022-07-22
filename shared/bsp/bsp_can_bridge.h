@@ -24,9 +24,29 @@
 
 namespace bsp {
 
+typedef enum {
+  VX,
+  VY,
+  RELATIVE_ANGLE,
+  START,
+  MODE,
+  DEAD,
+  SHOOTER_POWER,
+  COOLING_HEAT1,
+  COOLING_HEAT2,
+  COOLING_LIMIT1,
+  COOLING_LIMIT2,
+  SPEED_LIMIT1,
+  SPEED_LIMIT2,
+} can_bridge_cmd;
+
 typedef struct {
   uint8_t id;
-  float data;
+  union {
+    float data_float;
+    int data_int;
+    bool data_bool;
+  };
 } bridge_data_t;
 
 class CanBridge {
@@ -36,16 +56,19 @@ class CanBridge {
   void TransmitOutput();
 
   bridge_data_t cmd;
-  float vx = 0;              // 0
-  float vy = 0;              // 1
-  float relative_angle = 0;  // 2
-  float mode = 0;            // 3
-  float dead = 0;            // 4
-  float shooter_power;       // 5
-  float cooling_heat;        // 6
-  float cooling_limit;       // 7
-  float speed_limit;         // 8
-  float start = 0;           // 9
+  float vx = 0;
+  float vy = 0;
+  float relative_angle = 0;
+  bool start = false;
+  int mode = 0;
+  bool dead = false;
+  bool shooter_power = false;
+  float cooling_heat1 = 0;
+  float cooling_heat2 = 0;
+  float cooling_limit1 = 0;
+  float cooling_limit2 = 0;
+  float speed_limit1 = 0;
+  float speed_limit2 = 0;
 
  private:
   bsp::CAN* can_;

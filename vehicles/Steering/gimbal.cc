@@ -20,6 +20,9 @@
 
 #include "gimbal.h"
 
+#include <cstdio>
+
+#include "bsp_buzzer.h"
 #include "bsp_can.h"
 #include "bsp_can_bridge.h"
 #include "bsp_imu.h"
@@ -30,9 +33,11 @@
 #include "dbus.h"
 #include "i2c.h"
 #include "main.h"
+#include "oled.h"
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "stepper.h"
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -42,6 +47,7 @@ static display::RGB* RGB = nullptr;
 static const int GIMBAL_TASK_DELAY = 1;
 static const int CHASSIS_TASK_DELAY = 2;
 static const int SHOOTER_TASK_DELAY = 10;
+static const int SELFTEST_TASK_DELAY = 100;
 static const int KILLALL_DELAY = 100;
 static const int DEFAULT_TASK_DELAY = 100;
 
@@ -53,6 +59,22 @@ static BoolEdgeDetector ChangeSpinMode(false);
 static volatile bool SpinMode = false;
 
 static volatile float relative_angle = 0;
+
+static bool volatile pitch_motor_flag = false;
+static bool volatile yaw_motor_flag = false;
+static bool volatile sl_motor_flag = false;
+static bool volatile sr_motor_flag = false;
+static bool volatile ld_motor_flag = false;
+// static bool volatile fl_motor_flag = false;
+// static bool volatile fr_motor_flag = false;
+// static bool volatile bl_motor_flag = false;
+// static bool volatile br_motor_flag = false;
+static bool volatile calibration_flag = false;
+// static bool volatile referee_flag = false;
+static bool volatile dbus_flag = false;
+static bool volatile lidar_flag = false;
+
+static volatile bool selftestStart = false;
 
 //==================================================================================================
 // IMU
@@ -150,8 +172,8 @@ void gimbalTask(void* arg) {
   RGB->Display(display::color_green);
   laser->On();
 
-  send->cmd.id = 9;
-  send->cmd.data = 1;
+  send->cmd.id = bsp::START;
+  send->cmd.data_bool = true;
   send->TransmitOutput();
 
   float pitch_ratio, yaw_ratio;
@@ -248,8 +270,13 @@ static control::MotorCANBase* sl_motor = nullptr;
 static control::MotorCANBase* sr_motor = nullptr;
 static control::MotorCANBase* ld_motor = nullptr;
 static control::Shooter* shooter = nullptr;
+static control::Stepper* stepper = nullptr;
 
 static volatile bool flywheelFlag = false;
+
+static unsigned stepper_length = 700;
+static unsigned stepper_speed = 1000;
+static bool stepper_direction = true;
 
 void shooterTask(void* arg) {
   UNUSED(arg);
@@ -263,33 +290,53 @@ void shooterTask(void* arg) {
 
   while (!imu->CaliDone()) osDelay(100);
 
+  for (int i = 0; i < 2; ++i) {
+    stepper->Move(control::FORWARD, stepper_speed);
+    osDelay(stepper_length);
+    stepper->Move(control::BACKWARD, stepper_speed);
+    osDelay(stepper_length);
+  }
+  stepper->Stop();
+
   while (true) {
     while (Dead) osDelay(100);
 
-    if (send->shooter_power > 0 && send->cooling_heat < send->cooling_limit - 20 &&
-        (dbus->mouse.l || dbus->swr == remote::UP))
-      shooter->LoadNext();
-    if (send->shooter_power < 1 || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
-      flywheelFlag = false;
-      shooter->SetFlywheelSpeed(0);
-    } else if (14 < send->speed_limit && send->speed_limit < 16) {
-      flywheelFlag = true;
-      shooter->SetFlywheelSpeed(440);  // 445 MAX
-    } else if (send->speed_limit >= 18) {
-      flywheelFlag = true;
-      shooter->SetFlywheelSpeed(485);  // 490 MAX
-    } else {
-      flywheelFlag = false;
-      shooter->SetFlywheelSpeed(0);
+    if (send->shooter_power && send->cooling_heat1 > send->cooling_limit1 - 20) {
+      sl_motor->SetOutput(0);
+      sr_motor->SetOutput(0);
+      ld_motor->SetOutput(0);
+      control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
+      osDelay(100);
+      if (stepper_direction) {
+        stepper->Move(control::FORWARD, stepper_speed);
+        osDelay(stepper_length);
+        stepper->Stop();
+      } else {
+        stepper->Move(control::BACKWARD, stepper_speed);
+        osDelay(stepper_length);
+        stepper->Stop();
+      }
+      stepper_direction = !stepper_direction;
     }
 
-    //    if (dbus->mouse.l || dbus->swr == remote::UP)
-    //      shooter->LoadNext();
-    //    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
-    //      shooter->SetFlywheelSpeed(0);
-    //    } else {
-    //      shooter->SetFlywheelSpeed(440);  // 445 MAX
-    //    }
+    if (send->shooter_power && send->cooling_heat1 < send->cooling_limit1 - 20 &&
+        (dbus->mouse.l || dbus->swr == remote::UP))
+      shooter->LoadNext();
+    if (!send->shooter_power || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+      flywheelFlag = false;
+      shooter->SetFlywheelSpeed(0);
+    } else {
+      if (14 < send->speed_limit1 && send->speed_limit1 < 16) {
+        flywheelFlag = true;
+        shooter->SetFlywheelSpeed(437);  // 445 MAX
+      } else if (send->speed_limit1 >= 18) {
+        flywheelFlag = true;
+        shooter->SetFlywheelSpeed(482);  // 490 MAX
+      } else {
+        flywheelFlag = false;
+        shooter->SetFlywheelSpeed(0);
+      }
+    }
 
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
@@ -330,8 +377,8 @@ void chassisTask(void* arg) {
     ChangeSpinMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
     if (ChangeSpinMode.posEdge()) SpinMode = !SpinMode;
 
-    send->cmd.id = 3;
-    send->cmd.data = SpinMode ? 1 : 0;
+    send->cmd.id = bsp::MODE;
+    send->cmd.data_int = SpinMode ? 1 : 0;
     send->TransmitOutput();
 
     if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
@@ -361,15 +408,113 @@ void chassisTask(void* arg) {
     vx_set = vx_keyboard + vx_remote;
     vy_set = vy_keyboard + vy_remote;
 
-    send->cmd.id = 0;
-    send->cmd.data = Dead ? 0 : vx_set;
+    send->cmd.id = bsp::VX;
+    send->cmd.data_float = Dead ? 0 : vx_set;
     send->TransmitOutput();
 
-    send->cmd.id = 1;
-    send->cmd.data = Dead ? 0 : vy_set;
+    send->cmd.id = bsp::VY;
+    send->cmd.data_float = Dead ? 0 : vy_set;
     send->TransmitOutput();
 
     osDelay(CHASSIS_TASK_DELAY);
+  }
+}
+
+//==================================================================================================
+// SelfTest
+//==================================================================================================
+
+const osThreadAttr_t selfTestTaskAttribute = {.name = "selfTestTask",
+                                              .attr_bits = osThreadDetached,
+                                              .cb_mem = nullptr,
+                                              .cb_size = 0,
+                                              .stack_mem = nullptr,
+                                              .stack_size = 256 * 4,
+                                              .priority = (osPriority_t)osPriorityBelowNormal,
+                                              .tz_module = 0,
+                                              .reserved = 0};
+
+osThreadId_t selfTestTaskHandle;
+
+using Note = bsp::BuzzerNote;
+
+static bsp::BuzzerNoteDelayed Mario[] = {
+    {Note::Mi3M, 80}, {Note::Silent, 80},  {Note::Mi3M, 80}, {Note::Silent, 240},
+    {Note::Mi3M, 80}, {Note::Silent, 240}, {Note::Do1M, 80}, {Note::Silent, 80},
+    {Note::Mi3M, 80}, {Note::Silent, 240}, {Note::So5M, 80}, {Note::Silent, 560},
+    {Note::So5L, 80}, {Note::Silent, 0},   {Note::Finish, 0}};
+
+static bsp::Buzzer* buzzer = nullptr;
+static display::OLED* OLED = nullptr;
+
+void selfTestTask(void* arg) {
+  UNUSED(arg);
+
+  OLED->ShowIlliniRMLOGO();
+  buzzer->SingSong(Mario, [](uint32_t milli) { osDelay(milli); });
+  OLED->OperateGram(display::PEN_CLEAR);
+
+  OLED->ShowString(0, 0, (uint8_t*)"GP");
+  OLED->ShowString(0, 5, (uint8_t*)"GY");
+  OLED->ShowString(1, 0, (uint8_t*)"SL");
+  OLED->ShowString(1, 5, (uint8_t*)"SR");
+  OLED->ShowString(1, 10, (uint8_t*)"LD");
+  //  OLED->ShowString(2, 0, (uint8_t*)"FL");
+  //  OLED->ShowString(2, 5, (uint8_t*)"FR");
+  //  OLED->ShowString(2, 10, (uint8_t*)"BL");
+  //  OLED->ShowString(2, 15, (uint8_t*)"BR");
+  OLED->ShowString(3, 0, (uint8_t*)"Cali");
+  OLED->ShowString(3, 7, (uint8_t*)"Temp:");
+  //  OLED->ShowString(4, 0, (uint8_t*)"Ref");
+  OLED->ShowString(4, 6, (uint8_t*)"Dbus");
+  OLED->ShowString(4, 13, (uint8_t*)"Lidar");
+
+  char temp[6] = "";
+  while (true) {
+    pitch_motor->connection_flag_ = false;
+    yaw_motor->connection_flag_ = false;
+    sl_motor->connection_flag_ = false;
+    sr_motor->connection_flag_ = false;
+    ld_motor->connection_flag_ = false;
+    //    fl_motor->connection_flag_ = false;
+    //    fr_motor->connection_flag_ = false;
+    //    bl_motor->connection_flag_ = false;
+    //    br_motor->connection_flag_ = false;
+    referee->connection_flag_ = false;
+    dbus->connection_flag_ = false;
+    osDelay(SELFTEST_TASK_DELAY);
+    pitch_motor_flag = pitch_motor->connection_flag_;
+    yaw_motor_flag = yaw_motor->connection_flag_;
+    sl_motor_flag = sl_motor->connection_flag_;
+    sr_motor_flag = sr_motor->connection_flag_;
+    ld_motor_flag = ld_motor->connection_flag_;
+    //    fl_motor_flag = fl_motor->connection_flag_;
+    //    fr_motor_flag = fr_motor->connection_flag_;
+    //    bl_motor_flag = bl_motor->connection_flag_;
+    //    br_motor_flag = br_motor->connection_flag_;
+    calibration_flag = imu->CaliDone();
+    //    referee_flag = referee->connection_flag_;
+    dbus_flag = dbus->connection_flag_;
+
+    OLED->ShowBlock(0, 2, pitch_motor_flag);
+    OLED->ShowBlock(0, 7, yaw_motor_flag);
+    OLED->ShowBlock(1, 2, sl_motor_flag);
+    OLED->ShowBlock(1, 7, sr_motor_flag);
+    OLED->ShowBlock(1, 12, ld_motor_flag);
+    //    OLED->ShowBlock(2, 2, fl_motor_flag);
+    //    OLED->ShowBlock(2, 7, fr_motor_flag);
+    //    OLED->ShowBlock(2, 12, bl_motor_flag);
+    //    OLED->ShowBlock(2, 17, br_motor_flag);
+    OLED->ShowBlock(3, 4, imu->CaliDone());
+    snprintf(temp, 6, "%.2f", imu->Temp);
+    OLED->ShowString(3, 12, (uint8_t*)temp);
+    //    OLED->ShowBlock(4, 3, referee_flag);
+    OLED->ShowBlock(4, 10, dbus_flag);
+    OLED->ShowBlock(4, 18, lidar_flag);
+
+    OLED->RefreshGram();
+
+    selftestStart = true;
   }
 }
 
@@ -433,6 +578,11 @@ void RM_RTOS_Init(void) {
   shooter_data.load_motor = ld_motor;
   shooter_data.model = control::SHOOTER_STANDARD;
   shooter = new control::Shooter(shooter_data);
+  stepper = new control::Stepper(&htim1, 1, 1000000, DIR_GPIO_Port, DIR_Pin, ENABLE_GPIO_Port,
+                                 ENABLE_Pin);
+
+  buzzer = new bsp::Buzzer(&htim4, 3, 1000000);
+  OLED = new display::OLED(&hi2c2, 0x3C);
 
   send = new bsp::CanBridge(can2, 0x20A, 0x20B);
 }
@@ -443,6 +593,7 @@ void RM_RTOS_Threads_Init(void) {
   refereeTaskHandle = osThreadNew(refereeTask, nullptr, &refereeTaskAttribute);
   shooterTaskHandle = osThreadNew(shooterTask, nullptr, &shooterTaskAttribute);
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
+  selfTestTaskHandle = osThreadNew(selfTestTask, nullptr, &selfTestTaskAttribute);
 }
 
 void KillAll() {
@@ -456,8 +607,8 @@ void KillAll() {
   laser->Off();
 
   while (true) {
-    send->cmd.id = 4;
-    send->cmd.data = 1;
+    send->cmd.id = bsp::DEAD;
+    send->cmd.data_bool = true;
     send->TransmitOutput();
 
     FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
@@ -484,7 +635,6 @@ void KillAll() {
 }
 
 static bool debug = true;
-// static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
@@ -495,63 +645,29 @@ void RM_RTOS_Default_Task(const void* arg) {
       Dead = true;
       KillAll();
     }
-    send->cmd.id = 4;
-    send->cmd.data = 0;
+    send->cmd.id = bsp::DEAD;
+    send->cmd.data_bool = false;
     send->TransmitOutput();
 
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-    send->cmd.id = 2;
-    send->cmd.data = relative_angle;
+    send->cmd.id = bsp::RELATIVE_ANGLE;
+    send->cmd.data_float = relative_angle;
     send->TransmitOutput();
 
     if (debug) {
       set_cursor(0, 0);
       clear_screen();
 
-      //      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
-      //            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-      //      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
-      //      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
-      //            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
-      //
-      //      print("\r\n");
-      //
-      //      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2,
-      //      dbus->ch3); print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr,
-      //      dbus->timestamp);
-      //
-      //      print("\r\n");
-      //
-      //      print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
-      //            referee->game_robot_status.max_HP);
-      //
-      //      print("\r\n");
-      //
-      //      print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-      //      print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-      //      print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
-      //            referee->game_robot_status.chassis_power_limit);
-      //      print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
-      //
-      //      print("\r\n");
-      //
-      //      print("Shooter Heat: %hu / %d\r\n",
-      //      referee->power_heat_data.shooter_id1_17mm_cooling_heat,
-      //            referee->game_robot_status.shooter_id1_17mm_cooling_limit);
-      //      print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
-      //            referee->game_robot_status.shooter_id1_17mm_speed_limit);
-      //      print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-      //
-      //      if (referee->shoot_data.bullet_speed >
-      //          referee->game_robot_status.shooter_id1_17mm_speed_limit)
-      //        pass = false;
-      //      print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
-      //      float shooter_power; // 5
-      //      float cooling_heat; // 6
-      //      float cooling_limit; // 7
-      //      float speed_limit; // 8
-      print("shooter power: %f\r\ncooling heat: %f\r\ncooling limit: %f\r\nspeed_limit: %f\r\n",
-            send->shooter_power, send->cooling_heat, send->cooling_limit, send->speed_limit);
+      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
+      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+
+      print("\r\n");
+
+      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+      print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
     }
 
     osDelay(DEFAULT_TASK_DELAY);
