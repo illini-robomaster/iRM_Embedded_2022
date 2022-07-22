@@ -146,11 +146,9 @@ void chassisTask(void* arg) {
   //    osDelay(CHASSIS_TASK_DELAY);
   //  }
 
-  while (receive->start < 0.5) osDelay(100);
+  while (receive->start) osDelay(100);
 
   while (true) {
-    //    if (Dead) osDelay(100);
-
     float relative_angle = receive->relative_angle;
     float sin_yaw, cos_yaw, vx_set, vy_set, wz_set;
     UNUSED(wz_set);
@@ -158,7 +156,7 @@ void chassisTask(void* arg) {
     vx_set = receive->vx;
     vy_set = receive->vy;
 
-    if (receive->mode > 0.5) {  // spin mode
+    if (receive->mode == 1) {  // spin mode
       sin_yaw = arm_sin_f32(relative_angle);
       cos_yaw = arm_cos_f32(relative_angle);
       vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
@@ -180,48 +178,30 @@ void chassisTask(void* arg) {
                     referee->power_heat_data.chassis_power,
                     (float)referee->power_heat_data.chassis_power_buffer);
 
+    if (Dead) {
+      motor5->SetOutput(0);
+      motor6->SetOutput(0);
+      motor7->SetOutput(0);
+      motor8->SetOutput(0);
+    }
+
     control::MotorCANBase::TransmitOutput(wheel_motors, 4);
     control::MotorCANBase::TransmitOutput(steer_motors, 4);
 
-    //    float shooter_power; // 5
-    //    float cooling_heat; // 6
-    //    float cooling_limit; // 7
-    //    float speed_limit; // 8
-
-    //    if (referee->game_robot_status.mains_power_shooter_output &&
-    //        referee->power_heat_data.shooter_id1_17mm_cooling_heat <
-    //            referee->game_robot_status.shooter_id1_17mm_cooling_limit - 20 &&
-    //        (dbus->mouse.l || dbus->swr == remote::UP))
-    //      shooter->LoadNext();
-    //    if (!referee->game_robot_status.mains_power_shooter_output || dbus->keyboard.bit.Q ||
-    //        dbus->swr == remote::DOWN) {
-    //      flywheelFlag = false;
-    //      shooter->SetFlywheelSpeed(0);
-    //    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit == 15) {
-    //      flywheelFlag = true;
-    //      shooter->SetFlywheelSpeed(440);  // 445 MAX
-    //    } else if (referee->game_robot_status.shooter_id1_17mm_speed_limit >= 18) {
-    //      flywheelFlag = true;
-    //      shooter->SetFlywheelSpeed(485);  // 490 MAX
-    //    } else {
-    //      flywheelFlag = false;
-    //      shooter->SetFlywheelSpeed(0);
-    //    }
-
-    receive->cmd.id = 5;
-    receive->cmd.data = (float)referee->game_robot_status.mains_power_shooter_output;
+    receive->cmd.id = bsp::SHOOTER_POWER;
+    receive->cmd.data_float = (float)referee->game_robot_status.mains_power_shooter_output;
     receive->TransmitOutput();
 
-    receive->cmd.id = 6;
-    receive->cmd.data = (float)referee->power_heat_data.shooter_id1_17mm_cooling_heat;
+    receive->cmd.id = bsp::COOLING_HEAT;
+    receive->cmd.data_float = (float)referee->power_heat_data.shooter_id1_17mm_cooling_heat;
     receive->TransmitOutput();
 
-    receive->cmd.id = 7;
-    receive->cmd.data = (float)referee->game_robot_status.shooter_id1_17mm_cooling_limit;
+    receive->cmd.id = bsp::COOLING_LIMIT;
+    receive->cmd.data_float = (float)referee->game_robot_status.shooter_id1_17mm_cooling_limit;
     receive->TransmitOutput();
 
-    receive->cmd.id = 8;
-    receive->cmd.data = (float)referee->game_robot_status.shooter_id1_17mm_speed_limit;
+    receive->cmd.id = bsp::SPEED_LIMIT;
+    receive->cmd.data_float = (float)referee->game_robot_status.shooter_id1_17mm_speed_limit;
     receive->TransmitOutput();
 
     osDelay(CHASSIS_TASK_DELAY);
@@ -234,7 +214,6 @@ void RM_RTOS_Init() {
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
-  //  dbus = new remote::DBUS(&huart3);
   RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
 
   motor1 = new control::Motor3508(can1, 0x201);
@@ -285,53 +264,48 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
 }
 
-// void KillAll() {
-//   RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
-//
-//   control::MotorCANBase* steer_motors[] = {motor1, motor2, motor3, motor4};
-//   control::MotorCANBase* wheel_motors[] = {motor5, motor6, motor7, motor8};
-//
-//   RGB->Display(display::color_blue);
-//
-//   while (true) {
-//     if (receive->dead < 0.5) {
-//       SpinMode = false;
-//       Dead = false;
-//       RGB->Display(display::color_green);
-//       break;
-//     }
-//
-////    motor1->SetOutput(0);
-////    motor2->SetOutput(0);
-////    motor3->SetOutput(0);
-////    motor4->SetOutput(0);
-//    motor5->SetOutput(0);
-//    motor6->SetOutput(0);
-//    motor7->SetOutput(0);
-//    motor8->SetOutput(0);
-//
-//    control::MotorCANBase::TransmitOutput(wheel_motors, 4);
-//    control::MotorCANBase::TransmitOutput(steer_motors, 4);
-//
-//    osDelay(KILLALL_DELAY);
-//  }
-//}
+void KillAll() {
+  RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
 
-// static bool debug = false;
-// static bool pass = true;
+  control::MotorCANBase* wheel_motors[] = {motor5, motor6, motor7, motor8};
+
+  RGB->Display(display::color_blue);
+
+  while (true) {
+    if (!receive->dead) {
+      SpinMode = false;
+      Dead = false;
+      RGB->Display(display::color_green);
+      break;
+    }
+
+    motor5->SetOutput(0);
+    motor6->SetOutput(0);
+    motor7->SetOutput(0);
+    motor8->SetOutput(0);
+
+    control::MotorCANBase::TransmitOutput(wheel_motors, 4);
+
+    osDelay(KILLALL_DELAY);
+  }
+}
+
+static bool debug = false;
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   while (true) {
-    //    if (receive->dead > 0.5) {
-    //      Dead = true;
-    //      KillAll();
-    //    }
-    set_cursor(0, 0);
-    clear_screen();
-    print("vx: %f, vy: %f, angle: %f, mode: %f, dead: %f\r\n", receive->vx, receive->vy,
-          receive->relative_angle, receive->mode, receive->dead);
+    if (receive->dead) {
+      Dead = true;
+      KillAll();
+    }
+    if (debug) {
+      set_cursor(0, 0);
+      clear_screen();
+      print("vx: %f, vy: %f, angle: %f, mode: %f, dead: %f\r\n", receive->vx, receive->vy,
+            receive->relative_angle, receive->mode, receive->dead);
+    }
     osDelay(DEFAULT_TASK_DELAY);
   }
 }

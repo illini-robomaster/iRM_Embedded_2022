@@ -36,15 +36,15 @@ void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
 
   while (true) {
-    send->cmd.id = 0;
-    send->cmd.data = 8980.1;
+    send->cmd.id = bsp::VX;
+    send->cmd.data_float = 8980.1;
     send->TransmitOutput();
     osDelay(1000);
-    send->cmd.id = 1;
-    send->cmd.data = -9.2;
+    send->cmd.id = bsp::VY;
+    send->cmd.data_float = -9.2;
     send->TransmitOutput();
-    send->cmd.id = 0;
-    send->cmd.data = 999;
+    send->cmd.id = bsp::VX;
+    send->cmd.data_float = 999;
     send->TransmitOutput();
     osDelay(1000);
   }

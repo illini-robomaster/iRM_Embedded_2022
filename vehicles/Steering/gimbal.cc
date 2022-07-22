@@ -150,8 +150,8 @@ void gimbalTask(void* arg) {
   RGB->Display(display::color_green);
   laser->On();
 
-  send->cmd.id = 9;
-  send->cmd.data = 1;
+  send->cmd.id = bsp::START;
+  send->cmd.data_bool = true;
   send->TransmitOutput();
 
   float pitch_ratio, yaw_ratio;
@@ -283,14 +283,6 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     }
 
-    //    if (dbus->mouse.l || dbus->swr == remote::UP)
-    //      shooter->LoadNext();
-    //    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
-    //      shooter->SetFlywheelSpeed(0);
-    //    } else {
-    //      shooter->SetFlywheelSpeed(440);  // 445 MAX
-    //    }
-
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
     osDelay(SHOOTER_TASK_DELAY);
@@ -330,8 +322,8 @@ void chassisTask(void* arg) {
     ChangeSpinMode.input(dbus->keyboard.bit.SHIFT || dbus->swl == remote::UP);
     if (ChangeSpinMode.posEdge()) SpinMode = !SpinMode;
 
-    send->cmd.id = 3;
-    send->cmd.data = SpinMode ? 1 : 0;
+    send->cmd.id = bsp::MODE;
+    send->cmd.data_int = SpinMode ? 1 : 0;
     send->TransmitOutput();
 
     if (dbus->keyboard.bit.A) vx_keyboard -= 61.5;
@@ -361,12 +353,12 @@ void chassisTask(void* arg) {
     vx_set = vx_keyboard + vx_remote;
     vy_set = vy_keyboard + vy_remote;
 
-    send->cmd.id = 0;
-    send->cmd.data = Dead ? 0 : vx_set;
+    send->cmd.id = bsp::VX;
+    send->cmd.data_float = Dead ? 0 : vx_set;
     send->TransmitOutput();
 
-    send->cmd.id = 1;
-    send->cmd.data = Dead ? 0 : vy_set;
+    send->cmd.id = bsp::VY;
+    send->cmd.data_float = Dead ? 0 : vy_set;
     send->TransmitOutput();
 
     osDelay(CHASSIS_TASK_DELAY);
@@ -456,8 +448,8 @@ void KillAll() {
   laser->Off();
 
   while (true) {
-    send->cmd.id = 4;
-    send->cmd.data = 1;
+    send->cmd.id = bsp::DEAD;
+    send->cmd.data_bool = true;
     send->TransmitOutput();
 
     FakeDeath.input(dbus->keyboard.bit.B || dbus->swl == remote::DOWN);
@@ -495,61 +487,32 @@ void RM_RTOS_Default_Task(const void* arg) {
       Dead = true;
       KillAll();
     }
-    send->cmd.id = 4;
-    send->cmd.data = 0;
+    send->cmd.id = bsp::DEAD;
+    send->cmd.data_bool = false;
     send->TransmitOutput();
 
     relative_angle = yaw_motor->GetThetaDelta(gimbal_param->yaw_offset_);
-    send->cmd.id = 2;
-    send->cmd.data = relative_angle;
+    send->cmd.id = bsp::RELATIVE_ANGLE;
+    send->cmd.data_float = relative_angle;
     send->TransmitOutput();
 
     if (debug) {
       set_cursor(0, 0);
       clear_screen();
 
-      //      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
-      //            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-      //      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
-      //      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
-      //            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
-      //
-      //      print("\r\n");
-      //
-      //      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2,
-      //      dbus->ch3); print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr,
-      //      dbus->timestamp);
-      //
-      //      print("\r\n");
-      //
-      //      print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
-      //            referee->game_robot_status.max_HP);
-      //
-      //      print("\r\n");
-      //
-      //      print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-      //      print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-      //      print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
-      //            referee->game_robot_status.chassis_power_limit);
-      //      print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
-      //
-      //      print("\r\n");
-      //
-      //      print("Shooter Heat: %hu / %d\r\n",
-      //      referee->power_heat_data.shooter_id1_17mm_cooling_heat,
-      //            referee->game_robot_status.shooter_id1_17mm_cooling_limit);
-      //      print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
-      //            referee->game_robot_status.shooter_id1_17mm_speed_limit);
-      //      print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-      //
-      //      if (referee->shoot_data.bullet_speed >
-      //          referee->game_robot_status.shooter_id1_17mm_speed_limit)
-      //        pass = false;
-      //      print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
-      //      float shooter_power; // 5
-      //      float cooling_heat; // 6
-      //      float cooling_limit; // 7
-      //      float speed_limit; // 8
+      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
+      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+
+      print("\r\n");
+
+      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
+      print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
+
+      print("\r\n");
+
       print("shooter power: %f\r\ncooling heat: %f\r\ncooling limit: %f\r\nspeed_limit: %f\r\n",
             send->shooter_power, send->cooling_heat, send->cooling_limit, send->speed_limit);
     }
