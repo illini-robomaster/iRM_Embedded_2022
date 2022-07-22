@@ -33,6 +33,7 @@
 #include "protocol.h"
 #include "rgb.h"
 #include "shooter.h"
+#include "stepper.h"
 
 static bsp::CAN* can1 = nullptr;
 static bsp::CAN* can2 = nullptr;
@@ -248,8 +249,13 @@ static control::MotorCANBase* sl_motor = nullptr;
 static control::MotorCANBase* sr_motor = nullptr;
 static control::MotorCANBase* ld_motor = nullptr;
 static control::Shooter* shooter = nullptr;
+static control::Stepper* stepper = nullptr;
 
 static volatile bool flywheelFlag = false;
+
+static unsigned stepper_length = 445;
+static unsigned stepper_speed = 1000;
+static bool stepper_direction = true;
 
 void shooterTask(void* arg) {
   UNUSED(arg);
@@ -263,24 +269,60 @@ void shooterTask(void* arg) {
 
   while (!imu->CaliDone()) osDelay(100);
 
+  for (int i = 0; i < 2; ++i) {
+    stepper->Move(control::FORWARD, stepper_speed);
+    osDelay(stepper_length);
+    stepper->Move(control::BACKWARD, stepper_speed);
+    osDelay(stepper_length);
+  }
+  stepper->Stop();
+
   while (true) {
     while (Dead) osDelay(100);
 
-    if (send->shooter_power > 0 && send->cooling_heat < send->cooling_limit - 20 &&
+    if (send->shooter_power && (send->cooling_heat1 > send->cooling_limit1 - 20)) {
+      if (stepper_direction) {
+        stepper->Move(control::FORWARD, stepper_speed);
+        osDelay(stepper_length);
+        stepper->Stop();
+      } else {
+        stepper->Move(control::BACKWARD, stepper_speed);
+        osDelay(stepper_length);
+        stepper->Stop();
+      }
+      stepper_direction = !stepper_direction;
+    }
+
+    if (send->shooter_power && send->cooling_heat1 < send->cooling_limit1 - 20 && send->cooling_heat2 < send->cooling_limit2 - 20 &&
         (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
-    if (send->shooter_power < 1 || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+    if (!send->shooter_power || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
       flywheelFlag = false;
       shooter->SetFlywheelSpeed(0);
-    } else if (14 < send->speed_limit && send->speed_limit < 16) {
-      flywheelFlag = true;
-      shooter->SetFlywheelSpeed(440);  // 445 MAX
-    } else if (send->speed_limit >= 18) {
-      flywheelFlag = true;
-      shooter->SetFlywheelSpeed(485);  // 490 MAX
     } else {
-      flywheelFlag = false;
-      shooter->SetFlywheelSpeed(0);
+      if (stepper_direction) {
+        if (14 < send->speed_limit2 && send->speed_limit2 < 16) {
+          flywheelFlag = true;
+          shooter->SetFlywheelSpeed(440);  // 445 MAX
+        } else if (send->speed_limit2 >= 18) {
+          flywheelFlag = true;
+          shooter->SetFlywheelSpeed(485);  // 490 MAX
+        } else {
+          flywheelFlag = false;
+          shooter->SetFlywheelSpeed(0);
+        }
+      } else {
+        if (14 < send->speed_limit1 && send->speed_limit1 < 16) {
+          flywheelFlag = true;
+          shooter->SetFlywheelSpeed(440);  // 445 MAX
+        } else if (send->speed_limit1 >= 18) {
+          flywheelFlag = true;
+          shooter->SetFlywheelSpeed(485);  // 490 MAX
+        } else {
+          flywheelFlag = false;
+          shooter->SetFlywheelSpeed(0);
+        }
+      }
     }
 
     shooter->Update();
@@ -425,6 +467,8 @@ void RM_RTOS_Init(void) {
   shooter_data.load_motor = ld_motor;
   shooter_data.model = control::SHOOTER_STANDARD;
   shooter = new control::Shooter(shooter_data);
+  stepper = new control::Stepper(&htim1, 1, 1000000, DIR_GPIO_Port, DIR_Pin, ENABLE_GPIO_Port,
+                                 ENABLE_Pin);
 
   send = new bsp::CanBridge(can2, 0x20A, 0x20B);
 }
@@ -476,7 +520,6 @@ void KillAll() {
 }
 
 static bool debug = true;
-// static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
@@ -510,11 +553,6 @@ void RM_RTOS_Default_Task(const void* arg) {
 
       print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
       print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
-
-      print("\r\n");
-
-      print("shooter power: %f\r\ncooling heat: %f\r\ncooling limit: %f\r\nspeed_limit: %f\r\n",
-            send->shooter_power, send->cooling_heat, send->cooling_limit, send->speed_limit);
     }
 
     osDelay(DEFAULT_TASK_DELAY);

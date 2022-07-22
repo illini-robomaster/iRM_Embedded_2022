@@ -18,62 +18,55 @@
  *                                                                          *
  ****************************************************************************/
 
-#pragma once
+/*
+ * A4988 stepper
+ * 1B Green
+ * 1A Black
+ * 2A Red
+ * 2B Blue
+ * STEP PWM
+ * MISO MOSI
+ * PB14 PB15
+ * DIR  ENABLE
+ */
 
-#include "bsp_can.h"
+#include "main.h"
 
-namespace bsp {
+#include "bsp_print.h"
+#include "cmsis_os.h"
+#include "stepper.h"
 
-typedef enum {
-  VX,
-  VY,
-  RELATIVE_ANGLE,
-  START,
-  MODE,
-  DEAD,
-  SHOOTER_POWER,
-  COOLING_HEAT1,
-  COOLING_HEAT2,
-  COOLING_LIMIT1,
-  COOLING_LIMIT2,
-  SPEED_LIMIT1,
-  SPEED_LIMIT2,
-} can_bridge_cmd;
+static control::Stepper* stepper = nullptr;
 
-typedef struct {
-  uint8_t id;
-  union {
-    float data_float;
-    int data_int;
-    bool data_bool;
-  };
-} bridge_data_t;
+void RM_RTOS_Init(void) {
+  print_use_uart(&huart1);
+  stepper = new control::Stepper(&htim1, 1, 1000000, DIR_GPIO_Port, DIR_Pin, ENABLE_GPIO_Port,
+                                 ENABLE_Pin);
+}
 
-class CanBridge {
- public:
-  CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id);
-  void UpdateData(const uint8_t data[]);
-  void TransmitOutput();
-
-  bridge_data_t cmd;
-  float vx = 0;
-  float vy = 0;
-  float relative_angle = 0;
-  bool start = false;
-  int mode = 0;
-  bool dead = false;
-  bool shooter_power = false;
-  float cooling_heat1 = 0;
-  float cooling_heat2 = 0;
-  float cooling_limit1 = 0;
-  float cooling_limit2 = 0;
-  float speed_limit1 = 0;
-  float speed_limit2 = 0;
-
- private:
-  bsp::CAN* can_;
-  uint16_t rx_id_;
-  uint16_t tx_id_;
-};
-
-}  // namespace bsp
+void RM_RTOS_Default_Task(const void* arguments) {
+  UNUSED(arguments);
+  unsigned length = 445;
+  unsigned speed = 1000;
+  for (int i = 0; i < 2; ++i) {
+    stepper->Move(control::FORWARD, speed);
+    osDelay(length);
+    stepper->Move(control::BACKWARD, speed);
+    osDelay(length);
+  }
+  speed = 1600;
+  bool direction = true;
+  while (true) {
+    if (direction) {
+      stepper->Move(control::FORWARD, speed);
+      osDelay(length);
+      stepper->Stop();
+    } else {
+      stepper->Move(control::BACKWARD, speed);
+      osDelay(length);
+      stepper->Stop();
+    }
+    direction = !direction;
+    osDelay(500);
+  }
+}

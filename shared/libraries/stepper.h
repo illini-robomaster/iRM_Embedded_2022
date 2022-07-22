@@ -20,60 +20,25 @@
 
 #pragma once
 
-#include "bsp_can.h"
+#include "bsp_gpio.h"
+#include "bsp_pwm.h"
 
-namespace bsp {
+namespace control {
 
-typedef enum {
-  VX,
-  VY,
-  RELATIVE_ANGLE,
-  START,
-  MODE,
-  DEAD,
-  SHOOTER_POWER,
-  COOLING_HEAT1,
-  COOLING_HEAT2,
-  COOLING_LIMIT1,
-  COOLING_LIMIT2,
-  SPEED_LIMIT1,
-  SPEED_LIMIT2,
-} can_bridge_cmd;
+enum dir { FORWARD, BACKWARD };
 
-typedef struct {
-  uint8_t id;
-  union {
-    float data_float;
-    int data_int;
-    bool data_bool;
-  };
-} bridge_data_t;
-
-class CanBridge {
+class Stepper {
  public:
-  CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id);
-  void UpdateData(const uint8_t data[]);
-  void TransmitOutput();
-
-  bridge_data_t cmd;
-  float vx = 0;
-  float vy = 0;
-  float relative_angle = 0;
-  bool start = false;
-  int mode = 0;
-  bool dead = false;
-  bool shooter_power = false;
-  float cooling_heat1 = 0;
-  float cooling_heat2 = 0;
-  float cooling_limit1 = 0;
-  float cooling_limit2 = 0;
-  float speed_limit1 = 0;
-  float speed_limit2 = 0;
+  Stepper(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t clock_freq, GPIO_TypeDef* dir_group,
+          uint16_t dir_pin, GPIO_TypeDef* enable_group, uint16_t enable_pin);
+  void Move(dir direction, unsigned speed);
+  void Stop();
+  void Enable();
+  void Disable();
 
  private:
-  bsp::CAN* can_;
-  uint16_t rx_id_;
-  uint16_t tx_id_;
+  bsp::PWM stepper_;
+  bsp::GPIO dir_;
+  bsp::GPIO enable_;
 };
-
-}  // namespace bsp
+}  // namespace control

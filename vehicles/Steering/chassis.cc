@@ -122,8 +122,6 @@ static control::SteeringChassis* chassis;
 
 static const float CHASSIS_DEADZONE = 0.04;
 
-// static bool PeekDirection = false;
-
 bool steering_align_detect1() { return !key1->Read(); }
 
 bool steering_align_detect2() { return !key2->Read(); }
@@ -168,7 +166,7 @@ void chassisTask(void* arg) {
 
     chassis->SetYSpeed(-vx_set / 10);
     chassis->SetXSpeed(-vy_set / 10);
-    chassis->SetWSpeed(wz_set);  // wz_set / 10
+    chassis->SetWSpeed(wz_set);
     chassis->Update((float)referee->game_robot_status.chassis_power_limit,
                     referee->power_heat_data.chassis_power,
                     (float)referee->power_heat_data.chassis_power_buffer);
@@ -184,19 +182,31 @@ void chassisTask(void* arg) {
     control::MotorCANBase::TransmitOutput(steer_motors, 4);
 
     receive->cmd.id = bsp::SHOOTER_POWER;
-    receive->cmd.data_float = (float)referee->game_robot_status.mains_power_shooter_output;
+    receive->cmd.data_bool = referee->game_robot_status.mains_power_shooter_output;
     receive->TransmitOutput();
 
-    receive->cmd.id = bsp::COOLING_HEAT;
+    receive->cmd.id = bsp::COOLING_HEAT1;
     receive->cmd.data_float = (float)referee->power_heat_data.shooter_id1_17mm_cooling_heat;
     receive->TransmitOutput();
 
-    receive->cmd.id = bsp::COOLING_LIMIT;
+    receive->cmd.id = bsp::COOLING_HEAT2;
+    receive->cmd.data_float = (float)referee->power_heat_data.shooter_id2_17mm_cooling_heat;
+    receive->TransmitOutput();
+
+    receive->cmd.id = bsp::COOLING_LIMIT1;
     receive->cmd.data_float = (float)referee->game_robot_status.shooter_id1_17mm_cooling_limit;
     receive->TransmitOutput();
 
-    receive->cmd.id = bsp::SPEED_LIMIT;
+    receive->cmd.id = bsp::COOLING_LIMIT2;
+    receive->cmd.data_float = (float)referee->game_robot_status.shooter_id2_17mm_cooling_limit;
+    receive->TransmitOutput();
+
+    receive->cmd.id = bsp::SPEED_LIMIT1;
     receive->cmd.data_float = (float)referee->game_robot_status.shooter_id1_17mm_speed_limit;
+    receive->TransmitOutput();
+
+    receive->cmd.id = bsp::SPEED_LIMIT2;
+    receive->cmd.data_float = (float)referee->game_robot_status.shooter_id2_17mm_speed_limit;
     receive->TransmitOutput();
 
     osDelay(CHASSIS_TASK_DELAY);
