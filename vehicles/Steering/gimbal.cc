@@ -150,6 +150,10 @@ void gimbalTask(void* arg) {
   RGB->Display(display::color_green);
   laser->On();
 
+  send->cmd.id = 9;
+  send->cmd.data = 1;
+  send->TransmitOutput();
+
   float pitch_ratio, yaw_ratio;
   float pitch_curr, yaw_curr;
   float pitch_target = 0, yaw_target = 0;

@@ -37,10 +37,6 @@ CanBridge::CanBridge(bsp::CAN* can, uint16_t rx_id, uint16_t tx_id) {
 }
 
 void CanBridge::UpdateData(const uint8_t* data) {
-  //  float shooter_power; // 5
-  //  float cooling_heat; // 6
-  //  float cooling_limit; // 7
-  //  float speed_limit; // 8
   memcpy(&cmd, data, sizeof(bridge_data_t));
   switch (cmd.id) {
     case 0:
@@ -69,6 +65,9 @@ void CanBridge::UpdateData(const uint8_t* data) {
       break;
     case 8:
       speed_limit = cmd.data;
+      break;
+    case 9:
+      start = cmd.data;
       break;
     default:;
   }

@@ -146,6 +146,8 @@ void chassisTask(void* arg) {
   //    osDelay(CHASSIS_TASK_DELAY);
   //  }
 
+  while (receive->start < 0.5) osDelay(100);
+
   while (true) {
     //    if (Dead) osDelay(100);
 
