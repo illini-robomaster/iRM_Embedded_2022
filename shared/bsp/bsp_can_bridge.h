@@ -45,6 +45,7 @@ class CanBridge {
   float cooling_heat;        // 6
   float cooling_limit;       // 7
   float speed_limit;         // 8
+  float start = 0;           // 9
 
  private:
   bsp::CAN* can_;
