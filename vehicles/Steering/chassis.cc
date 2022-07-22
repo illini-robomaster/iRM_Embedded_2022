@@ -141,13 +141,13 @@ void chassisTask(void* arg) {
   float spin_speed = 10;
   float follow_speed = 10;
 
-//  while (!chassis->AlignUpdate()) {
-//    control::MotorCANBase::TransmitOutput(steer_motors, 4);
-//    osDelay(CHASSIS_TASK_DELAY);
-//  }
+  //  while (!chassis->AlignUpdate()) {
+  //    control::MotorCANBase::TransmitOutput(steer_motors, 4);
+  //    osDelay(CHASSIS_TASK_DELAY);
+  //  }
 
   while (true) {
-//    if (Dead) osDelay(100);
+    //    if (Dead) osDelay(100);
 
     float relative_angle = receive->relative_angle;
     float sin_yaw, cos_yaw, vx_set, vy_set, wz_set;
@@ -173,7 +173,7 @@ void chassisTask(void* arg) {
 
     chassis->SetYSpeed(-vx_set / 10);
     chassis->SetXSpeed(-vy_set / 10);
-    chassis->SetWSpeed(wz_set); // wz_set / 10
+    chassis->SetWSpeed(wz_set);  // wz_set / 10
     chassis->Update((float)referee->game_robot_status.chassis_power_limit,
                     referee->power_heat_data.chassis_power,
                     (float)referee->power_heat_data.chassis_power_buffer);
@@ -181,10 +181,10 @@ void chassisTask(void* arg) {
     control::MotorCANBase::TransmitOutput(wheel_motors, 4);
     control::MotorCANBase::TransmitOutput(steer_motors, 4);
 
-//    float shooter_power; // 5
-//    float cooling_heat; // 6
-//    float cooling_limit; // 7
-//    float speed_limit; // 8
+    //    float shooter_power; // 5
+    //    float cooling_heat; // 6
+    //    float cooling_limit; // 7
+    //    float speed_limit; // 8
 
     //    if (referee->game_robot_status.mains_power_shooter_output &&
     //        referee->power_heat_data.shooter_id1_17mm_cooling_heat <
@@ -232,7 +232,7 @@ void RM_RTOS_Init() {
 
   can1 = new bsp::CAN(&hcan1, 0x201, true);
   can2 = new bsp::CAN(&hcan2, 0x201, false);
-//  dbus = new remote::DBUS(&huart3);
+  //  dbus = new remote::DBUS(&huart3);
   RGB = new display::RGB(&htim5, 3, 2, 1, 1000000);
 
   motor1 = new control::Motor3508(can1, 0x201);
@@ -283,21 +283,21 @@ void RM_RTOS_Threads_Init(void) {
   chassisTaskHandle = osThreadNew(chassisTask, nullptr, &chassisTaskAttribute);
 }
 
-//void KillAll() {
-//  RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
+// void KillAll() {
+//   RM_EXPECT_TRUE(false, "Operation Killed!\r\n");
 //
-//  control::MotorCANBase* steer_motors[] = {motor1, motor2, motor3, motor4};
-//  control::MotorCANBase* wheel_motors[] = {motor5, motor6, motor7, motor8};
+//   control::MotorCANBase* steer_motors[] = {motor1, motor2, motor3, motor4};
+//   control::MotorCANBase* wheel_motors[] = {motor5, motor6, motor7, motor8};
 //
-//  RGB->Display(display::color_blue);
+//   RGB->Display(display::color_blue);
 //
-//  while (true) {
-//    if (receive->dead < 0.5) {
-//      SpinMode = false;
-//      Dead = false;
-//      RGB->Display(display::color_green);
-//      break;
-//    }
+//   while (true) {
+//     if (receive->dead < 0.5) {
+//       SpinMode = false;
+//       Dead = false;
+//       RGB->Display(display::color_green);
+//       break;
+//     }
 //
 ////    motor1->SetOutput(0);
 ////    motor2->SetOutput(0);
@@ -315,20 +315,21 @@ void RM_RTOS_Threads_Init(void) {
 //  }
 //}
 
-//static bool debug = false;
-//static bool pass = true;
+// static bool debug = false;
+// static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* args) {
   UNUSED(args);
 
   while (true) {
-//    if (receive->dead > 0.5) {
-//      Dead = true;
-//      KillAll();
-//    }
+    //    if (receive->dead > 0.5) {
+    //      Dead = true;
+    //      KillAll();
+    //    }
     set_cursor(0, 0);
     clear_screen();
-    print("vx: %f, vy: %f, angle: %f, mode: %f, dead: %f\r\n", receive->vx, receive->vy, receive->relative_angle, receive->mode, receive->dead);
+    print("vx: %f, vy: %f, angle: %f, mode: %f, dead: %f\r\n", receive->vx, receive->vy,
+          receive->relative_angle, receive->mode, receive->dead);
     osDelay(DEFAULT_TASK_DELAY);
   }
 }

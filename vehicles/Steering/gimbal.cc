@@ -262,10 +262,10 @@ void shooterTask(void* arg) {
   while (true) {
     while (Dead) osDelay(100);
 
-    if (send->shooter_power > 0 && send->cooling_heat < send->cooling_limit - 20 && (dbus->mouse.l || dbus->swr == remote::UP))
+    if (send->shooter_power > 0 && send->cooling_heat < send->cooling_limit - 20 &&
+        (dbus->mouse.l || dbus->swr == remote::UP))
       shooter->LoadNext();
-    if (send->shooter_power < 1 || dbus->keyboard.bit.Q ||
-        dbus->swr == remote::DOWN) {
+    if (send->shooter_power < 1 || dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
       flywheelFlag = false;
       shooter->SetFlywheelSpeed(0);
     } else if (14 < send->speed_limit && send->speed_limit < 16) {
@@ -279,13 +279,13 @@ void shooterTask(void* arg) {
       shooter->SetFlywheelSpeed(0);
     }
 
-//    if (dbus->mouse.l || dbus->swr == remote::UP)
-//      shooter->LoadNext();
-//    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
-//      shooter->SetFlywheelSpeed(0);
-//    } else {
-//      shooter->SetFlywheelSpeed(440);  // 445 MAX
-//    }
+    //    if (dbus->mouse.l || dbus->swr == remote::UP)
+    //      shooter->LoadNext();
+    //    if (dbus->keyboard.bit.Q || dbus->swr == remote::DOWN) {
+    //      shooter->SetFlywheelSpeed(0);
+    //    } else {
+    //      shooter->SetFlywheelSpeed(440);  // 445 MAX
+    //    }
 
     shooter->Update();
     control::MotorCANBase::TransmitOutput(motors_can1_shooter, 3);
@@ -480,7 +480,7 @@ void KillAll() {
 }
 
 static bool debug = true;
-//static bool pass = true;
+// static bool pass = true;
 
 void RM_RTOS_Default_Task(const void* arg) {
   UNUSED(arg);
@@ -504,47 +504,50 @@ void RM_RTOS_Default_Task(const void* arg) {
       set_cursor(0, 0);
       clear_screen();
 
-//      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
-//            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
-//      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
-//      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
-//            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
-//
-//      print("\r\n");
-//
-//      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2, dbus->ch3);
-//      print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr, dbus->timestamp);
-//
-//      print("\r\n");
-//
-//      print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
-//            referee->game_robot_status.max_HP);
-//
-//      print("\r\n");
-//
-//      print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
-//      print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
-//      print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
-//            referee->game_robot_status.chassis_power_limit);
-//      print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
-//
-//      print("\r\n");
-//
-//      print("Shooter Heat: %hu / %d\r\n", referee->power_heat_data.shooter_id1_17mm_cooling_heat,
-//            referee->game_robot_status.shooter_id1_17mm_cooling_limit);
-//      print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
-//            referee->game_robot_status.shooter_id1_17mm_speed_limit);
-//      print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
-//
-//      if (referee->shoot_data.bullet_speed >
-//          referee->game_robot_status.shooter_id1_17mm_speed_limit)
-//        pass = false;
-//      print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
-//      float shooter_power; // 5
-//      float cooling_heat; // 6
-//      float cooling_limit; // 7
-//      float speed_limit; // 8
-      print("shooter power: %f\r\ncooling heat: %f\r\ncooling limit: %f\r\nspeed_limit: %f\r\n", send->shooter_power, send->cooling_heat, send->cooling_limit, send->speed_limit);
+      //      print("# %.2f s, IMU %s\r\n", HAL_GetTick() / 1000.0,
+      //            imu->CaliDone() ? "\033[1;42mReady\033[0m" : "\033[1;41mNot Ready\033[0m");
+      //      print("Temp: %.2f, Effort: %.2f\r\n", imu->Temp, imu->TempPWM);
+      //      print("Euler Angles: %.2f, %.2f, %.2f\r\n", imu->INS_angle[0] / PI * 180,
+      //            imu->INS_angle[1] / PI * 180, imu->INS_angle[2] / PI * 180);
+      //
+      //      print("\r\n");
+      //
+      //      print("CH0: %-4d CH1: %-4d CH2: %-4d CH3: %-4d ", dbus->ch0, dbus->ch1, dbus->ch2,
+      //      dbus->ch3); print("SWL: %d SWR: %d @ %d ms\r\n", dbus->swl, dbus->swr,
+      //      dbus->timestamp);
+      //
+      //      print("\r\n");
+      //
+      //      print("%Robot HP: %d / %d\r\n", referee->game_robot_status.remain_HP,
+      //            referee->game_robot_status.max_HP);
+      //
+      //      print("\r\n");
+      //
+      //      print("Chassis Volt: %.3f\r\n", referee->power_heat_data.chassis_volt / 1000.0);
+      //      print("Chassis Curr: %.3f\r\n", referee->power_heat_data.chassis_current / 1000.0);
+      //      print("Chassis Power: %.2f / %d\r\n", referee->power_heat_data.chassis_power,
+      //            referee->game_robot_status.chassis_power_limit);
+      //      print("Chassis Buffer: %d / 60\r\n", referee->power_heat_data.chassis_power_buffer);
+      //
+      //      print("\r\n");
+      //
+      //      print("Shooter Heat: %hu / %d\r\n",
+      //      referee->power_heat_data.shooter_id1_17mm_cooling_heat,
+      //            referee->game_robot_status.shooter_id1_17mm_cooling_limit);
+      //      print("Bullet Speed: %.3f / %d\r\n", referee->shoot_data.bullet_speed,
+      //            referee->game_robot_status.shooter_id1_17mm_speed_limit);
+      //      print("Bullet Frequency: %hhu\r\n", referee->shoot_data.bullet_freq);
+      //
+      //      if (referee->shoot_data.bullet_speed >
+      //          referee->game_robot_status.shooter_id1_17mm_speed_limit)
+      //        pass = false;
+      //      print("\r\nSpeed Limit Test: %s\r\n", pass ? "PASS" : "FAIL");
+      //      float shooter_power; // 5
+      //      float cooling_heat; // 6
+      //      float cooling_limit; // 7
+      //      float speed_limit; // 8
+      print("shooter power: %f\r\ncooling heat: %f\r\ncooling limit: %f\r\nspeed_limit: %f\r\n",
+            send->shooter_power, send->cooling_heat, send->cooling_limit, send->speed_limit);
     }
 
     osDelay(DEFAULT_TASK_DELAY);

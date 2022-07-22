@@ -41,10 +41,10 @@ class CanBridge {
   float relative_angle = 0;  // 2
   float mode = 0;            // 3
   float dead = 0;            // 4
-  float shooter_power; // 5
-  float cooling_heat; // 6
-  float cooling_limit; // 7
-  float speed_limit; // 8
+  float shooter_power;       // 5
+  float cooling_heat;        // 6
+  float cooling_limit;       // 7
+  float speed_limit;         // 8
 
  private:
   bsp::CAN* can_;
