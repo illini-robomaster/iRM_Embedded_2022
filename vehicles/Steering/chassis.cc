@@ -141,12 +141,7 @@ void chassisTask(void* arg) {
   float spin_speed = 10;
   float follow_speed = 10;
 
-  //  while (!chassis->AlignUpdate()) {
-  //    control::MotorCANBase::TransmitOutput(steer_motors, 4);
-  //    osDelay(CHASSIS_TASK_DELAY);
-  //  }
-
-  while (receive->start) osDelay(100);
+  while (!receive->start) osDelay(100);
 
   while (true) {
     float relative_angle = receive->relative_angle;
