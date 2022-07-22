@@ -141,6 +141,8 @@ void chassisTask(void* arg) {
 
   while (!receive->start) osDelay(100);
 
+  while (receive->start < 0.5) osDelay(100);
+
   while (true) {
     float relative_angle = receive->relative_angle;
     float sin_yaw, cos_yaw, vx_set, vy_set, wz_set;
