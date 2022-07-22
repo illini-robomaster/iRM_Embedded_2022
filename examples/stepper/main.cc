@@ -46,7 +46,7 @@ void RM_RTOS_Init(void) {
 
 void RM_RTOS_Default_Task(const void* arguments) {
   UNUSED(arguments);
-  unsigned length = 445;
+  unsigned length = 700;
   unsigned speed = 1000;
   for (int i = 0; i < 2; ++i) {
     stepper->Move(control::FORWARD, speed);
@@ -54,7 +54,6 @@ void RM_RTOS_Default_Task(const void* arguments) {
     stepper->Move(control::BACKWARD, speed);
     osDelay(length);
   }
-  speed = 1600;
   bool direction = true;
   while (true) {
     if (direction) {
