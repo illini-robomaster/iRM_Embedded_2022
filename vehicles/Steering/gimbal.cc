@@ -65,12 +65,12 @@ static bool volatile yaw_motor_flag = false;
 static bool volatile sl_motor_flag = false;
 static bool volatile sr_motor_flag = false;
 static bool volatile ld_motor_flag = false;
-//static bool volatile fl_motor_flag = false;
-//static bool volatile fr_motor_flag = false;
-//static bool volatile bl_motor_flag = false;
-//static bool volatile br_motor_flag = false;
+// static bool volatile fl_motor_flag = false;
+// static bool volatile fr_motor_flag = false;
+// static bool volatile bl_motor_flag = false;
+// static bool volatile br_motor_flag = false;
 static bool volatile calibration_flag = false;
-//static bool volatile referee_flag = false;
+// static bool volatile referee_flag = false;
 static bool volatile dbus_flag = false;
 static bool volatile lidar_flag = false;
 
