@@ -328,10 +328,10 @@ void shooterTask(void* arg) {
     } else {
       if (14 < send->speed_limit1 && send->speed_limit1 < 16) {
         flywheelFlag = true;
-        shooter->SetFlywheelSpeed(440);  // 445 MAX
+        shooter->SetFlywheelSpeed(437);  // 445 MAX
       } else if (send->speed_limit1 >= 18) {
         flywheelFlag = true;
-        shooter->SetFlywheelSpeed(485);  // 490 MAX
+        shooter->SetFlywheelSpeed(482);  // 490 MAX
       } else {
         flywheelFlag = false;
         shooter->SetFlywheelSpeed(0);
