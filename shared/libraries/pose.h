@@ -55,6 +55,18 @@ class Pose {
    **/
   float GetGravity(void);
 
+  /** @description: set direction for gravity
+   *  @param : 0 = x, 1 = y, 2 = z; 3 = x_neg; 4 = y_neg, 5 = z_neg
+   *  @note: Direction is based on the "R" marker on the A-type board.
+   *         y z
+   *         |/
+   *         R -- x
+   *         Gravity direction is when the axis is pointing to the ground
+   *         at default postition.
+   *         (Z is pointing inwards with respect to the screen.)
+   **/
+  void SetGravityDir(uint8_t);
+
   /** @description: set offset (bias correction) for the 6 inputs
    *  @param: Offset (Bias) for the 3 axis of acce and gyro
    *  @note: The mean of all 6 axis except acc_z_off should be 0 after setting this.
@@ -117,6 +129,13 @@ class Pose {
   // pose estimated by acce alone
   float pitchAcc;
   float rollAcc;
+  float yawAcc;
+
+  // direction of gravity
+  // 0 = x
+  // 1 = y
+  // 2 = z
+  uint8_t gravityDir;
 
 };  // class Pose end
 
